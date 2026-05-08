@@ -12,38 +12,93 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = KliqPrimary,
-    secondary = KliqSecondary,
-    tertiary = NeonPurple,
+    primary = PurplePrimaryLight,
+    onPrimary = DarkBackground,
+    primaryContainer = PurpleContainer,
+    onPrimaryContainer = OnPurpleContainer,
+    secondary = TealSecondaryLight,
+    onSecondary = DarkBackground,
+    secondaryContainer = TealContainer,
+    onSecondaryContainer = OnTealContainer,
+    tertiary = FuchsiaTertiaryLight,
+    onTertiary = DarkBackground,
+    tertiaryContainer = FuchsiaContainer,
+    onTertiaryContainer = OnFuchsiaContainer,
+    error = ErrorRedLight,
+    onError = DarkBackground,
+    errorContainer = ErrorContainer,
+    onErrorContainer = OnErrorContainer,
     background = DarkBackground,
+    onBackground = DarkOnBackground,
     surface = DarkSurface,
-    onPrimary = HighContrastWhite,
-    onSecondary = HighContrastBlack,
-    onTertiary = HighContrastBlack,
-    onBackground = OnDarkSurface,
-    onSurface = OnDarkSurface,
-    error = KliqError
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkOutline,
+    outlineVariant = DarkOutlineVariant,
+    inverseSurface = DarkInverseSurface,
+    inverseOnSurface = DarkInverseOnSurface,
+    inversePrimary = DarkInversePrimary,
+    scrim = DarkScrim,
+    surfaceContainerHigh = DarkSurfaceContainerHigh,
+    surfaceContainerHighest = DarkSurfaceContainerHighest,
+    surfaceContainer = DarkSurfaceContainer
 )
 
-// Forcing Dark Mode for Kliq's signature look
+private val LightColorScheme = lightColorScheme(
+    primary = PurplePrimary,
+    onPrimary = LightBackground,
+    primaryContainer = PurpleContainerLight,
+    onPrimaryContainer = OnPurpleContainerLight,
+    secondary = TealSecondaryDark,
+    onSecondary = LightBackground,
+    secondaryContainer = TealContainerLight,
+    onSecondaryContainer = OnTealContainerLight,
+    tertiary = FuchsiaTertiaryDark,
+    onTertiary = LightBackground,
+    tertiaryContainer = FuchsiaContainerLight,
+    onTertiaryContainer = OnFuchsiaContainerLight,
+    error = ErrorRedDark,
+    onError = LightBackground,
+    errorContainer = ErrorContainerLight,
+    onErrorContainer = OnErrorContainerLight,
+    background = LightBackground,
+    onBackground = LightOnBackground,
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    outline = LightOutline,
+    outlineVariant = LightOutlineVariant,
+    inverseSurface = LightInverseSurface,
+    inverseOnSurface = LightInverseOnSurface,
+    inversePrimary = LightInversePrimary,
+    scrim = LightScrim,
+    surfaceContainerHigh = LightSurfaceContainerHigh,
+    surfaceContainerHighest = LightSurfaceContainerHighest,
+    surfaceContainer = LightSurfaceContainer
+)
+
 @Composable
 fun KliqTheme(
-    darkTheme: Boolean = true, // Default to true for High-Contrast look
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = DarkColorScheme
+    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
     val view = LocalView.current
+
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = KliqTypography,
+        shapes = KliqShapes,
         content = content
     )
 }
