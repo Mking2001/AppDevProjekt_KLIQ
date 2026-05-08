@@ -1,2 +1,2 @@
-# AppDevProjekt_Vibe
+# AppDevProjekt_KLIQ
 Socializing Plattform App 
