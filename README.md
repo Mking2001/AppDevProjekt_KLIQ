@@ -1,2 +1,2 @@
 # AppDevProjekt_Vibe
-Dating Plattform App 
+Socializing Plattform App 
