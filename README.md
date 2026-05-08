@@ -1,2 +1,2 @@
-# AppDevProjekt_LoveFinder
+# AppDevProjekt_Vibe
 Dating Plattform App 
