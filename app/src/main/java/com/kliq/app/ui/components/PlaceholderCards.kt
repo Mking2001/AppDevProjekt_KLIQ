@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Diese wiederverwendbaren UI-Komponenten wurden vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.components
 
 import androidx.compose.foundation.background
@@ -46,14 +40,8 @@ import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.ui.theme.FuchsiaTertiary
 
-// ============================================================
-// AI-generiert: Wiederverwendbare Platzhalter-Komponenten
-// für das Layout-Scaffolding aller Haupt-Screens.
-// ============================================================
-
-
 /**
- * AI-generiert: Runder Avatar-Platzhalter mit Gradient-Rahmen.
+ * Runder Avatar-Platzhalter mit Gradient-Rahmen.
  * Wird in Feed-Karten, Story-Row und Profil verwendet.
  *
  * @param size Durchmesser des Avatars.
@@ -85,7 +73,7 @@ fun KliqAvatarCircle(
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
     ) {
-        // AI-generiert: Initialen-Platzhalter innerhalb des Avatars
+        // Initialen-Platzhalter innerhalb des Avatars
         Text(
             text = "K",
             style = MaterialTheme.typography.labelMedium,
@@ -96,7 +84,7 @@ fun KliqAvatarCircle(
 }
 
 /**
- * AI-generiert: Feed-Karte im Glassmorphism-Stil.
+ * Feed-Karte im Glassmorphism-Stil.
  * Platzhalter-Karte für Social-Feed-Einträge mit Profilbild,
  * Name, Zeitstempel, Content-Bereich und Interaktions-Buttons.
  *
@@ -121,7 +109,7 @@ fun KliqFeedCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // AI-generiert: Profil-Header mit Avatar, Name und Zeitstempel
+            // Profil-Header mit Avatar, Name und Zeitstempel
             Row(verticalAlignment = Alignment.CenterVertically) {
                 KliqAvatarCircle(size = 40.dp)
                 Spacer(modifier = Modifier.width(12.dp))
@@ -142,7 +130,7 @@ fun KliqFeedCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // AI-generiert: Content-Platzhalter (Bild-Bereich)
+            // Content-Platzhalter (Bild-Bereich)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -160,7 +148,7 @@ fun KliqFeedCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // AI-generiert: Beitragstext
+            // Beitragstext
             Text(
                 text = contentText,
                 style = MaterialTheme.typography.bodyMedium,
@@ -171,7 +159,7 @@ fun KliqFeedCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // AI-generiert: Interaktions-Buttons (Like, Kommentar, Teilen)
+            // Interaktions-Buttons (Like, Kommentar, Teilen)
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -211,7 +199,7 @@ fun KliqFeedCard(
 }
 
 /**
- * AI-generiert: Selektierbarer Kategorie-Chip im Lila-Design.
+ * Selektierbarer Kategorie-Chip im Lila-Design.
  * Wird in Explore- und Map-Screen für Filteroptionen verwendet.
  *
  * @param label Beschriftung des Chips.
@@ -248,7 +236,7 @@ fun KliqCategoryChip(
 }
 
 /**
- * AI-generiert: Einzelne Benachrichtigungszeile.
+ * Einzelne Benachrichtigungszeile.
  * Zeigt Avatar, Beschreibungstext, Zeitstempel und visuellen Ungelesen-Indikator.
  *
  * @param text Benachrichtigungstext.
@@ -273,7 +261,7 @@ fun KliqNotificationItem(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // AI-generiert: Ungelesen-Indikator (kleiner Punkt)
+        // Ungelesen-Indikator (kleiner Punkt)
         if (isUnread) {
             Box(
                 modifier = Modifier

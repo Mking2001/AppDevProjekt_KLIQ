@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses ViewModel wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.screens.notifications
 
 import androidx.lifecycle.ViewModel
@@ -14,13 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-// ============================================================
-// AI-generiert: UI-State für den Notifications/Aktivität-Screen.
-// Folgt dem MVVM-Pattern mit immutablem State und UDF.
-// ============================================================
-
 /**
- * AI-generiert: Immutable UI State für den Notifications-Screen.
+ * Immutable UI State für den Notifications-Screen.
  *
  * @param selectedTabIndex Index des ausgewählten Filter-Tabs.
  * @param tabs Verfügbare Filter-Tabs.
@@ -35,7 +24,7 @@ data class NotificationsUiState(
 )
 
 /**
- * AI-generiert: Platzhalter-Datenklasse für eine Benachrichtigung.
+ * Platzhalter-Datenklasse für eine Benachrichtigung.
  */
 data class NotificationItemUi(
     val id: String,
@@ -46,14 +35,14 @@ data class NotificationItemUi(
 )
 
 /**
- * AI-generiert: Typ einer Benachrichtigung für Filter-Zuordnung.
+ * Typ einer Benachrichtigung für Filter-Zuordnung.
  */
 enum class NotificationType {
     LIKE, COMMENT, FOLLOW, EVENT
 }
 
 /**
- * AI-generiert: ViewModel für den Notifications/Aktivität-Screen.
+ * ViewModel für den Notifications/Aktivität-Screen.
  * Verwaltet Benachrichtigungs-Liste und Filter-Tab-State.
  *
  * Folgt strikt dem MVVM-Pattern:
@@ -71,7 +60,7 @@ class NotificationsViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Lädt Platzhalter-Daten für die visuelle Darstellung.
+     * Lädt Platzhalter-Daten für die visuelle Darstellung.
      */
     private fun loadMockData() {
         val notifications = listOf(
@@ -95,7 +84,7 @@ class NotificationsViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für Tab-Filter-Auswahl.
+     * Stub für Tab-Filter-Auswahl.
      * @param index Index des ausgewählten Tabs.
      */
     fun onFilterTabSelected(index: Int) {
@@ -103,7 +92,7 @@ class NotificationsViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub zum Markieren aller als gelesen.
+     * Stub zum Markieren aller als gelesen.
      */
     fun onMarkAllRead() {
         _uiState.update { state ->
@@ -115,7 +104,7 @@ class NotificationsViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für Klick auf eine Benachrichtigung.
+     * Stub für Klick auf eine Benachrichtigung.
      * @param notificationId ID der angeklickten Benachrichtigung.
      */
     fun onNotificationClicked(notificationId: String) {

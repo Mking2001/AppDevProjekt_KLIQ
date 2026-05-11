@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses Layout-Scaffolding wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.screens.home
 
 import androidx.compose.foundation.background
@@ -46,35 +40,42 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.ui.components.KliqFeedCard
 import com.kliq.app.ui.components.KliqScreenScaffold
+import com.kliq.app.ui.navigation.TopBarMenuAction
+import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.ui.theme.FuchsiaTertiary
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-// ============================================================
-// AI-generiert: Home-Feed-Screen – Hauptbildschirm der Kliq-App.
-// Zeigt eine Story-Row und einen scrollbaren Social-Feed.
-// Architektur: MVVM mit Hilt-injiziertem ViewModel.
-// ============================================================
-
 /**
- * AI-generiert: Home-Feed-Screen mit Story-Row, scrollbarem Feed
+ * Home-Feed-Screen mit Story-Row, scrollbarem Feed
  * und Floating Action Button zum Erstellen neuer Posts.
  *
  * Konsumiert den [HomeUiState] über collectAsStateWithLifecycle()
  * für lifecycle-bewusstes State-Management.
  *
+ * @param topBarState Aktueller Top-Bar UI-State (Menü, Titel).
+ * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
+ * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
+ * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
  * @param viewModel Hilt-injiziertes [HomeViewModel].
  */
 @Composable
 fun HomeScreen(
+    topBarState: TopBarUiState,
+    onToggleMenu: () -> Unit,
+    onDismissMenu: () -> Unit,
+    onMenuAction: (TopBarMenuAction) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     KliqScreenScaffold(
         title = "Kliq",
+        isMenuExpanded = topBarState.isMenuExpanded,
+        onToggleMenu = onToggleMenu,
+        onDismissMenu = onDismissMenu,
+        onMenuAction = onMenuAction,
         actions = {
-            // AI-generiert: Action-Icons in der Top-Bar (Filter & Nachrichten)
             IconButton(onClick = { /* TODO: Filter öffnen */ }) {
                 Icon(
                     imageVector = Icons.Outlined.Tune,
@@ -91,7 +92,6 @@ fun HomeScreen(
             }
         },
         floatingActionButton = {
-            // AI-generiert: FAB zum Erstellen neuer Posts im Primary-Lila
             FloatingActionButton(
                 onClick = { viewModel.onCreatePost() },
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -111,12 +111,10 @@ fun HomeScreen(
             contentPadding = PaddingValues(bottom = 16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // AI-generiert: Story-Row mit horizontal scrollbaren Avataren
             item {
                 StoryRow(stories = uiState.storyItems)
             }
 
-            // AI-generiert: Feed-Karten mit Platzhalter-Daten
             items(uiState.feedItems, key = { it.id }) { feedItem ->
                 KliqFeedCard(
                     userName = feedItem.userName,
@@ -130,7 +128,7 @@ fun HomeScreen(
 }
 
 /**
- * AI-generiert: Horizontale Story-Row mit kreisrunden Avataren.
+ * Horizontale Story-Row mit kreisrunden Avataren.
  * Jeder Avatar hat einen Gradient-Rahmen, der auf ungesehene
  * Stories hinweist (Lila → Fuchsia Gradient).
  *
@@ -143,7 +141,6 @@ private fun StoryRow(stories: List<StoryItemUi>) {
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         items(stories, key = { it.id }) { story ->
-            // AI-generiert: Einzelner Story-Avatar mit Gradient-Border
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.width(68.dp)

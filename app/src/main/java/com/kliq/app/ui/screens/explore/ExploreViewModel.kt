@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses ViewModel wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.screens.explore
 
 import androidx.lifecycle.ViewModel
@@ -14,13 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-// ============================================================
-// AI-generiert: UI-State für den Explore/Entdecken-Screen.
-// Folgt dem MVVM-Pattern mit immutablem State und UDF.
-// ============================================================
-
 /**
- * AI-generiert: Immutable UI State für den Explore-Screen.
+ * Immutable UI State für den Explore-Screen.
  *
  * @param searchQuery Aktuelle Sucheingabe.
  * @param selectedCategory Index der ausgewählten Kategorie (null = keine).
@@ -37,7 +26,7 @@ data class ExploreUiState(
 )
 
 /**
- * AI-generiert: Platzhalter-Datenklasse für ein Discovery-Element.
+ * Platzhalter-Datenklasse für ein Discovery-Element.
  */
 data class DiscoverItemUi(
     val id: String,
@@ -47,7 +36,7 @@ data class DiscoverItemUi(
 )
 
 /**
- * AI-generiert: ViewModel für den Explore/Entdecken-Screen.
+ * ViewModel für den Explore/Entdecken-Screen.
  * Verwaltet Such-, Filter- und Discovery-State.
  *
  * Folgt strikt dem MVVM-Pattern:
@@ -66,7 +55,7 @@ class ExploreViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Lädt Platzhalter-Daten für die visuelle Darstellung.
+     * Lädt Platzhalter-Daten für die visuelle Darstellung.
      */
     private fun loadMockData() {
         _uiState.update { state ->
@@ -88,7 +77,7 @@ class ExploreViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für Suchfunktion.
+     * Stub für Suchfunktion.
      * @param query Der eingegebene Suchtext.
      */
     fun onSearch(query: String) {
@@ -97,7 +86,7 @@ class ExploreViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für Kategorie-Auswahl.
+     * Stub für Kategorie-Auswahl.
      * @param index Index der ausgewählten Kategorie.
      */
     fun onCategorySelected(index: Int) {

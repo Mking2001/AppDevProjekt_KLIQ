@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses ViewModel wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.screens.profile
 
 import androidx.lifecycle.ViewModel
@@ -14,13 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-// ============================================================
-// AI-generiert: UI-State für den Profile/Profil-Screen.
-// Folgt dem MVVM-Pattern mit immutablem State und UDF.
-// ============================================================
-
 /**
- * AI-generiert: Immutable UI State für den Profile-Screen.
+ * Immutable UI State für den Profile-Screen.
  *
  * @param displayName Anzeigename des Benutzers.
  * @param username Benutzername/Handle.
@@ -47,7 +36,7 @@ data class ProfileUiState(
 )
 
 /**
- * AI-generiert: ViewModel für den Profile/Profil-Screen.
+ * ViewModel für den Profile/Profil-Screen.
  * Verwaltet Profildaten und Tab-Auswahl.
  *
  * Folgt strikt dem MVVM-Pattern:
@@ -65,7 +54,7 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Lädt Platzhalter-Profildaten für die visuelle Darstellung.
+     * Lädt Platzhalter-Profildaten für die visuelle Darstellung.
      */
     private fun loadMockData() {
         _uiState.update { state ->
@@ -84,7 +73,7 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für Tab-Auswahl im Profil.
+     * Stub für Tab-Auswahl im Profil.
      * @param index Index des ausgewählten Tabs.
      */
     fun onTabSelected(index: Int) {
@@ -92,14 +81,14 @@ class ProfileViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für "Profil bearbeiten"-Aktion.
+     * Stub für "Profil bearbeiten"-Aktion.
      */
     fun onEditProfile() {
         // TODO: Navigation zum Profil-Editor
     }
 
     /**
-     * AI-generiert: Stub für Follow/Unfollow-Toggle.
+     * Stub für Follow/Unfollow-Toggle.
      * Nur relevant wenn es nicht das eigene Profil ist.
      */
     fun onFollowToggle() {

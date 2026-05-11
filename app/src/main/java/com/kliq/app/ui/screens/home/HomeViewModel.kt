@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses ViewModel wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.screens.home
 
 import androidx.lifecycle.ViewModel
@@ -14,14 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-// ============================================================
-// AI-generiert: UI-State für den Home-Feed-Screen.
-// Folgt dem MVVM-Pattern mit immutablem State und
-// unidirektionalem Datenfluss (UDF).
-// ============================================================
-
 /**
- * AI-generiert: Immutable UI State für den Home-Screen.
+ * Immutable UI State für den Home-Screen.
  * Bildet alle darstellungsrelevanten Zustände des Feeds ab.
  *
  * @param isLoading Ob der Feed gerade geladen wird.
@@ -39,7 +27,7 @@ data class HomeUiState(
 )
 
 /**
- * AI-generiert: Platzhalter-Datenklasse für einen Feed-Eintrag.
+ * Platzhalter-Datenklasse für einen Feed-Eintrag.
  */
 data class FeedItemUi(
     val id: String,
@@ -51,7 +39,7 @@ data class FeedItemUi(
 )
 
 /**
- * AI-generiert: Platzhalter-Datenklasse für einen Story-Eintrag.
+ * Platzhalter-Datenklasse für einen Story-Eintrag.
  */
 data class StoryItemUi(
     val id: String,
@@ -60,7 +48,7 @@ data class StoryItemUi(
 )
 
 /**
- * AI-generiert: ViewModel für den Home-Feed-Screen.
+ * ViewModel für den Home-Feed-Screen.
  * Verwaltet den Feed-State und stellt Stub-Methoden
  * für spätere Feature-Implementierung bereit.
  *
@@ -76,12 +64,11 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
-        // AI-generiert: Platzhalter-Daten für das Layout-Scaffolding
         loadMockData()
     }
 
     /**
-     * AI-generiert: Lädt Platzhalter-Daten für die visuelle Darstellung.
+     * Lädt Platzhalter-Daten für die visuelle Darstellung.
      * Wird in der finalen Implementierung durch echte Repository-Aufrufe ersetzt.
      */
     private fun loadMockData() {
@@ -107,7 +94,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für Feed-Aktualisierung.
+     * Stub für Feed-Aktualisierung.
      * Wird mit echtem Pull-to-Refresh und Repository-Call implementiert.
      */
     fun refreshFeed() {
@@ -117,7 +104,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für Like-Aktion auf einem Post.
+     * Stub für Like-Aktion auf einem Post.
      * @param postId ID des zu likenden Beitrags.
      */
     fun onLikePost(postId: String) {
@@ -136,7 +123,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für Post-Erstellung.
+     * Stub für Post-Erstellung.
      * Öffnet in der finalen Version einen Post-Editor.
      */
     fun onCreatePost() {
