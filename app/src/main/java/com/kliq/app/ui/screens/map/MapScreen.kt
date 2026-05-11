@@ -1,83 +1,335 @@
+/**
+ * AI-GENERATED CODE
+ * Dieses Layout-Scaffolding wurde vollständig durch KI generiert.
+ * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
+ * Datum: 2026-05-11
+ */
 package com.kliq.app.ui.screens.map
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kliq.app.ui.components.KliqCategoryChip
+import com.kliq.app.ui.theme.PurplePrimary
+import com.kliq.app.ui.theme.PurplePrimaryLight
+
+// ============================================================
+// AI-generiert: Map/Karten-Screen der Kliq-App.
+// Zeigt eine Karten-Mockup-Fläche mit Filter-Chips,
+// Location-FAB und einem Bottom-Sheet-Peek für Venues.
+// Architektur: MVVM mit Hilt-injiziertem ViewModel.
+// ============================================================
 
 /**
- * Map screen showing nearby users and events on a map.
- * Currently a themed placeholder; will integrate Google Maps.
+ * AI-generiert: Map-Screen mit Karten-Platzhalter, Filter-Chips,
+ * Location-Button und Bottom-Sheet-Peek für nahegelegene Venues.
+ *
+ * @param viewModel Hilt-injiziertes [MapViewModel].
  */
 @Composable
-fun MapScreen() {
-    var visible by remember { mutableStateOf(false) }
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 600),
-        label = "mapAlpha"
-    )
+fun MapScreen(
+    viewModel: MapViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) { visible = true }
+    Box(modifier = Modifier.fillMaxSize()) {
+        // AI-generiert: Dunkel gestylte Karten-Mockup-Fläche mit Rasterlinien
+        MapPlaceholder(modifier = Modifier.fillMaxSize())
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .alpha(alpha),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Box(
+        // AI-generiert: Filter-Chips am oberen Rand über der Karte
+        LazyRow(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.align(Alignment.TopStart)
+        ) {
+            itemsIndexed(uiState.filters) { index, filter ->
+                KliqCategoryChip(
+                    label = filter,
+                    selected = uiState.selectedFilter == index,
+                    onClick = { viewModel.onFilterSelected(index) }
+                )
+            }
+        }
+
+        // AI-generiert: Location-FAB rechts unten
+        FloatingActionButton(
+            onClick = { viewModel.onLocationRequested() },
             modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.tertiaryContainer),
-            contentAlignment = Alignment.Center
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 240.dp),
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.primary,
+            elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
         ) {
             Icon(
-                imageVector = Icons.Filled.Map,
-                contentDescription = "Karte",
-                tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier = Modifier.size(40.dp)
+                imageVector = Icons.Filled.MyLocation,
+                contentDescription = "Mein Standort"
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Karte",
-            style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            fontWeight = FontWeight.Bold
+
+        // AI-generiert: Bottom-Sheet-Peek mit nahegelegenen Venues
+        VenueBottomSheet(
+            venues = uiState.nearbyVenues,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Entdecke was um dich herum passiert",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+    }
+}
+
+/**
+ * AI-generiert: Karten-Platzhalter mit dunklem Hintergrund und Rasterlinien.
+ * Simuliert eine Kartenansicht bis die echte Google Maps Integration erfolgt.
+ */
+@Composable
+private fun MapPlaceholder(modifier: Modifier = Modifier) {
+    val gridColor = PurplePrimary.copy(alpha = 0.08f)
+    val dotColor = PurplePrimaryLight.copy(alpha = 0.15f)
+
+    Box(
+        modifier = modifier
+            .background(MaterialTheme.colorScheme.background)
+            .drawBehind {
+                // AI-generiert: Rasterlinien als Karten-Simulation
+                val gridSpacing = 60.dp.toPx()
+                val dashEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
+
+                // Vertikale Linien
+                var x = 0f
+                while (x < size.width) {
+                    drawLine(
+                        color = gridColor,
+                        start = Offset(x, 0f),
+                        end = Offset(x, size.height),
+                        strokeWidth = 1f,
+                        pathEffect = dashEffect
+                    )
+                    x += gridSpacing
+                }
+
+                // Horizontale Linien
+                var y = 0f
+                while (y < size.height) {
+                    drawLine(
+                        color = gridColor,
+                        start = Offset(0f, y),
+                        end = Offset(size.width, y),
+                        strokeWidth = 1f,
+                        pathEffect = dashEffect
+                    )
+                    y += gridSpacing
+                }
+
+                // AI-generiert: Simulierte Standort-Punkte
+                val points = listOf(
+                    Offset(size.width * 0.3f, size.height * 0.25f),
+                    Offset(size.width * 0.6f, size.height * 0.35f),
+                    Offset(size.width * 0.45f, size.height * 0.5f),
+                    Offset(size.width * 0.7f, size.height * 0.2f),
+                    Offset(size.width * 0.2f, size.height * 0.45f)
+                )
+                points.forEach { point ->
+                    drawCircle(
+                        color = dotColor,
+                        radius = 24f,
+                        center = point
+                    )
+                    drawCircle(
+                        color = PurplePrimaryLight.copy(alpha = 0.4f),
+                        radius = 8f,
+                        center = point
+                    )
+                }
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        // AI-generiert: Zentraler Standort-Marker
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                imageVector = Icons.Filled.LocationOn,
+                contentDescription = "Standort",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(48.dp)
+            )
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(
+                        brush = Brush.radialGradient(
+                            colors = listOf(
+                                PurplePrimary.copy(alpha = 0.6f),
+                                PurplePrimary.copy(alpha = 0.0f)
+                            )
+                        )
+                    )
+            )
+        }
+    }
+}
+
+/**
+ * AI-generiert: Bottom-Sheet-Peek mit nahegelegenen Venues.
+ * Abgerundete Karte am unteren Bildschirmrand mit einer
+ * scrollbaren Liste von Venue-Karten.
+ *
+ * @param venues Liste der Venue-Platzhalter.
+ * @param modifier Optionaler Modifier.
+ */
+@Composable
+private fun VenueBottomSheet(
+    venues: List<VenueItemUi>,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Column(modifier = Modifier.padding(top = 8.dp)) {
+            // AI-generiert: Drag-Handle-Indikator
+            Box(
+                modifier = Modifier
+                    .width(40.dp)
+                    .height(4.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f))
+                    .align(Alignment.CenterHorizontally)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = "In deiner Nähe",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // AI-generiert: Scrollbare Venue-Liste
+            LazyColumn(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.height(160.dp)
+            ) {
+                items(venues, key = { it.id }) { venue ->
+                    VenueCard(venue = venue)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * AI-generiert: Einzelne Venue-Karte mit Name, Kategorie,
+ * Entfernung und Bewertung.
+ */
+@Composable
+private fun VenueCard(venue: VenueItemUi) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // AI-generiert: Venue-Icon-Platzhalter
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.LocationOn,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = venue.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "${venue.category} · ${venue.distance}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            // AI-generiert: Bewertung mit Stern-Icon
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.Star,
+                    contentDescription = "Bewertung",
+                    tint = Color(0xFFFFB800),
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                Text(
+                    text = venue.rating.toString(),
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
     }
 }
