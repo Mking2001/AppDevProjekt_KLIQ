@@ -1,13 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieser Test wurde aktualisiert durch KI für das neue Layout-Scaffolding.
- * Aktualisiert im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- *
- * Ursprünglicher Test geprüft: Navigationsfluss zwischen allen 5 Tabs.
- * Anpassung: Screen-Inhalte entsprechen nun dem neuen Scaffolding
- * (nicht mehr simple Platzhalter-Texte).
- */
 package com.kliq.app.ui.navigation
 
 import androidx.compose.ui.semantics.Role
@@ -21,15 +11,10 @@ import com.kliq.app.MainActivity
 import org.junit.Rule
 import org.junit.Test
 
-// ============================================================
-// AI-generiert: Aktualisierter Navigationsfluss-Test.
-// Angepasst an die neuen Screen-Scaffoldings (Schritt 4).
-// ============================================================
-
 class NavigationFlowTest {
 
     /**
-     * AI-generiert: Startet die MainActivity für den UI-Test.
+     * Startet die MainActivity für den UI-Test.
      * Da MainActivity mit @AndroidEntryPoint annotiert ist und die Application-Klasse
      * @HiltAndroidApp verwendet, wird Hilt für diesen Test normal initialisiert.
      */
@@ -37,7 +22,7 @@ class NavigationFlowTest {
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
     /**
-     * AI-generiert: Verifiziert den vollständigen Bottom-Navigation-Flow.
+     * Verifiziert den vollständigen Bottom-Navigation-Flow.
      * Navigiert durch alle 5 Tabs und prüft ob jeder Screen
      * seine Kern-UI-Elemente korrekt anzeigt.
      */

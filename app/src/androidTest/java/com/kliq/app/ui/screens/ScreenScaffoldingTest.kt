@@ -1,16 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses Test-Szenario wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- *
- * Zweck: Verifiziert das Layout-Scaffolding aller 5 Haupt-Screens.
- * - Kompilierbarkeit & Rendering im Emulator
- * - Korrekte Darstellung des Lila/Dark-Mode-Themes
- * - Erreichbarkeit aller 5 Screens über Bottom-Navigation
- * - Vorhandensein der wesentlichen UI-Strukturelemente pro Screen
- * - Reaktionsfähigkeit der UI-Komponenten (Klick-Interaktionen)
- */
 package com.kliq.app.ui.screens
 
 import androidx.compose.ui.semantics.Role
@@ -27,22 +14,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import androidx.test.ext.junit.runners.AndroidJUnit4
 
-// ============================================================
-// AI-generiert: Instrumentierter UI-Test für das Layout-Scaffolding
-// aller 5 Haupt-Screens (Home, Explore, Map, Notifications, Profile).
-//
-// Ausführung auf einem Android-Emulator oder physischem Gerät:
-//   ./gradlew connectedAndroidTest
-//
-// Oder einzelner Test:
-//   ./gradlew connectedAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.kliq.app.ui.screens.ScreenScaffoldingTest
-// ============================================================
-
 @RunWith(AndroidJUnit4::class)
 class ScreenScaffoldingTest {
 
     /**
-     * AI-generiert: Compose-Test-Rule, startet die MainActivity
+     * Compose-Test-Rule, startet die MainActivity
      * mit dem vollständigen Hilt-DI-Graph und dem KliqTheme (Dark-Mode).
      */
     @get:Rule
@@ -51,13 +27,12 @@ class ScreenScaffoldingTest {
     // ── Test 1: Home-Screen Scaffolding ────────────────────────
 
     /**
-     * AI-generiert: Prüft, ob der Home-Screen korrekt gerendert wird.
+     * Prüft, ob der Home-Screen korrekt gerendert wird.
      * Erwartet: TopAppBar mit "Kliq"-Titel, Story-Row-Avatare,
      * Feed-Karten mit Platzhalter-Daten, FAB.
      */
     @Test
     fun homeScreen_displaysScaffoldingElements() {
-        // Die App startet standardmäßig auf dem Home-Screen
         composeTestRule.waitForIdle()
 
         // TopAppBar-Titel
@@ -76,7 +51,7 @@ class ScreenScaffoldingTest {
     }
 
     /**
-     * AI-generiert: Prüft, ob die Story-Row Platzhalter-Avatare anzeigt.
+     * Prüft, ob die Story-Row Platzhalter-Avatare anzeigt.
      */
     @Test
     fun homeScreen_displaysStoryRow() {
@@ -91,12 +66,11 @@ class ScreenScaffoldingTest {
     // ── Test 2: Explore-Screen Scaffolding ─────────────────────
 
     /**
-     * AI-generiert: Prüft, ob der Explore-Screen korrekt gerendert wird.
+     * Prüft, ob der Explore-Screen korrekt gerendert wird.
      * Erwartet: TopAppBar mit "Entdecken", Suchleiste, Kategorie-Chips, Grid-Karten.
      */
     @Test
     fun exploreScreen_displaysScaffoldingElements() {
-        // Navigiere zum Explore-Screen
         navigateToTab("Entdecken")
 
         // TopAppBar-Titel
@@ -114,7 +88,7 @@ class ScreenScaffoldingTest {
     }
 
     /**
-     * AI-generiert: Prüft die Interaktivität der Kategorie-Chips.
+     * Prüft die Interaktivität der Kategorie-Chips.
      */
     @Test
     fun exploreScreen_categoryChipsAreClickable() {
@@ -131,7 +105,7 @@ class ScreenScaffoldingTest {
     // ── Test 3: Map-Screen Scaffolding ─────────────────────────
 
     /**
-     * AI-generiert: Prüft, ob der Map-Screen korrekt gerendert wird.
+     * Prüft, ob der Map-Screen korrekt gerendert wird.
      * Erwartet: Karten-Platzhalter, Filter-Chips, Location-FAB,
      * Bottom-Sheet mit Venue-Karten.
      */
@@ -159,7 +133,7 @@ class ScreenScaffoldingTest {
     // ── Test 4: Notifications-Screen Scaffolding ───────────────
 
     /**
-     * AI-generiert: Prüft, ob der Notifications-Screen korrekt gerendert wird.
+     * Prüft, ob der Notifications-Screen korrekt gerendert wird.
      * Erwartet: TopAppBar mit "Aktivität", Filter-Tabs, Benachrichtigungsliste.
      */
     @Test
@@ -181,7 +155,7 @@ class ScreenScaffoldingTest {
     }
 
     /**
-     * AI-generiert: Prüft die Tab-Filter-Interaktion auf dem Notifications-Screen.
+     * Prüft die Tab-Filter-Interaktion auf dem Notifications-Screen.
      */
     @Test
     fun notificationsScreen_tabFilterIsInteractive() {
@@ -196,7 +170,7 @@ class ScreenScaffoldingTest {
     }
 
     /**
-     * AI-generiert: Prüft die "Alle gelesen"-Funktionalität.
+     * Prüft die "Alle gelesen"-Funktionalität.
      */
     @Test
     fun notificationsScreen_markAllReadWorks() {
@@ -214,7 +188,7 @@ class ScreenScaffoldingTest {
     // ── Test 5: Profile-Screen Scaffolding ─────────────────────
 
     /**
-     * AI-generiert: Prüft, ob der Profile-Screen korrekt gerendert wird.
+     * Prüft, ob der Profile-Screen korrekt gerendert wird.
      * Erwartet: Avatar, Name, Bio, Statistiken, Bearbeiten-Button, Tabs.
      */
     @Test
@@ -239,7 +213,7 @@ class ScreenScaffoldingTest {
     }
 
     /**
-     * AI-generiert: Prüft die Tab-Navigation auf dem Profile-Screen.
+     * Prüft die Tab-Navigation auf dem Profile-Screen.
      */
     @Test
     fun profileScreen_tabNavigationWorks() {
@@ -259,7 +233,7 @@ class ScreenScaffoldingTest {
     // ── Test 6: Vollständiger Navigationskreislauf ─────────────
 
     /**
-     * AI-generiert: Navigiert durch alle 5 Tabs und prüft,
+     * Navigiert durch alle 5 Tabs und prüft,
      * ob jeder Screen seine Kernelemente anzeigt.
      * Verifiziert den vollständigen Navigation-Loop.
      */
@@ -293,7 +267,7 @@ class ScreenScaffoldingTest {
     // ── Hilfsfunktionen ────────────────────────────────────────
 
     /**
-     * AI-generiert: Navigiert zu einem Tab über die Bottom-Navigation-Bar.
+     * Navigiert zu einem Tab über die Bottom-Navigation-Bar.
      * Nutzt die semantische Rolle (Tab) und den Label-Text zur Identifikation.
      *
      * @param tabLabel Label des Ziel-Tabs (z.B. "Entdecken", "Karte").
