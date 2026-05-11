@@ -122,6 +122,7 @@ fun KliqBottomBar(
  * Features spring-animated scaling, color transitions, and an
  * active-state indicator pill beneath the icon.
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun KliqBottomBarItem(
     navItem: NavigationRoute,
