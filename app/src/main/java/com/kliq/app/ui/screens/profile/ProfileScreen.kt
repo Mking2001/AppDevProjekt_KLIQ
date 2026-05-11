@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses Layout-Scaffolding wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.screens.profile
 
 import androidx.compose.foundation.background
@@ -22,18 +16,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ScrollableTabRow
@@ -51,40 +41,38 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.ui.components.KliqScreenScaffold
+import com.kliq.app.ui.navigation.TopBarMenuAction
+import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.ui.theme.FuchsiaTertiary
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-// ============================================================
-// AI-generiert: Profile/Profil-Screen der Kliq-App.
-// Zeigt Profilbild, Statistiken, Bio und Tab-basierte Inhalte.
-// Architektur: MVVM mit Hilt-injiziertem ViewModel.
-// ============================================================
-
 /**
- * AI-generiert: Profile-Screen mit großem Avatar, Statistiken,
+ * Profile-Screen mit großem Avatar, Statistiken,
  * "Profil bearbeiten"-Button und Tab-basiertem Content-Bereich.
  *
+ * @param topBarState Aktueller Top-Bar UI-State.
+ * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
+ * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
+ * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
  * @param viewModel Hilt-injiziertes [ProfileViewModel].
  */
 @Composable
 fun ProfileScreen(
+    topBarState: TopBarUiState,
+    onToggleMenu: () -> Unit,
+    onDismissMenu: () -> Unit,
+    onMenuAction: (TopBarMenuAction) -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     KliqScreenScaffold(
         title = "Profil",
-        actions = {
-            // AI-generiert: Einstellungen-Icon in der Top-Bar
-            IconButton(onClick = { /* TODO: Einstellungen öffnen */ }) {
-                Icon(
-                    imageVector = Icons.Outlined.Settings,
-                    contentDescription = "Einstellungen",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
+        isMenuExpanded = topBarState.isMenuExpanded,
+        onToggleMenu = onToggleMenu,
+        onDismissMenu = onDismissMenu,
+        onMenuAction = onMenuAction
     ) { innerPadding ->
         LazyColumn(
             modifier = Modifier
@@ -92,12 +80,12 @@ fun ProfileScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            // AI-generiert: Profil-Header mit Avatar, Name, Bio und Statistiken
+            // Profil-Header mit Avatar, Name, Bio und Statistiken
             item {
                 ProfileHeader(uiState = uiState, onEditProfile = { viewModel.onEditProfile() })
             }
 
-            // AI-generiert: Tab-Row (Beiträge, Events, Über mich)
+            // Tab-Row (Beiträge, Events, Über mich)
             item {
                 ProfileTabRow(
                     tabs = uiState.tabs,
@@ -106,7 +94,7 @@ fun ProfileScreen(
                 )
             }
 
-            // AI-generiert: Tab-Content je nach Auswahl
+            // Tab-Content je nach Auswahl
             item {
                 ProfileTabContent(
                     selectedTabIndex = uiState.selectedTabIndex
@@ -117,7 +105,7 @@ fun ProfileScreen(
 }
 
 /**
- * AI-generiert: Profil-Header mit großem Avatar mit Gradient-Border,
+ * Profil-Header mit großem Avatar mit Gradient-Border,
  * Name, Username, Bio, Standort und Statistik-Zahlen.
  */
 @Composable
@@ -131,7 +119,7 @@ private fun ProfileHeader(
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // AI-generiert: Großer Avatar mit Lila-Fuchsia Gradient-Border
+        // Großer Avatar mit Lila-Fuchsia Gradient-Border
         Box(
             modifier = Modifier
                 .size(100.dp)
@@ -161,7 +149,7 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // AI-generiert: Anzeigename
+        // Anzeigename
         Text(
             text = uiState.displayName,
             style = MaterialTheme.typography.titleLarge,
@@ -169,7 +157,7 @@ private fun ProfileHeader(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        // AI-generiert: Username/Handle
+        // Username/Handle
         Text(
             text = uiState.username,
             style = MaterialTheme.typography.bodyMedium,
@@ -178,7 +166,7 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // AI-generiert: Bio-Text
+        // Bio-Text
         Text(
             text = uiState.bio,
             style = MaterialTheme.typography.bodyMedium,
@@ -188,7 +176,7 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // AI-generiert: Standort mit Icon
+        // Standort mit Icon
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Filled.LocationOn,
@@ -206,7 +194,7 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // AI-generiert: Statistik-Row (Beiträge, Follower, Following)
+        // Statistik-Row (Beiträge, Follower, Following)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -218,7 +206,7 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // AI-generiert: "Profil bearbeiten" Button im Outlined-Stil
+        // "Profil bearbeiten" Button im Outlined-Stil
         OutlinedButton(
             onClick = onEditProfile,
             modifier = Modifier.fillMaxWidth(),
@@ -243,7 +231,7 @@ private fun ProfileHeader(
 }
 
 /**
- * AI-generiert: Einzelne Statistik-Anzeige (Zahl + Label).
+ * Einzelne Statistik-Anzeige (Zahl + Label).
  */
 @Composable
 private fun StatItem(count: String, label: String) {
@@ -263,7 +251,7 @@ private fun StatItem(count: String, label: String) {
 }
 
 /**
- * AI-generiert: Tab-Row für Profil-Inhalte.
+ * Tab-Row für Profil-Inhalte.
  */
 @Composable
 private fun ProfileTabRow(
@@ -302,7 +290,7 @@ private fun ProfileTabRow(
 }
 
 /**
- * AI-generiert: Tab-Content basierend auf dem ausgewählten Tab.
+ * Tab-Content basierend auf dem ausgewählten Tab.
  * Tab 0: Beitrags-Grid, Tab 1: Events-Liste, Tab 2: Über-mich-Text.
  */
 @Composable
@@ -315,11 +303,10 @@ private fun ProfileTabContent(selectedTabIndex: Int) {
 }
 
 /**
- * AI-generiert: Platzhalter-Grid für Beiträge (3-Spalten).
+ * Platzhalter-Grid für Beiträge (3-Spalten).
  */
 @Composable
 private fun PostsGrid() {
-    // AI-generiert: Festes Grid ohne verschachtelte vertikale Scrolls
     val itemCount = 9
     Column(
         modifier = Modifier
@@ -358,7 +345,7 @@ private fun PostsGrid() {
 }
 
 /**
- * AI-generiert: Platzhalter-Liste für Events.
+ * Platzhalter-Liste für Events.
  */
 @Composable
 private fun EventsList() {
@@ -372,7 +359,6 @@ private fun EventsList() {
             "After Work" to "Do, 27. Mai · Bar Central"
         )
         events.forEach { (title, details) ->
-            // AI-generiert: Event-Karte
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -400,7 +386,7 @@ private fun EventsList() {
 }
 
 /**
- * AI-generiert: "Über mich" Abschnitt mit Platzhalter-Text.
+ * "Über mich" Abschnitt mit Platzhalter-Text.
  */
 @Composable
 private fun AboutSection() {
@@ -432,7 +418,7 @@ private fun AboutSection() {
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        // AI-generiert: Interessen-Chips
+        // Interessen-Chips
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
@@ -457,7 +443,7 @@ private fun AboutSection() {
 }
 
 /**
- * AI-generiert: Formatiert große Zahlen mit "k"-Suffix.
+ * Formatiert große Zahlen mit "k"-Suffix.
  */
 private fun formatCount(count: Int): String {
     return when {

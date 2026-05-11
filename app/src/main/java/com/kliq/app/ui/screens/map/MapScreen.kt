@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses Layout-Scaffolding wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.screens.map
 
 import androidx.compose.foundation.background
@@ -51,33 +45,39 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.ui.components.KliqCategoryChip
+import com.kliq.app.ui.navigation.TopBarMenuAction
+import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-// ============================================================
-// AI-generiert: Map/Karten-Screen der Kliq-App.
-// Zeigt eine Karten-Mockup-Fläche mit Filter-Chips,
-// Location-FAB und einem Bottom-Sheet-Peek für Venues.
-// Architektur: MVVM mit Hilt-injiziertem ViewModel.
-// ============================================================
-
 /**
- * AI-generiert: Map-Screen mit Karten-Platzhalter, Filter-Chips,
+ * Map-Screen mit Karten-Platzhalter, Filter-Chips,
  * Location-Button und Bottom-Sheet-Peek für nahegelegene Venues.
  *
+ * Der Map-Screen verwendet keine Top-Bar (showTopBar = false),
+ * da die Kartenansicht den gesamten Bildschirm einnimmt.
+ *
+ * @param topBarState Aktueller Top-Bar UI-State.
+ * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
+ * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
+ * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
  * @param viewModel Hilt-injiziertes [MapViewModel].
  */
 @Composable
 fun MapScreen(
+    topBarState: TopBarUiState,
+    onToggleMenu: () -> Unit,
+    onDismissMenu: () -> Unit,
+    onMenuAction: (TopBarMenuAction) -> Unit,
     viewModel: MapViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // AI-generiert: Dunkel gestylte Karten-Mockup-Fläche mit Rasterlinien
+        // Dunkel gestylte Karten-Mockup-Fläche mit Rasterlinien
         MapPlaceholder(modifier = Modifier.fillMaxSize())
 
-        // AI-generiert: Filter-Chips am oberen Rand über der Karte
+        // Filter-Chips am oberen Rand über der Karte
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -92,7 +92,7 @@ fun MapScreen(
             }
         }
 
-        // AI-generiert: Location-FAB rechts unten
+        // Location-FAB rechts unten
         FloatingActionButton(
             onClick = { viewModel.onLocationRequested() },
             modifier = Modifier
@@ -108,7 +108,7 @@ fun MapScreen(
             )
         }
 
-        // AI-generiert: Bottom-Sheet-Peek mit nahegelegenen Venues
+        // Bottom-Sheet-Peek mit nahegelegenen Venues
         VenueBottomSheet(
             venues = uiState.nearbyVenues,
             modifier = Modifier.align(Alignment.BottomCenter)
@@ -117,7 +117,7 @@ fun MapScreen(
 }
 
 /**
- * AI-generiert: Karten-Platzhalter mit dunklem Hintergrund und Rasterlinien.
+ * Karten-Platzhalter mit dunklem Hintergrund und Rasterlinien.
  * Simuliert eine Kartenansicht bis die echte Google Maps Integration erfolgt.
  */
 @Composable
@@ -129,7 +129,6 @@ private fun MapPlaceholder(modifier: Modifier = Modifier) {
         modifier = modifier
             .background(MaterialTheme.colorScheme.background)
             .drawBehind {
-                // AI-generiert: Rasterlinien als Karten-Simulation
                 val gridSpacing = 60.dp.toPx()
                 val dashEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
 
@@ -159,7 +158,7 @@ private fun MapPlaceholder(modifier: Modifier = Modifier) {
                     y += gridSpacing
                 }
 
-                // AI-generiert: Simulierte Standort-Punkte
+                // Simulierte Standort-Punkte
                 val points = listOf(
                     Offset(size.width * 0.3f, size.height * 0.25f),
                     Offset(size.width * 0.6f, size.height * 0.35f),
@@ -182,7 +181,7 @@ private fun MapPlaceholder(modifier: Modifier = Modifier) {
             },
         contentAlignment = Alignment.Center
     ) {
-        // AI-generiert: Zentraler Standort-Marker
+        // Zentraler Standort-Marker
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 imageVector = Icons.Filled.LocationOn,
@@ -208,7 +207,7 @@ private fun MapPlaceholder(modifier: Modifier = Modifier) {
 }
 
 /**
- * AI-generiert: Bottom-Sheet-Peek mit nahegelegenen Venues.
+ * Bottom-Sheet-Peek mit nahegelegenen Venues.
  * Abgerundete Karte am unteren Bildschirmrand mit einer
  * scrollbaren Liste von Venue-Karten.
  *
@@ -229,7 +228,7 @@ private fun VenueBottomSheet(
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(modifier = Modifier.padding(top = 8.dp)) {
-            // AI-generiert: Drag-Handle-Indikator
+            // Drag-Handle-Indikator
             Box(
                 modifier = Modifier
                     .width(40.dp)
@@ -251,7 +250,7 @@ private fun VenueBottomSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // AI-generiert: Scrollbare Venue-Liste
+            // Scrollbare Venue-Liste
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -266,7 +265,7 @@ private fun VenueBottomSheet(
 }
 
 /**
- * AI-generiert: Einzelne Venue-Karte mit Name, Kategorie,
+ * Einzelne Venue-Karte mit Name, Kategorie,
  * Entfernung und Bewertung.
  */
 @Composable
@@ -282,7 +281,7 @@ private fun VenueCard(venue: VenueItemUi) {
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // AI-generiert: Venue-Icon-Platzhalter
+            // Venue-Icon-Platzhalter
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -314,7 +313,7 @@ private fun VenueCard(venue: VenueItemUi) {
                 )
             }
 
-            // AI-generiert: Bewertung mit Stern-Icon
+            // Bewertung mit Stern-Icon
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Filled.Star,

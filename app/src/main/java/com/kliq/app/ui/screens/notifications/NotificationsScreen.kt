@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses Layout-Scaffolding wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.screens.notifications
 
 import androidx.compose.foundation.clickable
@@ -40,29 +34,37 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.ui.components.KliqNotificationItem
 import com.kliq.app.ui.components.KliqScreenScaffold
-
-// ============================================================
-// AI-generiert: Notifications/Aktivität-Screen der Kliq-App.
-// Zeigt Tab-Filter und eine scrollbare Benachrichtigungsliste.
-// Architektur: MVVM mit Hilt-injiziertem ViewModel.
-// ============================================================
+import com.kliq.app.ui.navigation.TopBarMenuAction
+import com.kliq.app.ui.navigation.TopBarUiState
 
 /**
- * AI-generiert: Notifications-Screen mit Filter-Tabs, scrollbarer
+ * Notifications-Screen mit Filter-Tabs, scrollbarer
  * Benachrichtigungsliste und Empty-State-Darstellung.
  *
+ * @param topBarState Aktueller Top-Bar UI-State.
+ * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
+ * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
+ * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
  * @param viewModel Hilt-injiziertes [NotificationsViewModel].
  */
 @Composable
 fun NotificationsScreen(
+    topBarState: TopBarUiState,
+    onToggleMenu: () -> Unit,
+    onDismissMenu: () -> Unit,
+    onMenuAction: (TopBarMenuAction) -> Unit,
     viewModel: NotificationsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     KliqScreenScaffold(
         title = "Aktivität",
+        isMenuExpanded = topBarState.isMenuExpanded,
+        onToggleMenu = onToggleMenu,
+        onDismissMenu = onDismissMenu,
+        onMenuAction = onMenuAction,
         actions = {
-            // AI-generiert: "Alle gelesen" Button in der Top-Bar
+            // "Alle gelesen" Button in der Top-Bar
             if (uiState.unreadCount > 0) {
                 IconButton(onClick = { viewModel.onMarkAllRead() }) {
                     Icon(
@@ -79,7 +81,7 @@ fun NotificationsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // AI-generiert: Filter-Tab-Row (Alle, Likes, Kommentare, Follows)
+            // Filter-Tab-Row (Alle, Likes, Kommentare, Follows)
             ScrollableTabRow(
                 selectedTabIndex = uiState.selectedTabIndex,
                 containerColor = MaterialTheme.colorScheme.background,
@@ -109,14 +111,13 @@ fun NotificationsScreen(
                 thickness = 0.5.dp
             )
 
-            // AI-generiert: Gefilterte Benachrichtigungsliste
+            // Gefilterte Benachrichtigungsliste
             val filteredNotifications = filterNotifications(
                 notifications = uiState.notifications,
                 selectedTabIndex = uiState.selectedTabIndex
             )
 
             if (filteredNotifications.isEmpty()) {
-                // AI-generiert: Empty-State wenn keine Benachrichtigungen vorhanden
                 EmptyNotificationsState()
             } else {
                 LazyColumn(
@@ -145,7 +146,7 @@ fun NotificationsScreen(
 }
 
 /**
- * AI-generiert: Filtert Benachrichtigungen basierend auf dem ausgewählten Tab.
+ * Filtert Benachrichtigungen basierend auf dem ausgewählten Tab.
  */
 private fun filterNotifications(
     notifications: List<NotificationItemUi>,
@@ -161,7 +162,7 @@ private fun filterNotifications(
 }
 
 /**
- * AI-generiert: Empty-State-Darstellung wenn keine Benachrichtigungen vorhanden.
+ * Empty-State-Darstellung wenn keine Benachrichtigungen vorhanden.
  * Zeigt ein gedimmtes Icon und einen Hinweistext.
  */
 @Composable

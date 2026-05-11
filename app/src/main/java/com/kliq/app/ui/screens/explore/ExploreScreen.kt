@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses Layout-Scaffolding wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.screens.explore
 
 import androidx.compose.foundation.background
@@ -43,34 +37,42 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.ui.components.KliqCategoryChip
 import com.kliq.app.ui.components.KliqScreenScaffold
-
-// ============================================================
-// AI-generiert: Explore/Entdecken-Screen der Kliq-App.
-// Bietet Suchleiste, Kategorie-Chips und ein Discovery-Grid.
-// Architektur: MVVM mit Hilt-injiziertem ViewModel.
-// ============================================================
+import com.kliq.app.ui.navigation.TopBarMenuAction
+import com.kliq.app.ui.navigation.TopBarUiState
 
 /**
- * AI-generiert: Explore-Screen mit Suchleiste, Kategorie-Filter-Chips
+ * Explore-Screen mit Suchleiste, Kategorie-Filter-Chips
  * und einem 2-Spalten Discovery-Grid mit Gradient-Overlays.
  *
+ * @param topBarState Aktueller Top-Bar UI-State.
+ * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
+ * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
+ * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
  * @param viewModel Hilt-injiziertes [ExploreViewModel].
  */
 @Composable
 fun ExploreScreen(
+    topBarState: TopBarUiState,
+    onToggleMenu: () -> Unit,
+    onDismissMenu: () -> Unit,
+    onMenuAction: (TopBarMenuAction) -> Unit,
     viewModel: ExploreViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     KliqScreenScaffold(
-        title = "Entdecken"
+        title = "Entdecken",
+        isMenuExpanded = topBarState.isMenuExpanded,
+        onToggleMenu = onToggleMenu,
+        onDismissMenu = onDismissMenu,
+        onMenuAction = onMenuAction
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // AI-generiert: Suchleiste mit Lupe-Icon im Lila-Design
+            // Suchleiste mit Lupe-Icon im Lila-Design
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = { viewModel.onSearch(it) },
@@ -100,7 +102,7 @@ fun ExploreScreen(
                 singleLine = true
             )
 
-            // AI-generiert: Horizontal scrollbare Kategorie-Chips
+            // Horizontal scrollbare Kategorie-Chips
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -116,7 +118,7 @@ fun ExploreScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // AI-generiert: 2-Spalten Discovery-Grid mit Gradient-Overlay-Karten
+            // 2-Spalten Discovery-Grid mit Gradient-Overlay-Karten
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
@@ -133,7 +135,7 @@ fun ExploreScreen(
 }
 
 /**
- * AI-generiert: Einzelne Discovery-Grid-Karte mit Gradient-Overlay.
+ * Einzelne Discovery-Grid-Karte mit Gradient-Overlay.
  * Zeigt Titel und Untertitel über einem Platzhalter-Hintergrund
  * mit Lila-Gradient im unteren Bereich.
  *
@@ -148,7 +150,7 @@ private fun DiscoverGridCard(item: DiscoverItemUi) {
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        // AI-generiert: Gradient-Overlay im unteren Bereich der Karte
+        // Gradient-Overlay im unteren Bereich der Karte
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -166,7 +168,7 @@ private fun DiscoverGridCard(item: DiscoverItemUi) {
                 )
         )
 
-        // AI-generiert: Text-Overlay mit Titel und Untertitel
+        // Text-Overlay mit Titel und Untertitel
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -189,7 +191,7 @@ private fun DiscoverGridCard(item: DiscoverItemUi) {
             )
         }
 
-        // AI-generiert: Kategorie-Badge oben rechts
+        // Kategorie-Badge oben rechts
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)

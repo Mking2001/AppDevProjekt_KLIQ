@@ -1,9 +1,3 @@
-/**
- * AI-GENERATED CODE
- * Dieses ViewModel wurde vollständig durch KI generiert.
- * Erstellt im Rahmen von Schritt 4: Layout-Scaffolding der Haupt-Screens.
- * Datum: 2026-05-11
- */
 package com.kliq.app.ui.screens.map
 
 import androidx.lifecycle.ViewModel
@@ -14,13 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-// ============================================================
-// AI-generiert: UI-State für den Map/Karten-Screen.
-// Folgt dem MVVM-Pattern mit immutablem State und UDF.
-// ============================================================
-
 /**
- * AI-generiert: Immutable UI State für den Map-Screen.
+ * Immutable UI State für den Map-Screen.
  *
  * @param selectedFilter Index des aktuell ausgewählten Filters (null = keiner).
  * @param filters Verfügbare Karten-Filter.
@@ -35,7 +24,7 @@ data class MapUiState(
 )
 
 /**
- * AI-generiert: Platzhalter-Datenklasse für einen Venue/Ort.
+ * Platzhalter-Datenklasse für einen Venue/Ort.
  */
 data class VenueItemUi(
     val id: String,
@@ -46,7 +35,7 @@ data class VenueItemUi(
 )
 
 /**
- * AI-generiert: ViewModel für den Map/Karten-Screen.
+ * ViewModel für den Map/Karten-Screen.
  * Verwaltet Filter- und Standort-State.
  *
  * Folgt strikt dem MVVM-Pattern:
@@ -64,7 +53,7 @@ class MapViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Lädt Platzhalter-Daten für die visuelle Darstellung.
+     * Lädt Platzhalter-Daten für die visuelle Darstellung.
      */
     private fun loadMockData() {
         _uiState.update { state ->
@@ -81,7 +70,7 @@ class MapViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für Filter-Auswahl auf der Karte.
+     * Stub für Filter-Auswahl auf der Karte.
      * @param index Index des ausgewählten Filters.
      */
     fun onFilterSelected(index: Int) {
@@ -93,7 +82,7 @@ class MapViewModel @Inject constructor() : ViewModel() {
     }
 
     /**
-     * AI-generiert: Stub für Standort-Anfrage.
+     * Stub für Standort-Anfrage.
      * Wird in der finalen Version den GPS-Standort abrufen.
      */
     fun onLocationRequested() {
