@@ -17,10 +17,14 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.kliq.app.ui.screens.chat.ChatDetailScreen
+import com.kliq.app.ui.screens.chat.ChatListScreen
 import com.kliq.app.ui.screens.explore.ExploreScreen
 import com.kliq.app.ui.screens.home.HomeScreen
 import com.kliq.app.ui.screens.map.MapScreen
@@ -50,6 +54,12 @@ fun KliqMainScaffold(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: NavigationRoute.Home.route
 
+    // Bottom Bar wird ausgeblendet, wenn Chat-Screens aktiv sind
+    val showBottomBar = currentRoute !in listOf(
+        ChatRoutes.CHAT_LIST,
+        ChatRoutes.CHAT_DETAIL
+    )
+
     // Sync ViewModel state when NavController route changes externally
     // (e.g., system back press)
     if (currentRoute != navigationState.currentRoute) {
@@ -64,23 +74,25 @@ fun KliqMainScaffold(
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            KliqBottomBar(
-                currentRoute = currentRoute,
-                notificationBadgeCount = navigationState.notificationBadgeCount,
-                onTabSelected = { route ->
-                    navigationViewModel.onTabSelected(route)
-                    navController.navigate(route) {
-                        // Pop up to start destination to avoid building a large back stack
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
+            if (showBottomBar) {
+                KliqBottomBar(
+                    currentRoute = currentRoute,
+                    notificationBadgeCount = navigationState.notificationBadgeCount,
+                    onTabSelected = { route ->
+                        navigationViewModel.onTabSelected(route)
+                        navController.navigate(route) {
+                            // Pop up to start destination to avoid building a large back stack
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            // Avoid multiple copies of the same destination
+                            launchSingleTop = true
+                            // Restore state when re-selecting a previously selected tab
+                            restoreState = true
                         }
-                        // Avoid multiple copies of the same destination
-                        launchSingleTop = true
-                        // Restore state when re-selecting a previously selected tab
-                        restoreState = true
                     }
-                }
-            )
+                )
+            }
         }
     ) { innerPadding ->
         KliqNavHost(
@@ -103,6 +115,11 @@ fun KliqMainScaffold(
                     TopBarMenuAction.ToggleTheme -> { /* TODO: Theme-Wechsel implementieren */ }
                     TopBarMenuAction.About -> { /* TODO: About-Dialog anzeigen */ }
                     TopBarMenuAction.Logout -> { /* TODO: Logout-Flow starten */ }
+                }
+            },
+            onNavigateToChat = {
+                navController.navigate(ChatRoutes.CHAT_LIST) {
+                    launchSingleTop = true
                 }
             }
         )
@@ -132,7 +149,8 @@ private fun KliqNavHost(
     topBarState: TopBarUiState,
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
-    onMenuAction: (TopBarMenuAction) -> Unit
+    onMenuAction: (TopBarMenuAction) -> Unit,
+    onNavigateToChat: () -> Unit
 ) {
     val routes = NavigationRoute.bottomBarItems.map { it.route }
     val currentIndex = routes.indexOf(currentRoute)
@@ -153,7 +171,8 @@ private fun KliqNavHost(
                 topBarState = topBarState,
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
-                onMenuAction = onMenuAction
+                onMenuAction = onMenuAction,
+                onNavigateToChat = onNavigateToChat
             )
         }
         composable(NavigationRoute.Explore.route) {
@@ -186,6 +205,30 @@ private fun KliqNavHost(
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
                 onMenuAction = onMenuAction
+            )
+        }
+
+        // Chat-Screens (außerhalb der Bottom Bar Navigation)
+        composable(ChatRoutes.CHAT_LIST) {
+            ChatListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onChatSelected = { chatId ->
+                    navController.navigate(ChatRoutes.chatDetail(chatId))
+                }
+            )
+        }
+        composable(
+            route = ChatRoutes.CHAT_DETAIL,
+            arguments = listOf(
+                navArgument(ChatRoutes.ARG_CHAT_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val chatId = backStackEntry.arguments?.getString(ChatRoutes.ARG_CHAT_ID) ?: ""
+            ChatDetailScreen(
+                chatId = chatId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

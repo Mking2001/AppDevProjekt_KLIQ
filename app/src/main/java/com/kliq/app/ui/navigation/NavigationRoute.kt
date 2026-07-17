@@ -66,3 +66,21 @@ sealed class NavigationRoute(
         )
     }
 }
+
+/**
+ * Zusätzliche Navigationsrouten, die nicht in der Bottom Bar
+ * angezeigt werden (Chat-Screens, Detail-Ansichten, etc.).
+ */
+object ChatRoutes {
+    /** Route zur Chat-Listen-Übersicht */
+    const val CHAT_LIST = "chat_list"
+
+    /** Route zum Chat-Detail-Screen mit chatId-Parameter */
+    const val CHAT_DETAIL = "chat_detail/{chatId}"
+
+    /** Erzeugt die konkrete Route für einen bestimmten Chat */
+    fun chatDetail(chatId: String): String = "chat_detail/$chatId"
+
+    /** Argument-Name für die Chat-ID im NavGraph */
+    const val ARG_CHAT_ID = "chatId"
+}
