@@ -15,8 +15,10 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
@@ -56,6 +58,7 @@ fun ExploreScreen(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
+    onNavigateToClub: (String) -> Unit = {},
     viewModel: ExploreViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -116,6 +119,29 @@ fun ExploreScreen(
                 }
             }
 
+            // Rating Filter Row
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {
+                    Text(
+                        text = "Mindestbewertung:",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(end = 4.dp, top = 8.dp)
+                    )
+                }
+                val ratings = listOf(0f, 3f, 4f, 4.5f)
+                items(ratings) { rating ->
+                    KliqCategoryChip(
+                        label = if (rating == 0f) "Alle" else "$rating+ Sterne",
+                        selected = uiState.minRating == rating,
+                        onClick = { viewModel.onMinRatingSelected(rating) }
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             // 2-Spalten Discovery-Grid mit Gradient-Overlay-Karten
@@ -127,7 +153,10 @@ fun ExploreScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(uiState.discoverItems, key = { it.id }) { item ->
-                    DiscoverGridCard(item = item)
+                    DiscoverGridCard(
+                        item = item,
+                        onClick = { onNavigateToClub(item.id) }
+                    )
                 }
             }
         }
@@ -139,16 +168,17 @@ fun ExploreScreen(
  * Zeigt Titel und Untertitel über einem Platzhalter-Hintergrund
  * mit Lila-Gradient im unteren Bereich.
  *
- * @param item Discover-Datenelement.
+ * @param onClick Callback wenn die Karte geklickt wird.
  */
 @Composable
-private fun DiscoverGridCard(item: DiscoverItemUi) {
+private fun DiscoverGridCard(item: DiscoverItemUi, onClick: () -> Unit = {}) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .aspectRatio(0.85f)
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable { onClick() }
     ) {
         // Gradient-Overlay im unteren Bereich der Karte
         Box(
