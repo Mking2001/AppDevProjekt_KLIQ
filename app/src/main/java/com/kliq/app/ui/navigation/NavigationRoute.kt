@@ -84,3 +84,21 @@ object ChatRoutes {
     /** Argument-Name für die Chat-ID im NavGraph */
     const val ARG_CHAT_ID = "chatId"
 }
+
+/**
+ * Kern-Routen für Onboarding und Splash.
+ */
+object CoreRoutes {
+    const val SPLASH = "splash"
+}
+
+/**
+ * Routen für Club-Analytics und Info-System.
+ */
+object ClubRoutes {
+    const val CLUB_DETAIL = "club_detail/{clubId}"
+    
+    fun clubDetail(clubId: String): String = "club_detail/$clubId"
+    
+    const val ARG_CLUB_ID = "clubId"
+}
