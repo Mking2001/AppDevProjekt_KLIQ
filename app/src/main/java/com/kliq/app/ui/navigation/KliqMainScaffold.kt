@@ -37,6 +37,7 @@ import com.kliq.app.ui.screens.map.MapScreen
 import com.kliq.app.ui.screens.notifications.NotificationsScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
 import com.kliq.app.ui.screens.splash.SplashScreen
+import com.kliq.app.viewmodel.ThemeViewModel
 
 val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
     error("No SnackbarHostState provided")
@@ -58,6 +59,7 @@ val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
 fun KliqMainScaffold(
     navigationViewModel: NavigationViewModel = hiltViewModel(),
     topBarViewModel: TopBarViewModel = hiltViewModel(),
+    themeViewModel: ThemeViewModel = hiltViewModel(),
     navController: NavHostController = rememberNavController()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -127,7 +129,7 @@ fun KliqMainScaffold(
                             launchSingleTop = true
                         }
                     }
-                    TopBarMenuAction.ToggleTheme -> { /* TODO: Theme-Wechsel implementieren */ }
+                    TopBarMenuAction.ToggleTheme -> { themeViewModel.toggleTheme() }
                     TopBarMenuAction.About -> { /* TODO: About-Dialog anzeigen */ }
                     TopBarMenuAction.Logout -> { /* TODO: Logout-Flow starten */ }
                 }
