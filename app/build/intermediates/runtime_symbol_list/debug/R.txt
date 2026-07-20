@@ -134,6 +134,11 @@ int drawable notification_template_icon_bg 0x7f060026
 int drawable notification_template_icon_low_bg 0x7f060027
 int drawable notification_tile_bg 0x7f060028
 int drawable notify_panel_notification_icon_bg 0x7f060029
+int font poppins_bold 0x7f0f0000
+int font poppins_light 0x7f0f0001
+int font poppins_medium 0x7f0f0002
+int font poppins_regular 0x7f0f0003
+int font poppins_semibold 0x7f0f0004
 int id accessibility_action_clickable_span 0x7f070000
 int id accessibility_custom_action_0 0x7f070001
 int id accessibility_custom_action_1 0x7f070002
