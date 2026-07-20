@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kliq.app.ui.screens.map.VenueItemUi
+import com.kliq.app.ui.theme.KliqAnimations
 
 /**
  * Animated popup card that appears when long-pressing a map marker.
@@ -37,8 +38,8 @@ fun MapQuickViewCard(
 ) {
     AnimatedVisibility(
         visible = isVisible && venue != null,
-        enter = slideInVertically(initialOffsetY = { it / 2 }) + fadeIn(),
-        exit = slideOutVertically(targetOffsetY = { it / 2 }) + fadeOut(),
+        enter = KliqAnimations.slideInUp,
+        exit = KliqAnimations.slideOutDown,
         modifier = modifier
             .fillMaxWidth()
             .padding(16.dp)

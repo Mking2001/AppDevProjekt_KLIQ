@@ -44,6 +44,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,6 +55,7 @@ import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
+import com.kliq.app.util.HapticFeedbackUtils
 
 /**
  * Map-Screen mit Karten-Platzhalter, Filter-Chips,
@@ -148,6 +150,7 @@ private fun MapPlaceholder(
 ) {
     val gridColor = PurplePrimary.copy(alpha = 0.08f)
     val dotColor = PurplePrimaryLight.copy(alpha = 0.15f)
+    val view = LocalView.current
 
     BoxWithConstraints(
         modifier = modifier
@@ -205,6 +208,7 @@ private fun MapPlaceholder(
                     .pointerInput(venue.id) {
                         detectTapGestures(
                             onLongPress = {
+                                HapticFeedbackUtils.triggerHeavyImpact(view)
                                 onVenueLongPress(venue)
                             }
                         )

@@ -21,7 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import com.kliq.app.util.HapticFeedbackUtils
 
 /**
  * Reusable wrapper that adds swipe-to-action behavior to any list item.
@@ -36,14 +38,17 @@ fun SwipeableActionRow(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit
 ) {
+    val view = LocalView.current
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
             when (dismissValue) {
                 SwipeToDismissBoxValue.StartToEnd -> {
+                    HapticFeedbackUtils.triggerMediumImpact(view)
                     onArchive()
                     true
                 }
                 SwipeToDismissBoxValue.EndToStart -> {
+                    HapticFeedbackUtils.triggerMediumImpact(view)
                     onDelete()
                     true
                 }
