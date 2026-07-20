@@ -5,6 +5,7 @@ import com.kliq.app.ui.navigation.NavigationViewModel_HiltModules;
 import com.kliq.app.ui.navigation.TopBarViewModel_HiltModules;
 import com.kliq.app.ui.screens.chat.ChatDetailViewModel_HiltModules;
 import com.kliq.app.ui.screens.chat.ChatListViewModel_HiltModules;
+import com.kliq.app.ui.screens.club.ClubViewModel_HiltModules;
 import com.kliq.app.ui.screens.explore.ExploreViewModel_HiltModules;
 import com.kliq.app.ui.screens.home.HomeViewModel_HiltModules;
 import com.kliq.app.ui.screens.map.MapViewModel_HiltModules;
@@ -164,6 +165,7 @@ public final class KliqApplication_HiltComponents {
       modules = {
           ChatDetailViewModel_HiltModules.KeyModule.class,
           ChatListViewModel_HiltModules.KeyModule.class,
+          ClubViewModel_HiltModules.KeyModule.class,
           ExploreViewModel_HiltModules.KeyModule.class,
           HiltWrapper_ActivityRetainedComponentManager_LifecycleModule.class,
           HiltWrapper_SavedStateHandleModule.class,
@@ -213,6 +215,7 @@ public final class KliqApplication_HiltComponents {
       modules = {
           ChatDetailViewModel_HiltModules.BindsModule.class,
           ChatListViewModel_HiltModules.BindsModule.class,
+          ClubViewModel_HiltModules.BindsModule.class,
           ExploreViewModel_HiltModules.BindsModule.class,
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
           HomeViewModel_HiltModules.BindsModule.class,

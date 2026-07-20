@@ -12,6 +12,7 @@ import com.kliq.app.ui.screens.map.MapViewModel_HiltModules;
 import com.kliq.app.ui.screens.notifications.NotificationsViewModel_HiltModules;
 import com.kliq.app.ui.screens.profile.ProfileViewModel_HiltModules;
 import com.kliq.app.viewmodel.MainViewModel_HiltModules;
+import com.kliq.app.viewmodel.ThemeViewModel_HiltModules;
 import dagger.Binds;
 import dagger.Component;
 import dagger.Module;
@@ -177,6 +178,7 @@ public final class KliqApplication_HiltComponents {
           NavigationViewModel_HiltModules.KeyModule.class,
           NotificationsViewModel_HiltModules.KeyModule.class,
           ProfileViewModel_HiltModules.KeyModule.class,
+          ThemeViewModel_HiltModules.KeyModule.class,
           TopBarViewModel_HiltModules.KeyModule.class
       }
   )
@@ -224,6 +226,7 @@ public final class KliqApplication_HiltComponents {
           NavigationViewModel_HiltModules.BindsModule.class,
           NotificationsViewModel_HiltModules.BindsModule.class,
           ProfileViewModel_HiltModules.BindsModule.class,
+          ThemeViewModel_HiltModules.BindsModule.class,
           TopBarViewModel_HiltModules.BindsModule.class
       }
   )

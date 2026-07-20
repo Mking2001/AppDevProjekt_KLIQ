@@ -61,9 +61,8 @@ sealed class NavigationRoute(
 
     companion object {
         /** Ordered list of all bottom bar tabs */
-        val bottomBarItems: List<NavigationRoute> = listOf(
-            Home, Explore, Map, Notifications, Profile
-        )
+        val bottomBarItems: List<NavigationRoute>
+            get() = listOf(Home, Explore, Map, Notifications, Profile)
     }
 }
 

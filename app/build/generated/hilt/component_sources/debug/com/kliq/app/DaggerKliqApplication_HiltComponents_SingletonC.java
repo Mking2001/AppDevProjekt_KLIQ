@@ -35,6 +35,8 @@ import com.kliq.app.ui.screens.profile.ProfileViewModel;
 import com.kliq.app.ui.screens.profile.ProfileViewModel_HiltModules_KeyModule_ProvideFactory;
 import com.kliq.app.viewmodel.MainViewModel;
 import com.kliq.app.viewmodel.MainViewModel_HiltModules_KeyModule_ProvideFactory;
+import com.kliq.app.viewmodel.ThemeViewModel;
+import com.kliq.app.viewmodel.ThemeViewModel_HiltModules_KeyModule_ProvideFactory;
 import dagger.hilt.android.ActivityRetainedLifecycle;
 import dagger.hilt.android.ViewModelLifecycle;
 import dagger.hilt.android.internal.builders.ActivityComponentBuilder;
@@ -392,7 +394,7 @@ public final class DaggerKliqApplication_HiltComponents_SingletonC {
 
     @Override
     public Set<String> getViewModelKeys() {
-      return SetBuilder.<String>newSetBuilder(11).add(ChatDetailViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ChatListViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ClubViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ExploreViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(HomeViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(MainViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(MapViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(NavigationViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(NotificationsViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ProfileViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(TopBarViewModel_HiltModules_KeyModule_ProvideFactory.provide()).build();
+      return SetBuilder.<String>newSetBuilder(12).add(ChatDetailViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ChatListViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ClubViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ExploreViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(HomeViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(MainViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(MapViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(NavigationViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(NotificationsViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ProfileViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(ThemeViewModel_HiltModules_KeyModule_ProvideFactory.provide()).add(TopBarViewModel_HiltModules_KeyModule_ProvideFactory.provide()).build();
     }
 
     @Override
@@ -438,6 +440,8 @@ public final class DaggerKliqApplication_HiltComponents_SingletonC {
 
     private Provider<ProfileViewModel> profileViewModelProvider;
 
+    private Provider<ThemeViewModel> themeViewModelProvider;
+
     private Provider<TopBarViewModel> topBarViewModelProvider;
 
     private ViewModelCImpl(SingletonCImpl singletonCImpl,
@@ -463,12 +467,13 @@ public final class DaggerKliqApplication_HiltComponents_SingletonC {
       this.navigationViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 7);
       this.notificationsViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 8);
       this.profileViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 9);
-      this.topBarViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 10);
+      this.themeViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 10);
+      this.topBarViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 11);
     }
 
     @Override
     public Map<String, javax.inject.Provider<ViewModel>> getHiltViewModelMap() {
-      return MapBuilder.<String, javax.inject.Provider<ViewModel>>newMapBuilder(11).put("com.kliq.app.ui.screens.chat.ChatDetailViewModel", ((Provider) chatDetailViewModelProvider)).put("com.kliq.app.ui.screens.chat.ChatListViewModel", ((Provider) chatListViewModelProvider)).put("com.kliq.app.ui.screens.club.ClubViewModel", ((Provider) clubViewModelProvider)).put("com.kliq.app.ui.screens.explore.ExploreViewModel", ((Provider) exploreViewModelProvider)).put("com.kliq.app.ui.screens.home.HomeViewModel", ((Provider) homeViewModelProvider)).put("com.kliq.app.viewmodel.MainViewModel", ((Provider) mainViewModelProvider)).put("com.kliq.app.ui.screens.map.MapViewModel", ((Provider) mapViewModelProvider)).put("com.kliq.app.ui.navigation.NavigationViewModel", ((Provider) navigationViewModelProvider)).put("com.kliq.app.ui.screens.notifications.NotificationsViewModel", ((Provider) notificationsViewModelProvider)).put("com.kliq.app.ui.screens.profile.ProfileViewModel", ((Provider) profileViewModelProvider)).put("com.kliq.app.ui.navigation.TopBarViewModel", ((Provider) topBarViewModelProvider)).build();
+      return MapBuilder.<String, javax.inject.Provider<ViewModel>>newMapBuilder(12).put("com.kliq.app.ui.screens.chat.ChatDetailViewModel", ((Provider) chatDetailViewModelProvider)).put("com.kliq.app.ui.screens.chat.ChatListViewModel", ((Provider) chatListViewModelProvider)).put("com.kliq.app.ui.screens.club.ClubViewModel", ((Provider) clubViewModelProvider)).put("com.kliq.app.ui.screens.explore.ExploreViewModel", ((Provider) exploreViewModelProvider)).put("com.kliq.app.ui.screens.home.HomeViewModel", ((Provider) homeViewModelProvider)).put("com.kliq.app.viewmodel.MainViewModel", ((Provider) mainViewModelProvider)).put("com.kliq.app.ui.screens.map.MapViewModel", ((Provider) mapViewModelProvider)).put("com.kliq.app.ui.navigation.NavigationViewModel", ((Provider) navigationViewModelProvider)).put("com.kliq.app.ui.screens.notifications.NotificationsViewModel", ((Provider) notificationsViewModelProvider)).put("com.kliq.app.ui.screens.profile.ProfileViewModel", ((Provider) profileViewModelProvider)).put("com.kliq.app.viewmodel.ThemeViewModel", ((Provider) themeViewModelProvider)).put("com.kliq.app.ui.navigation.TopBarViewModel", ((Provider) topBarViewModelProvider)).build();
     }
 
     @Override
@@ -527,7 +532,10 @@ public final class DaggerKliqApplication_HiltComponents_SingletonC {
           case 9: // com.kliq.app.ui.screens.profile.ProfileViewModel 
           return (T) new ProfileViewModel();
 
-          case 10: // com.kliq.app.ui.navigation.TopBarViewModel 
+          case 10: // com.kliq.app.viewmodel.ThemeViewModel 
+          return (T) new ThemeViewModel();
+
+          case 11: // com.kliq.app.ui.navigation.TopBarViewModel 
           return (T) new TopBarViewModel();
 
           default: throw new AssertionError(id);
