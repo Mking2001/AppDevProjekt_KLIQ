@@ -20,7 +20,8 @@ data class MapUiState(
     val selectedFilter: Int? = null,
     val filters: List<String> = emptyList(),
     val nearbyVenues: List<VenueItemUi> = emptyList(),
-    val isLocationEnabled: Boolean = false
+    val isLocationEnabled: Boolean = false,
+    val selectedVenue: VenueItemUi? = null
 )
 
 /**
@@ -88,5 +89,13 @@ class MapViewModel @Inject constructor() : ViewModel() {
     fun onLocationRequested() {
         _uiState.update { it.copy(isLocationEnabled = true) }
         // TODO: LocationProvider integrieren
+    }
+
+    fun onMarkerLongPressed(venue: VenueItemUi) {
+        _uiState.update { it.copy(selectedVenue = venue) }
+    }
+
+    fun onQuickViewDismissed() {
+        _uiState.update { it.copy(selectedVenue = null) }
     }
 }
