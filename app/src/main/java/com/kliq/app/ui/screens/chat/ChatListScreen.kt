@@ -31,6 +31,9 @@ import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -42,7 +45,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.data.model.ChatType
 import com.kliq.app.ui.components.ChatListItem
+import com.kliq.app.ui.components.SwipeableActionRow
+import com.kliq.app.ui.navigation.LocalSnackbarHostState
 import com.kliq.app.ui.theme.PurplePrimary
+import kotlinx.coroutines.launch
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
 /**
@@ -67,6 +73,8 @@ fun ChatListScreen(
     viewModel: ChatListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = LocalSnackbarHostState.current
+    val coroutineScope = rememberCoroutineScope()
     val tabs = listOf("Öffentlich", "Privat")
     val selectedTabIndex = if (uiState.selectedTab == ChatType.PUBLIC) 0 else 1
 
@@ -196,15 +204,47 @@ fun ChatListScreen(
                 contentPadding = PaddingValues(vertical = 4.dp)
             ) {
                 items(chats, key = { it.id }) { chat ->
-                    ChatListItem(
-                        conversation = chat,
-                        onClick = { onChatSelected(chat.id) }
-                    )
-                    Divider(
-                        modifier = Modifier.padding(start = 84.dp),
-                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f),
-                        thickness = 0.5.dp
-                    )
+                    SwipeableActionRow(
+                        onDelete = {
+                            viewModel.onChatDeleted(chat.id)
+                            coroutineScope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "Chat gelöscht",
+                                    actionLabel = "Rückgängig",
+                                    duration = SnackbarDuration.Short
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    viewModel.onUndoDelete(chat)
+                                }
+                            }
+                        },
+                        onArchive = {
+                            viewModel.onChatArchived(chat.id)
+                            coroutineScope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "Chat archiviert",
+                                    actionLabel = "Rückgängig",
+                                    duration = SnackbarDuration.Short
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    viewModel.onUndoDelete(chat)
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column {
+                            ChatListItem(
+                                conversation = chat,
+                                onClick = { onChatSelected(chat.id) }
+                            )
+                            Divider(
+                                modifier = Modifier.padding(start = 84.dp),
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f),
+                                thickness = 0.5.dp
+                            )
+                        }
+                    }
                 }
             }
         }

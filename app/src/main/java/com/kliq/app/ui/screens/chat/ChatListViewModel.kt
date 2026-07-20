@@ -165,4 +165,33 @@ class ChatListViewModel @Inject constructor() : ViewModel() {
             )
         }
     }
+
+    fun onChatDeleted(chatId: String) {
+        _uiState.update { state ->
+            state.copy(
+                publicChats = state.publicChats.filter { it.id != chatId },
+                privateChats = state.privateChats.filter { it.id != chatId }
+            )
+        }
+    }
+
+    fun onChatArchived(chatId: String) {
+        // Für dieses Beispiel verhält sich Archivieren visuell wie Löschen
+        _uiState.update { state ->
+            state.copy(
+                publicChats = state.publicChats.filter { it.id != chatId },
+                privateChats = state.privateChats.filter { it.id != chatId }
+            )
+        }
+    }
+
+    fun onUndoDelete(chat: ChatConversation) {
+        _uiState.update { state ->
+            if (chat.chatType == ChatType.PUBLIC) {
+                state.copy(publicChats = listOf(chat) + state.publicChats)
+            } else {
+                state.copy(privateChats = listOf(chat) + state.privateChats)
+            }
+        }
+    }
 }
