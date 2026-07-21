@@ -12,7 +12,6 @@ import com.kliq.app.data.model.Event
 import com.kliq.app.data.model.GpsLocation
 import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.remote.KliqApiService
-import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toDomain
 import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toEntity
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -82,9 +81,10 @@ class ClubAndEventRepositoryImpl @Inject constructor(
         return try {
             if (apiService != null) {
                 val remoteResponse = apiService.searchExternalClubsAndEvents("")
-                val remoteClubs = remoteResponse.toDomain()
-                val clubEntities = remoteClubs.map { it.toEntity() }
+                val clubEntities = remoteResponse.clubs.map { it.toEntity() }
+                val eventEntities = remoteResponse.events.map { it.toEntity() }
                 clubDao.insertClubs(clubEntities)
+                eventDao.insertEvents(eventEntities)
             }
             Result.success(Unit)
         } catch (e: Exception) {
