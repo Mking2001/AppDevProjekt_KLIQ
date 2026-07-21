@@ -8,7 +8,14 @@ import com.kliq.app.data.local.dao.ClubDao
 import com.kliq.app.data.local.dao.EventDao
 import com.kliq.app.data.local.entities.ClubEntity
 import com.kliq.app.data.local.entities.EventEntity
+import com.kliq.app.data.model.Club
+import com.kliq.app.data.model.Event
+import com.kliq.app.data.model.GpsLocation
+import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.remote.KliqApiService
+import com.kliq.app.data.remote.model.ExternalClubSearchResultDto
+import com.kliq.app.data.remote.model.ExternalEventSearchResultDto
+import com.kliq.app.data.remote.model.ExternalSearchResponseDto
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -52,8 +59,29 @@ class ClubAndEventRepositoryTest {
 
     @Test
     fun testUnifiedClubAndEventSingleSourceOfTruth() = runTest {
-        val clubEntity = ClubEntity("club_watergate", "Watergate", "Techno", 4.8f, "https://kliq.de/watergate.jpg", "Berlin", isFavorite = true)
-        val eventEntity = EventEntity("event_night", "club_watergate", "Night Session", "Deep House & Techno", "15€", "23:00")
+        val clubEntity = ClubEntity(
+            id = "club_watergate",
+            name = "Watergate",
+            latitude = 52.50,
+            longitude = 13.44,
+            address = "Falckensteinstr. 49",
+            geofenceRadiusMeters = 200.0,
+            averageRating = 4.8,
+            isFavorite = true,
+            category = "Techno",
+            rating = 4.8f,
+            imageUrl = "https://kliq.de/watergate.jpg",
+            region = "Berlin"
+        )
+        val eventEntity = EventEntity(
+            id = "event_night",
+            clubId = "club_watergate",
+            title = "Night Session",
+            description = "Deep House & Techno",
+            startTime = 1784600000000L,
+            endTime = 1784636000000L,
+            price = "15€"
+        )
 
         clubDao.insertClubs(listOf(clubEntity))
         eventDao.insertEvents(listOf(eventEntity))
@@ -71,8 +99,27 @@ class ClubAndEventRepositoryTest {
 
     @Test
     fun testCombinedLocalSearch() = runTest {
-        val clubEntity = ClubEntity("c_tresor", "Tresor Berlin", "Techno", 4.9f, "", "Berlin", externalSearchTags = "techno, vault")
-        val eventEntity = EventEntity("e_tresor_rave", "c_tresor", "Tresor Rave Night", "Rave", "20€", "23:59", searchKeywords = "rave, techno")
+        val clubEntity = ClubEntity(
+            id = "c_tresor",
+            name = "Tresor Berlin",
+            latitude = 52.51,
+            longitude = 13.41,
+            address = "Köpenicker Str. 70",
+            category = "Techno",
+            rating = 4.9f,
+            region = "Berlin",
+            externalSearchTags = "techno, vault"
+        )
+        val eventEntity = EventEntity(
+            id = "e_tresor_rave",
+            clubId = "c_tresor",
+            title = "Tresor Rave Night",
+            description = "Rave",
+            startTime = 1784600000000L,
+            endTime = 1784636000000L,
+            price = "20€",
+            searchKeywords = "rave, techno"
+        )
 
         clubDao.insertClubs(listOf(clubEntity))
         eventDao.insertEvents(listOf(eventEntity))
@@ -87,30 +134,35 @@ class ClubAndEventRepositoryTest {
 
     @Test
     fun testRemoteBackgroundSyncUpdatesLocalCache() = runTest {
-        val remoteClubs = listOf(
-            com.kliq.app.data.model.Club(
-                id = "c_remote_1",
-                name = "KitKatClub",
-                category = "Electro",
-                rating = 4.7f,
-                imageUrl = "https://kliq.de/kitkat.jpg",
-                region = "Berlin",
-                location = com.kliq.app.data.model.GpsLocation(52.51, 13.41)
-            )
+        val remoteClubDto = ExternalClubSearchResultDto(
+            placeId = "c_remote_1",
+            name = "KitKatClub",
+            category = "Electro",
+            rating = 4.7,
+            imageUrl = "https://kliq.de/kitkat.jpg",
+            address = "Köpenicker Str. 76",
+            latitude = 52.51,
+            longitude = 13.41,
+            isOpenNow = true,
+            openingHoursText = "22:00 - 08:00",
+            searchTags = listOf("electro", "fetish")
         )
-        val remoteEvents = listOf(
-            com.kliq.app.data.model.Event(
-                id = "e_remote_1",
-                clubId = "c_remote_1",
-                title = "Gegen Night",
-                description = "Electronic Art Party",
-                price = "18€",
-                time = "22:00"
-            )
+        val remoteEventDto = ExternalEventSearchResultDto(
+            eventId = "e_remote_1",
+            clubPlaceId = "c_remote_1",
+            title = "Gegen Night",
+            description = "Electronic Art Party",
+            ticketPrice = "18€",
+            startTimestamp = 1784600000000L,
+            endTimestamp = 1784636000000L,
+            keywords = listOf("gegen", "art")
+        )
+        val responseDto = ExternalSearchResponseDto(
+            clubs = listOf(remoteClubDto),
+            events = listOf(remoteEventDto)
         )
 
-        `when`(mockApiService.getClubs()).thenReturn(remoteClubs)
-        `when`(mockApiService.getEvents()).thenReturn(remoteEvents)
+        `when`(mockApiService.searchExternalClubsAndEvents("")).thenReturn(responseDto)
 
         val syncResult = repository.syncClubsAndEventsFromRemote()
         assertTrue(syncResult.isSuccess)
