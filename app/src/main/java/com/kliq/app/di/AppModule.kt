@@ -3,6 +3,9 @@ package com.kliq.app.di
 import android.content.Context
 import androidx.room.Room
 import com.kliq.app.data.local.KliqDatabase
+import com.kliq.app.data.local.dao.ChatDao
+import com.kliq.app.data.local.dao.ClubDao
+import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.remote.KliqApiService
 import dagger.Module
@@ -25,11 +28,22 @@ object AppModule {
             context,
             KliqDatabase::class.java,
             "kliq_db"
-        ).build()
+        )
+        .addMigrations(KliqDatabase.MIGRATION_1_2)
+        .build()
     }
 
     @Provides
     fun provideUserDao(database: KliqDatabase): UserDao = database.userDao()
+
+    @Provides
+    fun provideClubDao(database: KliqDatabase): ClubDao = database.clubDao()
+
+    @Provides
+    fun provideReviewDao(database: KliqDatabase): ReviewDao = database.reviewDao()
+
+    @Provides
+    fun provideChatDao(database: KliqDatabase): ChatDao = database.chatDao()
 
     @Provides
     @Singleton
