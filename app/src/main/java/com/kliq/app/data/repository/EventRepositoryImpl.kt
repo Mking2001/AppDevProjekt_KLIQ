@@ -1,7 +1,6 @@
 package com.kliq.app.data.repository
 
 import com.google.gson.Gson
-import com.kliq.app.data.local.Converters
 import com.kliq.app.data.local.RoomConverters
 import com.kliq.app.data.local.dao.EventDao
 import com.kliq.app.data.local.entities.EventEntity

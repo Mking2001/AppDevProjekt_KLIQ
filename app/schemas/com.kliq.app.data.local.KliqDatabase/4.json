@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 4,
-    "identityHash": "95e21db7d32968e55774beb9c28dba59",
+    "identityHash": "9a1e48245c1b91b9658e777ad02ddfa9",
     "entities": [
       {
         "tableName": "users",
@@ -303,7 +303,17 @@
             "id"
           ]
         },
-        "indices": [],
+        "indices": [
+          {
+            "name": "index_events_clubId",
+            "unique": false,
+            "columnNames": [
+              "clubId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_events_clubId` ON `${TABLE_NAME}` (`clubId`)"
+          }
+        ],
         "foreignKeys": [
           {
             "table": "clubs",
@@ -525,7 +535,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '95e21db7d32968e55774beb9c28dba59')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9a1e48245c1b91b9658e777ad02ddfa9')"
     ]
   }
 }
