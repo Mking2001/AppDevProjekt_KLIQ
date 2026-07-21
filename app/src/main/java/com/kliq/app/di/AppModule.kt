@@ -29,7 +29,7 @@ object AppModule {
             KliqDatabase::class.java,
             "kliq_db"
         )
-        .addMigrations(KliqDatabase.MIGRATION_1_2)
+        .addMigrations(*com.kliq.app.data.local.DatabaseMigrations.ALL_MIGRATIONS)
         .build()
     }
 
