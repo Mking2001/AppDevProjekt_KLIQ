@@ -206,6 +206,9 @@ class ChatIntegrationTest {
         chatDao.insertMessage(privMsg)
         chatDao.insertMessage(cityMsg)
 
+        val privChatMessage = com.kliq.app.data.model.ChatMessage("msg_priv", privateChatId, "user_sarah", "Sarah", null, "Hi Alex", 100L, "2026-07-21T21:00:00Z", null, MessageStatus.READ, false)
+        val cityChatMessage = com.kliq.app.data.model.ChatMessage("msg_city", cityChatId, "user_dj", "DJ Felix", null, "Welcher Club?", 200L, "2026-07-21T21:05:00Z", null, MessageStatus.SENT, false)
+
         // 3. Verifikation der DAO-Query-Filterung (Private vs Öffentliche Stadt-Chats)
         val privateChatsList = chatDao.getPrivateChats().first()
         assertEquals(1, privateChatsList.size)
@@ -219,10 +222,10 @@ class ChatIntegrationTest {
         assertEquals(ChatType.PUBLIC_CITY, publicCityChatsList[0].chatType)
 
         // 4. Verifikation der unterschiedlichen Sprechblasen-Formatierung
-        val privBubble = privMsg.toHighContrastBubbleState(isGroupChat = false)
+        val privBubble = privChatMessage.toHighContrastBubbleState(isGroupChat = false)
         assertFalse("Private Nachrichten zeigen keinen Gruppen-Absender-Header", privBubble.showSenderHeader)
 
-        val cityBubble = cityMsg.toHighContrastBubbleState(isGroupChat = true)
+        val cityBubble = cityChatMessage.toHighContrastBubbleState(isGroupChat = true)
         assertTrue("Fremde Stadt-Gruppennachrichten zeigen den Absender-Header", cityBubble.showSenderHeader)
         assertEquals("DJ Felix", cityBubble.senderName)
     }
