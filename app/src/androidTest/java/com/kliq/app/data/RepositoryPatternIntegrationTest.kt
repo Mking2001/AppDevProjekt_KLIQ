@@ -5,12 +5,9 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.kliq.app.data.local.KliqDatabase
-import com.kliq.app.data.local.entities.ChatEntity
 import com.kliq.app.data.local.entities.ClubEntity
 import com.kliq.app.data.local.entities.EventEntity
 import com.kliq.app.data.local.entities.UserEntity
-import com.kliq.app.data.model.ChatType
-import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.model.ExternalClubSearchResultDto
 import com.kliq.app.data.remote.model.ExternalSearchResponseDto
@@ -29,15 +26,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.mock
-import org.mockito.Mockito.`when`
 import java.io.IOException
 
 @RunWith(AndroidJUnit4::class)
 class RepositoryPatternIntegrationTest {
 
     private lateinit var db: KliqDatabase
-    private lateinit var mockApiService: KliqApiService
+    private lateinit var fakeApiService: FakeKliqApiService
     private lateinit var userRepository: UserRepositoryImpl
     private lateinit var clubAndEventRepository: ClubAndEventRepositoryImpl
     private lateinit var reviewRepository: ReviewRepositoryImpl
@@ -50,11 +45,11 @@ class RepositoryPatternIntegrationTest {
             .allowMainThreadQueries()
             .build()
 
-        mockApiService = mock(KliqApiService::class.java)
-        userRepository = UserRepositoryImpl(db.userDao(), mockApiService)
-        clubAndEventRepository = ClubAndEventRepositoryImpl(db.clubDao(), db.eventDao(), mockApiService)
-        reviewRepository = ReviewRepositoryImpl(db.reviewDao(), db.clubDao(), AntiSpamReviewValidator(), mockApiService)
-        chatRepository = ChatRepositoryImpl(db.chatDao(), mockApiService)
+        fakeApiService = FakeKliqApiService()
+        userRepository = UserRepositoryImpl(db.userDao(), fakeApiService)
+        clubAndEventRepository = ClubAndEventRepositoryImpl(db.clubDao(), db.eventDao(), fakeApiService)
+        reviewRepository = ReviewRepositoryImpl(db.reviewDao(), db.clubDao(), AntiSpamReviewValidator(), fakeApiService)
+        chatRepository = ChatRepositoryImpl(db.chatDao(), fakeApiService)
     }
 
     @After
@@ -93,9 +88,7 @@ class RepositoryPatternIntegrationTest {
     fun testEmptyLocalStorageTriggersRemoteSyncAndPersistsToRoom() = runBlocking {
         // 1. Speicher ist initial leer
         val userId = "usr_remote_new"
-        `when`(mockApiService.getUserProfile(userId)).thenReturn(
-            UserEntity(userId, "new_user_remote", "new@kliq.de", "https://kliq.de/pic.jpg", "New Bio")
-        )
+        fakeApiService.userProfileToReturn = UserEntity(userId, "new_user_remote", "new@kliq.de", "https://kliq.de/pic.jpg", "New Bio")
 
         val remoteClubDto = ExternalClubSearchResultDto(
             placeId = "club_remote_kitkat",
@@ -107,9 +100,7 @@ class RepositoryPatternIntegrationTest {
             latitude = 52.51,
             longitude = 13.41
         )
-        `when`(mockApiService.searchExternalClubsAndEvents("")).thenReturn(
-            ExternalSearchResponseDto(clubs = listOf(remoteClubDto), events = emptyList())
-        )
+        fakeApiService.searchResponseToReturn = ExternalSearchResponseDto(clubs = listOf(remoteClubDto), events = emptyList())
 
         // 2. Repository-Sync ausführen
         val userSyncResult = userRepository.syncUserProfile(userId)
@@ -135,16 +126,37 @@ class RepositoryPatternIntegrationTest {
         val initialUser = UserEntity(userId, "cached_alex", "alex@kliq.de", null, "Gecachte Bio")
         db.userDao().insertUser(initialUser)
 
-        // 2. Simulieren eines Netzwerkausfalls (IOException)
-        `when`(mockApiService.getUserProfile(userId)).thenThrow(RuntimeException("Netzwerkverbindung fehlgeschlagen"))
+        // 2. Simulieren eines Netzwerkausfalls
+        fakeApiService.shouldFail = true
 
         // 3. Aufruf der Sync-Funktion bei Netzwerkausfall
         val syncResult = userRepository.syncUserProfile(userId)
         assertFalse("Sync muss bei Netzwerkausfall fehlschlagen", syncResult.isSuccess)
 
-        // 4. Verifikation: Repository greift weiterhin stabil auf die gecachten Daten zu (Fallback)
+        // 4. Verifikation: Repository greift weiterhin mobil auf die gecachten Daten zu (Fallback)
         val cachedUser = userRepository.getUserById(userId).first()
         assertNotNull("Gecachter Benutzer muss trotz Netzwerkausfall verfügbar sein", cachedUser)
         assertEquals("cached_alex", cachedUser?.username)
+    }
+
+    private class FakeKliqApiService : KliqApiService {
+        var shouldFail: Boolean = false
+        var userProfileToReturn: UserEntity? = null
+        var searchResponseToReturn: ExternalSearchResponseDto = ExternalSearchResponseDto(emptyList(), emptyList())
+
+        override suspend fun getUserProfile(userId: String): UserEntity {
+            if (shouldFail) throw RuntimeException("Netzwerkverbindung fehlgeschlagen")
+            return userProfileToReturn ?: throw RuntimeException("User not found")
+        }
+
+        override suspend fun searchExternalClubsAndEvents(
+            query: String,
+            latitude: Double?,
+            longitude: Double?,
+            radiusKm: Int?
+        ): ExternalSearchResponseDto {
+            if (shouldFail) throw RuntimeException("Netzwerkverbindung fehlgeschlagen")
+            return searchResponseToReturn
+        }
     }
 }
