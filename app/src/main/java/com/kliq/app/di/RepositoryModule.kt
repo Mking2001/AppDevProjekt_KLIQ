@@ -4,6 +4,8 @@ import com.kliq.app.data.repository.ClubRepository
 import com.kliq.app.data.repository.ClubRepositoryImpl
 import com.kliq.app.data.repository.EventRepository
 import com.kliq.app.data.repository.EventRepositoryImpl
+import com.kliq.app.data.repository.ReviewRepository
+import com.kliq.app.data.repository.ReviewRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -21,4 +23,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindEventRepository(impl: EventRepositoryImpl): EventRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindReviewRepository(impl: ReviewRepositoryImpl): ReviewRepository
 }
