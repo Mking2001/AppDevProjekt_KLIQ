@@ -2,6 +2,8 @@ package com.kliq.app.di
 
 import com.kliq.app.data.repository.ChatRepository
 import com.kliq.app.data.repository.ChatRepositoryImpl
+import com.kliq.app.data.repository.ClubAndEventRepository
+import com.kliq.app.data.repository.ClubAndEventRepositoryImpl
 import com.kliq.app.data.repository.ClubRepository
 import com.kliq.app.data.repository.ClubRepositoryImpl
 import com.kliq.app.data.repository.EventRepository
@@ -23,6 +25,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindClubAndEventRepository(impl: ClubAndEventRepositoryImpl): ClubAndEventRepository
 
     @Binds
     @Singleton
