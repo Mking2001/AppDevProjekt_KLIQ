@@ -76,9 +76,43 @@ class ChatDetailViewModel @Inject constructor() : ViewModel() {
                 initial = "B",
                 isOnline = false,
                 messages = listOf(
-                    ChatMessage("1", chatId, "usr_1", "Max K.", "Hey Leute, wer ist heute dabei?", now - 3600000L, formatMsToIso(now - 3600000L), mediaUrl = null, status = MessageStatus.READ, isMine = false, dateHeader = "Heute"),
-                    ChatMessage("2", chatId, "usr_2", "Du", "Bin auf jeden Fall am Start! 🙋‍♂️", now - 3000000L, formatMsToIso(now - 3000000L), mediaUrl = null, status = MessageStatus.READ, isMine = true),
-                    ChatMessage("3", chatId, "usr_3", "Lisa W.", "Ich auch! Komme direkt nach der Arbeit", now - 2400000L, formatMsToIso(now - 2400000L), mediaUrl = null, status = MessageStatus.READ, isMine = false)
+                    ChatMessage(
+                        id = "1",
+                        chatId = chatId,
+                        senderUserId = "usr_1",
+                        senderName = "Max K.",
+                        text = "Hey Leute, wer ist heute dabei?",
+                        timestampMs = now - 3600000L,
+                        timestampIso = formatMsToIso(now - 3600000L),
+                        mediaUrl = null,
+                        status = MessageStatus.READ,
+                        isMine = false,
+                        dateHeader = "Heute"
+                    ),
+                    ChatMessage(
+                        id = "2",
+                        chatId = chatId,
+                        senderUserId = "usr_2",
+                        senderName = "Du",
+                        text = "Bin auf jeden Fall am Start! 🙋‍♂️",
+                        timestampMs = now - 3000000L,
+                        timestampIso = formatMsToIso(now - 3000000L),
+                        mediaUrl = null,
+                        status = MessageStatus.READ,
+                        isMine = true
+                    ),
+                    ChatMessage(
+                        id = "3",
+                        chatId = chatId,
+                        senderUserId = "usr_3",
+                        senderName = "Lisa W.",
+                        text = "Ich auch! Komme direkt nach der Arbeit",
+                        timestampMs = now - 2400000L,
+                        timestampIso = formatMsToIso(now - 2400000L),
+                        mediaUrl = null,
+                        status = MessageStatus.READ,
+                        isMine = false
+                    )
                 )
             )
             "priv_1" -> ConversationData(
@@ -86,8 +120,31 @@ class ChatDetailViewModel @Inject constructor() : ViewModel() {
                 initial = "L",
                 isOnline = true,
                 messages = listOf(
-                    ChatMessage("1", chatId, "usr_2", "Du", "Hey Lisa! Kommst du heute Abend?", now - 7200000L, formatMsToIso(now - 7200000L), mediaUrl = null, status = MessageStatus.READ, isMine = true, dateHeader = "Heute"),
-                    ChatMessage("2", chatId, "usr_3", "Lisa W.", "Hey! Ja klar, freue mich schon 🥳", "https://kliq-app.de/uploads/sample.jpg", now - 3600000L, formatMsToIso(now - 3600000L), MessageStatus.READ, isMine = false)
+                    ChatMessage(
+                        id = "1",
+                        chatId = chatId,
+                        senderUserId = "usr_2",
+                        senderName = "Du",
+                        text = "Hey Lisa! Kommst du heute Abend?",
+                        timestampMs = now - 7200000L,
+                        timestampIso = formatMsToIso(now - 7200000L),
+                        mediaUrl = null,
+                        status = MessageStatus.READ,
+                        isMine = true,
+                        dateHeader = "Heute"
+                    ),
+                    ChatMessage(
+                        id = "2",
+                        chatId = chatId,
+                        senderUserId = "usr_3",
+                        senderName = "Lisa W.",
+                        text = "Hey! Ja klar, freue mich schon 🥳",
+                        timestampMs = now - 3600000L,
+                        timestampIso = formatMsToIso(now - 3600000L),
+                        mediaUrl = "https://kliq-app.de/uploads/sample.jpg",
+                        status = MessageStatus.READ,
+                        isMine = false
+                    )
                 )
             )
             else -> ConversationData(
@@ -95,7 +152,19 @@ class ChatDetailViewModel @Inject constructor() : ViewModel() {
                 initial = "?",
                 isOnline = false,
                 messages = listOf(
-                    ChatMessage("1", chatId, "usr_sys", "System", "Willkommen im Chat!", now, formatMsToIso(now), mediaUrl = null, status = MessageStatus.READ, isMine = false, dateHeader = "Heute")
+                    ChatMessage(
+                        id = "1",
+                        chatId = chatId,
+                        senderUserId = "usr_sys",
+                        senderName = "System",
+                        text = "Willkommen im Chat!",
+                        timestampMs = now,
+                        timestampIso = formatMsToIso(now),
+                        mediaUrl = null,
+                        status = MessageStatus.READ,
+                        isMine = false,
+                        dateHeader = "Heute"
+                    )
                 )
             )
         }
