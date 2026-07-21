@@ -27,7 +27,7 @@ import com.kliq.app.data.local.entities.UserPreferencesEntity
         MessageEntity::class
     ],
     version = 3,
-    exportSchema = false
+    exportSchema = true
 )
 abstract class KliqDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
