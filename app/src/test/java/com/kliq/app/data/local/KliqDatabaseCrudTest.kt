@@ -116,7 +116,7 @@ class KliqDatabaseCrudTest {
             id = "ch1",
             name = "Test Chat",
             lastMessageText = "Hello",
-            lastMessageTimestamp = 0L,
+            lastMessageTimestampMs = 0L,
             avatarInitial = "T",
             chatType = ChatType.PRIVATE,
             isOnline = true
