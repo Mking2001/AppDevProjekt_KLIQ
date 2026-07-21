@@ -10,33 +10,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-/**
- * Immutable UI-State für die Chat-Listen-Übersicht.
- * Unterscheidet zwischen öffentlichen Gruppen-Chats und
- * privaten Direktnachrichten über den [selectedTab]-Zustand.
- *
- * @param publicChats Liste aller öffentlichen Gruppen-Chats.
- * @param privateChats Liste aller privaten Einzelgespräche.
- * @param selectedTab Aktuell ausgewählter Tab (PUBLIC oder PRIVATE).
- * @param isLoading Ladezustand für Skeleton-/Shimmer-Anzeige.
- */
 data class ChatListUiState(
     val publicChats: List<ChatConversation> = emptyList(),
     val privateChats: List<ChatConversation> = emptyList(),
-    val selectedTab: ChatType = ChatType.PUBLIC,
+    val selectedTab: ChatType = ChatType.PUBLIC_CITY,
     val isLoading: Boolean = false
 )
 
-/**
- * ViewModel für die Chat-Listen-Übersicht.
- * Verwaltet den Tab-Zustand und stellt Platzhalter-Daten
- * für die Scaffolding-Phase bereit.
- *
- * Folgt strikt dem MVVM-Pattern:
- * - Kein Compose/Android-Import
- * - Immutable State via [StateFlow]
- * - Intent-basierte Actions
- */
 @HiltViewModel
 class ChatListViewModel @Inject constructor() : ViewModel() {
 
@@ -47,75 +27,52 @@ class ChatListViewModel @Inject constructor() : ViewModel() {
         loadMockData()
     }
 
-    /**
-     * Wechselt den aktiven Tab zwischen öffentlich und privat.
-     * @param type Der Ziel-Chat-Typ.
-     */
     fun onTabSelected(type: ChatType) {
         _uiState.update { it.copy(selectedTab = type) }
     }
 
-    /**
-     * Lädt Platzhalter-Daten für beide Chat-Kategorien.
-     * Wird in der finalen Implementierung durch Repository-Aufrufe
-     * mit echten API-/Datenbankdaten ersetzt.
-     */
     private fun loadMockData() {
+        val now = System.currentTimeMillis()
         _uiState.update { state ->
             state.copy(
                 publicChats = listOf(
                     ChatConversation(
                         id = "pub_1",
-                        name = "Afterwork Köln",
-                        lastMessage = "Heute ab 20 Uhr im Bootshaus! 🎶",
-                        timestamp = "14:32",
-                        avatarInitial = "A",
+                        name = "Berlin - Tonight",
+                        cityRegion = "Berlin",
+                        lastMessageText = "Heute ab 23 Uhr im Watergate! 🎶",
+                        lastMessageTimestampMs = now - 600000L,
+                        avatarInitial = "B",
                         unreadCount = 5,
-                        chatType = ChatType.PUBLIC
+                        chatType = ChatType.PUBLIC_CITY
                     ),
                     ChatConversation(
                         id = "pub_2",
-                        name = "Festival Crew 2026",
-                        lastMessage = "Hat jemand noch ein Zelt übrig?",
-                        timestamp = "12:15",
-                        avatarInitial = "F",
+                        name = "München - Party Radar",
+                        cityRegion = "München",
+                        lastMessageText = "Hat jemand noch Tickets für Rote Sonne?",
+                        lastMessageTimestampMs = now - 3600000L,
+                        avatarInitial = "M",
                         unreadCount = 12,
-                        chatType = ChatType.PUBLIC
+                        chatType = ChatType.PUBLIC_CITY
                     ),
                     ChatConversation(
                         id = "pub_3",
-                        name = "Techno Düsseldorf",
-                        lastMessage = "Line-up steht! Schaut mal rein 👀",
-                        timestamp = "Gestern",
-                        avatarInitial = "T",
+                        name = "Hamburg - Reeperbahn",
+                        cityRegion = "Hamburg",
+                        lastMessageText = "Line-up steht! Schaut mal rein 👀",
+                        lastMessageTimestampMs = now - 86400000L,
+                        avatarInitial = "H",
                         unreadCount = 0,
-                        chatType = ChatType.PUBLIC
-                    ),
-                    ChatConversation(
-                        id = "pub_4",
-                        name = "Rooftop Sessions",
-                        lastMessage = "Nächste Session am Samstag",
-                        timestamp = "Gestern",
-                        avatarInitial = "R",
-                        unreadCount = 3,
-                        chatType = ChatType.PUBLIC
-                    ),
-                    ChatConversation(
-                        id = "pub_5",
-                        name = "Konzertgänger NRW",
-                        lastMessage = "Tickets für Rammstein sind raus!",
-                        timestamp = "Mo",
-                        avatarInitial = "K",
-                        unreadCount = 0,
-                        chatType = ChatType.PUBLIC
+                        chatType = ChatType.PUBLIC_CITY
                     )
                 ),
                 privateChats = listOf(
                     ChatConversation(
                         id = "priv_1",
                         name = "Lisa W.",
-                        lastMessage = "Treffen wir uns vor dem Eingang?",
-                        timestamp = "15:08",
+                        lastMessageText = "Treffen wir uns vor dem Eingang?",
+                        lastMessageTimestampMs = now - 900000L,
                         avatarInitial = "L",
                         unreadCount = 2,
                         chatType = ChatType.PRIVATE,
@@ -124,39 +81,9 @@ class ChatListViewModel @Inject constructor() : ViewModel() {
                     ChatConversation(
                         id = "priv_2",
                         name = "Max K.",
-                        lastMessage = "War ein geiler Abend! 🔥",
-                        timestamp = "13:45",
+                        lastMessageText = "War ein geiler Abend! 🔥",
+                        lastMessageTimestampMs = now - 7200000L,
                         avatarInitial = "M",
-                        unreadCount = 0,
-                        chatType = ChatType.PRIVATE,
-                        isOnline = true
-                    ),
-                    ChatConversation(
-                        id = "priv_3",
-                        name = "Anna M.",
-                        lastMessage = "Danke für die Einladung!",
-                        timestamp = "11:20",
-                        avatarInitial = "A",
-                        unreadCount = 1,
-                        chatType = ChatType.PRIVATE,
-                        isOnline = false
-                    ),
-                    ChatConversation(
-                        id = "priv_4",
-                        name = "Tom S.",
-                        lastMessage = "Klar, bin dabei 👍",
-                        timestamp = "Gestern",
-                        avatarInitial = "T",
-                        unreadCount = 0,
-                        chatType = ChatType.PRIVATE,
-                        isOnline = false
-                    ),
-                    ChatConversation(
-                        id = "priv_5",
-                        name = "Sarah B.",
-                        lastMessage = "Schick mir mal den Link",
-                        timestamp = "Gestern",
-                        avatarInitial = "S",
                         unreadCount = 0,
                         chatType = ChatType.PRIVATE,
                         isOnline = true
@@ -176,7 +103,6 @@ class ChatListViewModel @Inject constructor() : ViewModel() {
     }
 
     fun onChatArchived(chatId: String) {
-        // Für dieses Beispiel verhält sich Archivieren visuell wie Löschen
         _uiState.update { state ->
             state.copy(
                 publicChats = state.publicChats.filter { it.id != chatId },
@@ -187,7 +113,7 @@ class ChatListViewModel @Inject constructor() : ViewModel() {
 
     fun onUndoDelete(chat: ChatConversation) {
         _uiState.update { state ->
-            if (chat.chatType == ChatType.PUBLIC) {
+            if (chat.chatType == ChatType.PUBLIC_CITY) {
                 state.copy(publicChats = listOf(chat) + state.publicChats)
             } else {
                 state.copy(privateChats = listOf(chat) + state.privateChats)

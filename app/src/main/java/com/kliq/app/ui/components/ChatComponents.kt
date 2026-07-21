@@ -47,15 +47,6 @@ import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryDark
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-/**
- * Einzelner Eintrag in der Chat-Listen-Übersicht.
- * Zeigt Avatar mit Initialen, Chat-Name, letzte Nachricht,
- * Zeitstempel und einen optionalen Ungelesen-Badge an.
- *
- * @param conversation Die Chat-Konversationsdaten.
- * @param onClick Callback bei Klick auf den Eintrag.
- * @param modifier Optionaler Modifier.
- */
 @Composable
 fun ChatListItem(
     conversation: ChatConversation,
@@ -69,12 +60,11 @@ fun ChatListItem(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Avatar mit Gradient-Rahmen für Gruppen-Chats
         Box(
             modifier = Modifier
                 .size(56.dp)
                 .then(
-                    if (conversation.chatType == ChatType.PUBLIC) {
+                    if (conversation.chatType == ChatType.PUBLIC_CITY) {
                         Modifier.border(
                             width = 2.dp,
                             brush = Brush.linearGradient(
@@ -84,7 +74,7 @@ fun ChatListItem(
                         )
                     } else Modifier
                 )
-                .padding(if (conversation.chatType == ChatType.PUBLIC) 3.dp else 0.dp)
+                .padding(if (conversation.chatType == ChatType.PUBLIC_CITY) 3.dp else 0.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
@@ -96,7 +86,6 @@ fun ChatListItem(
                 fontWeight = FontWeight.Bold
             )
 
-            // Online-Indikator für private Chats
             if (conversation.chatType == ChatType.PRIVATE && conversation.isOnline) {
                 Box(
                     modifier = Modifier
@@ -113,7 +102,6 @@ fun ChatListItem(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // Name und letzte Nachricht
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = conversation.name,
@@ -125,7 +113,7 @@ fun ChatListItem(
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = conversation.lastMessage,
+                text = conversation.lastMessageText,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -135,13 +123,12 @@ fun ChatListItem(
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        // Zeitstempel und Ungelesen-Badge
         Column(
             horizontalAlignment = Alignment.End,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = conversation.timestamp,
+                text = conversation.lastMessageTimestampIso.take(16).replace("T", " "),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (conversation.unreadCount > 0) {
                     MaterialTheme.colorScheme.primary
@@ -171,14 +158,6 @@ fun ChatListItem(
     }
 }
 
-/**
- * Chat-Sprechblase mit richtungsabhängiger Ausrichtung und Farbgebung.
- * Eigene Nachrichten erscheinen rechts im Lila-Ton,
- * fremde Nachrichten links in der Surface-Variant-Farbe.
- *
- * @param message Die anzuzeigende Nachricht.
- * @param modifier Optionaler Modifier.
- */
 @Composable
 fun ChatBubble(
     message: ChatMessage,
@@ -188,7 +167,6 @@ fun ChatBubble(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = if (message.isMine) Alignment.End else Alignment.Start
     ) {
-        // Absendername bei Gruppenchats (nur fremde Nachrichten)
         if (!message.isMine) {
             Text(
                 text = message.senderName,
@@ -202,7 +180,6 @@ fun ChatBubble(
             )
         }
 
-        // Sprechblase mit asymmetrischen Ecken
         Surface(
             modifier = Modifier.widthIn(max = 280.dp),
             shape = RoundedCornerShape(
@@ -235,7 +212,7 @@ fun ChatBubble(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = message.timestamp,
+                    text = message.timestampIso.take(16).replace("T", " "),
                     style = MaterialTheme.typography.labelSmall,
                     color = if (message.isMine) {
                         Color.White.copy(alpha = 0.7f)
@@ -249,17 +226,6 @@ fun ChatBubble(
     }
 }
 
-/**
- * Eingabeleiste am unteren Bildschirmrand des Chat-Screens.
- * Enthält ein stilisiertes [OutlinedTextField] im Lila-Stil
- * und einen runden Sende-Button, der nur bei vorhandenem
- * Text aktiviert wird.
- *
- * @param value Aktueller Eingabetext.
- * @param onValueChange Callback bei Textänderung.
- * @param onSend Callback beim Absenden.
- * @param modifier Optionaler Modifier.
- */
 @Composable
 fun ChatInputBar(
     value: String,
@@ -280,7 +246,6 @@ fun ChatInputBar(
         tonalElevation = 8.dp
     ) {
         Column {
-            // Subtiler Gradient-Trenner am oberen Rand
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -332,7 +297,6 @@ fun ChatInputBar(
                     )
                 )
 
-                // Runder Sende-Button
                 IconButton(
                     onClick = onSend,
                     enabled = hasText,
@@ -357,14 +321,6 @@ fun ChatInputBar(
     }
 }
 
-/**
- * Datumstrennlinie zwischen Nachrichtengruppen.
- * Zeigt ein zentriertes Datumslabel (z.B. "Heute", "Gestern")
- * mit dezenten Trennlinien links und rechts.
- *
- * @param dateText Anzuzeigender Datumstext.
- * @param modifier Optionaler Modifier.
- */
 @Composable
 fun ChatDateDivider(
     dateText: String,
