@@ -11,8 +11,8 @@ import com.kliq.app.data.local.entities.ChatEntity
 import com.kliq.app.data.local.entities.ClubEntity
 import com.kliq.app.data.local.entities.ReviewEntity
 import com.kliq.app.data.local.entities.UserEntity
-import com.kliq.app.data.local.entities.VerificationStatus
 import com.kliq.app.data.model.ChatType
+import com.kliq.app.data.model.ReviewVerificationMethod
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -94,10 +94,11 @@ class KliqDatabaseCrudTest {
         val review = ReviewEntity(
             id = "r1",
             clubId = "c1",
-            userId = "u1",
+            reviewerUserId = "u1",
             rating = 5,
             text = "Great!",
-            status = VerificationStatus.VERIFIED,
+            verificationMethod = ReviewVerificationMethod.GPS_GEOFENCE_MATCH,
+            isVerified = true,
             timestamp = System.currentTimeMillis()
         )
         reviewDao.insertReview(review)
@@ -105,7 +106,8 @@ class KliqDatabaseCrudTest {
         val reviews = reviewDao.getReviewsForClub("c1").first()
         assertTrue(reviews.isNotEmpty())
         assertEquals(5, reviews[0].rating)
-        assertEquals(VerificationStatus.VERIFIED, reviews[0].status)
+        assertTrue(reviews[0].isVerified)
+        assertEquals(ReviewVerificationMethod.GPS_GEOFENCE_MATCH, reviews[0].verificationMethod)
     }
 
     @Test
