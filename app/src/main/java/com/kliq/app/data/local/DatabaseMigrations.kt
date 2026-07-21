@@ -62,10 +62,28 @@ object DatabaseMigrations {
         }
     }
 
+    val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `reviews` RENAME TO `reviews_old`")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `reviews` (`id` TEXT NOT NULL, `reviewerUserId` TEXT NOT NULL, `targetUserId` TEXT DEFAULT NULL, `clubId` TEXT DEFAULT NULL, `eventId` TEXT DEFAULT NULL, `rating` INTEGER NOT NULL, `text` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `verificationMethod` TEXT NOT NULL, `isVerified` INTEGER NOT NULL, `reviewerUsername` TEXT NOT NULL DEFAULT '', `reviewerAvatarUrl` TEXT DEFAULT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`clubId`) REFERENCES `clubs`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`reviewerUserId`) REFERENCES `users`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`eventId`) REFERENCES `events`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )"
+            )
+            db.execSQL(
+                "INSERT INTO `reviews` (`id`, `reviewerUserId`, `clubId`, `rating`, `text`, `timestamp`, `verificationMethod`, `isVerified`) SELECT `id`, `userId`, `clubId`, `rating`, `text`, `timestamp`, `status`, CASE WHEN `status` = 'VERIFIED' THEN 1 ELSE 0 END FROM `reviews_old`"
+            )
+            db.execSQL("DROP TABLE `reviews_old`")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_reviews_clubId` ON `reviews` (`clubId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_reviews_reviewerUserId` ON `reviews` (`reviewerUserId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_reviews_eventId` ON `reviews` (`eventId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_reviews_targetUserId` ON `reviews` (`targetUserId`)")
+        }
+    }
+
     // Array of all migrations. Scalable strategy for providing them to the builder.
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_1_2,
         MIGRATION_2_3,
-        MIGRATION_3_4
+        MIGRATION_3_4,
+        MIGRATION_4_5
     )
 }

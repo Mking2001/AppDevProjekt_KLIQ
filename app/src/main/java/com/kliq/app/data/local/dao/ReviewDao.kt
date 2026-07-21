@@ -12,9 +12,30 @@ interface ReviewDao {
     @Query("SELECT * FROM reviews WHERE clubId = :clubId ORDER BY timestamp DESC")
     fun getReviewsForClub(clubId: String): Flow<List<ReviewEntity>>
 
+    @Query("SELECT * FROM reviews WHERE clubId = :clubId AND isVerified = 1 ORDER BY timestamp DESC")
+    fun getVerifiedReviewsForClub(clubId: String): Flow<List<ReviewEntity>>
+
+    @Query("SELECT * FROM reviews WHERE eventId = :eventId ORDER BY timestamp DESC")
+    fun getReviewsForEvent(eventId: String): Flow<List<ReviewEntity>>
+
+    @Query("SELECT * FROM reviews WHERE targetUserId = :targetUserId ORDER BY timestamp DESC")
+    fun getReviewsForTargetUser(targetUserId: String): Flow<List<ReviewEntity>>
+
+    @Query("SELECT * FROM reviews WHERE reviewerUserId = :reviewerUserId ORDER BY timestamp DESC")
+    fun getReviewsByReviewer(reviewerUserId: String): Flow<List<ReviewEntity>>
+
+    @Query("SELECT AVG(rating) FROM reviews WHERE clubId = :clubId")
+    fun getAverageRatingForClub(clubId: String): Flow<Double?>
+
+    @Query("SELECT AVG(rating) FROM reviews WHERE eventId = :eventId")
+    fun getAverageRatingForEvent(eventId: String): Flow<Double?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReview(review: ReviewEntity)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReviews(reviews: List<ReviewEntity>)
+
+    @Query("DELETE FROM reviews WHERE id = :reviewId")
+    suspend fun deleteReviewById(reviewId: String)
 }
