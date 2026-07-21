@@ -7,6 +7,7 @@ import com.kliq.app.data.model.ChatConversation
 import com.kliq.app.data.model.ChatMessage
 import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.model.formatMsToIso
+import com.kliq.app.data.remote.KliqApiService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
@@ -15,7 +16,8 @@ import javax.inject.Singleton
 
 @Singleton
 class ChatRepositoryImpl @Inject constructor(
-    private val chatDao: ChatDao
+    private val chatDao: ChatDao,
+    private val apiService: KliqApiService? = null
 ) : ChatRepository {
 
     override fun getAllChats(): Flow<List<ChatConversation>> {
@@ -45,6 +47,19 @@ class ChatRepositoryImpl @Inject constructor(
     override fun searchMessagesInChat(chatId: String, query: String): Flow<List<ChatMessage>> {
         return chatDao.searchMessagesInChat(chatId, query).map { entities ->
             entities.map { it.toDomain() }
+        }
+    }
+
+    override suspend fun syncChatMessages(chatId: String): Result<Unit> {
+        return try {
+            if (apiService != null) {
+                val remoteMessages = apiService.getChatMessages(chatId)
+                val entities = remoteMessages.map { it.toEntity() }
+                entities.forEach { chatDao.insertMessage(it) }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
@@ -152,6 +167,21 @@ class ChatRepositoryImpl @Inject constructor(
             text = text,
             timestampMs = timestampMs,
             timestampIso = timestampIso.ifBlank { formatMsToIso(timestampMs) },
+            mediaUrl = mediaUrl,
+            status = status,
+            isMine = isMine
+        )
+    }
+
+    private fun ChatMessage.toEntity(): MessageEntity {
+        return MessageEntity(
+            id = id,
+            chatId = chatId,
+            senderUserId = senderUserId,
+            senderName = senderName,
+            text = text,
+            timestampMs = timestampMs,
+            timestampIso = timestampIso,
             mediaUrl = mediaUrl,
             status = status,
             isMine = isMine
