@@ -21,5 +21,6 @@ data class EventEntity(
     val title: String,
     val description: String,
     val price: String,
-    val time: String
+    val time: String,
+    val searchKeywords: String = ""
 )

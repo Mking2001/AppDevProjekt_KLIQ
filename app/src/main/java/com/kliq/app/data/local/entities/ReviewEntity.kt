@@ -1,5 +1,6 @@
 package com.kliq.app.data.local.entities
 
+import androidx.annotation.IntRange
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
@@ -30,7 +31,7 @@ data class ReviewEntity(
     @PrimaryKey val id: String,
     val clubId: String,
     val userId: String,
-    val rating: Int, // 1-5 stars
+    @IntRange(from = 1, to = 5) val rating: Int, // 1-5 stars
     val text: String,
     val status: VerificationStatus,
     val timestamp: Long

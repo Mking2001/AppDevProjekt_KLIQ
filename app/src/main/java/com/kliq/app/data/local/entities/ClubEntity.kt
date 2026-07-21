@@ -15,5 +15,7 @@ data class ClubEntity(
     val currentCapacityPercent: Int = 0,
     val malePercentage: Int = 0,
     val femalePercentage: Int = 0,
-    val totalLiveVisitors: Int = 0
+    val totalLiveVisitors: Int = 0,
+    val externalSearchTags: String = "",
+    val websiteUrl: String? = null
 )
