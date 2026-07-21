@@ -8,6 +8,8 @@ import com.kliq.app.data.repository.EventRepository
 import com.kliq.app.data.repository.EventRepositoryImpl
 import com.kliq.app.data.repository.ReviewRepository
 import com.kliq.app.data.repository.ReviewRepositoryImpl
+import com.kliq.app.data.repository.UserRepository
+import com.kliq.app.data.repository.UserRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -17,6 +19,10 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+
+    @Binds
+    @Singleton
+    abstract fun bindUserRepository(impl: UserRepositoryImpl): UserRepository
 
     @Binds
     @Singleton
