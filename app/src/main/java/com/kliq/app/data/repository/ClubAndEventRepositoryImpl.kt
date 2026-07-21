@@ -1,5 +1,7 @@
 package com.kliq.app.data.repository
 
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.kliq.app.data.local.RoomConverters
 import com.kliq.app.data.local.dao.ClubDao
 import com.kliq.app.data.local.dao.EventDao
@@ -7,6 +9,8 @@ import com.kliq.app.data.local.entities.ClubEntity
 import com.kliq.app.data.local.entities.EventEntity
 import com.kliq.app.data.model.Club
 import com.kliq.app.data.model.Event
+import com.kliq.app.data.model.GpsLocation
+import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toDomain
 import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toEntity
@@ -20,9 +24,10 @@ import javax.inject.Singleton
 class ClubAndEventRepositoryImpl @Inject constructor(
     private val clubDao: ClubDao,
     private val eventDao: EventDao,
-    private val apiService: KliqApiService
+    private val apiService: KliqApiService? = null
 ) : ClubAndEventRepository {
 
+    private val gson = Gson()
     private val roomConverters = RoomConverters()
 
     override fun getClubs(): Flow<List<Club>> {
@@ -75,15 +80,12 @@ class ClubAndEventRepositoryImpl @Inject constructor(
 
     override suspend fun syncClubsAndEventsFromRemote(): Result<Unit> {
         return try {
-            val remoteClubs = apiService.getClubs()
-            val remoteEvents = apiService.getEvents()
-
-            val clubEntities = remoteClubs.map { it.toEntity() }
-            val eventEntities = remoteEvents.map { it.toEntity() }
-
-            clubDao.insertClubs(clubEntities)
-            eventDao.insertEvents(eventEntities)
-
+            if (apiService != null) {
+                val remoteResponse = apiService.searchExternalClubsAndEvents("")
+                val remoteClubs = remoteResponse.toDomain()
+                val clubEntities = remoteClubs.map { it.toEntity() }
+                clubDao.insertClubs(clubEntities)
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -92,6 +94,33 @@ class ClubAndEventRepositoryImpl @Inject constructor(
 
     override suspend fun toggleClubFavorite(clubId: String, currentFavoriteState: Boolean) {
         clubDao.updateFavoriteStatus(clubId, !currentFavoriteState)
+    }
+
+    private fun ClubEntity.toDomain(): Club {
+        val schedule = try {
+            val type = object : TypeToken<Map<String, Any>>() {}.type
+            val map: Map<String, Any> = gson.fromJson(openingHoursJson, type) ?: emptyMap()
+            val isOpen = map["isOpenNow"] as? Boolean ?: false
+            val hoursText = map["todayHours"] as? String ?: ""
+            OperatingHours(isOpenNow = isOpen, todayHours = hoursText)
+        } catch (e: Exception) {
+            OperatingHours(isOpenNow = false, todayHours = "")
+        }
+
+        return Club(
+            id = id,
+            name = name,
+            location = GpsLocation(latitude, longitude, address),
+            geofenceRadiusMeters = geofenceRadiusMeters,
+            averageRating = averageRating,
+            operatingHours = schedule,
+            isFavorite = isFavorite,
+            category = category,
+            imageUrl = imageUrl,
+            region = region,
+            externalSearchTags = externalSearchTags,
+            websiteUrl = websiteUrl
+        )
     }
 
     private fun EventEntity.toDomain(): Event {
@@ -105,22 +134,6 @@ class ClubAndEventRepositoryImpl @Inject constructor(
             endTime = endTime,
             price = price,
             specialOffers = offers,
-            searchKeywords = searchKeywords,
-            imageUrl = imageUrl
-        )
-    }
-
-    private fun Event.toEntity(): EventEntity {
-        val offersJson = roomConverters.fromSpecialOffersList(specialOffers)
-        return EventEntity(
-            id = id,
-            clubId = clubId,
-            title = title,
-            description = description,
-            startTime = startTime,
-            endTime = endTime,
-            price = price,
-            specialOffersJson = offersJson,
             searchKeywords = searchKeywords,
             imageUrl = imageUrl
         )

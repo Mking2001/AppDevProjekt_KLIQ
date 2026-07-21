@@ -52,11 +52,6 @@ class ChatRepositoryImpl @Inject constructor(
 
     override suspend fun syncChatMessages(chatId: String): Result<Unit> {
         return try {
-            if (apiService != null) {
-                val remoteMessages = apiService.getChatMessages(chatId)
-                val entities = remoteMessages.map { it.toEntity() }
-                entities.forEach { chatDao.insertMessage(it) }
-            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -167,21 +162,6 @@ class ChatRepositoryImpl @Inject constructor(
             text = text,
             timestampMs = timestampMs,
             timestampIso = timestampIso.ifBlank { formatMsToIso(timestampMs) },
-            mediaUrl = mediaUrl,
-            status = status,
-            isMine = isMine
-        )
-    }
-
-    private fun ChatMessage.toEntity(): MessageEntity {
-        return MessageEntity(
-            id = id,
-            chatId = chatId,
-            senderUserId = senderUserId,
-            senderName = senderName,
-            text = text,
-            timestampMs = timestampMs,
-            timestampIso = timestampIso,
             mediaUrl = mediaUrl,
             status = status,
             isMine = isMine

@@ -46,11 +46,6 @@ class ReviewRepositoryImpl @Inject constructor(
 
     override suspend fun syncReviewsForClub(clubId: String): Result<Unit> {
         return try {
-            if (apiService != null) {
-                val remoteReviews = apiService.getReviewsForClub(clubId)
-                val entities = remoteReviews.map { it.toEntity() }
-                reviewDao.insertReviews(entities)
-            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -75,9 +70,9 @@ class ReviewRepositoryImpl @Inject constructor(
         val verification = antiSpamValidator.validateGpsLocationMatch(
             userLat = userLat,
             userLon = userLon,
-            clubLat = clubEntity.latitude,
-            clubLon = clubEntity.longitude,
-            geofenceRadiusMeters = clubEntity.geofenceRadiusMeters
+            targetLat = clubEntity.latitude,
+            targetLon = clubEntity.longitude,
+            allowedRadiusMeters = clubEntity.geofenceRadiusMeters
         )
 
         val entity = ReviewEntity(
@@ -106,7 +101,7 @@ class ReviewRepositoryImpl @Inject constructor(
             return Result.failure(IllegalArgumentException("Rating muss zwischen 1 und 5 Sternen liegen."))
         }
 
-        val verification = antiSpamValidator.validateQrPassScan(qrToken)
+        val verification = antiSpamValidator.validateQrCodeScanToken(qrToken, targetId)
         val entity = ReviewEntity(
             id = UUID.randomUUID().toString(),
             reviewerUserId = reviewerUserId,
