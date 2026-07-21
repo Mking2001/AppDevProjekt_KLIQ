@@ -44,9 +44,28 @@ object DatabaseMigrations {
         }
     }
 
+    val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Add GPS coordinates, geofence, rating, and opening hours to clubs table
+            db.execSQL("ALTER TABLE `clubs` ADD COLUMN `latitude` REAL NOT NULL DEFAULT 0.0")
+            db.execSQL("ALTER TABLE `clubs` ADD COLUMN `longitude` REAL NOT NULL DEFAULT 0.0")
+            db.execSQL("ALTER TABLE `clubs` ADD COLUMN `address` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `clubs` ADD COLUMN `geofenceRadiusMeters` REAL NOT NULL DEFAULT 200.0")
+            db.execSQL("ALTER TABLE `clubs` ADD COLUMN `averageRating` REAL NOT NULL DEFAULT 0.0")
+            db.execSQL("ALTER TABLE `clubs` ADD COLUMN `openingHoursJson` TEXT NOT NULL DEFAULT ''")
+
+            // Add timestamps, special offers, and image URL to events table
+            db.execSQL("ALTER TABLE `events` ADD COLUMN `startTime` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `events` ADD COLUMN `endTime` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `events` ADD COLUMN `specialOffersJson` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `events` ADD COLUMN `imageUrl` TEXT DEFAULT NULL")
+        }
+    }
+
     // Array of all migrations. Scalable strategy for providing them to the builder.
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_1_2,
-        MIGRATION_2_3
+        MIGRATION_2_3,
+        MIGRATION_3_4
     )
 }

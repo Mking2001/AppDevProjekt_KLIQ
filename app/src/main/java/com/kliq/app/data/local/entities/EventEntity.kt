@@ -20,7 +20,11 @@ data class EventEntity(
     val clubId: String,
     val title: String,
     val description: String,
-    val price: String,
-    val time: String,
-    val searchKeywords: String = ""
+    val startTime: Long = 0L,
+    val endTime: Long = 0L,
+    val price: String = "",
+    val time: String = "",
+    val specialOffersJson: String = "",
+    val searchKeywords: String = "",
+    val imageUrl: String? = null
 )
