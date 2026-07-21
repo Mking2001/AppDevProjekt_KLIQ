@@ -1,27 +1,14 @@
 package com.kliq.app.data.repository
 
-import com.kliq.app.data.local.dao.ClubDao
-import com.kliq.app.data.local.entities.ClubEntity
-import com.kliq.app.data.local.entities.EventEntity
+import com.kliq.app.data.model.Club
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class ClubRepository @Inject constructor(
-    private val clubDao: ClubDao
-) {
-    fun getAllClubs(): Flow<List<ClubEntity>> = clubDao.getAllClubs()
-    
-    fun getClubById(clubId: String): Flow<ClubEntity?> = clubDao.getClubById(clubId)
-
-    fun getEventsForClub(clubId: String): Flow<List<EventEntity>> = clubDao.getEventsForClub(clubId)
-
-    suspend fun refreshClubs() {
-        // Implement API call and update local DB
-    }
-
-    suspend fun toggleFavoriteStatus(clubId: String, isFavorite: Boolean) {
-        clubDao.updateFavoriteStatus(clubId, isFavorite)
-    }
+interface ClubRepository {
+    fun getAllClubs(): Flow<List<Club>>
+    fun getFavoriteClubs(): Flow<List<Club>>
+    fun getClubById(clubId: String): Flow<Club?>
+    fun searchClubsLocal(query: String): Flow<List<Club>>
+    suspend fun toggleFavorite(clubId: String, currentFavoriteState: Boolean)
+    suspend fun searchExternalClubs(query: String, userLat: Double? = null, userLon: Double? = null, radiusKm: Int = 25): Result<List<Club>>
+    suspend fun isUserWithinGeofence(clubId: String, userLat: Double, userLon: Double): Boolean
 }

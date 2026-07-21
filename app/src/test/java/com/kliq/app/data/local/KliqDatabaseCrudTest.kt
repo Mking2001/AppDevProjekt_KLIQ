@@ -88,9 +88,8 @@ class KliqDatabaseCrudTest {
 
     @Test
     fun testReviewConstraints() = runTest {
-        // Prepare foreign keys
         userDao.insertUser(UserEntity("u1", "test", "test", null, null))
-        clubDao.insertClubs(listOf(ClubEntity("c1", "test", "test", 0f, "", "")))
+        clubDao.insertClubs(listOf(ClubEntity(id = "c1", name = "test", category = "test")))
 
         val review = ReviewEntity(
             id = "r1",

@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.kliq.app.data.local.KliqDatabase
 import com.kliq.app.data.local.dao.ChatDao
 import com.kliq.app.data.local.dao.ClubDao
+import com.kliq.app.data.local.dao.EventDao
 import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.remote.KliqApiService
@@ -38,6 +39,9 @@ object AppModule {
 
     @Provides
     fun provideClubDao(database: KliqDatabase): ClubDao = database.clubDao()
+
+    @Provides
+    fun provideEventDao(database: KliqDatabase): EventDao = database.eventDao()
 
     @Provides
     fun provideReviewDao(database: KliqDatabase): ReviewDao = database.reviewDao()
