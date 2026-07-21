@@ -8,9 +8,12 @@ import com.kliq.app.data.model.ChatType
 data class ChatEntity(
     @PrimaryKey val id: String,
     val name: String,
+    val cityRegion: String? = null,
     val lastMessageText: String,
-    val lastMessageTimestamp: Long,
+    val lastMessageTimestampMs: Long,
+    val lastMessageTimestampIso: String = "",
     val avatarInitial: String,
+    val avatarUrl: String? = null,
     val unreadCount: Int = 0,
     val chatType: ChatType,
     val isOnline: Boolean = false
