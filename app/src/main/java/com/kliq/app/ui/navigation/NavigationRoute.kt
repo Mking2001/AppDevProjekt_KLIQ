@@ -89,6 +89,7 @@ object ChatRoutes {
  */
 object CoreRoutes {
     const val SPLASH = "splash"
+    const val PHONE_LOGIN = "phone_login"
 }
 
 /**

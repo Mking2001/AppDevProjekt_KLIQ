@@ -36,6 +36,7 @@ import com.kliq.app.ui.screens.home.HomeScreen
 import com.kliq.app.ui.screens.map.MapScreen
 import com.kliq.app.ui.screens.notifications.NotificationsScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
+import com.kliq.app.ui.screens.auth.PhoneLoginScreen
 import com.kliq.app.ui.screens.splash.SplashScreen
 import com.kliq.app.viewmodel.ThemeViewModel
 
@@ -68,11 +69,12 @@ fun KliqMainScaffold(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: NavigationRoute.Home.route
 
-    // Bottom Bar wird ausgeblendet, wenn Chat-Screens oder Splash aktiv sind
+    // Bottom Bar wird ausgeblendet, wenn Chat-Screens, Splash oder Phone-Login aktiv sind
     val showBottomBar = currentRoute !in listOf(
         ChatRoutes.CHAT_LIST,
         ChatRoutes.CHAT_DETAIL,
-        CoreRoutes.SPLASH
+        CoreRoutes.SPLASH,
+        CoreRoutes.PHONE_LOGIN
     )
 
     // Sync ViewModel state when NavController route changes externally
@@ -193,8 +195,17 @@ private fun KliqNavHost(
         composable(CoreRoutes.SPLASH) {
             SplashScreen(
                 onSplashFinished = {
-                    navController.navigate(NavigationRoute.Home.route) {
+                    navController.navigate(CoreRoutes.PHONE_LOGIN) {
                         popUpTo(CoreRoutes.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(CoreRoutes.PHONE_LOGIN) {
+            PhoneLoginScreen(
+                onLoginSuccess = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(CoreRoutes.PHONE_LOGIN) { inclusive = true }
                     }
                 }
             )
