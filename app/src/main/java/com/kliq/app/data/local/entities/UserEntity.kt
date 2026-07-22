@@ -8,6 +8,8 @@ data class UserEntity(
     @PrimaryKey val id: String,
     val username: String,
     val email: String,
-    val profilePictureUrl: String?,
-    val bio: String?
+    val age: Int? = null,
+    val hometown: String? = null,
+    val profilePictureUrl: String? = null,
+    val bio: String? = null
 )

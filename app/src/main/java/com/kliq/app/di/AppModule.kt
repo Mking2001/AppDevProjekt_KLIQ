@@ -25,7 +25,9 @@ object AppModule {
             context,
             KliqDatabase::class.java,
             "kliq_db"
-        ).build()
+        )
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
