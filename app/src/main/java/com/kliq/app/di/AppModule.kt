@@ -5,6 +5,8 @@ import androidx.room.Room
 import com.kliq.app.data.local.KliqDatabase
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.remote.KliqApiService
+import com.kliq.app.data.remote.MockSmsVerificationService
+import com.kliq.app.data.remote.SmsVerificationService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,5 +41,11 @@ object AppModule {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(KliqApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSmsVerificationService(): SmsVerificationService {
+        return MockSmsVerificationService()
     }
 }
