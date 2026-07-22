@@ -2,7 +2,9 @@ package com.kliq.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -32,8 +34,11 @@ abstract class BaseViewModel : ViewModel() {
         sendEvent(UiEvent.ShowSnackbar(exception.message ?: "Ein unbekannter Fehler ist aufgetreten."))
     }
 
-    protected fun launchWithHandling(block: suspend () -> Unit) {
-        viewModelScope.launch(coroutineExceptionHandler) {
+    protected fun launchWithHandling(
+        dispatcher: CoroutineDispatcher = Dispatchers.Main,
+        block: suspend () -> Unit
+    ) {
+        viewModelScope.launch(dispatcher + coroutineExceptionHandler) {
             _isLoading.value = true
             block()
             _isLoading.value = false
