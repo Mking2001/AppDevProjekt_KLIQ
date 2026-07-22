@@ -24,6 +24,12 @@ interface EventDao {
     @Query("SELECT * FROM events WHERE startTime >= :minTimestamp ORDER BY startTime ASC")
     fun getUpcomingEvents(minTimestamp: Long): Flow<List<EventEntity>>
 
+    @Query("SELECT * FROM events WHERE startTime >= :minTimestamp AND isCancelled = 0 ORDER BY startTime ASC")
+    fun getActiveUpcomingEvents(minTimestamp: Long): Flow<List<EventEntity>>
+
+    @Query("UPDATE events SET isCancelled = :isCancelled WHERE id = :eventId")
+    suspend fun updateEventCancellationStatus(eventId: String, isCancelled: Boolean)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEvents(events: List<EventEntity>)
 

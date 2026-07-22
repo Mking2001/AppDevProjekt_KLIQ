@@ -16,6 +16,12 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity)
 
+    @Query("SELECT * FROM users WHERE isVerified = 1 ORDER BY username ASC")
+    fun getVerifiedUsers(): Flow<List<UserEntity>>
+
+    @Query("UPDATE users SET isVerified = :isVerified WHERE id = :userId")
+    suspend fun updateUserVerificationStatus(userId: String, isVerified: Boolean)
+
     @Query("DELETE FROM users")
     suspend fun clearUsers()
 

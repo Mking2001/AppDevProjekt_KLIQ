@@ -9,5 +9,8 @@ data class UserEntity(
     val username: String,
     val email: String,
     val profilePictureUrl: String?,
-    val bio: String?
+    val bio: String?,
+    val phoneNumber: String? = null,
+    val isVerified: Boolean = false,
+    val updatedAtTimestampMs: Long = 0L
 )

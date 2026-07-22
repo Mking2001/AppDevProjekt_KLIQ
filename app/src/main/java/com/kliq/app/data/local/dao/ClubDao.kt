@@ -16,6 +16,12 @@ interface ClubDao {
     @Query("SELECT * FROM clubs WHERE isFavorite = 1 ORDER BY name ASC")
     fun getFavoriteClubs(): Flow<List<ClubEntity>>
 
+    @Query("SELECT * FROM clubs WHERE isPromoted = 1 ORDER BY name ASC")
+    fun getPromotedClubs(): Flow<List<ClubEntity>>
+
+    @Query("SELECT * FROM clubs WHERE city = :city ORDER BY name ASC")
+    fun getClubsByCity(city: String): Flow<List<ClubEntity>>
+
     @Query("SELECT * FROM clubs WHERE id = :clubId")
     fun getClubById(clubId: String): Flow<ClubEntity?>
 

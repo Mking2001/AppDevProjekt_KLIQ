@@ -30,5 +30,8 @@ data class EventEntity(
     val time: String = "",
     val specialOffersJson: String = "",
     val searchKeywords: String = "",
-    val imageUrl: String? = null
+    val imageUrl: String? = null,
+    val capacityLimit: Int = 0,
+    val isCancelled: Boolean = false,
+    val category: String = ""
 )

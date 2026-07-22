@@ -30,6 +30,12 @@ interface ReviewDao {
     @Query("SELECT AVG(rating) FROM reviews WHERE eventId = :eventId")
     fun getAverageRatingForEvent(eventId: String): Flow<Double?>
 
+    @Query("UPDATE reviews SET helpfulVotesCount = helpfulVotesCount + 1 WHERE id = :reviewId")
+    suspend fun incrementHelpfulVotes(reviewId: String)
+
+    @Query("UPDATE reviews SET flaggedCount = flaggedCount + 1 WHERE id = :reviewId")
+    suspend fun flagReview(reviewId: String)
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertReview(review: ReviewEntity)
 

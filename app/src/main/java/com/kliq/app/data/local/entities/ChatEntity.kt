@@ -16,5 +16,8 @@ data class ChatEntity(
     val avatarUrl: String? = null,
     val unreadCount: Int = 0,
     val chatType: ChatType,
-    val isOnline: Boolean = false
+    val isOnline: Boolean = false,
+    val isPinned: Boolean = false,
+    val isMuted: Boolean = false,
+    val lastReadMessageId: String? = null
 )

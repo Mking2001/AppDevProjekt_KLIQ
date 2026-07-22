@@ -31,5 +31,7 @@ data class MessageEntity(
     val timestampIso: String = "",
     val mediaUrl: String? = null,
     val status: MessageStatus = MessageStatus.SENT,
-    val isMine: Boolean
+    val isMine: Boolean,
+    val replyToMessageId: String? = null,
+    val isEdited: Boolean = false
 )

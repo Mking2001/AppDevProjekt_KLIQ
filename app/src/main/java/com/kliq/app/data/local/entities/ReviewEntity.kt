@@ -48,5 +48,7 @@ data class ReviewEntity(
     val verificationMethod: ReviewVerificationMethod = ReviewVerificationMethod.UNVERIFIED,
     val isVerified: Boolean = false,
     val reviewerUsername: String = "",
-    val reviewerAvatarUrl: String? = null
+    val reviewerAvatarUrl: String? = null,
+    val helpfulVotesCount: Int = 0,
+    val flaggedCount: Int = 0
 )

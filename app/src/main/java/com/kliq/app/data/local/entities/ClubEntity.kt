@@ -23,5 +23,8 @@ data class ClubEntity(
     val femalePercentage: Int = 0,
     val totalLiveVisitors: Int = 0,
     val externalSearchTags: String = "",
-    val websiteUrl: String? = null
+    val websiteUrl: String? = null,
+    val isPromoted: Boolean = false,
+    val city: String = "",
+    val postalCode: String = ""
 )

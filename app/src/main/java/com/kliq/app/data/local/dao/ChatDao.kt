@@ -51,6 +51,15 @@ interface ChatDao {
         unreadIncrement: Int = 0
     )
 
+    @Query("UPDATE chats SET unreadCount = 0, lastReadMessageId = :messageId WHERE id = :chatId")
+    suspend fun updateLastReadMessage(chatId: String, messageId: String)
+
+    @Query("UPDATE chats SET isPinned = :isPinned WHERE id = :chatId")
+    suspend fun updatePinStatus(chatId: String, isPinned: Boolean)
+
+    @Query("UPDATE chats SET isMuted = :isMuted WHERE id = :chatId")
+    suspend fun updateMuteStatus(chatId: String, isMuted: Boolean)
+
     @Query("UPDATE chats SET unreadCount = 0 WHERE id = :chatId")
     suspend fun markChatAsRead(chatId: String)
 
