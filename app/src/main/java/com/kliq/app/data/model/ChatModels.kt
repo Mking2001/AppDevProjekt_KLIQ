@@ -1,56 +1,52 @@
 package com.kliq.app.data.model
 
-/**
- * Typ-Unterscheidung zwischen öffentlichen Gruppen-Chats
- * und privaten Einzelgesprächen.
- */
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
+
 enum class ChatType {
-    PUBLIC,
-    PRIVATE
+    PRIVATE,
+    PUBLIC_CITY
 }
 
-/**
- * Repräsentiert einen einzelnen Chat-Eintrag in der Übersichtsliste.
- * Enthält alle Informationen, die für die Vorschau-Darstellung
- * in der Chat-Liste benötigt werden.
- *
- * @param id Eindeutige Chat-ID.
- * @param name Anzeigename des Chats (Gruppenname oder Kontaktname).
- * @param lastMessage Vorschautext der letzten Nachricht.
- * @param timestamp Zeitstempel der letzten Aktivität (formatiert).
- * @param avatarInitial Initiale für den Platzhalter-Avatar.
- * @param unreadCount Anzahl ungelesener Nachrichten.
- * @param chatType Unterscheidung zwischen PUBLIC und PRIVATE Chat.
- * @param isOnline Ob der Kontakt online ist (nur bei PRIVATE relevant).
- */
+enum class MessageStatus {
+    SENT,
+    DELIVERED,
+    READ
+}
+
 data class ChatConversation(
     val id: String,
     val name: String,
-    val lastMessage: String,
-    val timestamp: String,
+    val cityRegion: String? = null,
+    val lastMessageText: String,
+    val lastMessageTimestampMs: Long,
+    val lastMessageTimestampIso: String = formatMsToIso(lastMessageTimestampMs),
     val avatarInitial: String,
+    val avatarUrl: String? = null,
     val unreadCount: Int = 0,
     val chatType: ChatType,
     val isOnline: Boolean = false
 )
 
-/**
- * Einzelne Nachricht innerhalb eines Chatverlaufs.
- * Das [isMine]-Flag bestimmt die Ausrichtung und Farbgebung
- * der Sprechblase in der UI (eigene = Lila, fremde = Grau).
- *
- * @param id Eindeutige Nachrichten-ID.
- * @param senderName Anzeigename des Absenders.
- * @param text Nachrichteninhalt.
- * @param timestamp Zeitstempel (formatiert).
- * @param isMine Ob die Nachricht vom aktuellen Nutzer stammt.
- * @param dateHeader Optionaler Datums-Header (z.B. "Heute", "Gestern").
- */
 data class ChatMessage(
     val id: String,
+    val chatId: String,
+    val senderUserId: String,
     val senderName: String,
+    val senderAvatarUrl: String? = null,
     val text: String,
-    val timestamp: String,
+    val timestampMs: Long = System.currentTimeMillis(),
+    val timestampIso: String = formatMsToIso(timestampMs),
+    val mediaUrl: String? = null,
+    val status: MessageStatus = MessageStatus.SENT,
     val isMine: Boolean,
     val dateHeader: String? = null
 )
+
+fun formatMsToIso(timestampMs: Long): String {
+    val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+    sdf.timeZone = TimeZone.getTimeZone("UTC")
+    return sdf.format(Date(timestampMs))
+}

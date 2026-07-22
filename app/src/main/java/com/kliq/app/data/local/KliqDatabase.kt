@@ -2,10 +2,10 @@ package com.kliq.app.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import androidx.room.migration.Migration
-import androidx.sqlite.db.SupportSQLiteDatabase
+import androidx.room.TypeConverters
 import com.kliq.app.data.local.dao.ChatDao
 import com.kliq.app.data.local.dao.ClubDao
+import com.kliq.app.data.local.dao.EventDao
 import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.local.entities.ChatEntity
@@ -26,12 +26,14 @@ import com.kliq.app.data.local.entities.UserPreferencesEntity
         ChatEntity::class,
         MessageEntity::class
     ],
-    version = 3,
+    version = 6,
     exportSchema = true
 )
+@TypeConverters(RoomConverters::class)
 abstract class KliqDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun clubDao(): ClubDao
+    abstract fun eventDao(): EventDao
     abstract fun reviewDao(): ReviewDao
     abstract fun chatDao(): ChatDao
 }

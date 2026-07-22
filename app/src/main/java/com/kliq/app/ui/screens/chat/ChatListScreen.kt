@@ -51,20 +51,6 @@ import com.kliq.app.ui.theme.PurplePrimary
 import kotlinx.coroutines.launch
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-/**
- * Chat-Listen-Übersicht mit Tab-Umschaltung zwischen
- * öffentlichen Gruppen-Chats und privaten Direktnachrichten.
- *
- * Die Ansicht verwendet eine eigene Top-App-Bar mit Back-Navigation
- * (kein KliqScreenScaffold, da Chat-Screens die Bottom-Bar ausblenden).
- *
- * Konsumiert den [ChatListUiState] über collectAsStateWithLifecycle()
- * für lifecycle-bewusstes State-Management.
- *
- * @param onNavigateBack Callback für die Zurück-Navigation.
- * @param onChatSelected Callback mit Chat-ID bei Auswahl eines Chats.
- * @param viewModel Hilt-injiziertes [ChatListViewModel].
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatListScreen(
@@ -76,7 +62,7 @@ fun ChatListScreen(
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
     val tabs = listOf("Öffentlich", "Privat")
-    val selectedTabIndex = if (uiState.selectedTab == ChatType.PUBLIC) 0 else 1
+    val selectedTabIndex = if (uiState.selectedTab == ChatType.PUBLIC_CITY) 0 else 1
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -131,7 +117,6 @@ fun ChatListScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Tab-Row mit Lila-Akzent-Indikator
             TabRow(
                 selectedTabIndex = selectedTabIndex,
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -177,7 +162,7 @@ fun ChatListScreen(
                         selected = isSelected,
                         onClick = {
                             viewModel.onTabSelected(
-                                if (index == 0) ChatType.PUBLIC else ChatType.PRIVATE
+                                if (index == 0) ChatType.PUBLIC_CITY else ChatType.PRIVATE
                             )
                         },
                         text = {
@@ -192,8 +177,7 @@ fun ChatListScreen(
                 }
             }
 
-            // Chat-Liste basierend auf dem aktiven Tab
-            val chats = if (uiState.selectedTab == ChatType.PUBLIC) {
+            val chats = if (uiState.selectedTab == ChatType.PUBLIC_CITY) {
                 uiState.publicChats
             } else {
                 uiState.privateChats

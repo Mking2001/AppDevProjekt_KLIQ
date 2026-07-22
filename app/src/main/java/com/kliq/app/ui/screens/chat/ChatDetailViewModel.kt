@@ -2,6 +2,8 @@ package com.kliq.app.ui.screens.chat
 
 import androidx.lifecycle.ViewModel
 import com.kliq.app.data.model.ChatMessage
+import com.kliq.app.data.model.MessageStatus
+import com.kliq.app.data.model.formatMsToIso
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,17 +11,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
-/**
- * Immutable UI-State für den Chat-Detail-Screen.
- * Bildet den vollständigen Zustand des Chatverlaufs ab,
- * einschließlich der Eingabeleiste.
- *
- * @param conversationName Anzeigename des Chat-Partners/Gruppe.
- * @param conversationInitial Avatar-Initiale.
- * @param messages Chronologischer Nachrichtenverlauf.
- * @param currentInput Aktueller Text im Eingabefeld.
- * @param isOnline Online-Status des Gesprächspartners.
- */
 data class ChatDetailUiState(
     val conversationName: String = "",
     val conversationInitial: String = "",
@@ -28,16 +19,6 @@ data class ChatDetailUiState(
     val isOnline: Boolean = false
 )
 
-/**
- * ViewModel für den Chat-Detail-Screen.
- * Verwaltet den Nachrichtenverlauf und die Eingabe-Logik
- * für einen einzelnen Chat.
- *
- * Folgt strikt dem MVVM-Pattern:
- * - Kein Compose/Android-Import
- * - Immutable State via [StateFlow]
- * - Intent-basierte Actions
- */
 @HiltViewModel
 class ChatDetailViewModel @Inject constructor() : ViewModel() {
 
@@ -46,13 +27,6 @@ class ChatDetailViewModel @Inject constructor() : ViewModel() {
 
     private var messageCounter = 100
 
-    /**
-     * Lädt den Chatverlauf anhand der Chat-ID.
-     * In der Scaffolding-Phase werden Mock-Daten basierend auf
-     * der ID geladen. Wird später durch Repository-Aufrufe ersetzt.
-     *
-     * @param chatId Eindeutige ID der Konversation.
-     */
     fun loadConversation(chatId: String) {
         val (name, initial, online, messages) = getMockConversation(chatId)
         _uiState.update {
@@ -65,28 +39,24 @@ class ChatDetailViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    /**
-     * Aktualisiert den Eingabetext bei jeder Zeichenänderung.
-     * @param input Neuer Eingabetext.
-     */
     fun onInputChanged(input: String) {
         _uiState.update { it.copy(currentInput = input) }
     }
 
-    /**
-     * Sendet die aktuelle Eingabe als neue Nachricht.
-     * Fügt die Nachricht am Ende des Verlaufs hinzu und
-     * leert das Eingabefeld.
-     */
     fun onSendMessage() {
         val text = _uiState.value.currentInput.trim()
         if (text.isEmpty()) return
 
+        val now = System.currentTimeMillis()
         val newMessage = ChatMessage(
             id = "msg_${messageCounter++}",
+            chatId = "mock_chat",
+            senderUserId = "usr_current",
             senderName = "Du",
             text = text,
-            timestamp = "Jetzt",
+            timestampMs = now,
+            timestampIso = formatMsToIso(now),
+            status = MessageStatus.SENT,
             isMine = true
         )
 
@@ -98,36 +68,51 @@ class ChatDetailViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    /**
-     * Liefert Mock-Daten für den Chatverlauf basierend auf der Chat-ID.
-     * Erzeugt realistische Konversationen mit abwechselnden Nachrichten.
-     */
     private fun getMockConversation(chatId: String): ConversationData {
+        val now = System.currentTimeMillis()
         return when (chatId) {
             "pub_1" -> ConversationData(
-                name = "Afterwork Köln",
-                initial = "A",
+                name = "Berlin - Tonight",
+                initial = "B",
                 isOnline = false,
                 messages = listOf(
-                    ChatMessage("1", "Max K.", "Hey Leute, wer ist heute dabei?", "13:45", false, "Heute"),
-                    ChatMessage("2", "Du", "Bin auf jeden Fall am Start! 🙋‍♂️", "13:50", true),
-                    ChatMessage("3", "Lisa W.", "Ich auch! Komme direkt nach der Arbeit", "14:02", false),
-                    ChatMessage("4", "Du", "Top! Treffen wir uns am Eingang?", "14:10", true),
-                    ChatMessage("5", "Max K.", "Ja, so gegen 20 Uhr?", "14:15", false),
-                    ChatMessage("6", "Anna M.", "Perfekt, bin auch dabei 🎉", "14:20", false),
-                    ChatMessage("7", "Du", "Bis dann! 👋", "14:25", true),
-                    ChatMessage("8", "Max K.", "Heute ab 20 Uhr im Bootshaus! 🎶", "14:32", false)
-                )
-            )
-            "pub_2" -> ConversationData(
-                name = "Festival Crew 2026",
-                initial = "F",
-                isOnline = false,
-                messages = listOf(
-                    ChatMessage("1", "Tom S.", "Das Line-up ist endlich da!", "10:00", false, "Heute"),
-                    ChatMessage("2", "Du", "Zeig mal her! 👀", "10:05", true),
-                    ChatMessage("3", "Sarah B.", "Wir brauchen noch Camping-Equipment", "10:30", false),
-                    ChatMessage("4", "Tom S.", "Hat jemand noch ein Zelt übrig?", "12:15", false)
+                    ChatMessage(
+                        id = "1",
+                        chatId = chatId,
+                        senderUserId = "usr_1",
+                        senderName = "Max K.",
+                        text = "Hey Leute, wer ist heute dabei?",
+                        timestampMs = now - 3600000L,
+                        timestampIso = formatMsToIso(now - 3600000L),
+                        mediaUrl = null,
+                        status = MessageStatus.READ,
+                        isMine = false,
+                        dateHeader = "Heute"
+                    ),
+                    ChatMessage(
+                        id = "2",
+                        chatId = chatId,
+                        senderUserId = "usr_2",
+                        senderName = "Du",
+                        text = "Bin auf jeden Fall am Start! 🙋‍♂️",
+                        timestampMs = now - 3000000L,
+                        timestampIso = formatMsToIso(now - 3000000L),
+                        mediaUrl = null,
+                        status = MessageStatus.READ,
+                        isMine = true
+                    ),
+                    ChatMessage(
+                        id = "3",
+                        chatId = chatId,
+                        senderUserId = "usr_3",
+                        senderName = "Lisa W.",
+                        text = "Ich auch! Komme direkt nach der Arbeit",
+                        timestampMs = now - 2400000L,
+                        timestampIso = formatMsToIso(now - 2400000L),
+                        mediaUrl = null,
+                        status = MessageStatus.READ,
+                        isMine = false
+                    )
                 )
             )
             "priv_1" -> ConversationData(
@@ -135,34 +120,31 @@ class ChatDetailViewModel @Inject constructor() : ViewModel() {
                 initial = "L",
                 isOnline = true,
                 messages = listOf(
-                    ChatMessage("1", "Du", "Hey Lisa! Kommst du heute Abend?", "14:00", true, "Heute"),
-                    ChatMessage("2", "Lisa W.", "Hey! Ja klar, freue mich schon 🥳", "14:10", false),
-                    ChatMessage("3", "Du", "Super! Soll ich dich abholen?", "14:15", true),
-                    ChatMessage("4", "Lisa W.", "Das wäre mega nett!", "14:30", false),
-                    ChatMessage("5", "Du", "Alles klar, bin um 19:30 bei dir", "14:45", true),
-                    ChatMessage("6", "Lisa W.", "Perfekt! Bis gleich 💜", "14:50", false),
-                    ChatMessage("7", "Lisa W.", "Treffen wir uns vor dem Eingang?", "15:08", false)
-                )
-            )
-            "priv_2" -> ConversationData(
-                name = "Max K.",
-                initial = "M",
-                isOnline = true,
-                messages = listOf(
-                    ChatMessage("1", "Max K.", "Alter, gestern war mega!", "12:00", false, "Heute"),
-                    ChatMessage("2", "Du", "Ja richtig! Bester Abend seit Langem", "12:30", true),
-                    ChatMessage("3", "Max K.", "Die Location war auch top", "13:00", false),
-                    ChatMessage("4", "Du", "Müssen wir wiederholen 🔄", "13:20", true),
-                    ChatMessage("5", "Max K.", "War ein geiler Abend! 🔥", "13:45", false)
-                )
-            )
-            "priv_3" -> ConversationData(
-                name = "Anna M.",
-                initial = "A",
-                isOnline = false,
-                messages = listOf(
-                    ChatMessage("1", "Du", "Hey Anna, kommst du Samstag?", "10:00", true, "Heute"),
-                    ChatMessage("2", "Anna M.", "Danke für die Einladung!", "11:20", false)
+                    ChatMessage(
+                        id = "1",
+                        chatId = chatId,
+                        senderUserId = "usr_2",
+                        senderName = "Du",
+                        text = "Hey Lisa! Kommst du heute Abend?",
+                        timestampMs = now - 7200000L,
+                        timestampIso = formatMsToIso(now - 7200000L),
+                        mediaUrl = null,
+                        status = MessageStatus.READ,
+                        isMine = true,
+                        dateHeader = "Heute"
+                    ),
+                    ChatMessage(
+                        id = "2",
+                        chatId = chatId,
+                        senderUserId = "usr_3",
+                        senderName = "Lisa W.",
+                        text = "Hey! Ja klar, freue mich schon 🥳",
+                        timestampMs = now - 3600000L,
+                        timestampIso = formatMsToIso(now - 3600000L),
+                        mediaUrl = "https://kliq-app.de/uploads/sample.jpg",
+                        status = MessageStatus.READ,
+                        isMine = false
+                    )
                 )
             )
             else -> ConversationData(
@@ -170,15 +152,24 @@ class ChatDetailViewModel @Inject constructor() : ViewModel() {
                 initial = "?",
                 isOnline = false,
                 messages = listOf(
-                    ChatMessage("1", "System", "Willkommen im Chat!", "Jetzt", false, "Heute")
+                    ChatMessage(
+                        id = "1",
+                        chatId = chatId,
+                        senderUserId = "usr_sys",
+                        senderName = "System",
+                        text = "Willkommen im Chat!",
+                        timestampMs = now,
+                        timestampIso = formatMsToIso(now),
+                        mediaUrl = null,
+                        status = MessageStatus.READ,
+                        isMine = false,
+                        dateHeader = "Heute"
+                    )
                 )
             )
         }
     }
 
-    /**
-     * Hilfsklasse für die strukturierte Rückgabe von Mock-Konversationsdaten.
-     */
     private data class ConversationData(
         val name: String,
         val initial: String,

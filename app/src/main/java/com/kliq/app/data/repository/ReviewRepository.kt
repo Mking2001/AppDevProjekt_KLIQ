@@ -1,19 +1,37 @@
 package com.kliq.app.data.repository
 
-import com.kliq.app.data.local.dao.ReviewDao
-import com.kliq.app.data.local.entities.ReviewEntity
+import com.kliq.app.data.model.Review
 import kotlinx.coroutines.flow.Flow
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class ReviewRepository @Inject constructor(
-    private val reviewDao: ReviewDao
-) {
-    fun getReviewsForClub(clubId: String): Flow<List<ReviewEntity>> = reviewDao.getReviewsForClub(clubId)
+interface ReviewRepository {
+    fun getReviewsForClub(clubId: String): Flow<List<Review>>
+    fun getVerifiedReviewsForClub(clubId: String): Flow<List<Review>>
+    fun getReviewsForEvent(eventId: String): Flow<List<Review>>
+    fun getAverageRatingForClub(clubId: String): Flow<Double?>
+    suspend fun syncReviewsForClub(clubId: String): Result<Unit>
+    suspend fun submitReviewWithGpsCheck(
+        reviewerUserId: String,
+        clubId: String,
+        rating: Int,
+        text: String,
+        userLat: Double,
+        userLon: Double
+    ): Result<Review>
 
-    suspend fun addReview(review: ReviewEntity) {
-        reviewDao.insertReview(review)
-        // Optionally sync to backend
-    }
+    suspend fun submitReviewWithQrCheck(
+        reviewerUserId: String,
+        targetId: String,
+        rating: Int,
+        text: String,
+        qrToken: String
+    ): Result<Review>
+
+    suspend fun submitUnverifiedReview(
+        reviewerUserId: String,
+        clubId: String? = null,
+        eventId: String? = null,
+        targetUserId: String? = null,
+        rating: Int,
+        text: String
+    ): Result<Review>
 }

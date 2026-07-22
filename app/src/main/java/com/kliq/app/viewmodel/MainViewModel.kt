@@ -21,8 +21,8 @@ class MainViewModel @Inject constructor(
 
     fun fetchUser(userId: String) {
         viewModelScope.launch {
-            repository.refreshUser(userId)
-            repository.getUser(userId).collect { user ->
+            repository.syncUserProfile(userId)
+            repository.getUserById(userId).collect { user ->
                 _userState.value = user
             }
         }

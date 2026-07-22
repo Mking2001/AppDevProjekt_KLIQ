@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -87,7 +86,6 @@ fun ClubDetailScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    // Placeholder for Image
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -102,20 +100,16 @@ fun ClubDetailScreen(
                         )
                     }
 
-                    // Analytics Section
                     AnalyticsSection(analytics = club.analytics)
 
-                    // Event Section
                     club.activeEvent?.let { event ->
                         EventSection(
                             title = event.title,
                             description = event.description,
-                            time = event.time,
                             price = event.price
                         )
                     }
 
-                    // Operating Hours Section
                     OperatingHoursSection(club = club)
                 }
             }
@@ -139,7 +133,6 @@ private fun AnalyticsSection(analytics: ClubAnalytics) {
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Capacity
             Text(
                 text = "Auslastung: ${analytics.currentCapacityPercent}%",
                 style = MaterialTheme.typography.bodyMedium
@@ -157,7 +150,6 @@ private fun AnalyticsSection(analytics: ClubAnalytics) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Gender Ratio
             Text(
                 text = "Geschlechterverhältnis (${analytics.totalLiveVisitors} Gäste)",
                 style = MaterialTheme.typography.bodyMedium
@@ -205,7 +197,7 @@ private fun AnalyticsSection(analytics: ClubAnalytics) {
 }
 
 @Composable
-private fun EventSection(title: String, description: String, time: String, price: String) {
+private fun EventSection(title: String, description: String, price: String) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
         shape = RoundedCornerShape(16.dp),
@@ -230,7 +222,6 @@ private fun EventSection(title: String, description: String, time: String, price
             Text(text = title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyLarge)
             Text(text = description, style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Zeit: $time", style = MaterialTheme.typography.bodySmall)
             Text(text = "Eintritt: $price", style = MaterialTheme.typography.bodySmall)
         }
     }
@@ -271,7 +262,7 @@ private fun OperatingHoursSection(club: Club) {
             )
             
             Spacer(modifier = Modifier.height(8.dp))
-            club.operatingHours.allHours.forEach { (day, hours) ->
+            club.operatingHours.weeklySchedule.forEach { (day, hours) ->
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
                     horizontalArrangement = Arrangement.SpaceBetween

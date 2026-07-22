@@ -2,6 +2,7 @@ package com.kliq.app.data.local.entities
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
@@ -13,6 +14,9 @@ import androidx.room.PrimaryKey
             childColumns = arrayOf("clubId"),
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        Index(value = ["clubId"])
     ]
 )
 data class EventEntity(
@@ -20,7 +24,11 @@ data class EventEntity(
     val clubId: String,
     val title: String,
     val description: String,
-    val price: String,
-    val time: String,
-    val searchKeywords: String = ""
+    val startTime: Long = 0L,
+    val endTime: Long = 0L,
+    val price: String = "",
+    val time: String = "",
+    val specialOffersJson: String = "",
+    val searchKeywords: String = "",
+    val imageUrl: String? = null
 )
