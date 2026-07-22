@@ -1,7 +1,7 @@
 package com.kliq.app.di
 
 import android.content.Context
-import androidx.room.Room
+import com.kliq.app.data.local.DatabaseMigrationManager
 import com.kliq.app.data.local.KliqDatabase
 import com.kliq.app.data.local.dao.ChatDao
 import com.kliq.app.data.local.dao.ClubDao
@@ -19,8 +19,6 @@ import dagger.hilt.components.SingletonComponent
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
-
-import com.kliq.app.data.local.DatabaseMigrationManager
 
 @Module
 @InstallIn(SingletonComponent::class)

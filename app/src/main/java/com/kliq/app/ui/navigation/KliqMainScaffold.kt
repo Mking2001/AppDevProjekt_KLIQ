@@ -9,9 +9,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -23,23 +28,19 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
+import com.kliq.app.ui.screens.auth.PhoneLoginScreen
 import com.kliq.app.ui.screens.chat.ChatDetailScreen
-import com.kliq.app.ui.screens.club.ClubDetailScreen
 import com.kliq.app.ui.screens.chat.ChatListScreen
+import com.kliq.app.ui.screens.club.ClubDetailScreen
 import com.kliq.app.ui.screens.explore.ExploreScreen
 import com.kliq.app.ui.screens.home.HomeScreen
 import com.kliq.app.ui.screens.map.MapScreen
 import com.kliq.app.ui.screens.notifications.NotificationsScreen
+import com.kliq.app.ui.screens.onboarding.ProfileCreationScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
+import com.kliq.app.ui.screens.splash.SplashScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationViewModel
-import com.kliq.app.ui.screens.auth.PhoneLoginScreen
-import com.kliq.app.ui.screens.splash.SplashScreen
 import com.kliq.app.viewmodel.ThemeViewModel
 
 val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
@@ -48,15 +49,7 @@ val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
 
 /**
  * Main scaffold composable that hosts the Bottom Navigation Bar
- * and the [NavHost] for all 5 primary screens.
- *
- * Follows MVVM: The [NavigationViewModel] owns the navigation state,
- * the [TopBarViewModel] owns the top bar state, and this composable
- * purely observes and renders based on those states.
- *
- * @param navigationViewModel Hilt-injected ViewModel for navigation state.
- * @param topBarViewModel Hilt-injected ViewModel for top bar state.
- * @param navController The [NavHostController] managing the back stack.
+ * and the [NavHost] for all primary screens.
  */
 @Composable
 fun KliqMainScaffold(
@@ -71,7 +64,6 @@ fun KliqMainScaffold(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: NavigationRoute.Home.route
 
-    // Bottom Bar wird ausgeblendet, wenn Chat-Screens, Splash oder Phone-Login aktiv sind
     val showBottomBar = currentRoute !in listOf(
         ChatRoutes.CHAT_LIST,
         ChatRoutes.CHAT_DETAIL,
@@ -79,105 +71,77 @@ fun KliqMainScaffold(
         CoreRoutes.PHONE_LOGIN
     )
 
-    // Sync ViewModel state when NavController route changes externally
-    // (e.g., system back press)
     if (currentRoute != navigationState.currentRoute) {
         navigationViewModel.onTabSelected(currentRoute)
     }
 
-    // Update top bar title whenever the route changes
     LaunchedEffect(currentRoute) {
         topBarViewModel.updateTitleForRoute(currentRoute)
     }
 
-    // Bottom Bar nur auf den Haupt-Tab-Routen anzeigen
-    val isMainTabRoute = NavigationRoute.bottomBarItems.any { it.route == currentRoute }
-
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
-            if (isMainTabRoute) {
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        bottomBar = {
-            if (showBottomBar) {
-                KliqBottomBar(
-                    currentRoute = currentRoute,
-                    notificationBadgeCount = navigationState.notificationBadgeCount,
-                    onTabSelected = { route ->
-                        navigationViewModel.onTabSelected(route)
-                        navController.navigate(route) {
-                            // Pop up to start destination to avoid building a large back stack
-                            popUpTo(navController.graph.startDestinationId) {
-                                saveState = true
+            bottomBar = {
+                if (showBottomBar) {
+                    KliqBottomBar(
+                        currentRoute = currentRoute,
+                        notificationBadgeCount = navigationState.notificationBadgeCount,
+                        onTabSelected = { route ->
+                            navigationViewModel.onTabSelected(route)
+                            navController.navigate(route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
                             }
-                            // Avoid multiple copies of the same destination
-                            launchSingleTop = true
-                            // Restore state when re-selecting a previously selected tab
-                            restoreState = true
+                        }
+                    )
+                }
+            }
+        ) { innerPadding ->
+            KliqNavHost(
+                navController = navController,
+                modifier = Modifier.padding(innerPadding),
+                currentRoute = currentRoute,
+                previousRoute = navigationState.previousRoute,
+                topBarState = topBarState,
+                onToggleMenu = topBarViewModel::toggleMenu,
+                onDismissMenu = topBarViewModel::dismissMenu,
+                onMenuAction = { action ->
+                    when (action) {
+                        TopBarMenuAction.Settings -> { /* Settings-Screen öffnen */ }
+                        TopBarMenuAction.EditProfile -> {
+                            navController.navigate(NavigationRoute.Profile.route) {
+                                launchSingleTop = true
+                            }
+                        }
+                        TopBarMenuAction.ToggleTheme -> { themeViewModel.toggleTheme() }
+                        TopBarMenuAction.About -> { /* About-Dialog anzeigen */ }
+                        TopBarMenuAction.Logout -> {
+                            navController.navigate(
+                                NavigationRoute.verificationRoute("+49 176 12345678")
+                            )
                         }
                     }
-                )
-            }
+                },
+                onNavigateToChat = {
+                    navController.navigate(ChatRoutes.CHAT_LIST) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToClub = { clubId ->
+                    navController.navigate(ClubRoutes.clubDetail(clubId)) {
+                        launchSingleTop = true
+                    }
+                }
+            )
         }
-    ) { innerPadding ->
-        KliqNavHost(
-            navController = navController,
-            modifier = Modifier.padding(innerPadding),
-            currentRoute = currentRoute,
-            previousRoute = navigationState.previousRoute,
-            topBarState = topBarState,
-            onToggleMenu = topBarViewModel::toggleMenu,
-            onDismissMenu = topBarViewModel::dismissMenu,
-            onMenuAction = { action ->
-                // Globale Menü-Aktionen werden hier zentral verarbeitet
-                when (action) {
-                    TopBarMenuAction.Settings -> { /* TODO: Settings-Screen öffnen */ }
-                    TopBarMenuAction.EditProfile -> {
-                        navController.navigate(NavigationRoute.Profile.route) {
-                            launchSingleTop = true
-                        }
-                    }
-                    TopBarMenuAction.ToggleTheme -> { themeViewModel.toggleTheme() }
-                    TopBarMenuAction.About -> { /* TODO: About-Dialog anzeigen */ }
-                    TopBarMenuAction.Logout -> {
-                        navController.navigate(
-                            NavigationRoute.verificationRoute("+49 176 12345678")
-                        )
-                    }
-                }
-            },
-            onNavigateToChat = {
-                navController.navigate(ChatRoutes.CHAT_LIST) {
-                    launchSingleTop = true
-                }
-            },
-            onNavigateToClub = { clubId ->
-                navController.navigate(ClubRoutes.clubDetail(clubId)) {
-                    launchSingleTop = true
-                }
-            }
-        )
-    }
     }
 }
 
-/**
- * Navigation host defining the composable destinations for each
- * bottom bar tab. Includes directional slide + fade transitions
- * based on tab position for polished screen-to-screen animation.
- *
- * @param navController The [NavHostController] managing navigation.
- * @param modifier Modifier applied to the NavHost container.
- * @param currentRoute The currently active route for transition direction.
- * @param previousRoute The previously active route for transition direction.
- * @param topBarState The current top bar UI state.
- * @param onToggleMenu Callback to toggle the overflow menu.
- * @param onDismissMenu Callback to dismiss the overflow menu.
- * @param onMenuAction Callback when a menu action is selected.
- */
 @Composable
 private fun KliqNavHost(
     navController: NavHostController,
@@ -265,8 +229,16 @@ private fun KliqNavHost(
                 onMenuAction = onMenuAction
             )
         }
+        composable(NavigationRoute.ProfileCreation.route) {
+            ProfileCreationScreen(
+                onProfileCreated = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(NavigationRoute.ProfileCreation.route) { inclusive = true }
+                    }
+                }
+            )
+        }
 
-        // SMS-Verifizierung mit Telefonnummer als Navigation-Argument
         composable(
             route = NavigationRoute.VERIFICATION_ROUTE,
             arguments = listOf(
@@ -280,8 +252,10 @@ private fun KliqNavHost(
                     navController.navigate(NavigationRoute.Home.route) {
                         popUpTo(0) { inclusive = true }
                     }
-                },
-        // Chat-Screens (außerhalb der Bottom Bar Navigation)
+                }
+            )
+        }
+
         composable(ChatRoutes.CHAT_LIST) {
             ChatListScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -304,8 +278,7 @@ private fun KliqNavHost(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
-        
-        // Club Detail Screen
+
         composable(
             route = ClubRoutes.CLUB_DETAIL,
             arguments = listOf(
@@ -323,7 +296,6 @@ private fun KliqNavHost(
     }
 }
 
-/** Slide-in + fade-in enter transition based on navigation direction. */
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideEnterTransition(
     slideRight: Boolean
 ): EnterTransition {
@@ -338,7 +310,6 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideEnterTransiti
     ) + fadeIn(animationSpec = tween(durationMillis = 350))
 }
 
-/** Slide-out + fade-out exit transition based on navigation direction. */
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideExitTransition(
     slideRight: Boolean
 ): ExitTransition {

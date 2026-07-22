@@ -60,6 +60,13 @@ sealed class NavigationRoute(
         unselectedIcon = Icons.Outlined.Person
     )
 
+    data object ProfileCreation : NavigationRoute(
+        route = "onboarding/profile_creation",
+        label = "Profil erstellen",
+        selectedIcon = Icons.Filled.Person,
+        unselectedIcon = Icons.Outlined.Person
+    )
+
     companion object {
         /** Route-Template für den SMS-Verifizierungs-Screen. Erwartet phoneNumber als Argument. */
         const val VERIFICATION_ROUTE = "verification/{phoneNumber}"

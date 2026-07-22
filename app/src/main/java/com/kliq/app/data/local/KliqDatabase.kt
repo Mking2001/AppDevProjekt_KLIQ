@@ -26,8 +26,8 @@ import com.kliq.app.data.local.entities.UserPreferencesEntity
         ChatEntity::class,
         MessageEntity::class
     ],
-    version = 7,
-    exportSchema = true
+    version = 8,
+    exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
 abstract class KliqDatabase : RoomDatabase() {

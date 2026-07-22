@@ -39,6 +39,29 @@ class UserRepositoryImpl @Inject constructor(
         userDao.insertUser(user)
     }
 
+    override suspend fun saveProfile(
+        userId: String,
+        username: String,
+        age: Int,
+        hometown: String,
+        bio: String
+    ) = withContext(Dispatchers.IO) {
+        val existingUser = userDao.getUserByIdOneShot(userId)
+        val updatedUser = UserEntity(
+            id = userId,
+            username = username,
+            email = existingUser?.email ?: "",
+            age = age,
+            hometown = hometown,
+            profilePictureUrl = existingUser?.profilePictureUrl,
+            bio = bio.ifBlank { null },
+            phoneNumber = existingUser?.phoneNumber,
+            isVerified = existingUser?.isVerified ?: false,
+            updatedAtTimestampMs = System.currentTimeMillis()
+        )
+        userDao.insertUser(updatedUser)
+    }
+
     override suspend fun saveUserPreferences(preferences: UserPreferencesEntity) = withContext(Dispatchers.IO) {
         userDao.insertUserPreferences(preferences)
     }
