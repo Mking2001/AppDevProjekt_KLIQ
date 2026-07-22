@@ -1,10 +1,16 @@
 package com.kliq.app.di
 
 import android.content.Context
-import androidx.room.Room
+import com.kliq.app.data.local.DatabaseMigrationManager
 import com.kliq.app.data.local.KliqDatabase
+import com.kliq.app.data.local.dao.ChatDao
+import com.kliq.app.data.local.dao.ClubDao
+import com.kliq.app.data.local.dao.EventDao
+import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.remote.KliqApiService
+import com.kliq.app.data.remote.MockSmsVerificationService
+import com.kliq.app.data.remote.SmsVerificationService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,17 +27,23 @@ object AppModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): KliqDatabase {
-        return Room.databaseBuilder(
-            context,
-            KliqDatabase::class.java,
-            "kliq_db"
-        )
-            .fallbackToDestructiveMigration()
-            .build()
+        return DatabaseMigrationManager.buildDatabase(context)
     }
 
     @Provides
     fun provideUserDao(database: KliqDatabase): UserDao = database.userDao()
+
+    @Provides
+    fun provideClubDao(database: KliqDatabase): ClubDao = database.clubDao()
+
+    @Provides
+    fun provideEventDao(database: KliqDatabase): EventDao = database.eventDao()
+
+    @Provides
+    fun provideReviewDao(database: KliqDatabase): ReviewDao = database.reviewDao()
+
+    @Provides
+    fun provideChatDao(database: KliqDatabase): ChatDao = database.chatDao()
 
     @Provides
     @Singleton
@@ -41,5 +53,11 @@ object AppModule {
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(KliqApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSmsVerificationService(): SmsVerificationService {
+        return MockSmsVerificationService()
     }
 }

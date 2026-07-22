@@ -3,6 +3,7 @@ package com.kliq.app.ui.screens.map
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,15 +44,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.ui.components.KliqCategoryChip
+import com.kliq.app.ui.components.MapQuickViewCard
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
+import com.kliq.app.util.HapticFeedbackUtils
 
 /**
  * Map-Screen mit Karten-Platzhalter, Filter-Chips,
@@ -74,8 +81,12 @@ fun MapScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Dunkel gestylte Karten-Mockup-Fläche mit Rasterlinien
-        MapPlaceholder(modifier = Modifier.fillMaxSize())
+        // Dunkel gestylte Karten-Mockup-Fläche mit Rasterlinien und interaktiven Markern
+        MapPlaceholder(
+            venues = uiState.nearbyVenues,
+            onVenueLongPress = { viewModel.onMarkerLongPressed(it) },
+            modifier = Modifier.fillMaxSize()
+        )
 
         // Filter-Chips am oberen Rand über der Karte
         LazyRow(
@@ -113,6 +124,17 @@ fun MapScreen(
             venues = uiState.nearbyVenues,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
+
+        // Quick View Card (Overlay)
+        MapQuickViewCard(
+            venue = uiState.selectedVenue,
+            isVisible = uiState.selectedVenue != null,
+            onDismiss = { viewModel.onQuickViewDismissed() },
+            onNavigateDetails = { /* TODO */ },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 80.dp)
+        )
     }
 }
 
@@ -121,11 +143,16 @@ fun MapScreen(
  * Simuliert eine Kartenansicht bis die echte Google Maps Integration erfolgt.
  */
 @Composable
-private fun MapPlaceholder(modifier: Modifier = Modifier) {
+private fun MapPlaceholder(
+    venues: List<VenueItemUi>,
+    onVenueLongPress: (VenueItemUi) -> Unit,
+    modifier: Modifier = Modifier
+) {
     val gridColor = PurplePrimary.copy(alpha = 0.08f)
     val dotColor = PurplePrimaryLight.copy(alpha = 0.15f)
+    val view = LocalView.current
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .background(MaterialTheme.colorScheme.background)
             .drawBehind {
@@ -157,32 +184,47 @@ private fun MapPlaceholder(modifier: Modifier = Modifier) {
                     )
                     y += gridSpacing
                 }
-
-                // Simulierte Standort-Punkte
-                val points = listOf(
-                    Offset(size.width * 0.3f, size.height * 0.25f),
-                    Offset(size.width * 0.6f, size.height * 0.35f),
-                    Offset(size.width * 0.45f, size.height * 0.5f),
-                    Offset(size.width * 0.7f, size.height * 0.2f),
-                    Offset(size.width * 0.2f, size.height * 0.45f)
-                )
-                points.forEach { point ->
-                    drawCircle(
-                        color = dotColor,
-                        radius = 24f,
-                        center = point
-                    )
-                    drawCircle(
-                        color = PurplePrimaryLight.copy(alpha = 0.4f),
-                        radius = 8f,
-                        center = point
-                    )
-                }
-            },
-        contentAlignment = Alignment.Center
+            }
     ) {
+        val w = maxWidth
+        val h = maxHeight
+        
+        val relativePoints = listOf(
+            Offset(0.3f, 0.25f),
+            Offset(0.6f, 0.35f),
+            Offset(0.45f, 0.5f),
+            Offset(0.7f, 0.2f),
+            Offset(0.2f, 0.45f)
+        )
+        
+        venues.forEachIndexed { index, venue ->
+            val relPoint = relativePoints[index % relativePoints.size]
+            Box(
+                modifier = Modifier
+                    .offset(x = w * relPoint.x - 12.dp, y = h * relPoint.y - 12.dp)
+                    .size(24.dp)
+                    .clip(CircleShape)
+                    .background(dotColor)
+                    .pointerInput(venue.id) {
+                        detectTapGestures(
+                            onLongPress = {
+                                HapticFeedbackUtils.triggerHeavyImpact(view)
+                                onVenueLongPress(venue)
+                            }
+                        )
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(PurplePrimaryLight.copy(alpha = 0.4f))
+                )
+            }
+        }
         // Zentraler Standort-Marker
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 imageVector = Icons.Filled.LocationOn,
                 contentDescription = "Standort",
