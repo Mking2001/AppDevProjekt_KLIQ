@@ -34,6 +34,99 @@ class DatabaseMigrationTest {
     }
 
     @Test
+    fun migrate1To7_fullChain_preservesDataAndInitializesNewSchema() {
+        // Step 1: Create V1 Schema
+        val configV1 = SupportSQLiteOpenHelper.Configuration.builder(context)
+            .name(TEST_DB_NAME)
+            .callback(object : SupportSQLiteOpenHelper.Callback(1) {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `users` (" +
+                        "`id` TEXT NOT NULL, `username` TEXT NOT NULL, `email` TEXT NOT NULL, " +
+                        "`profilePictureUrl` TEXT, `bio` TEXT, PRIMARY KEY(`id`))"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `clubs` (" +
+                        "`id` TEXT NOT NULL, `name` TEXT NOT NULL, `category` TEXT NOT NULL, " +
+                        "`rating` REAL NOT NULL, `imageUrl` TEXT NOT NULL, `region` TEXT NOT NULL, " +
+                        "`isFavorite` INTEGER NOT NULL, `currentCapacityPercent` INTEGER NOT NULL, " +
+                        "`malePercentage` INTEGER NOT NULL, `femalePercentage` INTEGER NOT NULL, " +
+                        "`totalLiveVisitors` INTEGER NOT NULL, PRIMARY KEY(`id`))"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `chats` (" +
+                        "`id` TEXT NOT NULL, `name` TEXT NOT NULL, `lastMessageText` TEXT NOT NULL, " +
+                        "`lastMessageTimestamp` INTEGER NOT NULL, `avatarInitial` TEXT NOT NULL, " +
+                        "`unreadCount` INTEGER NOT NULL, `chatType` TEXT NOT NULL, `isOnline` INTEGER NOT NULL, " +
+                        "PRIMARY KEY(`id`))"
+                    )
+                }
+
+                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+            })
+            .build()
+
+        val helperV1 = FrameworkSQLiteOpenHelperFactory().create(configV1)
+        val dbV1 = helperV1.writableDatabase
+
+        dbV1.execSQL(
+            "INSERT INTO `users` (`id`, `username`, `email`, `profilePictureUrl`, `bio`) " +
+            "VALUES ('u_v1', 'v1_user', 'v1@kliq.app', NULL, 'V1 Bio')"
+        )
+        dbV1.execSQL(
+            "INSERT INTO `clubs` (`id`, `name`, `category`, `rating`, `imageUrl`, `region`, " +
+            "`isFavorite`, `currentCapacityPercent`, `malePercentage`, `femalePercentage`, `totalLiveVisitors`) " +
+            "VALUES ('c_v1', 'V1 Club', 'Techno', 4.0, 'https://img.com/v1.jpg', 'Berlin', 1, 50, 50, 50, 100)"
+        )
+        dbV1.execSQL(
+            "INSERT INTO `chats` (`id`, `name`, `lastMessageText`, `lastMessageTimestamp`, `avatarInitial`, " +
+            "`unreadCount`, `chatType`, `isOnline`) " +
+            "VALUES ('ch_v1', 'V1 Chat', 'Hello V1', 1600000000000, 'V', 1, 'PRIVATE', 1)"
+        )
+
+        helperV1.close()
+
+        // Step 2: Migrate from V1 to V7
+        val configV7 = SupportSQLiteOpenHelper.Configuration.builder(context)
+            .name(TEST_DB_NAME)
+            .callback(object : SupportSQLiteOpenHelper.Callback(7) {
+                override fun onCreate(db: SupportSQLiteDatabase) {}
+
+                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                    var ver = oldVersion
+                    if (ver == 1) { DatabaseMigrations.MIGRATION_1_2.migrate(db); ver = 2 }
+                    if (ver == 2) { DatabaseMigrations.MIGRATION_2_3.migrate(db); ver = 3 }
+                    if (ver == 3) { DatabaseMigrations.MIGRATION_3_4.migrate(db); ver = 4 }
+                    if (ver == 4) { DatabaseMigrations.MIGRATION_4_5.migrate(db); ver = 5 }
+                    if (ver == 5) { DatabaseMigrations.MIGRATION_5_6.migrate(db); ver = 6 }
+                    if (ver == 6) { DatabaseMigrations.MIGRATION_6_7.migrate(db) }
+                }
+            })
+            .build()
+
+        val helperV7 = FrameworkSQLiteOpenHelperFactory().create(configV7)
+        val dbV7 = helperV7.writableDatabase
+
+        // Step 3: Assert user, club, chat data preserved
+        val uCursor = dbV7.query("SELECT * FROM `users` WHERE `id` = 'u_v1'")
+        assertTrue(uCursor.moveToFirst())
+        assertEquals("v1_user", uCursor.getString(uCursor.getColumnIndexOrThrow("username")))
+        uCursor.close()
+
+        val cCursor = dbV7.query("SELECT * FROM `clubs` WHERE `id` = 'c_v1'")
+        assertTrue(cCursor.moveToFirst())
+        assertEquals("V1 Club", cCursor.getString(cCursor.getColumnIndexOrThrow("name")))
+        cCursor.close()
+
+        val chCursor = dbV7.query("SELECT * FROM `chats` WHERE `id` = 'ch_v1'")
+        assertTrue(chCursor.moveToFirst())
+        assertEquals("V1 Chat", chCursor.getString(chCursor.getColumnIndexOrThrow("name")))
+        chCursor.close()
+
+        helperV7.close()
+    }
+
+    @Test
     fun migrate6To7_preservesExistingDataAndAddsNewFields() {
         // Step 1: Create Version 6 Database Schema manually
         val configV6 = SupportSQLiteOpenHelper.Configuration.builder(context)
