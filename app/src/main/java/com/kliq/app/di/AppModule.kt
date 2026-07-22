@@ -18,6 +18,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
+import com.kliq.app.data.local.DatabaseMigrationManager
+
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
@@ -25,13 +27,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): KliqDatabase {
-        return Room.databaseBuilder(
-            context,
-            KliqDatabase::class.java,
-            "kliq_db"
-        )
-        .addMigrations(*com.kliq.app.data.local.DatabaseMigrations.ALL_MIGRATIONS)
-        .build()
+        return DatabaseMigrationManager.buildDatabase(context)
     }
 
     @Provides

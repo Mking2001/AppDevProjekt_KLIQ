@@ -105,12 +105,45 @@ object DatabaseMigrations {
         }
     }
 
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // User entity upgrades
+            db.execSQL("ALTER TABLE `users` ADD COLUMN `phoneNumber` TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE `users` ADD COLUMN `isVerified` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `users` ADD COLUMN `updatedAtTimestampMs` INTEGER NOT NULL DEFAULT 0")
+
+            // Club entity upgrades
+            db.execSQL("ALTER TABLE `clubs` ADD COLUMN `isPromoted` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `clubs` ADD COLUMN `city` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("ALTER TABLE `clubs` ADD COLUMN `postalCode` TEXT NOT NULL DEFAULT ''")
+
+            // Event entity upgrades
+            db.execSQL("ALTER TABLE `events` ADD COLUMN `capacityLimit` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `events` ADD COLUMN `isCancelled` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `events` ADD COLUMN `category` TEXT NOT NULL DEFAULT ''")
+
+            // Review entity upgrades
+            db.execSQL("ALTER TABLE `reviews` ADD COLUMN `helpfulVotesCount` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `reviews` ADD COLUMN `flaggedCount` INTEGER NOT NULL DEFAULT 0")
+
+            // Chat entity upgrades
+            db.execSQL("ALTER TABLE `chats` ADD COLUMN `isPinned` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `chats` ADD COLUMN `isMuted` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `chats` ADD COLUMN `lastReadMessageId` TEXT DEFAULT NULL")
+
+            // Message entity upgrades
+            db.execSQL("ALTER TABLE `messages` ADD COLUMN `replyToMessageId` TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE `messages` ADD COLUMN `isEdited` INTEGER NOT NULL DEFAULT 0")
+        }
+    }
+
     // Array of all migrations. Scalable strategy for providing them to the builder.
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_1_2,
         MIGRATION_2_3,
         MIGRATION_3_4,
         MIGRATION_4_5,
-        MIGRATION_5_6
+        MIGRATION_5_6,
+        MIGRATION_6_7
     )
 }
