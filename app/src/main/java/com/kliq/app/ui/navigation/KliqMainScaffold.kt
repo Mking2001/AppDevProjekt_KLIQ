@@ -36,6 +36,8 @@ import com.kliq.app.ui.screens.home.HomeScreen
 import com.kliq.app.ui.screens.map.MapScreen
 import com.kliq.app.ui.screens.notifications.NotificationsScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
+import com.kliq.app.ui.screens.verification.SmsVerificationScreen
+import com.kliq.app.ui.screens.verification.SmsVerificationViewModel
 import com.kliq.app.ui.screens.auth.PhoneLoginScreen
 import com.kliq.app.ui.screens.splash.SplashScreen
 import com.kliq.app.viewmodel.ThemeViewModel
@@ -88,6 +90,13 @@ fun KliqMainScaffold(
         topBarViewModel.updateTitleForRoute(currentRoute)
     }
 
+    // Bottom Bar nur auf den Haupt-Tab-Routen anzeigen
+    val isMainTabRoute = NavigationRoute.bottomBarItems.any { it.route == currentRoute }
+
+    Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        bottomBar = {
+            if (isMainTabRoute) {
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -133,7 +142,11 @@ fun KliqMainScaffold(
                     }
                     TopBarMenuAction.ToggleTheme -> { themeViewModel.toggleTheme() }
                     TopBarMenuAction.About -> { /* TODO: About-Dialog anzeigen */ }
-                    TopBarMenuAction.Logout -> { /* TODO: Logout-Flow starten */ }
+                    TopBarMenuAction.Logout -> {
+                        navController.navigate(
+                            NavigationRoute.verificationRoute("+49 176 12345678")
+                        )
+                    }
                 }
             },
             onNavigateToChat = {
@@ -253,6 +266,21 @@ private fun KliqNavHost(
             )
         }
 
+        // SMS-Verifizierung mit Telefonnummer als Navigation-Argument
+        composable(
+            route = NavigationRoute.VERIFICATION_ROUTE,
+            arguments = listOf(
+                navArgument(SmsVerificationViewModel.PHONE_NUMBER_KEY) {
+                    type = NavType.StringType
+                }
+            )
+        ) {
+            SmsVerificationScreen(
+                onVerificationSuccess = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
         // Chat-Screens (außerhalb der Bottom Bar Navigation)
         composable(ChatRoutes.CHAT_LIST) {
             ChatListScreen(
