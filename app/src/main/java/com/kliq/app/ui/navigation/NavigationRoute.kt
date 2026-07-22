@@ -1,5 +1,6 @@
 package com.kliq.app.ui.navigation
 
+import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
@@ -60,9 +61,18 @@ sealed class NavigationRoute(
     )
 
     companion object {
+        /** Route-Template für den SMS-Verifizierungs-Screen. Erwartet phoneNumber als Argument. */
+        const val VERIFICATION_ROUTE = "verification/{phoneNumber}"
+
+        /** Erzeugt die Navigations-Route zur Verifizierung mit URL-kodierter Telefonnummer. */
+        fun verificationRoute(phoneNumber: String): String {
+            return "verification/${Uri.encode(phoneNumber)}"
+        }
+
         /** Ordered list of all bottom bar tabs */
         val bottomBarItems: List<NavigationRoute> = listOf(
             Home, Explore, Map, Notifications, Profile
         )
     }
 }
+

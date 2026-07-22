@@ -17,15 +17,19 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.kliq.app.ui.screens.explore.ExploreScreen
 import com.kliq.app.ui.screens.home.HomeScreen
 import com.kliq.app.ui.screens.map.MapScreen
 import com.kliq.app.ui.screens.notifications.NotificationsScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
+import com.kliq.app.ui.screens.verification.SmsVerificationScreen
+import com.kliq.app.ui.screens.verification.SmsVerificationViewModel
 
 /**
  * Main scaffold composable that hosts the Bottom Navigation Bar
@@ -61,26 +65,31 @@ fun KliqMainScaffold(
         topBarViewModel.updateTitleForRoute(currentRoute)
     }
 
+    // Bottom Bar nur auf den Haupt-Tab-Routen anzeigen
+    val isMainTabRoute = NavigationRoute.bottomBarItems.any { it.route == currentRoute }
+
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
-            KliqBottomBar(
-                currentRoute = currentRoute,
-                notificationBadgeCount = navigationState.notificationBadgeCount,
-                onTabSelected = { route ->
-                    navigationViewModel.onTabSelected(route)
-                    navController.navigate(route) {
-                        // Pop up to start destination to avoid building a large back stack
-                        popUpTo(navController.graph.startDestinationId) {
-                            saveState = true
+            if (isMainTabRoute) {
+                KliqBottomBar(
+                    currentRoute = currentRoute,
+                    notificationBadgeCount = navigationState.notificationBadgeCount,
+                    onTabSelected = { route ->
+                        navigationViewModel.onTabSelected(route)
+                        navController.navigate(route) {
+                            // Pop up to start destination to avoid building a large back stack
+                            popUpTo(navController.graph.startDestinationId) {
+                                saveState = true
+                            }
+                            // Avoid multiple copies of the same destination
+                            launchSingleTop = true
+                            // Restore state when re-selecting a previously selected tab
+                            restoreState = true
                         }
-                        // Avoid multiple copies of the same destination
-                        launchSingleTop = true
-                        // Restore state when re-selecting a previously selected tab
-                        restoreState = true
                     }
-                }
-            )
+                )
+            }
         }
     ) { innerPadding ->
         KliqNavHost(
@@ -102,7 +111,11 @@ fun KliqMainScaffold(
                     }
                     TopBarMenuAction.ToggleTheme -> { /* TODO: Theme-Wechsel implementieren */ }
                     TopBarMenuAction.About -> { /* TODO: About-Dialog anzeigen */ }
-                    TopBarMenuAction.Logout -> { /* TODO: Logout-Flow starten */ }
+                    TopBarMenuAction.Logout -> {
+                        navController.navigate(
+                            NavigationRoute.verificationRoute("+49 176 12345678")
+                        )
+                    }
                 }
             }
         )
@@ -186,6 +199,25 @@ private fun KliqNavHost(
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
                 onMenuAction = onMenuAction
+            )
+        }
+
+        // SMS-Verifizierung mit Telefonnummer als Navigation-Argument
+        composable(
+            route = NavigationRoute.VERIFICATION_ROUTE,
+            arguments = listOf(
+                navArgument(SmsVerificationViewModel.PHONE_NUMBER_KEY) {
+                    type = NavType.StringType
+                }
+            )
+        ) {
+            SmsVerificationScreen(
+                onVerificationSuccess = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
