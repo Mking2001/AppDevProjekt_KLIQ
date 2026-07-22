@@ -6,8 +6,11 @@ import com.kliq.app.data.local.dao.EventDao
 import com.kliq.app.data.local.entities.EventEntity
 import com.kliq.app.data.model.Event
 import com.kliq.app.data.model.SpecialOffer
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -22,34 +25,34 @@ class EventRepositoryImpl @Inject constructor(
     override fun getAllEvents(): Flow<List<Event>> {
         return eventDao.getAllEvents().map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getEventsForClub(clubId: String): Flow<List<Event>> {
         return eventDao.getEventsByClubId(clubId).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getEventById(eventId: String): Flow<Event?> {
         return eventDao.getEventById(eventId).map { entity ->
             entity?.toDomain()
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun searchEventsLocal(query: String): Flow<List<Event>> {
         return eventDao.searchEvents(query).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getUpcomingEvents(minTimestamp: Long): Flow<List<Event>> {
         return eventDao.getUpcomingEvents(minTimestamp).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
-    override suspend fun saveEvents(events: List<Event>) {
+    override suspend fun saveEvents(events: List<Event>) = withContext(Dispatchers.IO) {
         val entities = events.map { it.toEntity() }
         eventDao.insertEvents(entities)
     }

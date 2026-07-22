@@ -7,9 +7,12 @@ import com.kliq.app.data.model.Review
 import com.kliq.app.data.model.ReviewVerificationMethod
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.util.AntiSpamReviewValidator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,27 +28,27 @@ class ReviewRepositoryImpl @Inject constructor(
     override fun getReviewsForClub(clubId: String): Flow<List<Review>> {
         return reviewDao.getReviewsForClub(clubId).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getVerifiedReviewsForClub(clubId: String): Flow<List<Review>> {
         return reviewDao.getVerifiedReviewsForClub(clubId).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getReviewsForEvent(eventId: String): Flow<List<Review>> {
         return reviewDao.getReviewsForEvent(eventId).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getAverageRatingForClub(clubId: String): Flow<Double?> {
-        return reviewDao.getAverageRatingForClub(clubId)
+        return reviewDao.getAverageRatingForClub(clubId).flowOn(Dispatchers.IO)
     }
 
-    override suspend fun syncReviewsForClub(clubId: String): Result<Unit> {
-        return try {
+    override suspend fun syncReviewsForClub(clubId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -59,13 +62,13 @@ class ReviewRepositoryImpl @Inject constructor(
         text: String,
         userLat: Double,
         userLon: Double
-    ): Result<Review> {
+    ): Result<Review> = withContext(Dispatchers.IO) {
         if (!antiSpamValidator.isRatingValid(rating)) {
-            return Result.failure(IllegalArgumentException("Rating muss zwischen 1 und 5 Sternen liegen."))
+            return@withContext Result.failure(IllegalArgumentException("Rating muss zwischen 1 und 5 Sternen liegen."))
         }
 
         val clubEntity = clubDao.getClubById(clubId).firstOrNull()
-            ?: return Result.failure(IllegalArgumentException("Club mit ID $clubId nicht gefunden."))
+            ?: return@withContext Result.failure(IllegalArgumentException("Club mit ID $clubId nicht gefunden."))
 
         val verification = antiSpamValidator.validateGpsLocationMatch(
             userLat = userLat,
@@ -87,7 +90,7 @@ class ReviewRepositoryImpl @Inject constructor(
         )
 
         reviewDao.insertReview(entity)
-        return Result.success(entity.toDomain())
+        Result.success(entity.toDomain())
     }
 
     override suspend fun submitReviewWithQrCheck(
@@ -96,9 +99,9 @@ class ReviewRepositoryImpl @Inject constructor(
         rating: Int,
         text: String,
         qrToken: String
-    ): Result<Review> {
+    ): Result<Review> = withContext(Dispatchers.IO) {
         if (!antiSpamValidator.isRatingValid(rating)) {
-            return Result.failure(IllegalArgumentException("Rating muss zwischen 1 und 5 Sternen liegen."))
+            return@withContext Result.failure(IllegalArgumentException("Rating muss zwischen 1 und 5 Sternen liegen."))
         }
 
         val verification = antiSpamValidator.validateQrCodeScanToken(qrToken, targetId)
@@ -114,7 +117,7 @@ class ReviewRepositoryImpl @Inject constructor(
         )
 
         reviewDao.insertReview(entity)
-        return Result.success(entity.toDomain())
+        Result.success(entity.toDomain())
     }
 
     override suspend fun submitUnverifiedReview(
@@ -124,9 +127,9 @@ class ReviewRepositoryImpl @Inject constructor(
         targetUserId: String?,
         rating: Int,
         text: String
-    ): Result<Review> {
+    ): Result<Review> = withContext(Dispatchers.IO) {
         if (!antiSpamValidator.isRatingValid(rating)) {
-            return Result.failure(IllegalArgumentException("Rating muss zwischen 1 und 5 Sternen liegen."))
+            return@withContext Result.failure(IllegalArgumentException("Rating muss zwischen 1 und 5 Sternen liegen."))
         }
 
         val entity = ReviewEntity(
@@ -143,7 +146,7 @@ class ReviewRepositoryImpl @Inject constructor(
         )
 
         reviewDao.insertReview(entity)
-        return Result.success(entity.toDomain())
+        Result.success(entity.toDomain())
     }
 
     private fun ReviewEntity.toDomain(): Review {

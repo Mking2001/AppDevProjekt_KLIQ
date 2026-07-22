@@ -8,8 +8,11 @@ import com.kliq.app.data.model.ChatMessage
 import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.model.formatMsToIso
 import com.kliq.app.data.remote.KliqApiService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,35 +26,35 @@ class ChatRepositoryImpl @Inject constructor(
     override fun getAllChats(): Flow<List<ChatConversation>> {
         return chatDao.getAllChats().map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getPrivateChats(): Flow<List<ChatConversation>> {
         return chatDao.getPrivateChats().map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getPublicCityChats(cityRegion: String?): Flow<List<ChatConversation>> {
         return chatDao.getPublicCityChats(cityRegion).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getMessagesForChat(chatId: String): Flow<List<ChatMessage>> {
         return chatDao.getMessagesForChat(chatId).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun searchMessagesInChat(chatId: String, query: String): Flow<List<ChatMessage>> {
         return chatDao.searchMessagesInChat(chatId, query).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
-    override suspend fun syncChatMessages(chatId: String): Result<Unit> {
-        return try {
+    override suspend fun syncChatMessages(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -63,8 +66,8 @@ class ChatRepositoryImpl @Inject constructor(
         senderUserId: String,
         senderName: String,
         text: String
-    ): Result<ChatMessage> {
-        return sendInternalMessage(
+    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+        sendInternalMessage(
             chatId = chatId,
             senderUserId = senderUserId,
             senderName = senderName,
@@ -79,8 +82,8 @@ class ChatRepositoryImpl @Inject constructor(
         senderName: String,
         text: String,
         mediaUrl: String
-    ): Result<ChatMessage> {
-        return sendInternalMessage(
+    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+        sendInternalMessage(
             chatId = chatId,
             senderUserId = senderUserId,
             senderName = senderName,
@@ -95,8 +98,8 @@ class ChatRepositoryImpl @Inject constructor(
         senderName: String,
         text: String,
         mediaUrl: String?
-    ): Result<ChatMessage> {
-        return try {
+    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+        try {
             val nowMs = System.currentTimeMillis()
             val nowIso = formatMsToIso(nowMs)
 
@@ -129,11 +132,11 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateMessageStatus(messageId: String, status: MessageStatus) {
+    override suspend fun updateMessageStatus(messageId: String, status: MessageStatus) = withContext(Dispatchers.IO) {
         chatDao.updateMessageStatus(messageId, status)
     }
 
-    override suspend fun markChatAsRead(chatId: String) {
+    override suspend fun markChatAsRead(chatId: String) = withContext(Dispatchers.IO) {
         chatDao.markChatAsRead(chatId)
     }
 

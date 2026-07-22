@@ -10,9 +10,12 @@ import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toDomain
 import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,28 +30,28 @@ class ClubRepositoryImpl @Inject constructor(
     override fun getAllClubs(): Flow<List<Club>> {
         return clubDao.getAllClubs().map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getFavoriteClubs(): Flow<List<Club>> {
         return clubDao.getFavoriteClubs().map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getClubById(clubId: String): Flow<Club?> {
         return clubDao.getClubById(clubId).map { entity ->
             entity?.toDomain()
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun searchClubsLocal(query: String): Flow<List<Club>> {
         return clubDao.searchClubs(query).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
-    override suspend fun toggleFavorite(clubId: String, currentFavoriteState: Boolean) {
+    override suspend fun toggleFavorite(clubId: String, currentFavoriteState: Boolean) = withContext(Dispatchers.IO) {
         clubDao.updateFavoriteStatus(clubId, !currentFavoriteState)
     }
 
@@ -57,8 +60,8 @@ class ClubRepositoryImpl @Inject constructor(
         userLat: Double?,
         userLon: Double?,
         radiusKm: Int
-    ): Result<List<Club>> {
-        return try {
+    ): Result<List<Club>> = withContext(Dispatchers.IO) {
+        try {
             val response = apiService.searchExternalClubsAndEvents(
                 query = query,
                 latitude = userLat,
@@ -78,12 +81,12 @@ class ClubRepositoryImpl @Inject constructor(
         clubId: String,
         userLat: Double,
         userLon: Double
-    ): Boolean {
-        val clubEntity = clubDao.getClubById(clubId).firstOrNull() ?: return false
+    ): Boolean = withContext(Dispatchers.IO) {
+        val clubEntity = clubDao.getClubById(clubId).firstOrNull() ?: return@withContext false
         val distanceMeters = calculateDistanceMeters(
             userLat, userLon, clubEntity.latitude, clubEntity.longitude
         )
-        return distanceMeters <= clubEntity.geofenceRadiusMeters
+        distanceMeters <= clubEntity.geofenceRadiusMeters
     }
 
     private fun calculateDistanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {

@@ -13,9 +13,12 @@ import com.kliq.app.data.model.GpsLocation
 import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toEntity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,37 +35,37 @@ class ClubAndEventRepositoryImpl @Inject constructor(
     override fun getClubs(): Flow<List<Club>> {
         return clubDao.getAllClubs().map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getFavoriteClubs(): Flow<List<Club>> {
         return clubDao.getFavoriteClubs().map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getEvents(): Flow<List<Event>> {
         return eventDao.getAllEvents().map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getEventsForClub(clubId: String): Flow<List<Event>> {
         return eventDao.getEventsByClubId(clubId).map { entities ->
             entities.map { it.toDomain() }
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getClubById(clubId: String): Flow<Club?> {
         return clubDao.getClubById(clubId).map { entity ->
             entity?.toDomain()
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun getEventById(eventId: String): Flow<Event?> {
         return eventDao.getEventById(eventId).map { entity ->
             entity?.toDomain()
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun searchClubsAndEventsLocal(query: String): Flow<Pair<List<Club>, List<Event>>> {
@@ -74,11 +77,11 @@ class ClubAndEventRepositoryImpl @Inject constructor(
                 clubEntities.map { it.toDomain() },
                 eventEntities.map { it.toDomain() }
             )
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
-    override suspend fun syncClubsAndEventsFromRemote(): Result<Unit> {
-        return try {
+    override suspend fun syncClubsAndEventsFromRemote(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
             if (apiService != null) {
                 val remoteResponse = apiService.searchExternalClubsAndEvents("")
                 val clubEntities = remoteResponse.clubs.map { it.toEntity() }
@@ -92,7 +95,7 @@ class ClubAndEventRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun toggleClubFavorite(clubId: String, currentFavoriteState: Boolean) {
+    override suspend fun toggleClubFavorite(clubId: String, currentFavoriteState: Boolean) = withContext(Dispatchers.IO) {
         clubDao.updateFavoriteStatus(clubId, !currentFavoriteState)
     }
 
