@@ -65,6 +65,7 @@ fun HomeScreen(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
+    onNavigateToChat: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -83,7 +84,7 @@ fun HomeScreen(
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            IconButton(onClick = { /* TODO: Chat öffnen */ }) {
+            IconButton(onClick = onNavigateToChat) {
                 Icon(
                     imageVector = Icons.Outlined.ChatBubbleOutline,
                     contentDescription = "Nachrichten",

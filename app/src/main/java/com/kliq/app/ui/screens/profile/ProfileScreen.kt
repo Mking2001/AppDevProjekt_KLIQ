@@ -31,16 +31,22 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.ui.components.KliqScreenScaffold
+import com.kliq.app.ui.components.ZoomableImageOverlay
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.ui.theme.FuchsiaTertiary
@@ -66,6 +72,7 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showZoomOverlay by remember { mutableStateOf(false) }
 
     KliqScreenScaffold(
         title = "Profil",
@@ -82,7 +89,11 @@ fun ProfileScreen(
         ) {
             // Profil-Header mit Avatar, Name, Bio und Statistiken
             item {
-                ProfileHeader(uiState = uiState, onEditProfile = { viewModel.onEditProfile() })
+                ProfileHeader(
+                    uiState = uiState,
+                    onEditProfile = { viewModel.onEditProfile() },
+                    onAvatarClick = { showZoomOverlay = true }
+                )
             }
 
             // Tab-Row (Beiträge, Events, Über mich)
@@ -102,6 +113,26 @@ fun ProfileScreen(
             }
         }
     }
+
+    ZoomableImageOverlay(
+        isVisible = showZoomOverlay,
+        onDismiss = { showZoomOverlay = false }
+    ) {
+        Box(
+            modifier = Modifier
+                .size(300.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = uiState.displayName.take(2).uppercase(),
+                style = MaterialTheme.typography.displayLarge.copy(fontSize = 120.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
 }
 
 /**
@@ -111,7 +142,8 @@ fun ProfileScreen(
 @Composable
 private fun ProfileHeader(
     uiState: ProfileUiState,
-    onEditProfile: () -> Unit
+    onEditProfile: () -> Unit,
+    onAvatarClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -136,7 +168,8 @@ private fun ProfileHeader(
                 )
                 .padding(4.dp)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable { onAvatarClick() },
             contentAlignment = Alignment.Center
         ) {
             Text(

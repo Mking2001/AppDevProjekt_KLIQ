@@ -1,9 +1,7 @@
 package com.kliq.app.ui.navigation
 
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotDisplayed
-import androidx.compose.ui.test.hasRole
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -282,9 +280,7 @@ class TopBarMenuTest {
      * @param tabLabel Label des Ziel-Tabs (z.B. "Entdecken", "Karte").
      */
     private fun navigateToTab(tabLabel: String) {
-        composeTestRule.onNode(
-            hasText(tabLabel) and hasRole(Role.Tab)
-        ).performClick()
+        composeTestRule.onNodeWithContentDescription(tabLabel).performClick()
         composeTestRule.waitForIdle()
     }
 }

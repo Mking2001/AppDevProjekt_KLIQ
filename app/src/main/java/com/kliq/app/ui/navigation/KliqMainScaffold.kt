@@ -23,6 +23,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
+import com.kliq.app.ui.screens.chat.ChatDetailScreen
+import com.kliq.app.ui.screens.club.ClubDetailScreen
+import com.kliq.app.ui.screens.chat.ChatListScreen
 import com.kliq.app.ui.screens.explore.ExploreScreen
 import com.kliq.app.ui.screens.home.HomeScreen
 import com.kliq.app.ui.screens.map.MapScreen
@@ -30,6 +38,13 @@ import com.kliq.app.ui.screens.notifications.NotificationsScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationViewModel
+import com.kliq.app.ui.screens.auth.PhoneLoginScreen
+import com.kliq.app.ui.screens.splash.SplashScreen
+import com.kliq.app.viewmodel.ThemeViewModel
+
+val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
+    error("No SnackbarHostState provided")
+}
 
 /**
  * Main scaffold composable that hosts the Bottom Navigation Bar
@@ -47,12 +62,22 @@ import com.kliq.app.ui.screens.verification.SmsVerificationViewModel
 fun KliqMainScaffold(
     navigationViewModel: NavigationViewModel = hiltViewModel(),
     topBarViewModel: TopBarViewModel = hiltViewModel(),
+    themeViewModel: ThemeViewModel = hiltViewModel(),
     navController: NavHostController = rememberNavController()
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
     val navigationState by navigationViewModel.navigationState.collectAsStateWithLifecycle()
     val topBarState by topBarViewModel.uiState.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route ?: NavigationRoute.Home.route
+
+    // Bottom Bar wird ausgeblendet, wenn Chat-Screens, Splash oder Phone-Login aktiv sind
+    val showBottomBar = currentRoute !in listOf(
+        ChatRoutes.CHAT_LIST,
+        ChatRoutes.CHAT_DETAIL,
+        CoreRoutes.SPLASH,
+        CoreRoutes.PHONE_LOGIN
+    )
 
     // Sync ViewModel state when NavController route changes externally
     // (e.g., system back press)
@@ -72,6 +97,12 @@ fun KliqMainScaffold(
         containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (isMainTabRoute) {
+    CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
+        Scaffold(
+            containerColor = MaterialTheme.colorScheme.background,
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        bottomBar = {
+            if (showBottomBar) {
                 KliqBottomBar(
                     currentRoute = currentRoute,
                     notificationBadgeCount = navigationState.notificationBadgeCount,
@@ -109,7 +140,7 @@ fun KliqMainScaffold(
                             launchSingleTop = true
                         }
                     }
-                    TopBarMenuAction.ToggleTheme -> { /* TODO: Theme-Wechsel implementieren */ }
+                    TopBarMenuAction.ToggleTheme -> { themeViewModel.toggleTheme() }
                     TopBarMenuAction.About -> { /* TODO: About-Dialog anzeigen */ }
                     TopBarMenuAction.Logout -> {
                         navController.navigate(
@@ -117,8 +148,19 @@ fun KliqMainScaffold(
                         )
                     }
                 }
+            },
+            onNavigateToChat = {
+                navController.navigate(ChatRoutes.CHAT_LIST) {
+                    launchSingleTop = true
+                }
+            },
+            onNavigateToClub = { clubId ->
+                navController.navigate(ClubRoutes.clubDetail(clubId)) {
+                    launchSingleTop = true
+                }
             }
         )
+    }
     }
 }
 
@@ -145,7 +187,9 @@ private fun KliqNavHost(
     topBarState: TopBarUiState,
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
-    onMenuAction: (TopBarMenuAction) -> Unit
+    onMenuAction: (TopBarMenuAction) -> Unit,
+    onNavigateToChat: () -> Unit,
+    onNavigateToClub: (String) -> Unit
 ) {
     val routes = NavigationRoute.bottomBarItems.map { it.route }
     val currentIndex = routes.indexOf(currentRoute)
@@ -154,19 +198,38 @@ private fun KliqNavHost(
 
     NavHost(
         navController = navController,
-        startDestination = NavigationRoute.Home.route,
+        startDestination = CoreRoutes.SPLASH,
         modifier = modifier,
         enterTransition = { slideEnterTransition(slideRight) },
         exitTransition = { slideExitTransition(slideRight) },
         popEnterTransition = { slideEnterTransition(!slideRight) },
         popExitTransition = { slideExitTransition(!slideRight) }
     ) {
+        composable(CoreRoutes.SPLASH) {
+            SplashScreen(
+                onSplashFinished = {
+                    navController.navigate(CoreRoutes.PHONE_LOGIN) {
+                        popUpTo(CoreRoutes.SPLASH) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(CoreRoutes.PHONE_LOGIN) {
+            PhoneLoginScreen(
+                onLoginSuccess = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(CoreRoutes.PHONE_LOGIN) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(NavigationRoute.Home.route) {
             HomeScreen(
                 topBarState = topBarState,
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
-                onMenuAction = onMenuAction
+                onMenuAction = onMenuAction,
+                onNavigateToChat = onNavigateToChat
             )
         }
         composable(NavigationRoute.Explore.route) {
@@ -174,7 +237,8 @@ private fun KliqNavHost(
                 topBarState = topBarState,
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
-                onMenuAction = onMenuAction
+                onMenuAction = onMenuAction,
+                onNavigateToClub = onNavigateToClub
             )
         }
         composable(NavigationRoute.Map.route) {
@@ -217,6 +281,42 @@ private fun KliqNavHost(
                         popUpTo(0) { inclusive = true }
                     }
                 },
+        // Chat-Screens (außerhalb der Bottom Bar Navigation)
+        composable(ChatRoutes.CHAT_LIST) {
+            ChatListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onChatSelected = { chatId ->
+                    navController.navigate(ChatRoutes.chatDetail(chatId))
+                }
+            )
+        }
+        composable(
+            route = ChatRoutes.CHAT_DETAIL,
+            arguments = listOf(
+                navArgument(ChatRoutes.ARG_CHAT_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val chatId = backStackEntry.arguments?.getString(ChatRoutes.ARG_CHAT_ID) ?: ""
+            ChatDetailScreen(
+                chatId = chatId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        
+        // Club Detail Screen
+        composable(
+            route = ClubRoutes.CLUB_DETAIL,
+            arguments = listOf(
+                navArgument(ClubRoutes.ARG_CLUB_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val clubId = backStackEntry.arguments?.getString(ClubRoutes.ARG_CLUB_ID) ?: ""
+            ClubDetailScreen(
+                clubId = clubId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

@@ -1,10 +1,8 @@
 package com.kliq.app.ui.navigation
 
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.hasRole
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.kliq.app.MainActivity
@@ -33,28 +31,29 @@ class NavigationFlowTest {
         composeTestRule.onNodeWithText("Anna M.").assertIsDisplayed()
 
         // 2. Navigiere zum 'Entdecken'-Screen
-        composeTestRule.onNode(hasText("Entdecken") and hasRole(Role.Tab)).performClick()
+        composeTestRule.onNodeWithContentDescription("Entdecken").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Suche nach Leuten, Events, Orten…").assertIsDisplayed()
 
         // 3. Navigiere zum 'Karte'-Screen
-        composeTestRule.onNode(hasText("Karte") and hasRole(Role.Tab)).performClick()
+        composeTestRule.onNodeWithContentDescription("Karte").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("In deiner Nähe").assertIsDisplayed()
 
         // 4. Navigiere zum 'Aktivität'-Screen (Notifications)
-        composeTestRule.onNode(hasText("Aktivität") and hasRole(Role.Tab)).performClick()
+        composeTestRule.onNodeWithContentDescription("Aktivität").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Anna M. hat deinen Beitrag geliked").assertIsDisplayed()
 
         // 5. Navigiere zum 'Profil'-Screen
-        composeTestRule.onNode(hasText("Profil") and hasRole(Role.Tab)).performClick()
+        composeTestRule.onNodeWithContentDescription("Profil").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Max Mustermann").assertIsDisplayed()
 
         // 6. Navigiere zurück zum 'Home'-Screen, um den vollständigen Loop zu testen
-        composeTestRule.onNode(hasText("Home") and hasRole(Role.Tab)).performClick()
+        composeTestRule.onNodeWithContentDescription("Home").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Kliq").assertIsDisplayed()
     }
 }
+
