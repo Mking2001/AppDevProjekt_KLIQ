@@ -25,6 +25,7 @@ import com.kliq.app.ui.screens.explore.ExploreScreen
 import com.kliq.app.ui.screens.home.HomeScreen
 import com.kliq.app.ui.screens.map.MapScreen
 import com.kliq.app.ui.screens.notifications.NotificationsScreen
+import com.kliq.app.ui.screens.onboarding.ProfileCreationScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
 
 /**
@@ -186,6 +187,15 @@ private fun KliqNavHost(
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
                 onMenuAction = onMenuAction
+            )
+        }
+        composable(NavigationRoute.ProfileCreation.route) {
+            ProfileCreationScreen(
+                onProfileCreated = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(NavigationRoute.ProfileCreation.route) { inclusive = true }
+                    }
+                }
             )
         }
     }

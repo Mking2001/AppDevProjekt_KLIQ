@@ -59,6 +59,13 @@ sealed class NavigationRoute(
         unselectedIcon = Icons.Outlined.Person
     )
 
+    data object ProfileCreation : NavigationRoute(
+        route = "onboarding/profile_creation",
+        label = "Profil erstellen",
+        selectedIcon = Icons.Filled.Person,
+        unselectedIcon = Icons.Outlined.Person
+    )
+
     companion object {
         /** Ordered list of all bottom bar tabs */
         val bottomBarItems: List<NavigationRoute> = listOf(
