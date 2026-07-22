@@ -10,4 +10,6 @@ interface UserRepository {
     suspend fun syncUserProfile(userId: String): Result<Unit>
     suspend fun saveUser(user: UserEntity)
     suspend fun saveUserPreferences(preferences: UserPreferencesEntity)
+    suspend fun requestOtp(countryCode: String, phoneNumber: String): Result<Boolean>
+    suspend fun verifyOtp(countryCode: String, phoneNumber: String, otpCode: String): Result<UserEntity>
 }
