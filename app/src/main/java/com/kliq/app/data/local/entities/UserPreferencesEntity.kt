@@ -4,6 +4,8 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
+import com.kliq.app.data.model.SearchIntent
+
 @Entity(
     tableName = "user_preferences",
     foreignKeys = [
@@ -19,5 +21,6 @@ data class UserPreferencesEntity(
     @PrimaryKey val userId: String,
     val isDarkMode: Boolean = false,
     val searchRadiusKm: Int = 10,
-    val pushNotificationsEnabled: Boolean = true
+    val pushNotificationsEnabled: Boolean = true,
+    val searchIntent: SearchIntent = SearchIntent.BOTH
 )

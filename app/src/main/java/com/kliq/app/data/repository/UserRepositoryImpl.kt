@@ -3,6 +3,7 @@ package com.kliq.app.data.repository
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.local.entities.UserEntity
 import com.kliq.app.data.local.entities.UserPreferencesEntity
+import com.kliq.app.data.model.SearchIntent
 import com.kliq.app.data.remote.KliqApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -64,6 +65,12 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun saveUserPreferences(preferences: UserPreferencesEntity) = withContext(Dispatchers.IO) {
         userDao.insertUserPreferences(preferences)
+    }
+
+    override suspend fun saveSearchIntent(userId: String, intent: SearchIntent) = withContext(Dispatchers.IO) {
+        val existingPref = userDao.getUserPreferencesOneShot(userId)
+        val updatedPref = (existingPref ?: UserPreferencesEntity(userId = userId)).copy(searchIntent = intent)
+        userDao.insertUserPreferences(updatedPref)
     }
 
     override suspend fun requestOtp(countryCode: String, phoneNumber: String): Result<Boolean> = withContext(Dispatchers.IO) {
