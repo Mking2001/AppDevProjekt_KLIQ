@@ -47,6 +47,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -81,6 +82,7 @@ private const val OTP_LENGTH = 6
  * @param onNavigateBack Callback für die Zurück-Navigation.
  * @param viewModel Hilt-injiziertes [SmsVerificationViewModel].
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SmsVerificationScreen(
     onVerificationSuccess: () -> Unit,
@@ -297,6 +299,7 @@ fun SmsVerificationScreen(
  * native Tastatureingabe. Die visuelle Darstellung erfolgt über einzelne
  * [OtpDigitBox]-Composables mit animierten Rahmen und Cursor.
  */
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun OtpInputRow(
     code: String,
