@@ -19,7 +19,7 @@ interface UserRepository {
         userId: String,
         smokingHabit: SmokingHabit,
         drinkingHabit: DrinkingHabit
-    )
+    ) {}
     suspend fun saveProfile(
         userId: String,
         username: String,
