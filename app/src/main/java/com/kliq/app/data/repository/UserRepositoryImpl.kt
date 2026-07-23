@@ -47,7 +47,8 @@ class UserRepositoryImpl @Inject constructor(
         username: String,
         age: Int,
         hometown: String,
-        bio: String
+        bio: String,
+        profilePictureUrl: String?
     ) = withContext(Dispatchers.IO) {
         val existingUser = userDao.getUserByIdOneShot(userId)
         val updatedUser = UserEntity(
@@ -56,10 +57,23 @@ class UserRepositoryImpl @Inject constructor(
             email = existingUser?.email ?: "",
             age = age,
             hometown = hometown,
-            profilePictureUrl = existingUser?.profilePictureUrl,
+            profilePictureUrl = profilePictureUrl ?: existingUser?.profilePictureUrl,
             bio = bio.ifBlank { null },
             phoneNumber = existingUser?.phoneNumber,
             isVerified = existingUser?.isVerified ?: false,
+            updatedAtTimestampMs = System.currentTimeMillis()
+        )
+        userDao.insertUser(updatedUser)
+    }
+
+    override suspend fun updateProfilePicture(userId: String, pictureUrl: String) = withContext(Dispatchers.IO) {
+        val existingUser = userDao.getUserByIdOneShot(userId)
+        val updatedUser = (existingUser ?: UserEntity(
+            id = userId,
+            username = "User",
+            email = ""
+        )).copy(
+            profilePictureUrl = pictureUrl,
             updatedAtTimestampMs = System.currentTimeMillis()
         )
         userDao.insertUser(updatedUser)

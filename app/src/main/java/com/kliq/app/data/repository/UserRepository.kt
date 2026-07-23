@@ -25,8 +25,10 @@ interface UserRepository {
         username: String,
         age: Int,
         hometown: String,
-        bio: String
+        bio: String,
+        profilePictureUrl: String? = null
     )
+    suspend fun updateProfilePicture(userId: String, pictureUrl: String)
     suspend fun requestOtp(countryCode: String, phoneNumber: String): Result<Boolean>
     suspend fun verifyOtp(countryCode: String, phoneNumber: String, otpCode: String): Result<UserEntity>
 }
