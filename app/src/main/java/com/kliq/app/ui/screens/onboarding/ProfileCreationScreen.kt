@@ -1,8 +1,13 @@
 package com.kliq.app.ui.screens.onboarding
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +38,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -40,37 +46,39 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kliq.app.ui.components.ProfileAvatarImage
+import com.kliq.app.ui.components.ProfileImagePickerBottomSheet
 import com.kliq.app.ui.theme.DarkBackground
 import com.kliq.app.ui.theme.DarkSurface
 import com.kliq.app.ui.theme.DarkSurfaceVariant
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
+import java.io.File
 
-/**
- * Screen for Step 3.3 of the Kliq Onboarding flow: Profile Creation.
- *
- * Implements high-contrast dark theme styling, real-time input field validation,
- * and MVVM architecture connected to [ProfileCreationViewModel].
- */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileCreationScreen(
     viewModel: ProfileCreationViewModel = hiltViewModel(),
@@ -79,6 +87,57 @@ fun ProfileCreationScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+
+    var showImageSourceSheet by remember { mutableStateOf(false) }
+    var tempCameraImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.onImageSelected(context, it)
+        }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            tempCameraImageUri?.let { uri ->
+                viewModel.onImageSelected(context, uri)
+            }
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val uri = createTempImageUri(context)
+            tempCameraImageUri = uri
+            uri?.let { cameraLauncher.launch(it) }
+        } else {
+            viewModel.onPermissionDenied(Manifest.permission.CAMERA)
+        }
+    }
+
+    fun launchCamera() {
+        val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            val uri = createTempImageUri(context)
+            tempCameraImageUri = uri
+            uri?.let { cameraLauncher.launch(it) }
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    fun launchGallery() {
+        photoPickerLauncher.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
+    }
 
     LaunchedEffect(uiState.isProfileSaved) {
         if (uiState.isProfileSaved) {
@@ -116,7 +175,6 @@ fun ProfileCreationScreen(
                     .padding(horizontal = 24.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header / Step indicator
                 Text(
                     text = "SCHRITT 1 VON 3 • PROFIL ERSTELLEN",
                     style = MaterialTheme.typography.labelMedium.copy(
@@ -145,9 +203,18 @@ fun ProfileCreationScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-                // Form Card Container
+                ProfileAvatarImage(
+                    imageUri = uiState.profilePictureUrl,
+                    isProcessing = uiState.isProcessingImage,
+                    initials = uiState.username.ifBlank { "KP" },
+                    onAvatarClick = { showImageSourceSheet = true },
+                    size = 110.dp
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = DarkSurface),
@@ -160,7 +227,6 @@ fun ProfileCreationScreen(
                             .padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(18.dp)
                     ) {
-                        // Username Field
                         Column {
                             OutlinedTextField(
                                 value = uiState.username,
@@ -211,7 +277,6 @@ fun ProfileCreationScreen(
                             }
                         }
 
-                        // Age Field
                         Column {
                             OutlinedTextField(
                                 value = uiState.age,
@@ -265,7 +330,6 @@ fun ProfileCreationScreen(
                             }
                         }
 
-                        // Hometown Field
                         Column {
                             OutlinedTextField(
                                 value = uiState.hometown,
@@ -316,7 +380,6 @@ fun ProfileCreationScreen(
                             }
                         }
 
-                        // Bio Field
                         Column {
                             OutlinedTextField(
                                 value = uiState.bio,
@@ -373,7 +436,6 @@ fun ProfileCreationScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Submit Button
                 Button(
                     onClick = {
                         focusManager.clearFocus()
@@ -418,6 +480,29 @@ fun ProfileCreationScreen(
                 }
             }
         }
+    }
+
+    ProfileImagePickerBottomSheet(
+        isVisible = showImageSourceSheet,
+        onDismissRequest = { showImageSourceSheet = false },
+        onCameraSelect = { launchCamera() },
+        onGallerySelect = { launchGallery() }
+    )
+}
+
+private fun createTempImageUri(context: Context): Uri? {
+    return try {
+        val tempFile = File.createTempFile("camera_capture_", ".jpg", context.cacheDir).apply {
+            createNewFile()
+            deleteOnExit()
+        }
+        FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            tempFile
+        )
+    } catch (e: Exception) {
+        null
     }
 }
 

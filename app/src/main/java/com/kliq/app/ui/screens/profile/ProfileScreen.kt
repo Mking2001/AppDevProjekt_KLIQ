@@ -1,7 +1,13 @@
 package com.kliq.app.ui.screens.profile
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,32 +43,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.clickable
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.ui.components.KliqScreenScaffold
+import com.kliq.app.ui.components.ProfileAvatarImage
+import com.kliq.app.ui.components.ProfileImagePickerBottomSheet
 import com.kliq.app.ui.components.ZoomableImageOverlay
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
-import com.kliq.app.ui.theme.FuchsiaTertiary
-import com.kliq.app.ui.theme.PurplePrimary
-import com.kliq.app.ui.theme.PurplePrimaryLight
+import java.io.File
 
-/**
- * Profile-Screen mit großem Avatar, Statistiken,
- * "Profil bearbeiten"-Button und Tab-basiertem Content-Bereich.
- *
- * @param topBarState Aktueller Top-Bar UI-State.
- * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
- * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
- * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
- * @param viewModel Hilt-injiziertes [ProfileViewModel].
- */
 @Composable
 fun ProfileScreen(
     topBarState: TopBarUiState,
@@ -73,6 +71,57 @@ fun ProfileScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showZoomOverlay by remember { mutableStateOf(false) }
+    var showImagePickerSheet by remember { mutableStateOf(false) }
+    var tempCameraImageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val context = LocalContext.current
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        uri?.let {
+            viewModel.onImageSelected(context, it)
+        }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            tempCameraImageUri?.let { uri ->
+                viewModel.onImageSelected(context, uri)
+            }
+        }
+    }
+
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            val uri = createProfileTempImageUri(context)
+            tempCameraImageUri = uri
+            uri?.let { cameraLauncher.launch(it) }
+        } else {
+            viewModel.onPermissionDenied(Manifest.permission.CAMERA)
+        }
+    }
+
+    fun launchCamera() {
+        val permissionCheck = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            val uri = createProfileTempImageUri(context)
+            tempCameraImageUri = uri
+            uri?.let { cameraLauncher.launch(it) }
+        } else {
+            cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+        }
+    }
+
+    fun launchGallery() {
+        photoPickerLauncher.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
+    }
 
     KliqScreenScaffold(
         title = "Profil",
@@ -87,16 +136,14 @@ fun ProfileScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
-            // Profil-Header mit Avatar, Name, Bio und Statistiken
             item {
                 ProfileHeader(
                     uiState = uiState,
                     onEditProfile = { viewModel.onEditProfile() },
-                    onAvatarClick = { showZoomOverlay = true }
+                    onAvatarClick = { showImagePickerSheet = true }
                 )
             }
 
-            // Tab-Row (Beiträge, Events, Über mich)
             item {
                 ProfileTabRow(
                     tabs = uiState.tabs,
@@ -105,7 +152,6 @@ fun ProfileScreen(
                 )
             }
 
-            // Tab-Content je nach Auswahl
             item {
                 ProfileTabContent(
                     selectedTabIndex = uiState.selectedTabIndex
@@ -113,6 +159,13 @@ fun ProfileScreen(
             }
         }
     }
+
+    ProfileImagePickerBottomSheet(
+        isVisible = showImagePickerSheet,
+        onDismissRequest = { showImagePickerSheet = false },
+        onCameraSelect = { launchCamera() },
+        onGallerySelect = { launchGallery() }
+    )
 
     ZoomableImageOverlay(
         isVisible = showZoomOverlay,
@@ -135,10 +188,6 @@ fun ProfileScreen(
     }
 }
 
-/**
- * Profil-Header mit großem Avatar mit Gradient-Border,
- * Name, Username, Bio, Standort und Statistik-Zahlen.
- */
 @Composable
 private fun ProfileHeader(
     uiState: ProfileUiState,
@@ -151,38 +200,16 @@ private fun ProfileHeader(
             .padding(horizontal = 24.dp, vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Großer Avatar mit Lila-Fuchsia Gradient-Border
-        Box(
-            modifier = Modifier
-                .size(100.dp)
-                .border(
-                    width = 3.dp,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            PurplePrimaryLight,
-                            FuchsiaTertiary,
-                            PurplePrimary
-                        )
-                    ),
-                    shape = CircleShape
-                )
-                .padding(4.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable { onAvatarClick() },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = uiState.displayName.take(2).uppercase(),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold
-            )
-        }
+        ProfileAvatarImage(
+            imageUri = uiState.profilePictureUrl,
+            isProcessing = uiState.isProcessingImage,
+            initials = uiState.displayName.ifBlank { "MM" },
+            onAvatarClick = onAvatarClick,
+            size = 100.dp
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Anzeigename
         Text(
             text = uiState.displayName,
             style = MaterialTheme.typography.titleLarge,
@@ -190,7 +217,6 @@ private fun ProfileHeader(
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        // Username/Handle
         Text(
             text = uiState.username,
             style = MaterialTheme.typography.bodyMedium,
@@ -199,7 +225,6 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Bio-Text
         Text(
             text = uiState.bio,
             style = MaterialTheme.typography.bodyMedium,
@@ -209,7 +234,6 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Standort mit Icon
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Filled.LocationOn,
@@ -227,7 +251,6 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Statistik-Row (Beiträge, Follower, Following)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly
@@ -239,7 +262,6 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // "Profil bearbeiten" Button im Outlined-Stil
         OutlinedButton(
             onClick = onEditProfile,
             modifier = Modifier.fillMaxWidth(),
@@ -263,9 +285,6 @@ private fun ProfileHeader(
     }
 }
 
-/**
- * Einzelne Statistik-Anzeige (Zahl + Label).
- */
 @Composable
 private fun StatItem(count: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -283,9 +302,6 @@ private fun StatItem(count: String, label: String) {
     }
 }
 
-/**
- * Tab-Row für Profil-Inhalte.
- */
 @Composable
 private fun ProfileTabRow(
     tabs: List<String>,
@@ -322,10 +338,6 @@ private fun ProfileTabRow(
     }
 }
 
-/**
- * Tab-Content basierend auf dem ausgewählten Tab.
- * Tab 0: Beitrags-Grid, Tab 1: Events-Liste, Tab 2: Über-mich-Text.
- */
 @Composable
 private fun ProfileTabContent(selectedTabIndex: Int) {
     when (selectedTabIndex) {
@@ -335,9 +347,6 @@ private fun ProfileTabContent(selectedTabIndex: Int) {
     }
 }
 
-/**
- * Platzhalter-Grid für Beiträge (3-Spalten).
- */
 @Composable
 private fun PostsGrid() {
     val itemCount = 9
@@ -377,9 +386,6 @@ private fun PostsGrid() {
     }
 }
 
-/**
- * Platzhalter-Liste für Events.
- */
 @Composable
 private fun EventsList() {
     Column(
@@ -418,9 +424,6 @@ private fun EventsList() {
     }
 }
 
-/**
- * "Über mich" Abschnitt mit Platzhalter-Text.
- */
 @Composable
 private fun AboutSection() {
     Column(
@@ -451,7 +454,6 @@ private fun AboutSection() {
             color = MaterialTheme.colorScheme.onBackground
         )
 
-        // Interessen-Chips
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
@@ -475,9 +477,22 @@ private fun AboutSection() {
     }
 }
 
-/**
- * Formatiert große Zahlen mit "k"-Suffix.
- */
+private fun createProfileTempImageUri(context: Context): Uri? {
+    return try {
+        val tempFile = File.createTempFile("profile_capture_", ".jpg", context.cacheDir).apply {
+            createNewFile()
+            deleteOnExit()
+        }
+        FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.fileprovider",
+            tempFile
+        )
+    } catch (e: Exception) {
+        null
+    }
+}
+
 private fun formatCount(count: Int): String {
     return when {
         count >= 1_000_000 -> "${count / 1_000_000}.${(count % 1_000_000) / 100_000}M"
