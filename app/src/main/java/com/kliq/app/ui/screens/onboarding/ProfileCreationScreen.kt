@@ -118,7 +118,7 @@ fun ProfileCreationScreen(
             ) {
                 // Header / Step indicator
                 Text(
-                    text = "SCHRITT 3 VON 3",
+                    text = "SCHRITT 1 VON 3 • PROFIL ERSTELLEN",
                     style = MaterialTheme.typography.labelMedium.copy(
                         color = PurplePrimaryLight,
                         fontWeight = FontWeight.Bold,

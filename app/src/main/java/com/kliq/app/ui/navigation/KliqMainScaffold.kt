@@ -36,6 +36,7 @@ import com.kliq.app.ui.screens.explore.ExploreScreen
 import com.kliq.app.ui.screens.home.HomeScreen
 import com.kliq.app.ui.screens.map.MapScreen
 import com.kliq.app.ui.screens.notifications.NotificationsScreen
+import com.kliq.app.ui.screens.onboarding.ConsumptionHabitsScreen
 import com.kliq.app.ui.screens.onboarding.IntentMatchingScreen
 import com.kliq.app.ui.screens.onboarding.ProfileCreationScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
@@ -242,8 +243,17 @@ private fun KliqNavHost(
         composable(NavigationRoute.IntentMatching.route) {
             IntentMatchingScreen(
                 onIntentConfirmed = {
-                    navController.navigate(NavigationRoute.Home.route) {
+                    navController.navigate(NavigationRoute.ConsumptionHabits.route) {
                         popUpTo(NavigationRoute.IntentMatching.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(NavigationRoute.ConsumptionHabits.route) {
+            ConsumptionHabitsScreen(
+                onHabitsConfirmed = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(NavigationRoute.ConsumptionHabits.route) { inclusive = true }
                     }
                 }
             )

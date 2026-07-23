@@ -74,6 +74,13 @@ sealed class NavigationRoute(
         unselectedIcon = Icons.Outlined.Person
     )
 
+    data object ConsumptionHabits : NavigationRoute(
+        route = "onboarding/consumption_habits",
+        label = "Konsum-Gewohnheiten",
+        selectedIcon = Icons.Filled.Person,
+        unselectedIcon = Icons.Outlined.Person
+    )
+
     companion object {
         /** Route-Template für den SMS-Verifizierungs-Screen. Erwartet phoneNumber als Argument. */
         const val VERIFICATION_ROUTE = "verification/{phoneNumber}"
