@@ -32,6 +32,9 @@ interface UserDao {
     @Query("SELECT * FROM user_preferences WHERE userId = :userId")
     fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?>
 
+    @Query("SELECT * FROM user_preferences WHERE userId = :userId LIMIT 1")
+    suspend fun getUserPreferencesOneShot(userId: String): UserPreferencesEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUserPreferences(preferences: UserPreferencesEntity)
 }

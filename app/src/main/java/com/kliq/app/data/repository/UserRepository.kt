@@ -2,6 +2,7 @@ package com.kliq.app.data.repository
 
 import com.kliq.app.data.local.entities.UserEntity
 import com.kliq.app.data.local.entities.UserPreferencesEntity
+import com.kliq.app.data.model.SearchIntent
 import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
@@ -11,6 +12,7 @@ interface UserRepository {
     suspend fun syncUserProfile(userId: String): Result<Unit>
     suspend fun saveUser(user: UserEntity)
     suspend fun saveUserPreferences(preferences: UserPreferencesEntity)
+    suspend fun saveSearchIntent(userId: String, intent: SearchIntent)
     suspend fun saveProfile(
         userId: String,
         username: String,

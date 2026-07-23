@@ -3,10 +3,21 @@ package com.kliq.app.data.local
 import androidx.room.TypeConverter
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.kliq.app.data.model.SearchIntent
 import com.kliq.app.data.model.SpecialOffer
 
 class RoomConverters {
     private val gson = Gson()
+
+    @TypeConverter
+    fun fromSearchIntent(intent: SearchIntent?): String {
+        return intent?.name ?: SearchIntent.BOTH.name
+    }
+
+    @TypeConverter
+    fun toSearchIntent(value: String?): SearchIntent {
+        return SearchIntent.fromString(value)
+    }
 
     @TypeConverter
     fun fromSpecialOffersList(value: List<SpecialOffer>?): String {

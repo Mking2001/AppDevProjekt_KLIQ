@@ -97,13 +97,16 @@ class ProfileCreationViewModelTest {
         assertTrue(viewModel.uiState.value.isProfileSaved)
     }
 
-    private class FakeUserRepository : UserRepository(
-        apiService = fakeApiService(),
-        userDao = fakeUserDao()
-    ) {
+    private class FakeUserRepository : UserRepository {
         var savedUser: UserEntity? = null
 
+        override fun getUserById(userId: String): Flow<UserEntity?> = flowOf(savedUser)
         override fun getUser(userId: String): Flow<UserEntity?> = flowOf(savedUser)
+        override fun getUserPreferences(userId: String): Flow<com.kliq.app.data.local.entities.UserPreferencesEntity?> = flowOf(null)
+        override suspend fun syncUserProfile(userId: String): Result<Unit> = Result.success(Unit)
+        override suspend fun saveUser(user: UserEntity) {}
+        override suspend fun saveUserPreferences(preferences: com.kliq.app.data.local.entities.UserPreferencesEntity) {}
+        override suspend fun saveSearchIntent(userId: String, intent: com.kliq.app.data.model.SearchIntent) {}
 
         override suspend fun saveProfile(
             userId: String,
@@ -122,24 +125,10 @@ class ProfileCreationViewModelTest {
                 bio = bio
             )
         }
-    }
 
-    companion object {
-        private fun fakeApiService(): com.kliq.app.data.remote.KliqApiService {
-            return object : com.kliq.app.data.remote.KliqApiService {
-                override suspend fun getUserProfile(userId: String): UserEntity {
-                    return UserEntity("1", "test", "test@kliq.de", 20, "Berlin", null, null)
-                }
-            }
-        }
-
-        private fun fakeUserDao(): com.kliq.app.data.local.dao.UserDao {
-            return object : com.kliq.app.data.local.dao.UserDao {
-                override fun getUserById(userId: String): Flow<UserEntity?> = flowOf(null)
-                override suspend fun getUserByIdOneShot(userId: String): UserEntity? = null
-                override suspend fun insertUser(user: UserEntity) {}
-                override suspend fun clearUsers() {}
-            }
+        override suspend fun requestOtp(countryCode: String, phoneNumber: String): Result<Boolean> = Result.success(true)
+        override suspend fun verifyOtp(countryCode: String, phoneNumber: String, otpCode: String): Result<UserEntity> {
+            return Result.success(UserEntity(id = "1", username = "test", email = "test@kliq.de"))
         }
     }
 }
