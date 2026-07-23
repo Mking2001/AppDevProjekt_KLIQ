@@ -23,7 +23,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -34,7 +33,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.kliq.app.ui.theme.DarkBackground
 import com.kliq.app.ui.theme.DarkSurface
 import com.kliq.app.ui.theme.DarkSurfaceVariant
@@ -47,10 +45,11 @@ fun ProfileImagePickerBottomSheet(
     isVisible: Boolean,
     onDismissRequest: () -> Unit,
     onCameraSelect: () -> Unit,
-    onGallerySelect: () -> Unit,
-    sheetState: SheetState = rememberModalBottomSheetState()
+    onGallerySelect: () -> Unit
 ) {
     if (!isVisible) return
+
+    val sheetState = rememberModalBottomSheetState()
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -120,7 +119,7 @@ fun ProfileImagePickerBottomSheet(
             ImageSourceOptionItem(
                 icon = Icons.Default.PhotoLibrary,
                 title = "Galerie / Foto-Mediathek",
-                subtitle = "Ein bestehendes Foto auswähen",
+                subtitle = "Ein bestehendes Foto auswählen",
                 onClick = {
                     onDismissRequest()
                     onGallerySelect()
