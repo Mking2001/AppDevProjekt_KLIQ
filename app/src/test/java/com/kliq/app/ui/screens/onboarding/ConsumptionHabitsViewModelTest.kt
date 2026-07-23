@@ -140,7 +140,8 @@ class ConsumptionHabitsViewModelTest {
             username: String,
             age: Int,
             hometown: String,
-            bio: String
+            bio: String,
+            profilePictureUrl: String?
         ) {}
 
         override suspend fun requestOtp(countryCode: String, phoneNumber: String): Result<Boolean> = Result.success(true)
