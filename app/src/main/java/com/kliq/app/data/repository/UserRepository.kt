@@ -2,7 +2,9 @@ package com.kliq.app.data.repository
 
 import com.kliq.app.data.local.entities.UserEntity
 import com.kliq.app.data.local.entities.UserPreferencesEntity
+import com.kliq.app.data.model.DrinkingHabit
 import com.kliq.app.data.model.SearchIntent
+import com.kliq.app.data.model.SmokingHabit
 import kotlinx.coroutines.flow.Flow
 
 interface UserRepository {
@@ -13,6 +15,11 @@ interface UserRepository {
     suspend fun saveUser(user: UserEntity)
     suspend fun saveUserPreferences(preferences: UserPreferencesEntity)
     suspend fun saveSearchIntent(userId: String, intent: SearchIntent)
+    suspend fun saveConsumptionHabits(
+        userId: String,
+        smokingHabit: SmokingHabit,
+        drinkingHabit: DrinkingHabit
+    )
     suspend fun saveProfile(
         userId: String,
         username: String,
