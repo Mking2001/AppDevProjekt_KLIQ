@@ -49,7 +49,13 @@ class UserRepositoryTest {
 
     @Test
     fun testUserSaveAndSingleSourceOfTruthFlow() = runTest {
-        val user = UserEntity("usr_101", "techno_alex", "alex@kliq.de", "https://kliq.de/avatar.jpg", "Club Enthusiast")
+        val user = UserEntity(
+            id = "usr_101",
+            username = "techno_alex",
+            email = "alex@kliq.de",
+            profilePictureUrl = "https://kliq.de/avatar.jpg",
+            bio = "Club Enthusiast"
+        )
         userRepository.saveUser(user)
 
         val retrievedUser = userRepository.getUserById("usr_101").first()
@@ -60,7 +66,12 @@ class UserRepositoryTest {
 
     @Test
     fun testSyncUserProfileUpdatesRoomDatabaseCache() = runTest {
-        val remoteUser = UserEntity("usr_sync_202", "sync_user", "sync@kliq.de", null, "Bio")
+        val remoteUser = UserEntity(
+            id = "usr_sync_202",
+            username = "sync_user",
+            email = "sync@kliq.de",
+            bio = "Bio"
+        )
         `when`(mockApiService.getUserProfile("usr_sync_202")).thenReturn(remoteUser)
 
         val syncResult = userRepository.syncUserProfile("usr_sync_202")
