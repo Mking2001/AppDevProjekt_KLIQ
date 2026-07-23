@@ -4,7 +4,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 
+import com.kliq.app.data.model.DrinkingHabit
 import com.kliq.app.data.model.SearchIntent
+import com.kliq.app.data.model.SmokingHabit
 
 @Entity(
     tableName = "user_preferences",
@@ -22,5 +24,7 @@ data class UserPreferencesEntity(
     val isDarkMode: Boolean = false,
     val searchRadiusKm: Int = 10,
     val pushNotificationsEnabled: Boolean = true,
-    val searchIntent: SearchIntent = SearchIntent.BOTH
+    val searchIntent: SearchIntent = SearchIntent.BOTH,
+    val smokingHabit: SmokingHabit = SmokingHabit.NEVER,
+    val drinkingHabit: DrinkingHabit = DrinkingHabit.NEVER
 )
