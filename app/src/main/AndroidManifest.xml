@@ -31,6 +31,16 @@
             android:foregroundServiceType="location"
             android:exported="false" />
 
+        <!-- Kliq Geofence Event BroadcastReceiver -->
+        <receiver
+            android:name=".service.GeofenceBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.kliq.app.ACTION_GEOFENCE_EVENT" />
+                <action android:name="com.kliq.app.GEOFENCE_TRANSITION_ACTION" />
+            </intent-filter>
+        </receiver>
+
         <!-- Google Maps API Key (loaded securely from local.properties via manifestPlaceholders) -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
