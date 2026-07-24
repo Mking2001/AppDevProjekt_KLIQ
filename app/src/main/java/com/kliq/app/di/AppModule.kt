@@ -66,4 +66,9 @@ object AppModule {
     fun provideSessionStorage(encryptedSessionStorage: com.kliq.app.data.local.security.EncryptedSessionStorage): com.kliq.app.data.local.security.SessionStorage {
         return encryptedSessionStorage
     }
+
+    @Provides
+    fun provideIoDispatcher(): kotlinx.coroutines.CoroutineDispatcher {
+        return kotlinx.coroutines.Dispatchers.IO
+    }
 }
