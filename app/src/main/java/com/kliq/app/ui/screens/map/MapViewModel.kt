@@ -21,6 +21,7 @@ data class MapUiState(
     val filters: List<String> = emptyList(),
     val nearbyVenues: List<VenueItemUi> = emptyList(),
     val isLocationEnabled: Boolean = false,
+    val isLoadingLocation: Boolean = false,
     val selectedVenue: VenueItemUi? = null
 )
 
