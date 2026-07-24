@@ -20,8 +20,18 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        val properties = java.util.Properties()
+        val localPropertiesFile = project.rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            properties.load(localPropertiesFile.inputStream())
+        }
+        val mapsApiKey = properties.getProperty("MAPS_API_KEY") ?: System.getenv("MAPS_API_KEY") ?: "AIzaSy_DEFAULT_DEVELOPMENT_MAPS_KEY"
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+        buildConfigField("String", "MAPS_API_KEY", "\"$mapsApiKey\"")
     }
-    
+
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
     }
@@ -49,6 +59,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.8"
@@ -97,8 +108,10 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // Location Services (GPS)
+    // Location Services (GPS) & Maps SDK
     implementation("com.google.android.gms:play-services-location:21.1.0")
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.maps.android:maps-compose:4.3.3")
 
     // Image Loading
     implementation("io.coil-kt:coil-compose:2.5.0")
