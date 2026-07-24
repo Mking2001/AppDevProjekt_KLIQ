@@ -53,4 +53,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindLocationRepository(impl: com.kliq.app.data.repository.LocationRepositoryImpl): com.kliq.app.data.repository.LocationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindGeofenceRepository(impl: com.kliq.app.data.repository.GeofenceRepositoryImpl): com.kliq.app.data.repository.GeofenceRepository
 }

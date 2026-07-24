@@ -80,4 +80,10 @@ object AppModule {
     fun providePermissionManager(impl: com.kliq.app.util.PermissionManagerImpl): com.kliq.app.util.PermissionManager {
         return impl
     }
+
+    @Provides
+    @Singleton
+    fun provideGeofenceManager(impl: com.kliq.app.util.GeofenceManagerImpl): com.kliq.app.util.GeofenceManager {
+        return impl
+    }
 }
