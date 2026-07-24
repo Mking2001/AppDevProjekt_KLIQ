@@ -60,4 +60,10 @@ object AppModule {
     fun provideSmsVerificationService(): SmsVerificationService {
         return MockSmsVerificationService()
     }
+
+    @Provides
+    @Singleton
+    fun provideSessionStorage(encryptedSessionStorage: com.kliq.app.data.local.security.EncryptedSessionStorage): com.kliq.app.data.local.security.SessionStorage {
+        return encryptedSessionStorage
+    }
 }
