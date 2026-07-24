@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Star
@@ -35,6 +36,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -70,8 +73,7 @@ import com.kliq.app.viewmodel.PermissionViewModel
 
 /**
  * Native Map Screen integrating Google Maps Compose SDK with custom dark-purple JSON styling,
- * interactive venue markers, location centering, and reactive location permission workflow
- * (Rationale Dialog & System Settings Deep-Linking).
+ * interactive club/event markers, performance marker clustering, and quick view card.
  *
  * @param topBarState Top bar UI state.
  * @param onToggleMenu Callback for menu toggle.
@@ -107,6 +109,14 @@ fun MapScreen(
         )
     }
 
+    LaunchedEffect(cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving) {
+            val target = cameraPositionState.position.target
+            val zoom = cameraPositionState.position.zoom
+            viewModel.onCameraMoved(target.latitude, target.longitude, zoom)
+        }
+    }
+
     val mapProperties = remember(uiState.styleConfig) {
         val styleOptions = try {
             MapStyleOptions.loadRawResourceStyle(context, uiState.styleConfig.styleRawResId)
@@ -133,7 +143,6 @@ fun MapScreen(
         )
     }
 
-    // ActivityResultLauncher for requesting system location permissions
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
@@ -160,17 +169,41 @@ fun MapScreen(
             onMapLoaded = { viewModel.onMapLoaded() },
             onMapClick = { viewModel.onQuickViewDismissed() }
         ) {
-            // Render Venue Markers on Map
-            uiState.nearbyVenues.forEach { venue ->
-                Marker(
-                    state = MarkerState(position = LatLng(venue.latitude, venue.longitude)),
-                    title = venue.name,
-                    snippet = "${venue.category} · ${venue.distance} · ★ ${venue.rating}",
-                    onClick = {
-                        viewModel.onMarkerClicked(venue)
-                        true
+            // Render Clustered & Single Club Markers
+            uiState.clusteredMarkers.forEach { markerItem ->
+                when (markerItem) {
+                    is ClusterMarkerUiState.SingleNode -> {
+                        val venue = markerItem.venue
+                        val hue = when (venue.category.lowercase()) {
+                            "bar" -> BitmapDescriptorFactory.HUE_ORANGE
+                            "event", "events" -> BitmapDescriptorFactory.HUE_MAGENTA
+                            else -> BitmapDescriptorFactory.HUE_VIOLET
+                        }
+                        Marker(
+                            state = MarkerState(position = markerItem.position),
+                            title = venue.name,
+                            snippet = "${venue.category} · ${venue.distance} · ★ ${venue.rating}" +
+                                    (venue.activeEventTitle?.let { " · 🎉 $it" } ?: ""),
+                            icon = BitmapDescriptorFactory.defaultMarker(hue),
+                            onClick = {
+                                viewModel.onMarkerClicked(venue)
+                                true
+                            }
+                        )
                     }
-                )
+                    is ClusterMarkerUiState.ClusterNode -> {
+                        Marker(
+                            state = MarkerState(position = markerItem.position),
+                            title = "${markerItem.count} Standorte in der Nähe",
+                            snippet = "${markerItem.primaryCategory}-Gruppe · Tippen zum Heranzoomen",
+                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN),
+                            onClick = {
+                                viewModel.onClusterClicked(markerItem)
+                                true
+                            }
+                        )
+                    }
+                }
             }
         }
 
@@ -189,7 +222,7 @@ fun MapScreen(
             }
         }
 
-        // Location FAB with Permission Workflow Trigger
+        // Location FAB
         FloatingActionButton(
             onClick = {
                 if (permissionUiState.permissionState is LocationPermissionState.Granted) {
@@ -291,7 +324,7 @@ private fun VenueBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "In deiner Nähe",
+                text = "In deiner Nähe (${venues.size})",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -342,7 +375,7 @@ private fun VenueCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Filled.LocationOn,
+                    imageVector = if (venue.activeEventTitle != null) Icons.Filled.Event else Icons.Filled.LocationOn,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(24.dp)
@@ -359,7 +392,7 @@ private fun VenueCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${venue.category} · ${venue.distance}",
+                    text = "${venue.category} · ${venue.distance}" + (venue.activeEventTitle?.let { " · 🎉 $it" } ?: ""),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
