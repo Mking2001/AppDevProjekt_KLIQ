@@ -15,6 +15,38 @@ import java.util.Locale
 import javax.inject.Inject
 
 /**
+ * UI State representation of a club/event map marker.
+ */
+data class ClubMarkerUiState(
+    val id: String,
+    val name: String,
+    val category: String,
+    val latitude: Double,
+    val longitude: Double,
+    val hasActiveEvent: Boolean = false,
+    val activeEventTitle: String? = null,
+    val rating: Float = 0f,
+    val distance: String = "",
+    val isOpenNow: Boolean = true,
+    val capacityPercent: Int = 0,
+    val venue: VenueItemUi
+)
+
+/**
+ * UI State representation of a Kliq user map marker.
+ */
+data class UserMarkerUiState(
+    val userId: String,
+    val username: String,
+    val avatarUrl: String? = null,
+    val latitude: Double,
+    val longitude: Double,
+    val isOnline: Boolean = true,
+    val statusMessage: String? = null,
+    val searchIntent: String? = null
+)
+
+/**
  * Immutable UI State for the MapScreen.
  *
  * @param cameraPosition Current map camera center, zoom, tilt and bearing.
@@ -22,10 +54,13 @@ import javax.inject.Inject
  * @param selectedFilter Index of selected filter category chip.
  * @param filters List of available venue filter labels.
  * @param nearbyVenues List of nearby club/bar venues with map pin coordinates.
+ * @param clubMarkers Structured club map marker UI states.
+ * @param userMarkers Structured user map marker UI states.
  * @param clusteredMarkers Computed cluster and single markers for performance map rendering.
  * @param isLocationEnabled State of GPS location permission.
  * @param isLoadingLocation State of location centering operation.
  * @param selectedVenue Currently selected venue for overlay quick view card.
+ * @param selectedUser Currently selected user profile marker for overlay quick view.
  * @param isMapLoaded State of map render completion.
  */
 data class MapUiState(
@@ -34,10 +69,13 @@ data class MapUiState(
     val selectedFilter: Int? = null,
     val filters: List<String> = emptyList(),
     val nearbyVenues: List<VenueItemUi> = emptyList(),
+    val clubMarkers: List<ClubMarkerUiState> = emptyList(),
+    val userMarkers: List<UserMarkerUiState> = emptyList(),
     val clusteredMarkers: List<ClusterMarkerUiState> = emptyList(),
     val isLocationEnabled: Boolean = false,
     val isLoadingLocation: Boolean = false,
     val selectedVenue: VenueItemUi? = null,
+    val selectedUser: UserMarkerUiState? = null,
     val isMapLoaded: Boolean = false
 )
 
@@ -61,7 +99,8 @@ data class VenueItemUi(
 
 /**
  * ViewModel managing Map state, camera viewport, filters, custom styling,
- * ClubRepository flow observation, and performance marker clustering.
+ * ClubRepository flow observation, separate club/user marker UI states,
+ * and performance marker clustering.
  */
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -72,9 +111,11 @@ class MapViewModel @Inject constructor(
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
 
     private var allVenues: List<VenueItemUi> = emptyList()
+    private var allUsers: List<UserMarkerUiState> = emptyList()
 
     init {
         setupFilters()
+        loadUserMarkers()
         observeClubRepository()
     }
 
@@ -83,6 +124,13 @@ class MapViewModel @Inject constructor(
             state.copy(
                 filters = listOf("Alle", "Clubs", "Bars", "Events", "Restaurants")
             )
+        }
+    }
+
+    private fun loadUserMarkers() {
+        allUsers = getFallbackUsers()
+        _uiState.update { state ->
+            state.copy(userMarkers = allUsers)
         }
     }
 
@@ -137,12 +185,30 @@ class MapViewModel @Inject constructor(
             else -> allVenues.filter { it.category.equals(filterName, ignoreCase = true) }
         }
 
+        val clubMarkerStates = filtered.map { venue ->
+            ClubMarkerUiState(
+                id = venue.id,
+                name = venue.name,
+                category = venue.category,
+                latitude = venue.latitude,
+                longitude = venue.longitude,
+                hasActiveEvent = venue.activeEventTitle != null,
+                activeEventTitle = venue.activeEventTitle,
+                rating = venue.rating,
+                distance = venue.distance,
+                isOpenNow = venue.isOpenNow,
+                capacityPercent = venue.currentCapacityPercent,
+                venue = venue
+            )
+        }
+
         val zoom = _uiState.value.cameraPosition.zoom
         val clusters = MapClusterManager.clusterVenues(filtered, zoom)
 
         _uiState.update { state ->
             state.copy(
                 nearbyVenues = filtered,
+                clubMarkers = clubMarkerStates,
                 clusteredMarkers = clusters
             )
         }
@@ -200,6 +266,38 @@ class MapViewModel @Inject constructor(
         )
     }
 
+    private fun getFallbackUsers(): List<UserMarkerUiState> {
+        return listOf(
+            UserMarkerUiState(
+                userId = "u1",
+                username = "Alex",
+                latitude = 52.5130,
+                longitude = 13.4410,
+                isOnline = true,
+                statusMessage = "Looking for Techno party",
+                searchIntent = "Party"
+            ),
+            UserMarkerUiState(
+                userId = "u2",
+                username = "Sophie",
+                latitude = 52.5050,
+                longitude = 13.4480,
+                isOnline = true,
+                statusMessage = "Drinks at Watergate?",
+                searchIntent = "Bar & Lounge"
+            ),
+            UserMarkerUiState(
+                userId = "u3",
+                username = "Leon",
+                latitude = 52.5180,
+                longitude = 13.4120,
+                isOnline = false,
+                statusMessage = "Chilling",
+                searchIntent = "Chill"
+            )
+        )
+    }
+
     fun onMapLoaded() {
         _uiState.update { it.copy(isMapLoaded = true) }
     }
@@ -228,13 +326,32 @@ class MapViewModel @Inject constructor(
         _uiState.update { it.copy(isLoadingLocation = false) }
     }
 
+    fun onClubMarkerClicked(clubMarker: ClubMarkerUiState) {
+        onMarkerClicked(clubMarker.venue)
+    }
+
     fun onMarkerClicked(venue: VenueItemUi) {
         _uiState.update { state ->
             state.copy(
                 selectedVenue = venue,
+                selectedUser = null,
                 cameraPosition = CameraPositionStateData(
                     latitude = venue.latitude,
                     longitude = venue.longitude,
+                    zoom = 16.0f
+                )
+            )
+        }
+    }
+
+    fun onUserMarkerClicked(userMarker: UserMarkerUiState) {
+        _uiState.update { state ->
+            state.copy(
+                selectedUser = userMarker,
+                selectedVenue = null,
+                cameraPosition = CameraPositionStateData(
+                    latitude = userMarker.latitude,
+                    longitude = userMarker.longitude,
                     zoom = 16.0f
                 )
             )
@@ -251,7 +368,11 @@ class MapViewModel @Inject constructor(
     }
 
     fun onQuickViewDismissed() {
-        _uiState.update { it.copy(selectedVenue = null) }
+        _uiState.update { it.copy(selectedVenue = null, selectedUser = null) }
+    }
+
+    fun onUserQuickViewDismissed() {
+        _uiState.update { it.copy(selectedUser = null) }
     }
 
     fun onCameraMoved(latitude: Double, longitude: Double, zoom: Float) {

@@ -36,7 +36,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,7 +51,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
@@ -67,13 +65,15 @@ import com.kliq.app.ui.components.KliqCategoryChip
 import com.kliq.app.ui.components.LocationPermanentlyDeniedDialog
 import com.kliq.app.ui.components.LocationRationaleDialog
 import com.kliq.app.ui.components.MapQuickViewCard
+import com.kliq.app.ui.components.UserQuickViewCard
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.viewmodel.PermissionViewModel
 
 /**
  * Native Map Screen integrating Google Maps Compose SDK with custom dark-purple JSON styling,
- * interactive club/event markers, performance marker clustering, and quick view card.
+ * custom Kliq purple club pins, circular user profile markers, performance marker clustering,
+ * and interactive quick view cards.
  *
  * @param topBarState Top bar UI state.
  * @param onToggleMenu Callback for menu toggle.
@@ -169,22 +169,43 @@ fun MapScreen(
             onMapLoaded = { viewModel.onMapLoaded() },
             onMapClick = { viewModel.onQuickViewDismissed() }
         ) {
-            // Render Clustered & Single Club Markers
+            // Render Custom Kliq User Profile Markers
+            uiState.userMarkers.forEach { userMarker ->
+                val userIcon = remember(userMarker.username, userMarker.isOnline) {
+                    MarkerBitmapHelper.getUserMarkerBitmap(
+                        username = userMarker.username,
+                        isOnline = userMarker.isOnline
+                    )
+                }
+                Marker(
+                    state = MarkerState(position = LatLng(userMarker.latitude, userMarker.longitude)),
+                    title = userMarker.username,
+                    snippet = userMarker.statusMessage ?: if (userMarker.isOnline) "Online" else "Zuletzt aktiv",
+                    icon = userIcon,
+                    onClick = {
+                        viewModel.onUserMarkerClicked(userMarker)
+                        true
+                    }
+                )
+            }
+
+            // Render Clustered & Single Kliq Club Markers
             uiState.clusteredMarkers.forEach { markerItem ->
                 when (markerItem) {
                     is ClusterMarkerUiState.SingleNode -> {
                         val venue = markerItem.venue
-                        val hue = when (venue.category.lowercase()) {
-                            "bar" -> BitmapDescriptorFactory.HUE_ORANGE
-                            "event", "events" -> BitmapDescriptorFactory.HUE_MAGENTA
-                            else -> BitmapDescriptorFactory.HUE_VIOLET
+                        val clubIcon = remember(venue.category, venue.activeEventTitle) {
+                            MarkerBitmapHelper.getClubMarkerBitmap(
+                                category = venue.category,
+                                hasActiveEvent = venue.activeEventTitle != null
+                            )
                         }
                         Marker(
                             state = MarkerState(position = markerItem.position),
                             title = venue.name,
                             snippet = "${venue.category} · ${venue.distance} · ★ ${venue.rating}" +
                                     (venue.activeEventTitle?.let { " · 🎉 $it" } ?: ""),
-                            icon = BitmapDescriptorFactory.defaultMarker(hue),
+                            icon = clubIcon,
                             onClick = {
                                 viewModel.onMarkerClicked(venue)
                                 true
@@ -192,11 +213,17 @@ fun MapScreen(
                         )
                     }
                     is ClusterMarkerUiState.ClusterNode -> {
+                        val clusterIcon = remember(markerItem.count, markerItem.primaryCategory) {
+                            MarkerBitmapHelper.getClusterMarkerBitmap(
+                                count = markerItem.count,
+                                primaryCategory = markerItem.primaryCategory
+                            )
+                        }
                         Marker(
                             state = MarkerState(position = markerItem.position),
                             title = "${markerItem.count} Standorte in der Nähe",
                             snippet = "${markerItem.primaryCategory}-Gruppe · Tippen zum Heranzoomen",
-                            icon = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN),
+                            icon = clusterIcon,
                             onClick = {
                                 viewModel.onClusterClicked(markerItem)
                                 true
@@ -259,12 +286,23 @@ fun MapScreen(
             modifier = Modifier.align(Alignment.BottomCenter)
         )
 
-        // Overlay Quick View Card for selected venue
+        // Overlay Quick View Card for selected club venue
         MapQuickViewCard(
             venue = uiState.selectedVenue,
             isVisible = uiState.selectedVenue != null,
             onDismiss = { viewModel.onQuickViewDismissed() },
             onNavigateDetails = { /* Navigate to Venue Detail */ },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 80.dp)
+        )
+
+        // Overlay Quick View Card for selected user marker
+        UserQuickViewCard(
+            user = uiState.selectedUser,
+            isVisible = uiState.selectedUser != null,
+            onDismiss = { viewModel.onUserQuickViewDismissed() },
+            onSendMessage = { /* Trigger chat navigation */ },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 80.dp)
