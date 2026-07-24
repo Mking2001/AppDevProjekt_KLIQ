@@ -71,4 +71,10 @@ object AppModule {
     fun provideIoDispatcher(): kotlinx.coroutines.CoroutineDispatcher {
         return kotlinx.coroutines.Dispatchers.IO
     }
+
+    @Provides
+    @Singleton
+    fun providePermissionManager(impl: com.kliq.app.util.PermissionManagerImpl): com.kliq.app.util.PermissionManager {
+        return impl
+    }
 }
