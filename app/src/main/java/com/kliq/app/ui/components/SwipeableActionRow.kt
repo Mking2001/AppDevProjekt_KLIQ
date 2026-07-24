@@ -9,13 +9,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.DismissDirection
-import androidx.compose.material3.DismissValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SwipeToDismiss
-import androidx.compose.material3.rememberDismissState
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -40,58 +39,59 @@ fun SwipeableActionRow(
     content: @Composable () -> Unit
 ) {
     val view = LocalView.current
-    val dismissState = rememberDismissState(
+    val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { dismissValue ->
             when (dismissValue) {
-                DismissValue.DismissedToEnd -> {
+                SwipeToDismissBoxValue.StartToEnd -> {
                     HapticFeedbackUtils.triggerMediumImpact(view)
                     onArchive()
                     true
                 }
-                DismissValue.DismissedToStart -> {
+                SwipeToDismissBoxValue.EndToStart -> {
                     HapticFeedbackUtils.triggerMediumImpact(view)
                     onDelete()
                     true
                 }
-                DismissValue.Default -> false
+                SwipeToDismissBoxValue.Settled -> false
             }
         }
     )
 
-    SwipeToDismiss(
+    SwipeToDismissBox(
         state = dismissState,
         modifier = modifier,
-        directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart),
-        background = {
+        enableDismissFromStartToEnd = true,
+        enableDismissFromEndToStart = true,
+        backgroundContent = {
             val direction = dismissState.dismissDirection
             
             val color by animateColorAsState(
                 targetValue = when (dismissState.targetValue) {
-                    DismissValue.Default -> Color.Transparent
-                    DismissValue.DismissedToEnd -> Color(0xFFE2B93B) // Gelb für Archiv
-                    DismissValue.DismissedToStart -> MaterialTheme.colorScheme.error // Rot für Delete
+                    SwipeToDismissBoxValue.Settled -> Color.Transparent
+                    SwipeToDismissBoxValue.StartToEnd -> Color(0xFFE2B93B) // Gelb für Archiv
+                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error // Rot für Delete
                 }, 
                 label = "swipe_color"
             )
 
             val alignment = when (direction) {
-                DismissDirection.StartToEnd -> Alignment.CenterStart
-                DismissDirection.EndToStart -> Alignment.CenterEnd
-                null -> Alignment.Center
+                SwipeToDismissBoxValue.StartToEnd -> Alignment.CenterStart
+                SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
+                SwipeToDismissBoxValue.Settled -> Alignment.Center
             }
             
             val icon = when (direction) {
-                DismissDirection.StartToEnd -> Icons.Default.Archive
-                DismissDirection.EndToStart -> Icons.Default.Delete
-                null -> Icons.Default.Delete
+                SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Archive
+                SwipeToDismissBoxValue.EndToStart -> Icons.Default.Delete
+                SwipeToDismissBoxValue.Settled -> Icons.Default.Delete
             }
 
             val scale by animateFloatAsState(
-                targetValue = if (dismissState.targetValue == DismissValue.Default) 0.75f else 1f,
+                targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.Settled) 0.75f else 1f,
                 label = "swipe_icon_scale"
             )
 
-            if (direction != null) {
+            if (direction != SwipeToDismissBoxValue.Settled) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -108,7 +108,7 @@ fun SwipeableActionRow(
                 }
             }
         },
-        dismissContent = {
+        content = {
             content()
         }
     )
