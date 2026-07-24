@@ -19,6 +19,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.NoActionBar"
+        tools:targetApi="31">
+
         <!-- Google Maps API Key (loaded securely from local.properties via manifestPlaceholders) -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
