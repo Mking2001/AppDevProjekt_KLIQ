@@ -1,6 +1,11 @@
 package com.kliq.app.ui.screens.map
 
+import android.Manifest
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -19,8 +24,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -29,6 +32,7 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -44,31 +48,36 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.kliq.app.data.model.LocationPermissionState
 import com.kliq.app.ui.components.KliqCategoryChip
+import com.kliq.app.ui.components.LocationPermanentlyDeniedDialog
+import com.kliq.app.ui.components.LocationRationaleDialog
 import com.kliq.app.ui.components.MapQuickViewCard
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.util.HapticFeedbackUtils
+import com.kliq.app.viewmodel.PermissionViewModel
 
 /**
- * Map-Screen mit Karten-Platzhalter, Filter-Chips,
- * Location-Button und Bottom-Sheet-Peek für nahegelegene Venues.
+ * Map Screen integrating interactive map controls, category filters, bottom sheet venue peeking,
+ * and reactive location permission workflow (Rationale Dialog & Settings Deep-Linking).
  *
- * Der Map-Screen verwendet keine Top-Bar (showTopBar = false),
- * da die Kartenansicht den gesamten Bildschirm einnimmt.
- *
- * @param topBarState Aktueller Top-Bar UI-State.
- * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
- * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
- * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
- * @param viewModel Hilt-injiziertes [MapViewModel].
+ * @param topBarState Top bar UI state.
+ * @param onToggleMenu Callback for menu toggle.
+ * @param onDismissMenu Callback for menu dismiss.
+ * @param onMenuAction Callback for menu actions.
+ * @param viewModel Hilt-injected [MapViewModel].
+ * @param permissionViewModel Hilt-injected [PermissionViewModel].
  */
 @Composable
 fun MapScreen(
@@ -76,19 +85,39 @@ fun MapScreen(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
-    viewModel: MapViewModel = hiltViewModel()
+    viewModel: MapViewModel = hiltViewModel(),
+    permissionViewModel: PermissionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val permissionUiState by permissionViewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    // ActivityResultLauncher for requesting system location permissions
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val isGranted = permissions.values.any { it }
+        val activity = context as? Activity
+        val shouldShowRationale = activity?.let {
+            ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.ACCESS_FINE_LOCATION) ||
+            ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.ACCESS_COARSE_LOCATION)
+        } ?: false
+
+        permissionViewModel.onPermissionResult(isGranted, shouldShowRationale)
+        if (isGranted) {
+            viewModel.onLocationRequested()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Dunkel gestylte Karten-Mockup-Fläche mit Rasterlinien und interaktiven Markern
+        // Map Surface Placeholder / SDK View
         MapPlaceholder(
             venues = uiState.nearbyVenues,
             onVenueLongPress = { viewModel.onMarkerLongPressed(it) },
             modifier = Modifier.fillMaxSize()
         )
 
-        // Filter-Chips am oberen Rand über der Karte
+        // Category Filter Chips
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -103,9 +132,15 @@ fun MapScreen(
             }
         }
 
-        // Location-FAB rechts unten
+        // Location FAB with Permission Workflow Trigger
         FloatingActionButton(
-            onClick = { viewModel.onLocationRequested() },
+            onClick = {
+                if (permissionUiState.permissionState is LocationPermissionState.Granted) {
+                    viewModel.onLocationRequested()
+                } else {
+                    permissionViewModel.onRequestPermissionClicked(context)
+                }
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 16.dp, bottom = 240.dp),
@@ -113,34 +148,63 @@ fun MapScreen(
             contentColor = MaterialTheme.colorScheme.primary,
             elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
         ) {
-            Icon(
-                imageVector = Icons.Filled.MyLocation,
-                contentDescription = "Mein Standort"
-            )
+            if (uiState.isLoadingLocation) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.5.dp
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.MyLocation,
+                    contentDescription = "Mein Standort"
+                )
+            }
         }
 
-        // Bottom-Sheet-Peek mit nahegelegenen Venues
+        // Bottom-Sheet-Peek for nearby venues
         VenueBottomSheet(
             venues = uiState.nearbyVenues,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
 
-        // Quick View Card (Overlay)
+        // Overlay Quick View Card
         MapQuickViewCard(
             venue = uiState.selectedVenue,
             isVisible = uiState.selectedVenue != null,
             onDismiss = { viewModel.onQuickViewDismissed() },
-            onNavigateDetails = { /* TODO */ },
+            onNavigateDetails = { /* Navigate to Venue Detail */ },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 80.dp)
+        )
+
+        // Custom Kliq Location Rationale Dialog
+        LocationRationaleDialog(
+            isVisible = permissionUiState.showRationaleDialog,
+            onConfirmActivate = {
+                permissionViewModel.onRationaleDismissed()
+                permissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            },
+            onDismiss = { permissionViewModel.onRationaleDismissed() }
+        )
+
+        // Custom Permanently Denied Settings Deep-Link Dialog
+        LocationPermanentlyDeniedDialog(
+            isVisible = permissionUiState.showPermanentlyDeniedDialog,
+            onOpenSettings = { permissionViewModel.onOpenSettingsClicked(context) },
+            onDismiss = { permissionViewModel.onPermanentlyDeniedDismissed() }
         )
     }
 }
 
 /**
- * Karten-Platzhalter mit dunklem Hintergrund und Rasterlinien.
- * Simuliert eine Kartenansicht bis die echte Google Maps Integration erfolgt.
+ * Map placeholder with dark styling and grid lines.
  */
 @Composable
 private fun MapPlaceholder(
@@ -159,7 +223,6 @@ private fun MapPlaceholder(
                 val gridSpacing = 60.dp.toPx()
                 val dashEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
 
-                // Vertikale Linien
                 var x = 0f
                 while (x < size.width) {
                     drawLine(
@@ -172,7 +235,6 @@ private fun MapPlaceholder(
                     x += gridSpacing
                 }
 
-                // Horizontale Linien
                 var y = 0f
                 while (y < size.height) {
                     drawLine(
@@ -188,7 +250,7 @@ private fun MapPlaceholder(
     ) {
         val w = maxWidth
         val h = maxHeight
-        
+
         val relativePoints = listOf(
             Offset(0.3f, 0.25f),
             Offset(0.6f, 0.35f),
@@ -196,7 +258,7 @@ private fun MapPlaceholder(
             Offset(0.7f, 0.2f),
             Offset(0.2f, 0.45f)
         )
-        
+
         venues.forEachIndexed { index, venue ->
             val relPoint = relativePoints[index % relativePoints.size]
             Box(
@@ -223,7 +285,7 @@ private fun MapPlaceholder(
                 )
             }
         }
-        // Zentraler Standort-Marker
+
         Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
                 imageVector = Icons.Filled.LocationOn,
@@ -249,12 +311,7 @@ private fun MapPlaceholder(
 }
 
 /**
- * Bottom-Sheet-Peek mit nahegelegenen Venues.
- * Abgerundete Karte am unteren Bildschirmrand mit einer
- * scrollbaren Liste von Venue-Karten.
- *
- * @param venues Liste der Venue-Platzhalter.
- * @param modifier Optionaler Modifier.
+ * Bottom-Sheet-Peek for nearby venues.
  */
 @Composable
 private fun VenueBottomSheet(
@@ -270,7 +327,6 @@ private fun VenueBottomSheet(
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(modifier = Modifier.padding(top = 8.dp)) {
-            // Drag-Handle-Indikator
             Box(
                 modifier = Modifier
                     .width(40.dp)
@@ -292,7 +348,6 @@ private fun VenueBottomSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Scrollbare Venue-Liste
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -307,8 +362,7 @@ private fun VenueBottomSheet(
 }
 
 /**
- * Einzelne Venue-Karte mit Name, Kategorie,
- * Entfernung und Bewertung.
+ * Individual Venue Card item.
  */
 @Composable
 private fun VenueCard(venue: VenueItemUi) {
@@ -323,7 +377,6 @@ private fun VenueCard(venue: VenueItemUi) {
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Venue-Icon-Platzhalter
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -355,7 +408,6 @@ private fun VenueCard(venue: VenueItemUi) {
                 )
             }
 
-            // Bewertung mit Stern-Icon
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Filled.Star,
