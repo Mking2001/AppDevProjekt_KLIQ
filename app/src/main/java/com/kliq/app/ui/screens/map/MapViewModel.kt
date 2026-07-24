@@ -56,7 +56,7 @@ data class VenueItemUi(
  */
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val clubRepository: ClubRepository? = null
+    private val clubRepository: ClubRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MapUiState())
