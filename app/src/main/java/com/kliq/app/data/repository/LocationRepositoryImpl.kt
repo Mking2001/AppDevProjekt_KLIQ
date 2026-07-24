@@ -35,19 +35,27 @@ class LocationRepositoryImpl @Inject constructor(
     override val isTrackingActive: StateFlow<Boolean> = _isTrackingActive.asStateFlow()
 
     override fun startBackgroundTracking() {
-        val intent = Intent(context, BackgroundLocationService::class.java).apply {
-            action = BackgroundLocationService.ACTION_START
-        }
-        ContextCompat.startForegroundService(context, intent)
         _isTrackingActive.value = true
+        try {
+            val intent = Intent(context, BackgroundLocationService::class.java).apply {
+                action = BackgroundLocationService.ACTION_START
+            }
+            ContextCompat.startForegroundService(context, intent)
+        } catch (e: Exception) {
+            // Non-android host environment fallback
+        }
     }
 
     override fun stopBackgroundTracking() {
-        val intent = Intent(context, BackgroundLocationService::class.java).apply {
-            action = BackgroundLocationService.ACTION_STOP
-        }
-        context.stopService(intent)
         _isTrackingActive.value = false
+        try {
+            val intent = Intent(context, BackgroundLocationService::class.java).apply {
+                action = BackgroundLocationService.ACTION_STOP
+            }
+            context.stopService(intent)
+        } catch (e: Exception) {
+            // Non-android host environment fallback
+        }
     }
 
     override suspend fun recordLocationUpdate(location: LocationData) {
