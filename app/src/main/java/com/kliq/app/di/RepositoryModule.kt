@@ -49,4 +49,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSessionRepository(impl: com.kliq.app.data.repository.SessionRepositoryImpl): com.kliq.app.data.repository.SessionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLocationRepository(impl: com.kliq.app.data.repository.LocationRepositoryImpl): com.kliq.app.data.repository.LocationRepository
 }

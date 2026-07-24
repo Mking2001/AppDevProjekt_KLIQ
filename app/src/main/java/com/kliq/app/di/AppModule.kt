@@ -46,6 +46,9 @@ object AppModule {
     fun provideChatDao(database: KliqDatabase): ChatDao = database.chatDao()
 
     @Provides
+    fun provideLocationDao(database: KliqDatabase): com.kliq.app.data.local.dao.LocationDao = database.locationDao()
+
+    @Provides
     @Singleton
     fun provideApiService(): KliqApiService {
         return Retrofit.Builder()
