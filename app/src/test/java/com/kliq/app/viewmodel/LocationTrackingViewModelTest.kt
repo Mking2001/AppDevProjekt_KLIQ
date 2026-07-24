@@ -15,8 +15,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -37,8 +35,6 @@ class LocationTrackingViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    private lateinit var viewModel: LocationTrackingViewModel
-
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
@@ -46,13 +42,6 @@ class LocationTrackingViewModelTest {
         `when`(repository.isTrackingActive).thenReturn(isTrackingFlow)
         `when`(repository.locationUpdates).thenReturn(locationUpdatesFlow)
         `when`(repository.getLocationCount()).thenReturn(locationCountFlow)
-        `when`(permissionManager.checkBackgroundLocationPermission(context)).thenReturn(LocationPermissionState.Granted)
-
-        viewModel = LocationTrackingViewModel(
-            context = context,
-            locationRepository = repository,
-            permissionManager = permissionManager
-        )
     }
 
     @After
@@ -60,15 +49,29 @@ class LocationTrackingViewModelTest {
         Dispatchers.resetMain()
     }
 
+    private fun createViewModel(permState: LocationPermissionState): LocationTrackingViewModel {
+        `when`(permissionManager.checkBackgroundLocationPermission(context)).thenReturn(permState)
+        return LocationTrackingViewModel(
+            context = context,
+            locationRepository = repository,
+            permissionManager = permissionManager
+        )
+    }
+
     @Test
     fun toggleTracking_whenPermissionGrantedAndInactive_startsBackgroundTracking() = runTest {
+        val viewModel = createViewModel(LocationPermissionState.Granted)
+        testDispatcher.scheduler.advanceUntilIdle()
+
         viewModel.toggleTracking()
+
         verify(repository).startBackgroundTracking()
     }
 
     @Test
     fun toggleTracking_whenPermissionDenied_doesNotStartTracking() = runTest {
-        `when`(permissionManager.checkBackgroundLocationPermission(context)).thenReturn(LocationPermissionState.Denied)
+        val viewModel = createViewModel(LocationPermissionState.Denied)
+        testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.toggleTracking()
 
@@ -79,6 +82,7 @@ class LocationTrackingViewModelTest {
     @Test
     fun toggleTracking_whenPermissionGrantedAndActive_stopsBackgroundTracking() = runTest {
         isTrackingFlow.value = true
+        val viewModel = createViewModel(LocationPermissionState.Granted)
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.toggleTracking()
@@ -88,6 +92,9 @@ class LocationTrackingViewModelTest {
 
     @Test
     fun clearLocationHistory_invokesRepositoryClear() = runTest {
+        val viewModel = createViewModel(LocationPermissionState.Granted)
+        testDispatcher.scheduler.advanceUntilIdle()
+
         viewModel.clearLocationHistory()
         testDispatcher.scheduler.advanceUntilIdle()
 

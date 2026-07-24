@@ -64,13 +64,19 @@ class BackgroundLocationService : Service() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val lastLocation = result.lastLocation ?: return
+                val isMockLocation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    lastLocation.isMock
+                } else {
+                    @Suppress("DEPRECATION")
+                    lastLocation.isFromMockProvider
+                }
                 val locationData = LocationData(
                     latitude = lastLocation.latitude,
                     longitude = lastLocation.longitude,
                     accuracy = lastLocation.accuracy,
                     timestampMs = lastLocation.time,
                     speed = lastLocation.speed,
-                    isMock = lastLocation.isFromMockProvider
+                    isMock = isMockLocation
                 )
 
                 serviceScope.launch {
