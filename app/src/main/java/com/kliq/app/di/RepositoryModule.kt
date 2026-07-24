@@ -45,4 +45,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChatRepository(impl: ChatRepositoryImpl): ChatRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSessionRepository(impl: com.kliq.app.data.repository.SessionRepositoryImpl): com.kliq.app.data.repository.SessionRepository
 }

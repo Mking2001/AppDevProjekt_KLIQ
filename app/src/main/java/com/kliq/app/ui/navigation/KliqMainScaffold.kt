@@ -43,6 +43,7 @@ import com.kliq.app.ui.screens.profile.ProfileScreen
 import com.kliq.app.ui.screens.splash.SplashScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationViewModel
+import com.kliq.app.viewmodel.AuthViewModel
 import com.kliq.app.viewmodel.ThemeViewModel
 
 val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
@@ -58,6 +59,7 @@ fun KliqMainScaffold(
     navigationViewModel: NavigationViewModel = hiltViewModel(),
     topBarViewModel: TopBarViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
     navController: NavHostController = rememberNavController()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -110,6 +112,7 @@ fun KliqMainScaffold(
                 currentRoute = currentRoute,
                 previousRoute = navigationState.previousRoute,
                 topBarState = topBarState,
+                authViewModel = authViewModel,
                 onToggleMenu = topBarViewModel::toggleMenu,
                 onDismissMenu = topBarViewModel::dismissMenu,
                 onMenuAction = { action ->
@@ -123,9 +126,10 @@ fun KliqMainScaffold(
                         TopBarMenuAction.ToggleTheme -> { themeViewModel.toggleTheme() }
                         TopBarMenuAction.About -> { /* About-Dialog anzeigen */ }
                         TopBarMenuAction.Logout -> {
-                            navController.navigate(
-                                NavigationRoute.verificationRoute("+49 176 12345678")
-                            )
+                            authViewModel.logout()
+                            navController.navigate(CoreRoutes.PHONE_LOGIN) {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
                     }
                 },
@@ -151,6 +155,7 @@ private fun KliqNavHost(
     currentRoute: String,
     previousRoute: String?,
     topBarState: TopBarUiState,
+    authViewModel: AuthViewModel,
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
@@ -173,7 +178,13 @@ private fun KliqNavHost(
     ) {
         composable(CoreRoutes.SPLASH) {
             SplashScreen(
-                onSplashFinished = {
+                authViewModel = authViewModel,
+                onNavigateToHome = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(CoreRoutes.SPLASH) { inclusive = true }
+                    }
+                },
+                onNavigateToPhoneLogin = {
                     navController.navigate(CoreRoutes.PHONE_LOGIN) {
                         popUpTo(CoreRoutes.SPLASH) { inclusive = true }
                     }

@@ -75,6 +75,9 @@ dependencies {
     // Lifecycle Compose (collectAsStateWithLifecycle)
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0")
     
+    // Security & Encryption (EncryptedSharedPreferences)
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.6")
 
