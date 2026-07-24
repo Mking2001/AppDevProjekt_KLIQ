@@ -16,13 +16,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Instrumentierter UI-Test für Kapitel 4.4: Anzeige von Club-Markern auf der Karte.
+ * Instrumentierter UI-Test für Kapitel 4.5: Anzeige von Custom Club & User Markern auf der Karte.
  *
  * Testet folgende UI-Interaktionsabläufe auf dem Emulator / Endgerät:
- *   1. Rendering von Club-Markern & Bottom Sheet Liste bei Kartenaufruf.
+ *   1. Rendering von Custom Club-Markern & Bottom Sheet Liste bei Kartenaufruf.
  *   2. Reaktivität bei Klick auf Club-Elemente: Öffnen des MapQuickViewCard Overlays mit Event-Details.
  *   3. Schließen-Funktion des Quick-View Overlays.
  *   4. Reagieren der Kategorie-Filter-Chips auf der Karte.
+ *   5. Anzeige und Rendering von Custom User Profile Markern & Navigation.
  */
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)
@@ -128,5 +129,23 @@ class ClubMapMarkersUiTest {
         composeTestRule.waitForIdle()
 
         composeTestRule.onNodeWithText("Sunset Lounge").assertIsDisplayed()
+    }
+
+    /**
+     * Testfall 5: Custom User Profile Marker und Club Marker werden geladen.
+     */
+    @Test
+    fun test5_userUndClubMarkerWerdenErfolgreichGeladen() {
+        composeTestRule.onNodeWithContentDescription("Karte").performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule
+                .onAllNodesWithText("Berghain / Panorama Bar")
+                .fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+
+        composeTestRule.onNodeWithText("In deiner Nähe (4)").assertIsDisplayed()
     }
 }
