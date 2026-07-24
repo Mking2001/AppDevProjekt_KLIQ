@@ -1,5 +1,9 @@
 package com.kliq.app.ui.screens.map
 
+import android.Manifest
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.model.CameraPosition
@@ -54,20 +59,26 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.kliq.app.data.model.LocationPermissionState
 import com.kliq.app.ui.components.KliqCategoryChip
+import com.kliq.app.ui.components.LocationPermanentlyDeniedDialog
+import com.kliq.app.ui.components.LocationRationaleDialog
 import com.kliq.app.ui.components.MapQuickViewCard
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
+import com.kliq.app.viewmodel.PermissionViewModel
 
 /**
  * Native Map Screen integrating Google Maps Compose SDK with custom dark-purple JSON styling,
- * interactive venue markers, location centering, and bottom sheet venue peeking.
+ * interactive venue markers, location centering, and reactive location permission workflow
+ * (Rationale Dialog & System Settings Deep-Linking).
  *
- * @param topBarState Top bar UI state representation.
- * @param onToggleMenu Callback toggling overflow menu.
- * @param onDismissMenu Callback dismissing overflow menu.
- * @param onMenuAction Callback executing menu actions.
+ * @param topBarState Top bar UI state.
+ * @param onToggleMenu Callback for menu toggle.
+ * @param onDismissMenu Callback for menu dismiss.
+ * @param onMenuAction Callback for menu actions.
  * @param viewModel Hilt-injected [MapViewModel].
+ * @param permissionViewModel Hilt-injected [PermissionViewModel].
  */
 @Composable
 fun MapScreen(
@@ -75,9 +86,11 @@ fun MapScreen(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
-    viewModel: MapViewModel = hiltViewModel()
+    viewModel: MapViewModel = hiltViewModel(),
+    permissionViewModel: PermissionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val permissionUiState by permissionViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     val cameraPositionState = rememberCameraPositionState {
@@ -120,6 +133,23 @@ fun MapScreen(
         )
     }
 
+    // ActivityResultLauncher for requesting system location permissions
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val isGranted = permissions.values.any { it }
+        val activity = context as? Activity
+        val shouldShowRationale = activity?.let {
+            ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.ACCESS_FINE_LOCATION) ||
+            ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.ACCESS_COARSE_LOCATION)
+        } ?: false
+
+        permissionViewModel.onPermissionResult(isGranted, shouldShowRationale)
+        if (isGranted) {
+            viewModel.onLocationRequested()
+        }
+    }
+
     Box(modifier = Modifier.fillMaxSize()) {
         // Native Google Map SDK Component
         GoogleMap(
@@ -159,9 +189,15 @@ fun MapScreen(
             }
         }
 
-        // Location FAB
+        // Location FAB with Permission Workflow Trigger
         FloatingActionButton(
-            onClick = { viewModel.onLocationRequested() },
+            onClick = {
+                if (permissionUiState.permissionState is LocationPermissionState.Granted) {
+                    viewModel.onLocationRequested()
+                } else {
+                    permissionViewModel.onRequestPermissionClicked(context)
+                }
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 16.dp, bottom = 240.dp),
@@ -190,15 +226,37 @@ fun MapScreen(
             modifier = Modifier.align(Alignment.BottomCenter)
         )
 
-        // Quick View Card Overlay for selected venue
+        // Overlay Quick View Card for selected venue
         MapQuickViewCard(
             venue = uiState.selectedVenue,
             isVisible = uiState.selectedVenue != null,
             onDismiss = { viewModel.onQuickViewDismissed() },
-            onNavigateDetails = { /* Detail navigation */ },
+            onNavigateDetails = { /* Navigate to Venue Detail */ },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 80.dp)
+        )
+
+        // Custom Kliq Location Rationale Dialog
+        LocationRationaleDialog(
+            isVisible = permissionUiState.showRationaleDialog,
+            onConfirmActivate = {
+                permissionViewModel.onRationaleDismissed()
+                permissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
+                )
+            },
+            onDismiss = { permissionViewModel.onRationaleDismissed() }
+        )
+
+        // Custom Permanently Denied Settings Deep-Link Dialog
+        LocationPermanentlyDeniedDialog(
+            isVisible = permissionUiState.showPermanentlyDeniedDialog,
+            onOpenSettings = { permissionViewModel.onOpenSettingsClicked(context) },
+            onDismiss = { permissionViewModel.onPermanentlyDeniedDismissed() }
         )
     }
 }
