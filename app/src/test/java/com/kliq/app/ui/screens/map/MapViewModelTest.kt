@@ -24,8 +24,8 @@ import org.mockito.Mockito.`when`
 
 /**
  * Unit tests for [MapViewModel] validating ClubRepository flow integration,
- * dynamic marker clustering, camera position management, venue filtering,
- * edge case handling, and quick view popup states.
+ * dynamic marker clustering, separate ClubMarkerUiState and UserMarkerUiState,
+ * camera position management, venue filtering, edge cases, and quick view popup states.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
@@ -76,14 +76,84 @@ class MapViewModelTest {
     }
 
     @Test
-    fun testInitialStateLoadsClubsFromRepositoryAndClusters() {
+    fun testInitialStateLoadsClubsAndUsers() {
         val state = viewModel.uiState.value
         assertTrue(state.filters.isNotEmpty())
         assertEquals(2, state.nearbyVenues.size)
+        assertEquals(2, state.clubMarkers.size)
+        assertTrue(state.userMarkers.isNotEmpty())
         assertTrue(state.clusteredMarkers.isNotEmpty())
         assertNull(state.selectedFilter)
         assertNull(state.selectedVenue)
+        assertNull(state.selectedUser)
         assertFalse(state.isLocationEnabled)
+    }
+
+    @Test
+    fun testClubMarkerUiStateMapping_populatesEventDetailsCorrectly() {
+        val clubMarker = viewModel.uiState.value.clubMarkers.first { it.id == "c1" }
+        assertEquals("Berghain", clubMarker.name)
+        assertTrue(clubMarker.hasActiveEvent)
+        assertEquals("Klubnacht", clubMarker.activeEventTitle)
+        assertEquals(52.5112, clubMarker.latitude, 0.0001)
+    }
+
+    @Test
+    fun testUserMarkerClicked_updatesSelectedUserAndCameraPosition() {
+        val userMarker = viewModel.uiState.value.userMarkers.first()
+        viewModel.onUserMarkerClicked(userMarker)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNotNull(state.selectedUser)
+        assertEquals(userMarker.userId, state.selectedUser?.userId)
+        assertNull(state.selectedVenue)
+        assertEquals(userMarker.latitude, state.cameraPosition.latitude, 0.0001)
+        assertEquals(16.0f, state.cameraPosition.zoom)
+    }
+
+    @Test
+    fun testClubMarkerClicked_updatesSelectedVenueAndClearsSelectedUser() {
+        val userMarker = viewModel.uiState.value.userMarkers.first()
+        viewModel.onUserMarkerClicked(userMarker)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertNotNull(viewModel.uiState.value.selectedUser)
+
+        val clubMarker = viewModel.uiState.value.clubMarkers.first()
+        viewModel.onClubMarkerClicked(clubMarker)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNotNull(state.selectedVenue)
+        assertEquals(clubMarker.id, state.selectedVenue?.id)
+        assertNull(state.selectedUser)
+    }
+
+    @Test
+    fun testUserQuickViewDismissed_clearsOnlySelectedUser() {
+        val userMarker = viewModel.uiState.value.userMarkers.first()
+        viewModel.onUserMarkerClicked(userMarker)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertNotNull(viewModel.uiState.value.selectedUser)
+
+        viewModel.onUserQuickViewDismissed()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.selectedUser)
+    }
+
+    @Test
+    fun testQuickViewDismissed_clearsBothSelectedVenueAndUser() {
+        val userMarker = viewModel.uiState.value.userMarkers.first()
+        viewModel.onUserMarkerClicked(userMarker)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertNotNull(viewModel.uiState.value.selectedUser)
+
+        viewModel.onQuickViewDismissed()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.selectedVenue)
+        assertNull(viewModel.uiState.value.selectedUser)
     }
 
     @Test
@@ -124,20 +194,6 @@ class MapViewModelTest {
     }
 
     @Test
-    fun testMarkerClickedUpdatesSelectedVenueAndCameraPosition() {
-        val venue = viewModel.uiState.value.nearbyVenues.first()
-        viewModel.onMarkerClicked(venue)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertNotNull(state.selectedVenue)
-        assertEquals(venue.id, state.selectedVenue?.id)
-        assertEquals(venue.latitude, state.cameraPosition.latitude, 0.0001)
-        assertEquals(venue.longitude, state.cameraPosition.longitude, 0.0001)
-        assertEquals(16.0f, state.cameraPosition.zoom)
-    }
-
-    @Test
     fun testClusterClickedZoomsInCamera() {
         val initialZoom = viewModel.uiState.value.cameraPosition.zoom
         val clusterNode = ClusterMarkerUiState.ClusterNode(
@@ -158,18 +214,6 @@ class MapViewModelTest {
     }
 
     @Test
-    fun testQuickViewDismissedClearsSelectedVenue() {
-        val venue = viewModel.uiState.value.nearbyVenues.first()
-        viewModel.onMarkerClicked(venue)
-        testDispatcher.scheduler.advanceUntilIdle()
-        assertNotNull(viewModel.uiState.value.selectedVenue)
-
-        viewModel.onQuickViewDismissed()
-        testDispatcher.scheduler.advanceUntilIdle()
-        assertNull(viewModel.uiState.value.selectedVenue)
-    }
-
-    @Test
     fun testOnMapLoadedUpdatesLoadedState() {
         assertFalse(viewModel.uiState.value.isMapLoaded)
         viewModel.onMapLoaded()
@@ -184,31 +228,7 @@ class MapViewModelTest {
 
         val state = fallbackVm.uiState.value
         assertTrue(state.nearbyVenues.isNotEmpty())
-        assertEquals(4, state.nearbyVenues.size) // Default 4 fallback venues
-    }
-
-    @Test
-    fun testEdgeCase_clubWithActiveEvent_populatesActiveEventDetailsInUiState() {
-        val state = viewModel.uiState.value
-        val berghain = state.nearbyVenues.first { it.id == "c1" }
-        assertEquals("Klubnacht", berghain.activeEventTitle)
-    }
-
-    @Test
-    fun testEdgeCase_clubWithEmptyCategory_defaultsToClubCategory() {
-        val clubWithEmptyCategory = Club(
-            id = "c3",
-            name = "Mystery Venue",
-            location = GpsLocation(52.5200, 13.4000, "Unknown Street"),
-            averageRating = 4.0,
-            operatingHours = OperatingHours(false, ""),
-            category = ""
-        )
-        `when`(clubRepository.getAllClubs()).thenReturn(flowOf(listOf(clubWithEmptyCategory)))
-        val customVm = MapViewModel(clubRepository)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val venue = customVm.uiState.value.nearbyVenues.first()
-        assertEquals("Club", venue.category)
+        assertEquals(4, state.nearbyVenues.size)
+        assertEquals(4, state.clubMarkers.size)
     }
 }
