@@ -18,6 +18,9 @@ interface PermissionManager {
     /** Evaluates the current system location permission state. */
     fun checkLocationPermission(context: Context): LocationPermissionState
 
+    /** Evaluates the background location permission (ACCESS_BACKGROUND_LOCATION). */
+    fun checkBackgroundLocationPermission(context: Context): LocationPermissionState
+
     /** Creates and launches an intent leading directly to the app's system settings page. */
     fun openAppSettings(context: Context)
 }
@@ -40,6 +43,28 @@ class PermissionManagerImpl @Inject constructor() : PermissionManager {
         ) == PackageManager.PERMISSION_GRANTED
 
         return if (fineLocationGranted || coarseLocationGranted) {
+            LocationPermissionState.Granted
+        } else {
+            LocationPermissionState.Denied
+        }
+    }
+
+    override fun checkBackgroundLocationPermission(context: Context): LocationPermissionState {
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
+            return checkLocationPermission(context)
+        }
+
+        val hasForeground = checkLocationPermission(context) == LocationPermissionState.Granted
+        if (!hasForeground) {
+            return LocationPermissionState.Denied
+        }
+
+        val backgroundGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_BACKGROUND_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        return if (backgroundGranted) {
             LocationPermissionState.Granted
         } else {
             LocationPermissionState.Denied
