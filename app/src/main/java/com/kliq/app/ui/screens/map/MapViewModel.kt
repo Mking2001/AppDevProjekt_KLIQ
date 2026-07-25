@@ -438,7 +438,7 @@ class MapViewModel @Inject constructor(
                 cameraPosition = CameraPositionStateData(
                     latitude = targetLat,
                     longitude = targetLng,
-                    zoom = 15.5f,
+                    zoom = 15.0f,
                     tilt = 0.0f,
                     bearing = 0.0f
                 )
@@ -453,7 +453,7 @@ class MapViewModel @Inject constructor(
                 MapCameraAnimationEvent.AnimateToLocation(
                     latitude = targetLat,
                     longitude = targetLng,
-                    zoom = 15.5f,
+                    zoom = 15.0f,
                     tilt = 0.0f,
                     bearing = 0.0f,
                     durationMs = 1000,
