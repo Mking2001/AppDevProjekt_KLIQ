@@ -2,7 +2,10 @@ package com.kliq.app.ui.screens.map
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kliq.app.data.model.CameraEasing
 import com.kliq.app.data.model.CameraPositionStateData
+import com.kliq.app.data.model.LatLngBoundsData
+import com.kliq.app.data.model.MapCameraAnimationEvent
 import com.kliq.app.data.model.MapStyleConfig
 import com.kliq.app.data.repository.ClubRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -10,8 +13,11 @@ import com.kliq.app.data.repository.LocationRepository
 import com.kliq.app.domain.usecase.CalculateUserDistanceUseCase
 import com.kliq.app.util.UserDistanceFormatter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -135,6 +141,12 @@ class MapViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
+
+    private val _cameraEventFlow = MutableSharedFlow<MapCameraAnimationEvent>(
+        extraBufferCapacity = 10,
+        replay = 0
+    )
+    val cameraEventFlow: SharedFlow<MapCameraAnimationEvent> = _cameraEventFlow.asSharedFlow()
 
     private var allVenues: List<VenueItemUi> = emptyList()
     private var allUsers: List<UserMarkerUiState> = emptyList()
@@ -400,6 +412,7 @@ class MapViewModel @Inject constructor(
         }
         updateFilteredAndClusteredVenues()
         updateUserDistances(_uiState.value.cameraPosition.latitude, _uiState.value.cameraPosition.longitude)
+        triggerAutoFitCameraAnimation()
     }
 
     fun onMapLoaded() {
@@ -412,6 +425,7 @@ class MapViewModel @Inject constructor(
             state.copy(selectedFilter = newFilter)
         }
         updateFilteredAndClusteredVenues()
+        triggerAutoFitCameraAnimation()
     }
 
     fun onLocationRequested() {
@@ -424,13 +438,29 @@ class MapViewModel @Inject constructor(
                 cameraPosition = CameraPositionStateData(
                     latitude = targetLat,
                     longitude = targetLng,
-                    zoom = 15.0f
+                    zoom = 15.5f,
+                    tilt = 0.0f,
+                    bearing = 0.0f
                 )
             )
         }
         updateFilteredAndClusteredVenues()
         updateUserDistances(targetLat, targetLng)
         _uiState.update { it.copy(isLoadingLocation = false) }
+
+        viewModelScope.launch {
+            _cameraEventFlow.emit(
+                MapCameraAnimationEvent.AnimateToLocation(
+                    latitude = targetLat,
+                    longitude = targetLng,
+                    zoom = 15.5f,
+                    tilt = 0.0f,
+                    bearing = 0.0f,
+                    durationMs = 1000,
+                    easing = CameraEasing.EASE_IN_OUT
+                )
+            )
+        }
     }
 
     fun onClubMarkerClicked(clubMarker: ClubMarkerUiState) {
@@ -445,7 +475,22 @@ class MapViewModel @Inject constructor(
                 cameraPosition = CameraPositionStateData(
                     latitude = venue.latitude,
                     longitude = venue.longitude,
-                    zoom = 16.0f
+                    zoom = 16.0f,
+                    tilt = 35.0f,
+                    bearing = 15.0f
+                )
+            )
+        }
+        viewModelScope.launch {
+            _cameraEventFlow.emit(
+                MapCameraAnimationEvent.AnimateToLocation(
+                    latitude = venue.latitude,
+                    longitude = venue.longitude,
+                    zoom = 16.0f,
+                    tilt = 35.0f,
+                    bearing = 15.0f,
+                    durationMs = 1000,
+                    easing = CameraEasing.EASE_IN_OUT
                 )
             )
         }
@@ -459,7 +504,22 @@ class MapViewModel @Inject constructor(
                 cameraPosition = CameraPositionStateData(
                     latitude = userMarker.latitude,
                     longitude = userMarker.longitude,
-                    zoom = 16.0f
+                    zoom = 16.0f,
+                    tilt = 35.0f,
+                    bearing = 15.0f
+                )
+            )
+        }
+        viewModelScope.launch {
+            _cameraEventFlow.emit(
+                MapCameraAnimationEvent.AnimateToLocation(
+                    latitude = userMarker.latitude,
+                    longitude = userMarker.longitude,
+                    zoom = 16.0f,
+                    tilt = 35.0f,
+                    bearing = 15.0f,
+                    durationMs = 1000,
+                    easing = CameraEasing.EASE_IN_OUT
                 )
             )
         }
@@ -468,6 +528,64 @@ class MapViewModel @Inject constructor(
     fun onClusterClicked(cluster: ClusterMarkerUiState.ClusterNode) {
         val targetZoom = (_uiState.value.cameraPosition.zoom + 2.0f).coerceAtMost(18.0f)
         onCameraMoved(cluster.centerLat, cluster.centerLng, targetZoom)
+        viewModelScope.launch {
+            _cameraEventFlow.emit(
+                MapCameraAnimationEvent.AnimateToLocation(
+                    latitude = cluster.centerLat,
+                    longitude = cluster.centerLng,
+                    zoom = targetZoom,
+                    tilt = 20.0f,
+                    durationMs = 800
+                )
+            )
+        }
+    }
+
+    fun animateNightPerspective(tilt: Float = 40.0f, bearing: Float = 25.0f) {
+        viewModelScope.launch {
+            _cameraEventFlow.emit(
+                MapCameraAnimationEvent.AnimateTiltRotation(
+                    tilt = tilt,
+                    bearing = bearing,
+                    durationMs = 800
+                )
+            )
+        }
+    }
+
+    private fun triggerAutoFitCameraAnimation() {
+        viewModelScope.launch(defaultDispatcher) {
+            val visibleCoordinates = mutableListOf<Pair<Double, Double>>()
+            val state = _uiState.value
+            if (state.showPublicEvents) {
+                visibleCoordinates.addAll(state.nearbyVenues.map { Pair(it.latitude, it.longitude) })
+            }
+            if (state.showPrivateLocations) {
+                visibleCoordinates.addAll(state.userMarkers.map { Pair(it.latitude, it.longitude) })
+            }
+
+            if (visibleCoordinates.size >= 2) {
+                LatLngBoundsData.fromCoordinates(visibleCoordinates)?.let { bounds ->
+                    _cameraEventFlow.emit(
+                        MapCameraAnimationEvent.AnimateToBounds(
+                            bounds = bounds,
+                            paddingPx = 120,
+                            durationMs = 1000
+                        )
+                    )
+                }
+            } else if (visibleCoordinates.size == 1) {
+                val (lat, lng) = visibleCoordinates.first()
+                _cameraEventFlow.emit(
+                    MapCameraAnimationEvent.AnimateToLocation(
+                        latitude = lat,
+                        longitude = lng,
+                        zoom = 15.5f,
+                        durationMs = 1000
+                    )
+                )
+            }
+        }
     }
 
     fun onMarkerLongPressed(venue: VenueItemUi) {
