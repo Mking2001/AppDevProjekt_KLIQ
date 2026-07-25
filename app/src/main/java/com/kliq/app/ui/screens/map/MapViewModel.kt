@@ -113,7 +113,8 @@ class MapViewModel @Inject constructor(
     private val clubRepository: ClubRepository,
     private val calculateUserDistanceUseCase: CalculateUserDistanceUseCase = CalculateUserDistanceUseCase(),
     private val userDistanceFormatter: UserDistanceFormatter = UserDistanceFormatter.default,
-    private val locationRepository: LocationRepository? = null
+    private val locationRepository: LocationRepository? = null,
+    private val defaultDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MapUiState())
@@ -143,7 +144,7 @@ class MapViewModel @Inject constructor(
     }
 
     fun updateUserDistances(currentLat: Double, currentLng: Double) {
-        viewModelScope.launch(Dispatchers.Default) {
+        viewModelScope.launch(defaultDispatcher) {
             val updatedUsers = allUsers.map { user ->
                 val rawDist = calculateUserDistanceUseCase.calculateDistanceMeters(
                     startLat = currentLat,

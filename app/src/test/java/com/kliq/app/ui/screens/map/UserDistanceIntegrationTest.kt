@@ -66,7 +66,8 @@ class UserDistanceIntegrationTest {
             clubRepository = clubRepository,
             calculateUserDistanceUseCase = calculateUseCase,
             userDistanceFormatter = formatter,
-            locationRepository = fakeLocationRepository
+            locationRepository = fakeLocationRepository,
+            defaultDispatcher = testDispatcher
         )
         testDispatcher.scheduler.advanceUntilIdle()
     }
