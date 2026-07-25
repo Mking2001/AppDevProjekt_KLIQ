@@ -64,6 +64,7 @@ import com.kliq.app.data.model.LocationPermissionState
 import com.kliq.app.ui.components.KliqCategoryChip
 import com.kliq.app.ui.components.LocationPermanentlyDeniedDialog
 import com.kliq.app.ui.components.LocationRationaleDialog
+import com.kliq.app.ui.components.MapFilterSegmentedControl
 import com.kliq.app.ui.components.MapQuickViewCard
 import com.kliq.app.ui.components.UserQuickViewCard
 import com.kliq.app.ui.navigation.TopBarMenuAction
@@ -73,7 +74,7 @@ import com.kliq.app.viewmodel.PermissionViewModel
 /**
  * Native Map Screen integrating Google Maps Compose SDK with custom dark-purple JSON styling,
  * custom Kliq purple club pins, circular user profile markers, performance marker clustering,
- * and interactive quick view cards.
+ * interactive quick view cards, and location filter mode switching (Public Events vs Private Locations).
  *
  * @param topBarState Top bar UI state.
  * @param onToggleMenu Callback for menu toggle.
@@ -169,83 +170,100 @@ fun MapScreen(
             onMapLoaded = { viewModel.onMapLoaded() },
             onMapClick = { viewModel.onQuickViewDismissed() }
         ) {
-            // Render Custom Kliq User Profile Markers
-            uiState.userMarkers.forEach { userMarker ->
-                val userIcon = remember(userMarker.username, userMarker.isOnline) {
-                    MarkerBitmapHelper.getUserMarkerBitmap(
-                        username = userMarker.username,
-                        isOnline = userMarker.isOnline
+            // Render Custom Kliq User Profile Markers (Only if showPrivateLocations is enabled)
+            if (uiState.showPrivateLocations) {
+                uiState.userMarkers.forEach { userMarker ->
+                    val userIcon = remember(userMarker.username, userMarker.isOnline) {
+                        MarkerBitmapHelper.getUserMarkerBitmap(
+                            username = userMarker.username,
+                            isOnline = userMarker.isOnline
+                        )
+                    }
+                    Marker(
+                        state = MarkerState(position = LatLng(userMarker.latitude, userMarker.longitude)),
+                        title = userMarker.username,
+                        snippet = userMarker.statusMessage ?: if (userMarker.isOnline) "Online" else "Zuletzt aktiv",
+                        icon = userIcon,
+                        onClick = {
+                            viewModel.onUserMarkerClicked(userMarker)
+                            true
+                        }
                     )
                 }
-                Marker(
-                    state = MarkerState(position = LatLng(userMarker.latitude, userMarker.longitude)),
-                    title = userMarker.username,
-                    snippet = userMarker.statusMessage ?: if (userMarker.isOnline) "Online" else "Zuletzt aktiv",
-                    icon = userIcon,
-                    onClick = {
-                        viewModel.onUserMarkerClicked(userMarker)
-                        true
-                    }
-                )
             }
 
-            // Render Clustered & Single Kliq Club Markers
-            uiState.clusteredMarkers.forEach { markerItem ->
-                when (markerItem) {
-                    is ClusterMarkerUiState.SingleNode -> {
-                        val venue = markerItem.venue
-                        val clubIcon = remember(venue.category, venue.activeEventTitle) {
-                            MarkerBitmapHelper.getClubMarkerBitmap(
-                                category = venue.category,
-                                hasActiveEvent = venue.activeEventTitle != null
+            // Render Clustered & Single Kliq Club Markers (Only if showPublicEvents is enabled)
+            if (uiState.showPublicEvents) {
+                uiState.clusteredMarkers.forEach { markerItem ->
+                    when (markerItem) {
+                        is ClusterMarkerUiState.SingleNode -> {
+                            val venue = markerItem.venue
+                            val clubIcon = remember(venue.category, venue.activeEventTitle) {
+                                MarkerBitmapHelper.getClubMarkerBitmap(
+                                    category = venue.category,
+                                    hasActiveEvent = venue.activeEventTitle != null
+                                )
+                            }
+                            Marker(
+                                state = MarkerState(position = markerItem.position),
+                                title = venue.name,
+                                snippet = "${venue.category} · ${venue.distance} · ★ ${venue.rating}" +
+                                        (venue.activeEventTitle?.let { " · 🎉 $it" } ?: ""),
+                                icon = clubIcon,
+                                onClick = {
+                                    viewModel.onMarkerClicked(venue)
+                                    true
+                                }
                             )
                         }
-                        Marker(
-                            state = MarkerState(position = markerItem.position),
-                            title = venue.name,
-                            snippet = "${venue.category} · ${venue.distance} · ★ ${venue.rating}" +
-                                    (venue.activeEventTitle?.let { " · 🎉 $it" } ?: ""),
-                            icon = clubIcon,
-                            onClick = {
-                                viewModel.onMarkerClicked(venue)
-                                true
+                        is ClusterMarkerUiState.ClusterNode -> {
+                            val clusterIcon = remember(markerItem.count, markerItem.primaryCategory) {
+                                MarkerBitmapHelper.getClusterMarkerBitmap(
+                                    count = markerItem.count,
+                                    primaryCategory = markerItem.primaryCategory
+                                )
                             }
-                        )
-                    }
-                    is ClusterMarkerUiState.ClusterNode -> {
-                        val clusterIcon = remember(markerItem.count, markerItem.primaryCategory) {
-                            MarkerBitmapHelper.getClusterMarkerBitmap(
-                                count = markerItem.count,
-                                primaryCategory = markerItem.primaryCategory
+                            Marker(
+                                state = MarkerState(position = markerItem.position),
+                                title = "${markerItem.count} Standorte in der Nähe",
+                                snippet = "${markerItem.primaryCategory}-Gruppe · Tippen zum Heranzoomen",
+                                icon = clusterIcon,
+                                onClick = {
+                                    viewModel.onClusterClicked(markerItem)
+                                    true
+                                }
                             )
                         }
-                        Marker(
-                            state = MarkerState(position = markerItem.position),
-                            title = "${markerItem.count} Standorte in der Nähe",
-                            snippet = "${markerItem.primaryCategory}-Gruppe · Tippen zum Heranzoomen",
-                            icon = clusterIcon,
-                            onClick = {
-                                viewModel.onClusterClicked(markerItem)
-                                true
-                            }
-                        )
                     }
                 }
             }
         }
 
-        // Category Filter Chips
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.align(Alignment.TopStart)
+        // Floating Top Filter Controls (MapLocationFilterMode & Category Sub-Chips)
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
         ) {
-            itemsIndexed(uiState.filters) { index, filter ->
-                KliqCategoryChip(
-                    label = filter,
-                    selected = uiState.selectedFilter == index,
-                    onClick = { viewModel.onFilterSelected(index) }
-                )
+            MapFilterSegmentedControl(
+                selectedMode = uiState.locationFilterMode,
+                onModeSelected = { viewModel.onLocationFilterModeSelected(it) }
+            )
+
+            if (uiState.showPublicEvents) {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    itemsIndexed(uiState.filters) { index, filter ->
+                        KliqCategoryChip(
+                            label = filter,
+                            selected = uiState.selectedFilter == index,
+                            onClick = { viewModel.onFilterSelected(index) }
+                        )
+                    }
+                }
             }
         }
 
@@ -294,7 +312,7 @@ fun MapScreen(
             onNavigateDetails = { /* Navigate to Venue Detail */ },
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 80.dp)
+                .padding(top = 135.dp)
         )
 
         // Overlay Quick View Card for selected user marker
@@ -305,7 +323,7 @@ fun MapScreen(
             onSendMessage = { /* Trigger chat navigation */ },
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 80.dp)
+                .padding(top = 135.dp)
         )
 
         // Custom Kliq Location Rationale Dialog
