@@ -48,14 +48,56 @@ class CalculateUserDistanceUseCaseTest {
     }
 
     @Test
-    fun calculateDistanceMeters_invalidCoordinates_returnsNull() {
-        val result1 = useCase.calculateDistanceMeters(100.0, 13.4050, 52.5200, 13.4050)
-        val result2 = useCase.calculateDistanceMeters(Double.NaN, 13.4050, 52.5200, 13.4050)
-        val result3 = useCase.calculateDistanceMeters(52.5200, 200.0, 52.5200, 13.4050)
+    fun calculateDistanceMeters_nearRange_returnsAccurateMeters() {
+        // ~50m apart (0.00045 degrees lat difference at Berlin latitude)
+        val dist50m = useCase.calculateDistanceMeters(52.52000, 13.40500, 52.52045, 13.40500)
+        assertNotNull(dist50m)
+        assertEquals(50.0, dist50m!!, 5.0)
 
-        assertNull(result1)
-        assertNull(result2)
-        assertNull(result3)
+        // ~500m apart (0.0045 degrees lat difference)
+        val dist500m = useCase.calculateDistanceMeters(52.52000, 13.40500, 52.52450, 13.40500)
+        assertNotNull(dist500m)
+        assertEquals(500.0, dist500m!!, 20.0)
+    }
+
+    @Test
+    fun calculateDistanceMeters_farRange_returnsAccurateKilometers() {
+        // Berlin (52.5200, 13.4050) to Munich (48.1351, 11.5820) ~ 504 km
+        val dist500km = useCase.calculateDistanceMeters(52.5200, 13.4050, 48.1351, 11.5820)
+        assertNotNull(dist500km)
+        assertEquals(504000.0, dist500km!!, 10000.0)
+    }
+
+    @Test
+    fun calculateDistanceMeters_antipodalPoints_returnsHalfEarthCircumference() {
+        // North Pole to South Pole ~ 20,015 km
+        val poleDistance = useCase.calculateDistanceMeters(90.0, 0.0, -90.0, 0.0)
+        assertNotNull(poleDistance)
+        assertEquals(20015000.0, poleDistance!!, 50000.0)
+
+        // Equator opposite points: (0.0, 0.0) to (0.0, 180.0)
+        val equatorAntipode = useCase.calculateDistanceMeters(0.0, 0.0, 0.0, 180.0)
+        assertNotNull(equatorAntipode)
+        assertEquals(20015000.0, equatorAntipode!!, 50000.0)
+    }
+
+    @Test
+    fun calculateDistanceMeters_meridianCrossing_calculatesShortestPath() {
+        // Crossing 180th meridian (International Date Line)
+        // Point A: (0.0, 179.9), Point B: (0.0, -179.9) -> 0.2 degrees apart (~22.2 km)
+        val distCrossing = useCase.calculateDistanceMeters(0.0, 179.9, 0.0, -179.9)
+        assertNotNull(distCrossing)
+        assertEquals(22239.0, distCrossing!!, 500.0)
+    }
+
+    @Test
+    fun calculateDistanceMeters_invalidAndExtremeCoordinates_returnsNull() {
+        assertNull(useCase.calculateDistanceMeters(90.0001, 13.4050, 52.5200, 13.4050))
+        assertNull(useCase.calculateDistanceMeters(-90.1, 13.4050, 52.5200, 13.4050))
+        assertNull(useCase.calculateDistanceMeters(52.5200, 180.0001, 52.5200, 13.4050))
+        assertNull(useCase.calculateDistanceMeters(52.5200, -180.0001, 52.5200, 13.4050))
+        assertNull(useCase.calculateDistanceMeters(Double.NaN, 13.4050, 52.5200, 13.4050))
+        assertNull(useCase.calculateDistanceMeters(52.5200, Double.POSITIVE_INFINITY, 52.5200, 13.4050))
     }
 
     @Test

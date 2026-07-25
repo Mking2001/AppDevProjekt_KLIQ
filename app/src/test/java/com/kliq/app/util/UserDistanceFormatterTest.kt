@@ -15,23 +15,29 @@ class UserDistanceFormatterTest {
     }
 
     @Test
-    fun formatDistance_under1000Meters_formatsAsMeters() {
-        assertEquals("150 m", formatter.formatDistance(150.4))
+    fun formatDistance_under1000Meters_formatsAsMetersWithoutDecimals() {
         assertEquals("0 m", formatter.formatDistance(0.0))
+        assertEquals("50 m", formatter.formatDistance(50.0))
+        assertEquals("150 m", formatter.formatDistance(150.4))
+        assertEquals("500 m", formatter.formatDistance(500.0))
         assertEquals("851 m", formatter.formatDistance(850.7))
+        assertEquals("999 m", formatter.formatDistance(999.4))
     }
 
     @Test
-    fun formatDistance_1000MetersAndAbove_formatsAsKilometers() {
-        assertEquals("1.2 km", formatter.formatDistance(1200.0))
-        assertEquals("15.4 km", formatter.formatDistance(15400.0))
+    fun formatDistance_1000MetersAndAbove_formatsAsKilometersWithOneDecimal() {
         assertEquals("1.0 km", formatter.formatDistance(1000.0))
+        assertEquals("1.2 km", formatter.formatDistance(1200.0))
+        assertEquals("2.5 km", formatter.formatDistance(2500.0))
+        assertEquals("15.0 km", formatter.formatDistance(15000.0))
+        assertEquals("15.4 km", formatter.formatDistance(15400.0))
     }
 
     @Test
     fun formatDistance_nullOrInvalid_returnsFallbackText() {
         assertEquals("Entfernung unbekannt", formatter.formatDistance(null))
         assertEquals("Entfernung unbekannt", formatter.formatDistance(Double.NaN))
+        assertEquals("Entfernung unbekannt", formatter.formatDistance(Double.POSITIVE_INFINITY))
         assertEquals("Entfernung unbekannt", formatter.formatDistance(-5.0))
     }
 
@@ -43,6 +49,7 @@ class UserDistanceFormatterTest {
 
     @Test
     fun formatDistanceBadge_validDistance_includesLocationPinPrefix() {
+        assertEquals("📍 50 m", formatter.formatDistanceBadge(50.0))
         assertEquals("📍 150 m", formatter.formatDistanceBadge(150.0))
         assertEquals("📍 2.5 km", formatter.formatDistanceBadge(2500.0))
         assertEquals("Entfernung unbekannt", formatter.formatDistanceBadge(null))
@@ -50,8 +57,10 @@ class UserDistanceFormatterTest {
 
     @Test
     fun formatDistanceWithSuffix_validDistance_appendsSuffix() {
+        assertEquals("50 m entfernt", formatter.formatDistanceWithSuffix(50.0))
         assertEquals("150 m entfernt", formatter.formatDistanceWithSuffix(150.0))
-        assertEquals("1.2 km entfernt", formatter.formatDistanceWithSuffix(1200.0))
+        assertEquals("2.5 km entfernt", formatter.formatDistanceWithSuffix(2500.0))
+        assertEquals("15.0 km entfernt", formatter.formatDistanceWithSuffix(15000.0))
         assertEquals("Entfernung unbekannt", formatter.formatDistanceWithSuffix(null))
     }
 }
