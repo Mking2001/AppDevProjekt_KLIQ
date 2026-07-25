@@ -51,8 +51,10 @@ import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.MapProperties
@@ -61,6 +63,8 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.kliq.app.data.model.LocationPermissionState
+import com.kliq.app.data.model.MapCameraAnimationEvent
+import kotlinx.coroutines.flow.collectLatest
 import com.kliq.app.ui.components.KliqCategoryChip
 import com.kliq.app.ui.components.LocationPermanentlyDeniedDialog
 import com.kliq.app.ui.components.LocationRationaleDialog
@@ -103,11 +107,52 @@ fun MapScreen(
         )
     }
 
-    LaunchedEffect(uiState.cameraPosition) {
-        cameraPositionState.position = CameraPosition.fromLatLngZoom(
-            LatLng(uiState.cameraPosition.latitude, uiState.cameraPosition.longitude),
-            uiState.cameraPosition.zoom
-        )
+    LaunchedEffect(Unit) {
+        viewModel.cameraEventFlow.collectLatest { event ->
+            when (event) {
+                is MapCameraAnimationEvent.AnimateToLocation -> {
+                    val cameraPosition = CameraPosition.Builder()
+                        .target(LatLng(event.latitude, event.longitude))
+                        .zoom(event.zoom)
+                        .tilt(event.tilt)
+                        .bearing(event.bearing)
+                        .build()
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newCameraPosition(cameraPosition),
+                        durationMs = event.durationMs
+                    )
+                }
+                is MapCameraAnimationEvent.AnimateToBounds -> {
+                    val bounds = LatLngBounds(
+                        LatLng(event.bounds.southWestLat, event.bounds.southWestLng),
+                        LatLng(event.bounds.northEastLat, event.bounds.northEastLng)
+                    )
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newLatLngBounds(bounds, event.paddingPx),
+                        durationMs = event.durationMs
+                    )
+                }
+                is MapCameraAnimationEvent.AnimateTiltRotation -> {
+                    val currentPos = cameraPositionState.position
+                    val cameraPosition = CameraPosition.Builder()
+                        .target(currentPos.target)
+                        .zoom(currentPos.zoom)
+                        .tilt(event.tilt)
+                        .bearing(event.bearing)
+                        .build()
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newCameraPosition(cameraPosition),
+                        durationMs = event.durationMs
+                    )
+                }
+                is MapCameraAnimationEvent.SnapToPosition -> {
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                        LatLng(event.latitude, event.longitude),
+                        event.zoom
+                    )
+                }
+            }
+        }
     }
 
     LaunchedEffect(cameraPositionState.isMoving) {
