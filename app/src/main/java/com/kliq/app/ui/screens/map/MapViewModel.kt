@@ -112,7 +112,7 @@ data class VenueItemUi(
     val rating: Float = 0f,
     val latitude: Double = 52.5200,
     val longitude: Double = 13.4050,
-    address: String = "",
+    val address: String = "",
     val activeEventTitle: String? = null,
     val isFavorite: Boolean = false,
     val currentCapacityPercent: Int = 0,
