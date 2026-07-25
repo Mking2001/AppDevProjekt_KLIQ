@@ -59,9 +59,6 @@ class UserDistanceMotionSimulationTest {
     @Test
     fun testLiveMotionSimulation_userApproaching_distanceDecreasesContinuously() {
         // Target User "Alex" (u1) is stationary at (52.5130, 13.4410)
-        val targetLat = 52.5130
-        val targetLng = 13.4410
-
         // Current user moves towards Alex over 5 simulation steps from 2.5km away to 0m
         val steps = listOf(
             Pair(52.5350, 13.4410), // ~2.45 km away

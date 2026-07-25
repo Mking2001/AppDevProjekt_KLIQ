@@ -31,7 +31,7 @@ class UserDistanceFormatter(
         distanceMeters: Double?,
         fallbackLabel: String = DEFAULT_UNKNOWN_DISTANCE
     ): String {
-        if (distanceMeters == null || distanceMeters.isNaN() || distanceMeters < 0.0) {
+        if (distanceMeters == null || distanceMeters.isNaN() || distanceMeters.isInfinite() || distanceMeters < 0.0) {
             return fallbackLabel
         }
 
@@ -59,7 +59,7 @@ class UserDistanceFormatter(
         withPrefix: Boolean = true
     ): String {
         val text = formatDistance(distanceMeters)
-        if (distanceMeters == null || distanceMeters.isNaN() || distanceMeters < 0.0) {
+        if (distanceMeters == null || distanceMeters.isNaN() || distanceMeters.isInfinite() || distanceMeters < 0.0) {
             return text
         }
         return if (withPrefix) "📍 $text" else text
@@ -73,7 +73,7 @@ class UserDistanceFormatter(
         suffix: String = "entfernt"
     ): String {
         val text = formatDistance(distanceMeters)
-        if (distanceMeters == null || distanceMeters.isNaN() || distanceMeters < 0.0) {
+        if (distanceMeters == null || distanceMeters.isNaN() || distanceMeters.isInfinite() || distanceMeters < 0.0) {
             return text
         }
         return "$text $suffix"
