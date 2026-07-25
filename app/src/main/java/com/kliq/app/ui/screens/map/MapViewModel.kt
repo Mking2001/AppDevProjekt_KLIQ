@@ -6,6 +6,10 @@ import com.kliq.app.data.model.CameraPositionStateData
 import com.kliq.app.data.model.MapStyleConfig
 import com.kliq.app.data.repository.ClubRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import com.kliq.app.data.repository.LocationRepository
+import com.kliq.app.domain.usecase.CalculateUserDistanceUseCase
+import com.kliq.app.util.UserDistanceFormatter
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,7 +47,9 @@ data class UserMarkerUiState(
     val longitude: Double,
     val isOnline: Boolean = true,
     val statusMessage: String? = null,
-    val searchIntent: String? = null
+    val searchIntent: String? = null,
+    val distanceMeters: Double? = null,
+    val formattedDistance: String = ""
 )
 
 /**
@@ -104,7 +110,10 @@ data class VenueItemUi(
  */
 @HiltViewModel
 class MapViewModel @Inject constructor(
-    private val clubRepository: ClubRepository
+    private val clubRepository: ClubRepository,
+    private val calculateUserDistanceUseCase: CalculateUserDistanceUseCase = CalculateUserDistanceUseCase(),
+    private val userDistanceFormatter: UserDistanceFormatter = UserDistanceFormatter.default,
+    private val locationRepository: LocationRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MapUiState())
@@ -117,6 +126,7 @@ class MapViewModel @Inject constructor(
         setupFilters()
         loadUserMarkers()
         observeClubRepository()
+        observeLocationUpdates()
     }
 
     private fun setupFilters() {
@@ -129,8 +139,46 @@ class MapViewModel @Inject constructor(
 
     private fun loadUserMarkers() {
         allUsers = getFallbackUsers()
-        _uiState.update { state ->
-            state.copy(userMarkers = allUsers)
+        updateUserDistances(_uiState.value.cameraPosition.latitude, _uiState.value.cameraPosition.longitude)
+    }
+
+    fun updateUserDistances(currentLat: Double, currentLng: Double) {
+        viewModelScope.launch(Dispatchers.Default) {
+            val updatedUsers = allUsers.map { user ->
+                val rawDist = calculateUserDistanceUseCase.calculateDistanceMeters(
+                    startLat = currentLat,
+                    startLng = currentLng,
+                    endLat = user.latitude,
+                    endLng = user.longitude
+                )
+                val formatted = userDistanceFormatter.formatDistance(rawDist)
+                user.copy(
+                    distanceMeters = rawDist,
+                    formattedDistance = formatted
+                )
+            }
+            allUsers = updatedUsers
+            _uiState.update { state ->
+                val updatedSelected = state.selectedUser?.let { selected ->
+                    updatedUsers.find { it.userId == selected.userId } ?: selected
+                }
+                state.copy(
+                    userMarkers = updatedUsers,
+                    selectedUser = updatedSelected
+                )
+            }
+        }
+    }
+
+    private fun observeLocationUpdates() {
+        locationRepository?.let { repo ->
+            viewModelScope.launch {
+                repo.locationUpdates.collect { locationData ->
+                    locationData?.let { loc ->
+                        updateUserDistances(loc.latitude, loc.longitude)
+                    }
+                }
+            }
         }
     }
 
@@ -311,18 +359,21 @@ class MapViewModel @Inject constructor(
     }
 
     fun onLocationRequested() {
+        val targetLat = 52.5112
+        val targetLng = 13.4430
         _uiState.update { state ->
             state.copy(
                 isLocationEnabled = true,
                 isLoadingLocation = true,
                 cameraPosition = CameraPositionStateData(
-                    latitude = 52.5112,
-                    longitude = 13.4430,
+                    latitude = targetLat,
+                    longitude = targetLng,
                     zoom = 15.0f
                 )
             )
         }
         updateFilteredAndClusteredVenues()
+        updateUserDistances(targetLat, targetLng)
         _uiState.update { it.copy(isLoadingLocation = false) }
     }
 
@@ -382,5 +433,6 @@ class MapViewModel @Inject constructor(
             )
         }
         updateFilteredAndClusteredVenues()
+        updateUserDistances(latitude, longitude)
     }
 }

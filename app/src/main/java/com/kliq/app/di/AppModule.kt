@@ -86,4 +86,16 @@ object AppModule {
     fun provideGeofenceManager(impl: com.kliq.app.util.GeofenceManagerImpl): com.kliq.app.util.GeofenceManager {
         return impl
     }
+
+    @Provides
+    @Singleton
+    fun provideCalculateUserDistanceUseCase(): com.kliq.app.domain.usecase.CalculateUserDistanceUseCase {
+        return com.kliq.app.domain.usecase.CalculateUserDistanceUseCase()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserDistanceFormatter(): com.kliq.app.util.UserDistanceFormatter {
+        return com.kliq.app.util.UserDistanceFormatter()
+    }
 }
