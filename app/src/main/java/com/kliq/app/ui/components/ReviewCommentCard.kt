@@ -75,7 +75,7 @@ fun ReviewCommentCard(
 
                     Column {
                         Text(
-                            text = review.reviewerName.ifBlank { "Verifizierter Nutzer" },
+                            text = review.reviewerUsername.ifBlank { "Verifizierter Nutzer" },
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
@@ -119,7 +119,7 @@ fun ReviewCommentCard(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 for (star in 1..5) {
-                    val isFilled = star <= review.ratingStars
+                    val isFilled = star <= review.rating
                     Icon(
                         imageVector = if (isFilled) Icons.Default.Star else Icons.Outlined.Star,
                         contentDescription = "Stern $star",
@@ -129,10 +129,10 @@ fun ReviewCommentCard(
                 }
             }
 
-            if (review.commentText.isNotBlank()) {
+            if (review.reviewText.isNotBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = review.commentText,
+                    text = review.reviewText,
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.LightGray
                 )
