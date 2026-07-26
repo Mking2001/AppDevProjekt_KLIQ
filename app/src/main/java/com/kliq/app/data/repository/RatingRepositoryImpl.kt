@@ -6,6 +6,7 @@ import com.kliq.app.data.model.AntiSpamVerificationResult
 import com.kliq.app.data.model.Review
 import com.kliq.app.data.util.AntiSpamReviewValidator
 import com.kliq.app.service.VerificationService
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -19,19 +20,20 @@ import javax.inject.Singleton
 class RatingRepositoryImpl @Inject constructor(
     private val reviewDao: ReviewDao,
     private val verificationService: VerificationService,
-    private val antiSpamValidator: AntiSpamReviewValidator
+    private val antiSpamValidator: AntiSpamReviewValidator,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : RatingRepository {
 
     override fun getReviewsForTargetUser(targetUserId: String): Flow<List<Review>> {
         return reviewDao.getReviewsForTargetUser(targetUserId).map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getAverageRatingForUser(targetUserId: String): Flow<Double?> {
         return reviewDao.getReviewsForTargetUser(targetUserId).map { reviews ->
             if (reviews.isEmpty()) null else reviews.map { it.rating }.average()
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override suspend fun checkRatingVerification(
@@ -48,7 +50,7 @@ class RatingRepositoryImpl @Inject constructor(
         rating: Int,
         text: String,
         qrToken: String?
-    ): Result<Review> = withContext(Dispatchers.IO) {
+    ): Result<Review> = withContext(ioDispatcher) {
         if (!antiSpamValidator.isRatingValid(rating)) {
             return@withContext Result.failure(
                 IllegalArgumentException("Ungültige Bewertung: Die Sterne-Bewertung muss zwischen 1 und 5 liegen.")

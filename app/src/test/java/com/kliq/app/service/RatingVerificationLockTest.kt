@@ -47,7 +47,7 @@ class RatingVerificationLockTest {
         fakeGeofenceRepository = FakeGeofenceRepository()
         antiSpamValidator = AntiSpamReviewValidator()
         verificationService = VerificationServiceImpl(fakeGeofenceRepository, antiSpamValidator)
-        ratingRepository = RatingRepositoryImpl(fakeDao, verificationService, antiSpamValidator)
+        ratingRepository = RatingRepositoryImpl(fakeDao, verificationService, antiSpamValidator, testDispatcher)
         viewModel = RatingViewModel(ratingRepository, verificationService)
     }
 
