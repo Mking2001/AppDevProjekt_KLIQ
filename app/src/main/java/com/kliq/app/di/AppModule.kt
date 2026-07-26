@@ -92,4 +92,10 @@ object AppModule {
     fun provideVerificationService(impl: com.kliq.app.service.VerificationServiceImpl): com.kliq.app.service.VerificationService {
         return impl
     }
+
+    @Provides
+    @Singleton
+    fun provideQrCodeService(impl: com.kliq.app.service.QrCodeServiceImpl): com.kliq.app.service.QrCodeService {
+        return impl
+    }
 }
