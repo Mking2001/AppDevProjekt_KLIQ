@@ -5,12 +5,16 @@ import com.kliq.app.data.local.entities.UserPreferencesEntity
 import com.kliq.app.data.model.DrinkingHabit
 import com.kliq.app.data.model.SearchIntent
 import com.kliq.app.data.model.SmokingHabit
+import com.kliq.app.data.model.UserReputationSummary
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 
 interface UserRepository {
     fun getUserById(userId: String): Flow<UserEntity?>
     fun getUser(userId: String): Flow<UserEntity?> = getUserById(userId)
     fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?>
+    fun getUserReputationSummary(userId: String): Flow<UserReputationSummary> =
+        flowOf(UserReputationSummary(targetUserId = userId))
     suspend fun syncUserProfile(userId: String): Result<Unit>
     suspend fun saveUser(user: UserEntity)
     suspend fun saveUserPreferences(preferences: UserPreferencesEntity)

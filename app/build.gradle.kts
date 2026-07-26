@@ -115,8 +115,9 @@ dependencies {
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.maps.android:maps-compose:4.3.3")
 
-    // Image Loading
+    // Image Loading & QR Generation
     implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("com.google.zxing:core:3.5.3")
 
     // Coroutines Play Services (for .await() on Tasks)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")

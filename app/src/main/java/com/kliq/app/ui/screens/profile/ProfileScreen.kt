@@ -57,6 +57,10 @@ import com.kliq.app.ui.components.KliqScreenScaffold
 import com.kliq.app.ui.components.ProfileAvatarImage
 import com.kliq.app.ui.components.ProfileImagePickerBottomSheet
 import com.kliq.app.ui.components.ZoomableImageOverlay
+import com.kliq.app.ui.components.UserRatingStarBar
+import com.kliq.app.ui.components.ReviewCommentSection
+import com.kliq.app.ui.components.ProfileQrCodeBottomSheet
+import androidx.compose.material.icons.filled.QrCode2
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
 import java.io.File
@@ -141,6 +145,7 @@ fun ProfileScreen(
                 ProfileHeader(
                     uiState = uiState,
                     onEditProfile = { viewModel.onEditProfile() },
+                    onShowQrCode = { viewModel.showQrCodeModal() },
                     onAvatarClick = { showImagePickerSheet = true }
                 )
             }
@@ -168,6 +173,15 @@ fun ProfileScreen(
         onGallerySelect = { launchGallery() }
     )
 
+    ProfileQrCodeBottomSheet(
+        isVisible = uiState.isQrModalVisible,
+        qrBitmap = uiState.qrCodeBitmap,
+        isGenerating = uiState.isGeneratingQrCode,
+        displayName = uiState.displayName,
+        username = uiState.username,
+        onDismissRequest = { viewModel.dismissQrCodeModal() }
+    )
+
     ZoomableImageOverlay(
         isVisible = showZoomOverlay,
         onDismiss = { showZoomOverlay = false }
@@ -193,6 +207,7 @@ fun ProfileScreen(
 private fun ProfileHeader(
     uiState: ProfileUiState,
     onEditProfile: () -> Unit,
+    onShowQrCode: () -> Unit,
     onAvatarClick: () -> Unit
 ) {
     Column(
@@ -250,6 +265,16 @@ private fun ProfileHeader(
             )
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+
+        UserRatingStarBar(
+            averageRating = uiState.averageRating,
+            formattedAverageRating = uiState.formattedAverageRating,
+            totalReviewsCount = uiState.totalReviewsCount,
+            verifiedReviewsCount = uiState.verifiedReviewsCount,
+            hasRatings = uiState.hasRatings
+        )
+
         Spacer(modifier = Modifier.height(16.dp))
 
         Row(
@@ -263,25 +288,52 @@ private fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        OutlinedButton(
-            onClick = onEditProfile,
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.outlinedButtonColors(
-                contentColor = MaterialTheme.colorScheme.primary
-            ),
-            border = ButtonDefaults.outlinedButtonBorder
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Icon(
-                imageVector = Icons.Outlined.Edit,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "Profil bearbeiten",
-                fontWeight = FontWeight.SemiBold
-            )
+            OutlinedButton(
+                onClick = onEditProfile,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.primary
+                ),
+                border = ButtonDefaults.outlinedButtonBorder
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "Bearbeiten",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Button(
+                onClick = onShowQrCode,
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.QrCode2,
+                    contentDescription = null,
+                    modifier = Modifier.size(18.dp),
+                    tint = Color.White
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "QR-Pass",
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
         }
     }
 }
