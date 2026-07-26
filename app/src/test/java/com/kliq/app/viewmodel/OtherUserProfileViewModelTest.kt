@@ -72,7 +72,7 @@ class OtherUserProfileViewModelTest {
                 rating = 5,
                 text = "Toller Mensch!",
                 timestamp = System.currentTimeMillis(),
-                verificationMethod = ReviewVerificationMethod.GPS_LOCATION,
+                verificationMethod = ReviewVerificationMethod.GPS_GEOFENCE_MATCH,
                 isVerified = true
             )
         )
