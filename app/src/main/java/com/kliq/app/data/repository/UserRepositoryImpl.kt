@@ -15,14 +15,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
-    private val reviewDao: ReviewDao,
     private val apiService: KliqApiService,
+    private val reviewDao: ReviewDao? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : UserRepository {
 
@@ -35,10 +36,11 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override fun getUserReputationSummary(userId: String): Flow<UserReputationSummary> {
+        val dao = reviewDao ?: return flowOf(UserReputationSummary(targetUserId = userId))
         return combine(
-            reviewDao.getAverageRatingForTargetUser(userId),
-            reviewDao.getReviewsCountForTargetUser(userId),
-            reviewDao.getVerifiedReviewsCountForTargetUser(userId)
+            dao.getAverageRatingForTargetUser(userId),
+            dao.getReviewsCountForTargetUser(userId),
+            dao.getVerifiedReviewsCountForTargetUser(userId)
         ) { avgRating, totalCount, verifiedCount ->
             UserReputationSummary(
                 targetUserId = userId,

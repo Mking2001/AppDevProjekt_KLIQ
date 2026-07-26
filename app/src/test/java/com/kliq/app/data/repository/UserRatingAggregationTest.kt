@@ -134,7 +134,9 @@ class UserRatingAggregationTest {
         override suspend fun getUserPreferencesOneShot(userId: String): UserPreferencesEntity? = null
         override suspend fun insertUser(user: UserEntity) { users[user.id] = user }
         override suspend fun insertUserPreferences(preferences: UserPreferencesEntity) {}
-        override suspend fun deleteUserById(userId: String) { users.remove(userId) }
+        override fun getVerifiedUsers(): Flow<List<UserEntity>> = flowOf(emptyList())
+        override suspend fun updateUserVerificationStatus(userId: String, isVerified: Boolean) {}
+        override suspend fun clearUsers() { users.clear() }
     }
 
     private class FakeReviewDao : ReviewDao {
@@ -173,5 +175,14 @@ class UserRatingAggregationTest {
     private class FakeKliqApiService : KliqApiService {
         override suspend fun getUserProfile(userId: String): UserEntity =
             UserEntity(id = userId, username = "TestUser", email = "test@kliq.app")
+
+        override suspend fun searchExternalClubsAndEvents(
+            query: String,
+            latitude: Double?,
+            longitude: Double?,
+            radiusKm: Int?
+        ): com.kliq.app.data.remote.model.ExternalSearchResponseDto {
+            return com.kliq.app.data.remote.model.ExternalSearchResponseDto(emptyList(), emptyList())
+        }
     }
 }
