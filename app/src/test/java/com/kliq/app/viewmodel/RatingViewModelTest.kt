@@ -15,9 +15,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentMatchers.anyInt
-import org.mockito.ArgumentMatchers.anyString
-import org.mockito.ArgumentMatchers.eq
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
@@ -25,12 +22,13 @@ import org.mockito.Mockito.mock
 class RatingViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private val reviewRepository: ReviewRepository = mock(ReviewRepository::class.java)
+    private lateinit var reviewRepository: ReviewRepository
     private lateinit var viewModel: RatingViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        reviewRepository = mock(ReviewRepository::class.java)
         viewModel = RatingViewModel(reviewRepository)
     }
 
@@ -97,12 +95,12 @@ class RatingViewModelTest {
 
         `when`(
             reviewRepository.submitUnverifiedReview(
-                reviewerUserId = eq(authorId),
-                clubId = eq(null),
-                eventId = eq(null),
-                targetUserId = eq(targetUserId),
-                rating = eq(5),
-                text = eq("Super Abend!")
+                reviewerUserId = authorId,
+                clubId = null,
+                eventId = null,
+                targetUserId = targetUserId,
+                rating = 5,
+                text = "Super Abend!"
             )
         ).thenReturn(Result.success(mockReview))
 
@@ -126,12 +124,12 @@ class RatingViewModelTest {
 
         `when`(
             reviewRepository.submitUnverifiedReview(
-                reviewerUserId = eq(authorId),
-                clubId = eq(null),
-                eventId = eq(null),
-                targetUserId = eq(targetUserId),
-                rating = eq(4),
-                text = eq("")
+                reviewerUserId = authorId,
+                clubId = null,
+                eventId = null,
+                targetUserId = targetUserId,
+                rating = 4,
+                text = ""
             )
         ).thenReturn(Result.failure(RuntimeException(errorMessage)))
 
