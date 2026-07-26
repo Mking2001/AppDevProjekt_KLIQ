@@ -105,7 +105,7 @@ class OtherUserProfileViewModel @Inject constructor(
                 rating = 5,
                 text = "Sehr sympathische Begleitung im Club! Gerne wieder 🎉",
                 timestamp = System.currentTimeMillis() - 86400000L * 2,
-                verificationMethod = ReviewVerificationMethod.GPS_LOCATION,
+                verificationMethod = ReviewVerificationMethod.GPS_GEOFENCE_MATCH,
                 isVerified = true,
                 reviewerUsername = "Elena_M"
             ),
@@ -116,7 +116,7 @@ class OtherUserProfileViewModel @Inject constructor(
                 rating = 4,
                 text = "Super entspannt beim Event getroffen.",
                 timestamp = System.currentTimeMillis() - 86400000L * 5,
-                verificationMethod = ReviewVerificationMethod.QR_CODE,
+                verificationMethod = ReviewVerificationMethod.QR_CODE_SCAN,
                 isVerified = true,
                 reviewerUsername = "Alex_K"
             )
