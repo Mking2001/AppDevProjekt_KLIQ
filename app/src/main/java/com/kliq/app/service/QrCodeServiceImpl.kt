@@ -11,9 +11,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class QrCodeServiceImpl @Inject constructor(
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+class QrCodeServiceImpl(
+    private val ioDispatcher: CoroutineDispatcher
 ) : QrCodeService {
+
+    @Inject
+    constructor() : this(Dispatchers.IO)
 
     override fun generateProfileQrPayload(userId: String): String {
         val timestamp = System.currentTimeMillis()
