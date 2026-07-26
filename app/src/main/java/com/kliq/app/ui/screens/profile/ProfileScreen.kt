@@ -58,6 +58,7 @@ import com.kliq.app.ui.components.ProfileAvatarImage
 import com.kliq.app.ui.components.ProfileImagePickerBottomSheet
 import com.kliq.app.ui.components.ZoomableImageOverlay
 import com.kliq.app.ui.components.UserRatingStarBar
+import com.kliq.app.ui.components.ReviewCommentSection
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
 import java.io.File
