@@ -2,6 +2,7 @@ package com.kliq.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kliq.app.data.model.ReviewVerificationMethod
 import com.kliq.app.data.repository.ReviewRepository
 import com.kliq.app.ui.model.ReviewHighContrastItemState
 import com.kliq.app.ui.model.toHighContrastUiState
@@ -17,14 +18,31 @@ import javax.inject.Inject
 
 data class ReviewUiState(
     val clubId: String? = null,
+    val targetUserId: String? = null,
     val isLoading: Boolean = false,
     val isSubmitting: Boolean = false,
     val submitSuccessMessage: String? = null,
     val reviews: List<ReviewHighContrastItemState> = emptyList(),
+    val commentReviews: List<ReviewHighContrastItemState> = emptyList(),
     val verifiedReviewsOnly: Boolean = false,
     val averageRating: Double = 0.0,
-    val errorMessage: String? = null
-)
+    val errorMessage: String? = null,
+
+    // Kommentarsektions-Zustände (Kapitel 5.5)
+    val commentInputText: String = "",
+    val maxCommentLength: Int = 280,
+    val selectedRating: Int = 5,
+    val isVerificationLocked: Boolean = true,
+    val activeVerificationMethod: ReviewVerificationMethod = ReviewVerificationMethod.UNVERIFIED,
+    val isSectionEmpty: Boolean = true,
+    val activeQrToken: String? = null
+) {
+    val remainingCharacters: Int
+        get() = maxCommentLength - commentInputText.length
+
+    val isCommentLengthValid: Boolean
+        get() = commentInputText.trim().isNotEmpty() && commentInputText.length <= maxCommentLength
+}
 
 @HiltViewModel
 class ReviewViewModel @Inject constructor(
@@ -54,6 +72,95 @@ class ReviewViewModel @Inject constructor(
                         isLoading = false,
                         reviews = uiReviews,
                         averageRating = avgRating
+                    )
+                }
+            }
+        }
+    }
+
+    fun loadCommentsForUser(targetUserId: String) {
+        _uiState.update { it.copy(targetUserId = targetUserId, isLoading = true) }
+
+        viewModelScope.launch {
+            reviewRepository.getReviewsForTargetUser(targetUserId)
+                .catch { throwable ->
+                    _uiState.update { it.copy(isLoading = false, errorMessage = throwable.localizedMessage) }
+                }
+                .collect { reviewsList ->
+                    val uiComments = reviewsList.map { it.toHighContrastUiState() }
+                    _uiState.update { state ->
+                        state.copy(
+                            isLoading = false,
+                            commentReviews = uiComments,
+                            isSectionEmpty = uiComments.isEmpty()
+                        )
+                    }
+                }
+        }
+    }
+
+    fun onCommentInputChanged(text: String) {
+        val trimmedToMax = text.take(_uiState.value.maxCommentLength)
+        _uiState.update { it.copy(commentInputText = trimmedToMax) }
+    }
+
+    fun onRatingSelected(rating: Int) {
+        if (rating in 1..5) {
+            _uiState.update { it.copy(selectedRating = rating) }
+        }
+    }
+
+    fun updateVerificationLockStatus(isLocked: Boolean, method: ReviewVerificationMethod = ReviewVerificationMethod.UNVERIFIED, qrToken: String? = null) {
+        _uiState.update {
+            it.copy(
+                isVerificationLocked = isLocked,
+                activeVerificationMethod = method,
+                activeQrToken = qrToken
+            )
+        }
+    }
+
+    fun submitUserComment(reviewerUserId: String, targetUserId: String) {
+        val currentState = _uiState.value
+
+        if (currentState.isVerificationLocked) {
+            _uiState.update {
+                it.copy(errorMessage = "Sicherheits-Sperre aktiv: Kommentare erfordern physische Nähe (GPS) oder QR-Scan!")
+            }
+            return
+        }
+
+        if (!currentState.isCommentLengthValid) {
+            _uiState.update {
+                it.copy(errorMessage = "Kommentar muss zwischen 1 und 280 Zeichen lang sein.")
+            }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSubmitting = true, errorMessage = null) }
+            val result = reviewRepository.submitVerifiedUserComment(
+                reviewerUserId = reviewerUserId,
+                targetUserId = targetUserId,
+                rating = currentState.selectedRating,
+                text = currentState.commentInputText,
+                verificationMethod = currentState.activeVerificationMethod,
+                qrToken = currentState.activeQrToken
+            )
+
+            result.onSuccess {
+                _uiState.update { state ->
+                    state.copy(
+                        isSubmitting = false,
+                        commentInputText = "",
+                        submitSuccessMessage = "Verifizierter Kommentar erfolgreich veröffentlicht!"
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update { state ->
+                    state.copy(
+                        isSubmitting = false,
+                        errorMessage = error.localizedMessage ?: "Fehler beim Veröffentlichen des Kommentars."
                     )
                 }
             }
