@@ -118,6 +118,14 @@ fun UserQuickViewCard(
                                         style = MaterialTheme.typography.labelSmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
+                                    if (currentUser.formattedDistance.isNotBlank()) {
+                                        Text(
+                                            text = " • ${currentUser.formattedDistance}",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                    }
                                 }
                             }
                         }
