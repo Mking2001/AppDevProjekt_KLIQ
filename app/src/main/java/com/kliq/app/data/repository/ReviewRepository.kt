@@ -7,7 +7,10 @@ interface ReviewRepository {
     fun getReviewsForClub(clubId: String): Flow<List<Review>>
     fun getVerifiedReviewsForClub(clubId: String): Flow<List<Review>>
     fun getReviewsForEvent(eventId: String): Flow<List<Review>>
+    fun getReviewsForTargetUser(targetUserId: String): Flow<List<Review>>
     fun getAverageRatingForClub(clubId: String): Flow<Double?>
+    fun getAverageRatingForTargetUser(targetUserId: String): Flow<Double?>
+    fun getReviewCountForTargetUser(targetUserId: String): Flow<Int>
     suspend fun syncReviewsForClub(clubId: String): Result<Unit>
     suspend fun submitReviewWithGpsCheck(
         reviewerUserId: String,

@@ -17,7 +17,7 @@ object DatabaseMigrationManager {
             KliqDatabase::class.java,
             DATABASE_NAME
         )
-        .addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
+        .fallbackToDestructiveMigration()
         .fallbackToDestructiveMigrationOnDowngrade()
         .addCallback(object : RoomDatabase.Callback() {
             override fun onOpen(db: SupportSQLiteDatabase) {
