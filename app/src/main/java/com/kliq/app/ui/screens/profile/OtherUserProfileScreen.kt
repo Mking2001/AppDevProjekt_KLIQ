@@ -61,7 +61,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -73,7 +72,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import com.kliq.app.ui.components.InteractiveStarRating
+import com.kliq.app.ui.theme.PurpleContainer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -827,8 +829,9 @@ private fun UserRatingBottomSheet(
     onDismiss: () -> Unit,
     onSubmitRating: (Int, String) -> Unit
 ) {
-    var selectedRating by remember { mutableIntStateOf(5) }
+    var selectedRating by remember { mutableIntStateOf(0) }
     var reviewText by remember { mutableStateOf("") }
+    val maxTextLength = 300
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     ModalBottomSheet(
@@ -839,14 +842,15 @@ private fun UserRatingBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp),
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "Nutzer bewerten",
                 style = MaterialTheme.typography.titleLarge.copy(
                     color = DarkOnBackground,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 22.sp
                 )
             )
             Spacer(modifier = Modifier.height(6.dp))
@@ -860,30 +864,35 @@ private fun UserRatingBottomSheet(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                for (i in 1..5) {
-                    val isSelected = i <= selectedRating
-                    Icon(
-                        imageVector = if (isSelected) Icons.Default.Star else Icons.Default.StarOutline,
-                        contentDescription = "$i Sterne",
-                        tint = if (isSelected) Color(0xFFFFC107) else DarkOnSurfaceVariant,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clickable { selectedRating = i }
-                    )
-                }
-            }
+            InteractiveStarRating(
+                rating = selectedRating,
+                onRatingChanged = { selectedRating = it },
+                starSize = 40.dp,
+                starSpacing = 12.dp,
+                isReadOnly = isSubmitting
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
             OutlinedTextField(
                 value = reviewText,
-                onValueChange = { reviewText = it },
-                modifier = Modifier.fillMaxWidth(),
+                onValueChange = {
+                    if (it.length <= maxTextLength) {
+                        reviewText = it
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(120.dp),
                 placeholder = { Text("Kommentar schreiben (optional)...", color = DarkOnSurfaceVariant) },
+                supportingText = {
+                    Text(
+                        text = "${reviewText.length} / $maxTextLength Zeichen",
+                        modifier = Modifier.fillMaxWidth(),
+                        textAlign = TextAlign.End,
+                        color = DarkOnSurfaceVariant
+                    )
+                },
                 maxLines = 4,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = PurplePrimary,
@@ -898,12 +907,13 @@ private fun UserRatingBottomSheet(
 
             Button(
                 onClick = { onSubmitRating(selectedRating, reviewText) },
-                enabled = !isSubmitting,
+                enabled = !isSubmitting && selectedRating in 1..5,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = PurplePrimary,
+                    disabledContainerColor = PurpleContainer.copy(alpha = 0.4f),
                     contentColor = Color.White
                 ),
                 shape = RoundedCornerShape(12.dp)
@@ -915,7 +925,10 @@ private fun UserRatingBottomSheet(
                         strokeWidth = 2.dp
                     )
                 } else {
-                    Text("Bewertung absenden", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (selectedRating == 0) "Stern auswählen zum Absenden" else "Bewertung absenden",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
