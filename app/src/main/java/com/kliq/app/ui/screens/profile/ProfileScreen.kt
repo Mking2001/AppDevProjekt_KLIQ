@@ -57,6 +57,7 @@ import com.kliq.app.ui.components.KliqScreenScaffold
 import com.kliq.app.ui.components.ProfileAvatarImage
 import com.kliq.app.ui.components.ProfileImagePickerBottomSheet
 import com.kliq.app.ui.components.ZoomableImageOverlay
+import com.kliq.app.ui.components.UserRatingStarBar
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
 import java.io.File
@@ -249,6 +250,16 @@ private fun ProfileHeader(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        UserRatingStarBar(
+            averageRating = uiState.averageRating,
+            formattedAverageRating = uiState.formattedAverageRating,
+            totalReviewsCount = uiState.totalReviewsCount,
+            verifiedReviewsCount = uiState.verifiedReviewsCount,
+            hasRatings = uiState.hasRatings
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
