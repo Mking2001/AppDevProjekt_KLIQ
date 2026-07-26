@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ProfileUiState(
+    val userId: String = "current_user",
     val displayName: String = "Max Mustermann",
     val username: String = "@maxmuster",
     val bio: String = "Nightlife-Enthusiast 🌙 | Immer unterwegs | München 📍",
@@ -26,6 +27,11 @@ data class ProfileUiState(
     val postsCount: Int = 127,
     val followersCount: Int = 1842,
     val followingCount: Int = 394,
+    val averageRating: Double = 0.0,
+    val formattedAverageRating: String = "0.0",
+    val totalReviewsCount: Int = 0,
+    val verifiedReviewsCount: Int = 0,
+    val hasRatings: Boolean = false,
     val selectedTabIndex: Int = 0,
     val tabs: List<String> = listOf("Beiträge", "Events", "Über mich"),
     val isOwnProfile: Boolean = true
@@ -43,9 +49,11 @@ class ProfileViewModel @Inject constructor(
         loadProfileData()
     }
 
-    private fun loadProfileData() {
+    fun loadProfileData(targetUserId: String = "current_user") {
+        _uiState.update { it.copy(userId = targetUserId, isOwnProfile = (targetUserId == "current_user")) }
+
         viewModelScope.launch {
-            userRepository.getUserById("current_user")
+            userRepository.getUserById(targetUserId)
                 .catch {
                     loadMockFallbackData()
                 }
@@ -61,12 +69,29 @@ class ProfileViewModel @Inject constructor(
                                 postsCount = 127,
                                 followersCount = 1842,
                                 followingCount = 394,
-                                tabs = listOf("Beiträge", "Events", "Über mich"),
-                                isOwnProfile = true
+                                tabs = listOf("Beiträge", "Events", "Über mich")
                             )
                         }
                     } else {
                         loadMockFallbackData()
+                    }
+                }
+        }
+
+        viewModelScope.launch {
+            userRepository.getUserReputationSummary(targetUserId)
+                .catch { error ->
+                    _uiState.update { it.copy(errorMessage = error.localizedMessage) }
+                }
+                .collect { summary ->
+                    _uiState.update { state ->
+                        state.copy(
+                            averageRating = summary.averageRating,
+                            formattedAverageRating = summary.formattedAverageRating,
+                            totalReviewsCount = summary.totalReviewsCount,
+                            verifiedReviewsCount = summary.verifiedReviewsCount,
+                            hasRatings = summary.hasRatings
+                        )
                     }
                 }
         }
@@ -82,8 +107,7 @@ class ProfileViewModel @Inject constructor(
                 postsCount = 127,
                 followersCount = 1842,
                 followingCount = 394,
-                tabs = listOf("Beiträge", "Events", "Über mich"),
-                isOwnProfile = true
+                tabs = listOf("Beiträge", "Events", "Über mich")
             )
         }
     }
@@ -95,7 +119,7 @@ class ProfileViewModel @Inject constructor(
             val result = compressor.compressAndSaveImage(uri)
 
             result.onSuccess { savedPath ->
-                userRepository.updateProfilePicture("current_user", savedPath)
+                userRepository.updateProfilePicture(_uiState.value.userId, savedPath)
                 _uiState.update {
                     it.copy(
                         profilePictureUrl = savedPath,
