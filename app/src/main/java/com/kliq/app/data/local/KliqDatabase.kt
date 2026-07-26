@@ -29,7 +29,7 @@ import com.kliq.app.data.local.entities.UserPreferencesEntity
         MessageEntity::class,
         LocationEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
