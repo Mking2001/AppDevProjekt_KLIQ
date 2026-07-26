@@ -110,11 +110,11 @@ class ReviewViewModel @Inject constructor(
         }
     }
 
-    fun updateVerificationLockStatus(isLocked: Boolean, method: ReviewVerificationMethod = ReviewVerificationMethod.UNVERIFIED, qrToken: String? = null) {
+    fun updateVerificationLockStatus(isLocked: Boolean, method: ReviewVerificationMethod = ReviewVerificationMethod.GPS_GEOFENCE_MATCH, qrToken: String? = null) {
         _uiState.update {
             it.copy(
                 isVerificationLocked = isLocked,
-                activeVerificationMethod = method,
+                activeVerificationMethod = if (isLocked) ReviewVerificationMethod.UNVERIFIED else method,
                 activeQrToken = qrToken
             )
         }
