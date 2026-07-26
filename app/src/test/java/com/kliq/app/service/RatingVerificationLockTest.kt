@@ -173,6 +173,8 @@ class RatingVerificationLockTest {
             flowOf(insertedReviews.filter { it.reviewerUserId == reviewerUserId })
         override fun getAverageRatingForClub(clubId: String): Flow<Double?> = flowOf(null)
         override fun getAverageRatingForEvent(eventId: String): Flow<Double?> = flowOf(null)
+        override fun getAverageRatingForTargetUser(targetUserId: String): Flow<Double?> = flowOf(null)
+        override fun getReviewCountForTargetUser(targetUserId: String): Flow<Int> = flowOf(insertedReviews.count { it.targetUserId == targetUserId })
         override suspend fun incrementHelpfulVotes(reviewId: String) {}
         override suspend fun flagReview(reviewId: String) {}
         override suspend fun insertReview(review: ReviewEntity) {

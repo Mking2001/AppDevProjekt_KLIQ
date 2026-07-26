@@ -15,6 +15,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+sealed interface RatingSubmitStatus {
+    object Idle : RatingSubmitStatus
+    object Submitting : RatingSubmitStatus
+    data class Success(val review: Review) : RatingSubmitStatus
+    data class Error(val message: String) : RatingSubmitStatus
+}
+
 data class RatingUiState(
     val reviewerUserId: String = "",
     val targetUserId: String = "",
@@ -26,8 +33,24 @@ data class RatingUiState(
     val isSubmitting: Boolean = false,
     val submitSuccess: Boolean = false,
     val submittedReview: Review? = null,
-    val errorMessage: String? = null
-)
+    val errorMessage: String? = null,
+    val maxTextLength: Int = 300,
+    val status: RatingSubmitStatus = RatingSubmitStatus.Idle,
+    val clubId: String? = null,
+    val eventId: String? = null
+) {
+    val authorId: String
+        get() = reviewerUserId
+
+    val reviewText: String
+        get() = text
+
+    val isSubmitEnabled: Boolean
+        get() = !isRatingLocked && rating in 1..5 && !isSubmitting && status !is RatingSubmitStatus.Submitting
+
+    val remainingCharacters: Int
+        get() = maxTextLength - text.length
+}
 
 @HiltViewModel
 class RatingViewModel @Inject constructor(
@@ -50,7 +73,12 @@ class RatingViewModel @Inject constructor(
         viewModelScope.launch {
             verificationService.observeVerificationStatus(reviewerUserId, targetUserId)
                 .catch { error ->
-                    _uiState.update { it.copy(errorMessage = error.localizedMessage) }
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            errorMessage = error.localizedMessage,
+                            status = RatingSubmitStatus.Error(error.localizedMessage ?: "Fehler")
+                        )
+                    }
                 }
                 .collect { verificationResult ->
                     _uiState.update { currentState ->
@@ -64,6 +92,25 @@ class RatingViewModel @Inject constructor(
         }
     }
 
+    fun setTarget(
+        authorId: String,
+        targetUserId: String? = null,
+        clubId: String? = null,
+        eventId: String? = null
+    ) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                reviewerUserId = authorId,
+                targetUserId = targetUserId ?: "",
+                clubId = clubId,
+                eventId = eventId
+            )
+        }
+        if (targetUserId != null) {
+            initTargetUser(authorId, targetUserId)
+        }
+    }
+
     fun onRatingChanged(newRating: Int) {
         if (_uiState.value.isRatingLocked) return
         _uiState.update { it.copy(rating = newRating.coerceIn(1, 5)) }
@@ -71,7 +118,13 @@ class RatingViewModel @Inject constructor(
 
     fun onCommentChanged(newText: String) {
         if (_uiState.value.isRatingLocked) return
-        _uiState.update { it.copy(text = newText) }
+        val maxLength = _uiState.value.maxTextLength
+        val sanitized = if (newText.length > maxLength) newText.substring(0, maxLength) else newText
+        _uiState.update { it.copy(text = sanitized) }
+    }
+
+    fun onReviewTextChanged(newText: String) {
+        onCommentChanged(newText)
     }
 
     fun onQrCodeScanned(qrToken: String) {
@@ -92,9 +145,11 @@ class RatingViewModel @Inject constructor(
                     )
                 }
             } else {
+                val errorMsg = "Ungültiger QR-Code für diesen Nutzer."
                 _uiState.update {
                     it.copy(
-                        errorMessage = "Ungültiger QR-Code für diesen Nutzer."
+                        errorMessage = errorMsg,
+                        status = RatingSubmitStatus.Error(errorMsg)
                     )
                 }
             }
@@ -104,21 +159,35 @@ class RatingViewModel @Inject constructor(
     fun submitRating() {
         val currentState = _uiState.value
         if (currentState.isRatingLocked) {
+            val errorMsg = "Bewertung gesperrt: Weder physische Nähe noch QR-Scan vorhanden."
             _uiState.update {
-                it.copy(errorMessage = "Bewertung gesperrt: Weder physische Nähe noch QR-Scan vorhanden.")
+                it.copy(
+                    errorMessage = errorMsg,
+                    status = RatingSubmitStatus.Error(errorMsg)
+                )
             }
             return
         }
 
         if (currentState.rating !in 1..5) {
+            val errorMsg = "Bitte wähle eine Sternebewertung zwischen 1 und 5 Sternen."
             _uiState.update {
-                it.copy(errorMessage = "Bitte wähle eine Sternebewertung zwischen 1 und 5 Sternen.")
+                it.copy(
+                    errorMessage = errorMsg,
+                    status = RatingSubmitStatus.Error(errorMsg)
+                )
             }
             return
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isSubmitting = true, errorMessage = null) }
+            _uiState.update {
+                it.copy(
+                    isSubmitting = true,
+                    status = RatingSubmitStatus.Submitting,
+                    errorMessage = null
+                )
+            }
 
             val result = ratingRepository.submitUserRating(
                 reviewerUserId = currentState.reviewerUserId,
@@ -132,17 +201,33 @@ class RatingViewModel @Inject constructor(
                     it.copy(
                         isSubmitting = false,
                         submitSuccess = true,
-                        submittedReview = review
+                        submittedReview = review,
+                        status = RatingSubmitStatus.Success(review)
                     )
                 }
             }.onFailure { error ->
+                val msg = error.localizedMessage ?: "Fehler beim Einreichen der Bewertung."
                 _uiState.update {
                     it.copy(
                         isSubmitting = false,
-                        errorMessage = error.localizedMessage ?: "Fehler beim Einreichen der Bewertung."
+                        errorMessage = msg,
+                        status = RatingSubmitStatus.Error(msg)
                     )
                 }
             }
+        }
+    }
+
+    fun resetState() {
+        _uiState.update { currentState ->
+            currentState.copy(
+                rating = 0,
+                text = "",
+                status = RatingSubmitStatus.Idle,
+                errorMessage = null,
+                submitSuccess = false,
+                submittedReview = null
+            )
         }
     }
 
