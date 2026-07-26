@@ -64,7 +64,7 @@ class RatingVerificationLockEmulatorTest {
      * - Erwartung: UI ist gesperrt (`isRatingLocked = true`). Programmatischer DB-Schreibversuch wirft IllegalStateException.
      */
     @Test
-    fun test1_unverifiedRatingSubmission_locksUiAndThrowsSecurityExceptionOnRepositoryCall() = runBlocking {
+    fun test1_unverifiedRatingSubmission_locksUiAndThrowsSecurityExceptionOnRepositoryCall() = runTest {
         val reviewerId = "user_alpha"
         val targetId = "user_beta"
 
@@ -96,7 +96,7 @@ class RatingVerificationLockEmulatorTest {
      * - Erwartung: RatingViewModel erkennt den Status, schaltet die UI frei und speichert den Datensatz mit GPS_GEOFENCE_MATCH.
      */
     @Test
-    fun test2_successfulGpsMatch_unlocksUiAndPersistsRatingToDatabase() = runBlocking {
+    fun test2_successfulGpsMatch_unlocksUiAndPersistsRatingToDatabase() = runTest {
         val reviewerId = "user_alpha"
         val targetId = "user_beta"
 
@@ -136,7 +136,7 @@ class RatingVerificationLockEmulatorTest {
      * - Erwartung: Sperre wird sofort aufgehoben, Eingabe akzeptiert und Datensatz in DB aktualisiert.
      */
     @Test
-    fun test3_successfulQrScan_instantlyUnlocksUiAndUpdatesRecord() = runBlocking {
+    fun test3_successfulQrScan_instantlyUnlocksUiAndUpdatesRecord() = runTest {
         val reviewerId = "user_alpha"
         val targetId = "user_beta"
         val qrToken = "KLIQ_PASS_$targetId"

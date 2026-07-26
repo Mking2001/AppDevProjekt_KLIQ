@@ -59,7 +59,7 @@ class RatingVerificationLockTest {
      * Ablauf 1: Unverifizierter Bewertungsversuch (Sperre greift)
      */
     @Test
-    fun test1_unverifiedRatingSubmission_locksUiAndThrowsSecurityExceptionOnRepositoryCall() = runBlocking {
+    fun test1_unverifiedRatingSubmission_locksUiAndThrowsSecurityExceptionOnRepositoryCall() = runTest {
         val reviewerId = "user_alpha"
         val targetId = "user_beta"
 
@@ -89,7 +89,7 @@ class RatingVerificationLockTest {
      * Ablauf 2: Erfolgreicher GPS-Match (Freischaltung via Nähe)
      */
     @Test
-    fun test2_successfulGpsMatch_unlocksUiAndPersistsRatingToDatabase() = runBlocking {
+    fun test2_successfulGpsMatch_unlocksUiAndPersistsRatingToDatabase() = runTest {
         val reviewerId = "user_alpha"
         val targetId = "user_beta"
 
@@ -127,7 +127,7 @@ class RatingVerificationLockTest {
      * Ablauf 3: Erfolgreicher QR-Scan (Freischaltung via Koppelung)
      */
     @Test
-    fun test3_successfulQrScan_instantlyUnlocksUiAndUpdatesRecord() = runBlocking {
+    fun test3_successfulQrScan_instantlyUnlocksUiAndUpdatesRecord() = runTest {
         val reviewerId = "user_alpha"
         val targetId = "user_beta"
         val qrToken = "KLIQ_PASS_$targetId"
