@@ -26,6 +26,17 @@ interface ReviewRepository {
         qrToken: String
     ): Result<Review>
 
+    fun getReviewsForTargetUser(targetUserId: String): Flow<List<Review>>
+
+    suspend fun submitVerifiedUserComment(
+        reviewerUserId: String,
+        targetUserId: String,
+        rating: Int,
+        text: String,
+        verificationMethod: com.kliq.app.data.model.ReviewVerificationMethod = com.kliq.app.data.model.ReviewVerificationMethod.GPS_GEOFENCE_MATCH,
+        qrToken: String? = null
+    ): Result<Review>
+
     suspend fun submitUnverifiedReview(
         reviewerUserId: String,
         clubId: String? = null,
