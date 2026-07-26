@@ -40,7 +40,7 @@ class UserRatingAggregationTest {
         fakeUserDao = FakeUserDao()
         fakeReviewDao = FakeReviewDao()
         fakeApiService = FakeKliqApiService()
-        userRepository = UserRepositoryImpl(fakeUserDao, fakeReviewDao, fakeApiService, testDispatcher)
+        userRepository = UserRepositoryImpl(fakeUserDao, fakeApiService, fakeReviewDao, testDispatcher)
         viewModel = ProfileViewModel(userRepository)
     }
 
