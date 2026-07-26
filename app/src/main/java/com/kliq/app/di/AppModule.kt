@@ -86,4 +86,10 @@ object AppModule {
     fun provideGeofenceManager(impl: com.kliq.app.util.GeofenceManagerImpl): com.kliq.app.util.GeofenceManager {
         return impl
     }
+
+    @Provides
+    @Singleton
+    fun provideVerificationService(impl: com.kliq.app.service.VerificationServiceImpl): com.kliq.app.service.VerificationService {
+        return impl
+    }
 }
