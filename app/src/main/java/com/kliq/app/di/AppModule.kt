@@ -92,4 +92,16 @@ object AppModule {
     fun provideVerificationService(impl: com.kliq.app.service.VerificationServiceImpl): com.kliq.app.service.VerificationService {
         return impl
     }
+
+    @Provides
+    @Singleton
+    fun provideCalculateUserDistanceUseCase(): com.kliq.app.domain.usecase.CalculateUserDistanceUseCase {
+        return com.kliq.app.domain.usecase.CalculateUserDistanceUseCase()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserDistanceFormatter(): com.kliq.app.util.UserDistanceFormatter {
+        return com.kliq.app.util.UserDistanceFormatter()
+    }
 }
