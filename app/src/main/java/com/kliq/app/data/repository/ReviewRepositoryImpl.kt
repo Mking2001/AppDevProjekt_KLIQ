@@ -47,6 +47,20 @@ class ReviewRepositoryImpl @Inject constructor(
         return reviewDao.getAverageRatingForClub(clubId).flowOn(Dispatchers.IO)
     }
 
+    override fun getReviewsForTargetUser(targetUserId: String): Flow<List<Review>> {
+        return reviewDao.getReviewsForTargetUser(targetUserId).map { entities ->
+            entities.map { it.toDomain() }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override fun getAverageRatingForTargetUser(targetUserId: String): Flow<Double?> {
+        return reviewDao.getAverageRatingForTargetUser(targetUserId).flowOn(Dispatchers.IO)
+    }
+
+    override fun getReviewCountForTargetUser(targetUserId: String): Flow<Int> {
+        return reviewDao.getReviewCountForTargetUser(targetUserId).flowOn(Dispatchers.IO)
+    }
+
     override suspend fun syncReviewsForClub(clubId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             Result.success(Unit)

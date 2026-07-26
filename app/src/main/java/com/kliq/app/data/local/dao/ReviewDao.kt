@@ -39,6 +39,9 @@ interface ReviewDao {
     @Query("SELECT COUNT(*) FROM reviews WHERE targetUserId = :targetUserId")
     fun getReviewsCountForTargetUser(targetUserId: String): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM reviews WHERE targetUserId = :targetUserId")
+    fun getReviewCountForTargetUser(targetUserId: String): Flow<Int>
+
     @Query("UPDATE reviews SET helpfulVotesCount = helpfulVotesCount + 1 WHERE id = :reviewId")
     suspend fun incrementHelpfulVotes(reviewId: String)
 

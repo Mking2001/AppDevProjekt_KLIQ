@@ -132,3 +132,14 @@ object ClubRoutes {
     
     const val ARG_CLUB_ID = "clubId"
 }
+
+/**
+ * Routen für Benutzer-Profile und Details.
+ */
+object ProfileRoutes {
+    const val OTHER_USER_PROFILE = "profile/other/{userId}"
+
+    fun otherUserProfile(userId: String): String = "profile/other/$userId"
+
+    const val ARG_USER_ID = "userId"
+}

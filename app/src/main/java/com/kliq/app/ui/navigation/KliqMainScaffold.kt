@@ -39,6 +39,7 @@ import com.kliq.app.ui.screens.notifications.NotificationsScreen
 import com.kliq.app.ui.screens.onboarding.ConsumptionHabitsScreen
 import com.kliq.app.ui.screens.onboarding.IntentMatchingScreen
 import com.kliq.app.ui.screens.onboarding.ProfileCreationScreen
+import com.kliq.app.ui.screens.profile.OtherUserProfileScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
 import com.kliq.app.ui.screens.splash.SplashScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationScreen
@@ -323,6 +324,24 @@ private fun KliqNavHost(
             ClubDetailScreen(
                 clubId = clubId,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = ProfileRoutes.OTHER_USER_PROFILE,
+            arguments = listOf(
+                navArgument(ProfileRoutes.ARG_USER_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString(ProfileRoutes.ARG_USER_ID) ?: ""
+            OtherUserProfileScreen(
+                userId = userId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToChat = { targetUserId ->
+                    navController.navigate(ChatRoutes.chatDetail("chat_$targetUserId"))
+                }
             )
         }
     }
