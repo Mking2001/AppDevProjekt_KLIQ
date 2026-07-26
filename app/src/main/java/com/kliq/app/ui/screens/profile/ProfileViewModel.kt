@@ -1,11 +1,13 @@
 package com.kliq.app.ui.screens.profile
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.data.util.ImageCompressor
+import com.kliq.app.service.QrCodeService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,12 +36,19 @@ data class ProfileUiState(
     val hasRatings: Boolean = false,
     val selectedTabIndex: Int = 0,
     val tabs: List<String> = listOf("Beiträge", "Events", "Über mich"),
-    val isOwnProfile: Boolean = true
+    val isOwnProfile: Boolean = true,
+
+    // QR-Code Zustände (Kapitel 5.6)
+    val isQrModalVisible: Boolean = false,
+    val qrCodeBitmap: Bitmap? = null,
+    val isGeneratingQrCode: Boolean = false,
+    val qrPayloadText: String? = null
 )
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val qrCodeService: QrCodeService? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -110,6 +119,41 @@ class ProfileViewModel @Inject constructor(
                 tabs = listOf("Beiträge", "Events", "Über mich")
             )
         }
+    }
+
+    fun showQrCodeModal() {
+        _uiState.update { it.copy(isQrModalVisible = true, isGeneratingQrCode = true) }
+        val service = qrCodeService ?: run {
+            _uiState.update { it.copy(isGeneratingQrCode = false) }
+            return
+        }
+        val targetId = _uiState.value.userId
+
+        viewModelScope.launch {
+            val payload = service.generateProfileQrPayload(targetId)
+            val result = service.generateQrCodeBitmap(targetId)
+
+            result.onSuccess { bitmap ->
+                _uiState.update {
+                    it.copy(
+                        qrCodeBitmap = bitmap,
+                        qrPayloadText = payload,
+                        isGeneratingQrCode = false
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isGeneratingQrCode = false,
+                        errorMessage = error.localizedMessage ?: "Fehler beim Generieren des QR-Codes."
+                    )
+                }
+            }
+        }
+    }
+
+    fun dismissQrCodeModal() {
+        _uiState.update { it.copy(isQrModalVisible = false) }
     }
 
     fun onImageSelected(context: Context, uri: Uri) {
