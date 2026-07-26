@@ -30,6 +30,15 @@ interface ReviewDao {
     @Query("SELECT AVG(rating) FROM reviews WHERE eventId = :eventId")
     fun getAverageRatingForEvent(eventId: String): Flow<Double?>
 
+    @Query("SELECT AVG(rating) FROM reviews WHERE targetUserId = :targetUserId")
+    fun getAverageRatingForTargetUser(targetUserId: String): Flow<Double?>
+
+    @Query("SELECT COUNT(*) FROM reviews WHERE targetUserId = :targetUserId AND isVerified = 1")
+    fun getVerifiedReviewsCountForTargetUser(targetUserId: String): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM reviews WHERE targetUserId = :targetUserId")
+    fun getReviewsCountForTargetUser(targetUserId: String): Flow<Int>
+
     @Query("UPDATE reviews SET helpfulVotesCount = helpfulVotesCount + 1 WHERE id = :reviewId")
     suspend fun incrementHelpfulVotes(reviewId: String)
 

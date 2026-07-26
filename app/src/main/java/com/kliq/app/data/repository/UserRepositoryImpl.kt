@@ -1,14 +1,18 @@
 package com.kliq.app.data.repository
 
+import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.local.entities.UserEntity
 import com.kliq.app.data.local.entities.UserPreferencesEntity
 import com.kliq.app.data.model.DrinkingHabit
 import com.kliq.app.data.model.SearchIntent
 import com.kliq.app.data.model.SmokingHabit
+import com.kliq.app.data.model.UserReputationSummary
 import com.kliq.app.data.remote.KliqApiService
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -17,15 +21,32 @@ import javax.inject.Singleton
 @Singleton
 class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
-    private val apiService: KliqApiService
+    private val reviewDao: ReviewDao,
+    private val apiService: KliqApiService,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : UserRepository {
 
     override fun getUserById(userId: String): Flow<UserEntity?> {
-        return userDao.getUserById(userId).flowOn(Dispatchers.IO)
+        return userDao.getUserById(userId).flowOn(ioDispatcher)
     }
 
     override fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?> {
-        return userDao.getUserPreferences(userId).flowOn(Dispatchers.IO)
+        return userDao.getUserPreferences(userId).flowOn(ioDispatcher)
+    }
+
+    override fun getUserReputationSummary(userId: String): Flow<UserReputationSummary> {
+        return combine(
+            reviewDao.getAverageRatingForTargetUser(userId),
+            reviewDao.getReviewsCountForTargetUser(userId),
+            reviewDao.getVerifiedReviewsCountForTargetUser(userId)
+        ) { avgRating, totalCount, verifiedCount ->
+            UserReputationSummary(
+                targetUserId = userId,
+                averageRating = avgRating ?: 0.0,
+                totalReviewsCount = totalCount,
+                verifiedReviewsCount = verifiedCount
+            )
+        }.flowOn(ioDispatcher)
     }
 
     override suspend fun syncUserProfile(userId: String): Result<Unit> = withContext(Dispatchers.IO) {
