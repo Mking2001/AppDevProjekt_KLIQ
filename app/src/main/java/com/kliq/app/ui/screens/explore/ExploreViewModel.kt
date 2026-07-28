@@ -50,7 +50,7 @@ data class DiscoverItemUi(
  */
 @HiltViewModel
 class ExploreViewModel @Inject constructor(
-    private val userRepository: UserRepository? = null
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ExploreUiState())
@@ -64,15 +64,13 @@ class ExploreViewModel @Inject constructor(
     }
 
     private fun observeBlockedUsers() {
-        userRepository?.let { repo ->
-            viewModelScope.launch {
-                repo.getBlockedUserIds("current_user")
-                    .catch { }
-                    .collect { blockedList ->
-                        blockedUserIds = blockedList.toSet()
-                        applyFilters()
-                    }
-            }
+        viewModelScope.launch {
+            userRepository.getBlockedUserIds("current_user")
+                .catch { }
+                .collect { blockedList ->
+                    blockedUserIds = blockedList.toSet()
+                    applyFilters()
+                }
         }
     }
 

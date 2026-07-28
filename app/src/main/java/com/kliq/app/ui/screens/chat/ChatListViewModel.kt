@@ -23,7 +23,7 @@ data class ChatListUiState(
 
 @HiltViewModel
 class ChatListViewModel @Inject constructor(
-    private val userRepository: UserRepository? = null
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatListUiState())
@@ -37,18 +37,16 @@ class ChatListViewModel @Inject constructor(
     }
 
     private fun observeBlockedUsers() {
-        userRepository?.let { repo ->
-            viewModelScope.launch {
-                repo.getBlockedUserIds("current_user")
-                    .catch { }
-                    .collect { blockedIds ->
-                        val blockedSet = blockedIds.toSet()
-                        val filteredPrivate = allPrivateChats.filter { chat ->
-                            !blockedSet.contains(chat.id) && !blockedSet.contains("usr_${chat.name}")
-                        }
-                        _uiState.update { it.copy(privateChats = filteredPrivate) }
+        viewModelScope.launch {
+            userRepository.getBlockedUserIds("current_user")
+                .catch { }
+                .collect { blockedIds ->
+                    val blockedSet = blockedIds.toSet()
+                    val filteredPrivate = allPrivateChats.filter { chat ->
+                        !blockedSet.contains(chat.id) && !blockedSet.contains("usr_${chat.name}")
                     }
-            }
+                    _uiState.update { it.copy(privateChats = filteredPrivate) }
+                }
         }
     }
 

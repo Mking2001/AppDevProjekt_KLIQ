@@ -31,7 +31,7 @@ data class ChatDetailUiState(
 
 @HiltViewModel
 class ChatDetailViewModel @Inject constructor(
-    private val userRepository: UserRepository? = null
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatDetailUiState())
@@ -53,14 +53,12 @@ class ChatDetailViewModel @Inject constructor(
             )
         }
 
-        userRepository?.let { repo ->
-            viewModelScope.launch {
-                repo.isUserBlocked("current_user", targetId)
-                    .catch { }
-                    .collect { isBlocked ->
-                        _uiState.update { it.copy(isBlocked = isBlocked) }
-                    }
-            }
+        viewModelScope.launch {
+            userRepository.isUserBlocked("current_user", targetId)
+                .catch { }
+                .collect { isBlocked ->
+                    _uiState.update { it.copy(isBlocked = isBlocked) }
+                }
         }
     }
 
@@ -106,7 +104,7 @@ class ChatDetailViewModel @Inject constructor(
     fun reportUser(reason: String, details: String = "") {
         val targetId = _uiState.value.targetUserId
         viewModelScope.launch {
-            userRepository?.reportUser("current_user", targetId, reason, details)
+            userRepository.reportUser("current_user", targetId, reason, details)
             _uiState.update {
                 it.copy(
                     isReportDialogVisible = false,
@@ -135,7 +133,7 @@ class ChatDetailViewModel @Inject constructor(
     fun confirmBlockUser(reason: String? = null) {
         val targetId = _uiState.value.targetUserId
         viewModelScope.launch {
-            userRepository?.blockUser("current_user", targetId, reason)
+            userRepository.blockUser("current_user", targetId, reason)
             _uiState.update {
                 it.copy(
                     isBlocked = true,
@@ -149,7 +147,7 @@ class ChatDetailViewModel @Inject constructor(
     fun unblockUser() {
         val targetId = _uiState.value.targetUserId
         viewModelScope.launch {
-            userRepository?.unblockUser("current_user", targetId)
+            userRepository.unblockUser("current_user", targetId)
             _uiState.update {
                 it.copy(
                     isBlocked = false,

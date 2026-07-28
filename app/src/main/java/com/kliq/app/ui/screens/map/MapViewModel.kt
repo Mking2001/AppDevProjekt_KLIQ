@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -165,7 +166,7 @@ class MapViewModel @Inject constructor(
         userRepository?.let { repo ->
             viewModelScope.launch {
                 repo.getBlockedUserIds("current_user")
-                    .kotlinx.coroutines.flow.catch { }
+                    .catch { }
                     .collect { blockedList ->
                         blockedUserIds = blockedList.toSet()
                         updateUserDistances(_uiState.value.cameraPosition.latitude, _uiState.value.cameraPosition.longitude)

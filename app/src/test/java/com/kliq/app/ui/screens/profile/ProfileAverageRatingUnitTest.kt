@@ -229,5 +229,17 @@ class ProfileAverageRatingUnitTest {
         ): ExternalSearchResponseDto {
             return ExternalSearchResponseDto(emptyList(), emptyList())
         }
+
+        override suspend fun reportUser(request: com.kliq.app.data.remote.ReportUserRequestDto): retrofit2.Response<Unit> {
+            return retrofit2.Response.success(Unit)
+        }
+
+        override suspend fun blockUser(request: com.kliq.app.data.remote.BlockUserRequestDto): retrofit2.Response<Unit> {
+            return retrofit2.Response.success(Unit)
+        }
+
+        override suspend fun unblockUser(currentUserId: String, targetUserId: String): retrofit2.Response<Unit> {
+            return retrofit2.Response.success(Unit)
+        }
     }
 }

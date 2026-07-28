@@ -81,6 +81,7 @@ class OtherUserProfileViewModelTest {
         `when`(userRepository.getUserPreferences(targetUserId)).thenReturn(flowOf(mockPrefs))
         `when`(reviewRepository.getReviewsForTargetUser(targetUserId)).thenReturn(flowOf(mockReviews))
         `when`(reviewRepository.getAverageRatingForTargetUser(targetUserId)).thenReturn(flowOf(5.0))
+        `when`(userRepository.isUserBlocked("current_user", targetUserId)).thenReturn(flowOf(false))
 
         val savedStateHandle = SavedStateHandle(mapOf("userId" to targetUserId))
         val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, savedStateHandle)
@@ -108,6 +109,7 @@ class OtherUserProfileViewModelTest {
         `when`(userRepository.getUserPreferences(targetUserId)).thenReturn(flowOf(null))
         `when`(reviewRepository.getReviewsForTargetUser(targetUserId)).thenReturn(flowOf(emptyList()))
         `when`(reviewRepository.getAverageRatingForTargetUser(targetUserId)).thenReturn(flowOf(null))
+        `when`(userRepository.isUserBlocked("current_user", targetUserId)).thenReturn(flowOf(false))
 
         val savedStateHandle = SavedStateHandle(mapOf("userId" to targetUserId))
         val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, savedStateHandle)
@@ -127,6 +129,7 @@ class OtherUserProfileViewModelTest {
         `when`(userRepository.getUserPreferences("user_123")).thenReturn(flowOf(null))
         `when`(reviewRepository.getReviewsForTargetUser("user_123")).thenReturn(flowOf(emptyList()))
         `when`(reviewRepository.getAverageRatingForTargetUser("user_123")).thenReturn(flowOf(null))
+        `when`(userRepository.isUserBlocked("current_user", "user_123")).thenReturn(flowOf(false))
 
         val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, savedStateHandle)
         testDispatcher.scheduler.advanceUntilIdle()
@@ -134,6 +137,11 @@ class OtherUserProfileViewModelTest {
         assertFalse(viewModel.uiState.value.isBlocked)
 
         viewModel.toggleBlockUser()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isBlockConfirmationDialogVisible)
+
+        viewModel.confirmBlockUser()
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isBlocked)
@@ -151,6 +159,7 @@ class OtherUserProfileViewModelTest {
         `when`(userRepository.getUserPreferences("user_123")).thenReturn(flowOf(null))
         `when`(reviewRepository.getReviewsForTargetUser("user_123")).thenReturn(flowOf(emptyList()))
         `when`(reviewRepository.getAverageRatingForTargetUser("user_123")).thenReturn(flowOf(null))
+        `when`(userRepository.isUserBlocked("current_user", "user_123")).thenReturn(flowOf(false))
 
         val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, savedStateHandle)
         testDispatcher.scheduler.advanceUntilIdle()

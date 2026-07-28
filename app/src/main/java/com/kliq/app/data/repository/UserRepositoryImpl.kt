@@ -28,8 +28,8 @@ class UserRepositoryImpl @Inject constructor(
     private val userDao: UserDao,
     private val apiService: KliqApiService,
     private val reviewDao: ReviewDao? = null,
-    private val blockedUserDao: BlockedUserDao? = null,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val blockedUserDao: BlockedUserDao? = null
 ) : UserRepository {
 
     override fun getUserById(userId: String): Flow<UserEntity?> {
