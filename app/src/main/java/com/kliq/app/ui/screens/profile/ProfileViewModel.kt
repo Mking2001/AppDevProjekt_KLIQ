@@ -35,7 +35,7 @@ data class ProfileUiState(
     val verifiedReviewsCount: Int = 0,
     val hasRatings: Boolean = false,
     val selectedTabIndex: Int = 0,
-    val tabs: List<String> = listOf("Beiträge", "Events", "Über mich"),
+    val tabs: List<String> = listOf("Beiträge", "Events", "Historie", "Über mich"),
     val isOwnProfile: Boolean = true,
 
     // QR-Code Zustände (Kapitel 5.6)
@@ -78,7 +78,7 @@ class ProfileViewModel @Inject constructor(
                                 postsCount = 127,
                                 followersCount = 1842,
                                 followingCount = 394,
-                                tabs = listOf("Beiträge", "Events", "Über mich")
+                                tabs = listOf("Beiträge", "Events", "Historie", "Über mich")
                             )
                         }
                     } else {
@@ -116,7 +116,7 @@ class ProfileViewModel @Inject constructor(
                 postsCount = 127,
                 followersCount = 1842,
                 followingCount = 394,
-                tabs = listOf("Beiträge", "Events", "Über mich")
+                tabs = listOf("Beiträge", "Events", "Historie", "Über mich")
             )
         }
     }
