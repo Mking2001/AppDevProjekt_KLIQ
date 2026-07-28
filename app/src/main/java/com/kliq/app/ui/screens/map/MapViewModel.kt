@@ -136,6 +136,7 @@ class MapViewModel @Inject constructor(
     private val calculateUserDistanceUseCase: CalculateUserDistanceUseCase = CalculateUserDistanceUseCase(),
     private val userDistanceFormatter: UserDistanceFormatter = UserDistanceFormatter.default,
     private val locationRepository: LocationRepository? = null,
+    private val userRepository: com.kliq.app.data.repository.UserRepository? = null,
     private val defaultDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
@@ -150,12 +151,27 @@ class MapViewModel @Inject constructor(
 
     private var allVenues: List<VenueItemUi> = emptyList()
     private var allUsers: List<UserMarkerUiState> = emptyList()
+    private var blockedUserIds: Set<String> = emptySet()
 
     init {
         setupFilters()
         loadUserMarkers()
         observeClubRepository()
         observeLocationUpdates()
+        observeBlockedUsers()
+    }
+
+    private fun observeBlockedUsers() {
+        userRepository?.let { repo ->
+            viewModelScope.launch {
+                repo.getBlockedUserIds("current_user")
+                    .kotlinx.coroutines.flow.catch { }
+                    .collect { blockedList ->
+                        blockedUserIds = blockedList.toSet()
+                        updateUserDistances(_uiState.value.cameraPosition.latitude, _uiState.value.cameraPosition.longitude)
+                    }
+            }
+        }
     }
 
     private fun setupFilters() {
@@ -189,7 +205,7 @@ class MapViewModel @Inject constructor(
             allUsers = updatedUsers
             val showPrivate = _uiState.value.showPrivateLocations
             val visibleUsers = if (showPrivate) {
-                updatedUsers.filter { it.isLocationSharingEnabled }
+                updatedUsers.filter { it.isLocationSharingEnabled && !blockedUserIds.contains(it.userId) }
             } else {
                 emptyList()
             }
