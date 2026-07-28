@@ -158,6 +158,16 @@ object DatabaseMigrations {
         }
     }
 
+    val MIGRATION_12_13 = object : Migration(12, 13) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `visited_logs` (`id` TEXT NOT NULL, `userId` TEXT NOT NULL, `clubId` TEXT NOT NULL, `clubName` TEXT NOT NULL, `visitedAtTimestamp` INTEGER NOT NULL, `isVerifiedByGps` INTEGER NOT NULL, PRIMARY KEY(`id`))"
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_visited_logs_userId` ON `visited_logs` (`userId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_visited_logs_clubId` ON `visited_logs` (`clubId`)")
+        }
+    }
+
     // Array of all migrations. Scalable strategy for providing them to the builder.
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_1_2,
@@ -168,6 +178,7 @@ object DatabaseMigrations {
         MIGRATION_6_7,
         MIGRATION_7_8,
         MIGRATION_8_9,
-        MIGRATION_9_10
+        MIGRATION_9_10,
+        MIGRATION_12_13
     )
 }
