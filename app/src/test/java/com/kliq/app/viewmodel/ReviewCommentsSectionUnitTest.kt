@@ -3,6 +3,7 @@ package com.kliq.app.viewmodel
 import com.kliq.app.data.local.dao.ClubDao
 import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.entities.ClubEntity
+import com.kliq.app.data.local.entities.EventEntity
 import com.kliq.app.data.local.entities.ReviewEntity
 import com.kliq.app.data.model.Review
 import com.kliq.app.data.model.ReviewVerificationMethod
@@ -136,7 +137,7 @@ class ReviewCommentsSectionUnitTest {
         val state = viewModel.uiState.value
         assertFalse(state.isSectionEmpty)
         assertEquals(1, state.commentReviews.size)
-        assertEquals("Klasse Erfahrung im Neuraum", state.commentReviews.first().commentText)
+        assertEquals("Klasse Erfahrung im Neuraum", state.commentReviews.first().reviewText)
     }
 
     private class FakeReviewDao : ReviewDao {
@@ -153,6 +154,7 @@ class ReviewCommentsSectionUnitTest {
         override fun getAverageRatingForTargetUser(targetUserId: String): Flow<Double?> = flowOf(null)
         override fun getVerifiedReviewsCountForTargetUser(targetUserId: String): Flow<Int> = flowOf(0)
         override fun getReviewsCountForTargetUser(targetUserId: String): Flow<Int> = flowOf(0)
+        override fun getReviewCountForTargetUser(targetUserId: String): Flow<Int> = flowOf(0)
         override suspend fun incrementHelpfulVotes(reviewId: String) {}
         override suspend fun flagReview(reviewId: String) {}
         override suspend fun insertReview(review: ReviewEntity) { reviews.add(review) }
@@ -163,11 +165,15 @@ class ReviewCommentsSectionUnitTest {
     private class FakeClubDao : ClubDao {
         val clubs = mutableListOf<ClubEntity>()
         override fun getAllClubs(): Flow<List<ClubEntity>> = flowOf(clubs)
+        override fun getFavoriteClubs(): Flow<List<ClubEntity>> = flowOf(emptyList())
+        override fun getPromotedClubs(): Flow<List<ClubEntity>> = flowOf(emptyList())
+        override fun getClubsByCity(city: String): Flow<List<ClubEntity>> = flowOf(clubs.filter { it.city == city })
         override fun getClubById(clubId: String): Flow<ClubEntity?> = flowOf(clubs.find { it.id == clubId })
-        override suspend fun getClubByIdOneShot(clubId: String): ClubEntity? = clubs.find { it.id == clubId }
+        override fun searchClubs(query: String): Flow<List<ClubEntity>> = flowOf(emptyList())
         override suspend fun insertClub(club: ClubEntity) { clubs.add(club) }
         override suspend fun insertClubs(clubsList: List<ClubEntity>) { clubs.addAll(clubsList) }
-        override suspend fun updateClub(club: ClubEntity) {}
-        override suspend fun deleteClub(club: ClubEntity) {}
+        override suspend fun updateFavoriteStatus(clubId: String, isFavorite: Boolean) {}
+        override fun getEventsForClub(clubId: String): Flow<List<EventEntity>> = flowOf(emptyList())
+        override suspend fun insertEvents(events: List<EventEntity>) {}
     }
 }

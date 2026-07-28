@@ -40,8 +40,9 @@ class ProfileAverageRatingUnitTest {
         fakeUserDao = FakeUserDao()
         fakeReviewDao = FakeReviewDao()
         fakeApiService = FakeKliqApiService()
+        val qrCodeService = com.kliq.app.service.QrCodeServiceImpl(testDispatcher)
         userRepository = UserRepositoryImpl(fakeUserDao, fakeApiService, fakeReviewDao, testDispatcher)
-        viewModel = ProfileViewModel(userRepository)
+        viewModel = ProfileViewModel(userRepository, qrCodeService)
     }
 
     @After
@@ -202,6 +203,10 @@ class ProfileAverageRatingUnitTest {
         }
 
         override fun getReviewsCountForTargetUser(targetUserId: String): Flow<Int> {
+            return flowOf(reviews.count { it.targetUserId == targetUserId })
+        }
+
+        override fun getReviewCountForTargetUser(targetUserId: String): Flow<Int> {
             return flowOf(reviews.count { it.targetUserId == targetUserId })
         }
 

@@ -28,7 +28,8 @@ class ProfileViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeUserRepository = FakeUserRepository()
-        viewModel = ProfileViewModel(fakeUserRepository)
+        val qrCodeService = com.kliq.app.service.QrCodeServiceImpl(testDispatcher)
+        viewModel = ProfileViewModel(fakeUserRepository, qrCodeService)
     }
 
     @After

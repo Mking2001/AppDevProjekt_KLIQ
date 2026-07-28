@@ -41,6 +41,7 @@ import com.kliq.app.ui.screens.onboarding.IntentMatchingScreen
 import com.kliq.app.ui.screens.onboarding.ProfileCreationScreen
 import com.kliq.app.ui.screens.profile.OtherUserProfileScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
+import com.kliq.app.ui.screens.qr.QRScannerScreen
 import com.kliq.app.ui.screens.splash.SplashScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationViewModel
@@ -73,7 +74,8 @@ fun KliqMainScaffold(
         ChatRoutes.CHAT_LIST,
         ChatRoutes.CHAT_DETAIL,
         CoreRoutes.SPLASH,
-        CoreRoutes.PHONE_LOGIN
+        CoreRoutes.PHONE_LOGIN,
+        ProfileRoutes.QR_SCANNER
     )
 
     if (currentRoute != navigationState.currentRoute) {
@@ -240,7 +242,12 @@ private fun KliqNavHost(
                 topBarState = topBarState,
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
-                onMenuAction = onMenuAction
+                onMenuAction = onMenuAction,
+                onNavigateToQrScanner = {
+                    navController.navigate(ProfileRoutes.QR_SCANNER) {
+                        launchSingleTop = true
+                    }
+                }
             )
         }
         composable(NavigationRoute.ProfileCreation.route) {
@@ -341,6 +348,15 @@ private fun KliqNavHost(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToChat = { targetUserId ->
                     navController.navigate(ChatRoutes.chatDetail("chat_$targetUserId"))
+                }
+            )
+        }
+
+        composable(ProfileRoutes.QR_SCANNER) {
+            QRScannerScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(userId))
                 }
             )
         }

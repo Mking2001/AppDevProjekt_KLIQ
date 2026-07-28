@@ -74,6 +74,7 @@ fun ProfileScreen(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
+    onNavigateToQrScanner: () -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -181,7 +182,8 @@ fun ProfileScreen(
         isGenerating = uiState.isGeneratingQrCode,
         displayName = uiState.displayName,
         username = uiState.username,
-        onDismissRequest = { viewModel.dismissQrCodeModal() }
+        onDismissRequest = { viewModel.dismissQrCodeModal() },
+        onScanQrCode = onNavigateToQrScanner
     )
 
     ZoomableImageOverlay(

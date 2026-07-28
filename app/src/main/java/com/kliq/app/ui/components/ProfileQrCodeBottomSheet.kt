@@ -55,6 +55,7 @@ fun ProfileQrCodeBottomSheet(
     displayName: String,
     username: String,
     onDismissRequest: () -> Unit,
+    onScanQrCode: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (!isVisible) return
@@ -207,17 +208,48 @@ fun ProfileQrCodeBottomSheet(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Button(
-                onClick = onDismissRequest,
-                colors = ButtonDefaults.buttonColors(containerColor = accentPurple),
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier.fillMaxWidth()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = "Fertig",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                if (onScanQrCode != null) {
+                    Button(
+                        onClick = {
+                            onDismissRequest()
+                            onScanQrCode()
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = accentPurple),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.QrCode2,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Code scannen",
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
+
+                Button(
+                    onClick = onDismissRequest,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (onScanQrCode != null) Color.White.copy(alpha = 0.15f) else accentPurple
+                    ),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "Schließen",
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

@@ -118,6 +118,7 @@ class ReviewCommentsSectionScenarioTest {
         override fun getAverageRatingForTargetUser(targetUserId: String): Flow<Double?> = flowOf(null)
         override fun getVerifiedReviewsCountForTargetUser(targetUserId: String): Flow<Int> = flowOf(0)
         override fun getReviewsCountForTargetUser(targetUserId: String): Flow<Int> = flowOf(0)
+        override fun getReviewCountForTargetUser(targetUserId: String): Flow<Int> = flowOf(0)
         override suspend fun incrementHelpfulVotes(reviewId: String) {}
         override suspend fun flagReview(reviewId: String) {}
         override suspend fun insertReview(review: ReviewEntity) { reviews.add(review) }

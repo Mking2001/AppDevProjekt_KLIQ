@@ -134,10 +134,11 @@ object ClubRoutes {
 }
 
 /**
- * Routen für Benutzer-Profile und Details.
+ * Routen für Benutzer-Profile, Scanner und Details.
  */
 object ProfileRoutes {
     const val OTHER_USER_PROFILE = "profile/other/{userId}"
+    const val QR_SCANNER = "profile/qr_scanner"
 
     fun otherUserProfile(userId: String): String = "profile/other/$userId"
 
