@@ -62,6 +62,7 @@ import com.kliq.app.ui.components.ZoomableImageOverlay
 import com.kliq.app.ui.components.UserRatingStarBar
 import com.kliq.app.ui.components.ReviewCommentSection
 import com.kliq.app.ui.components.ProfileQrCodeBottomSheet
+import com.kliq.app.ui.screens.history.VisitedHistoryScreen
 import androidx.compose.material.icons.filled.QrCode2
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
@@ -400,7 +401,8 @@ private fun ProfileTabContent(selectedTabIndex: Int) {
     when (selectedTabIndex) {
         0 -> PostsGrid()
         1 -> EventsList()
-        2 -> AboutSection()
+        2 -> VisitedHistoryScreen(userId = "current_user")
+        3 -> AboutSection()
     }
 }
 

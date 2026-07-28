@@ -52,6 +52,9 @@ object AppModule {
     fun provideSocialDao(database: KliqDatabase): com.kliq.app.data.local.dao.SocialDao = database.socialDao()
 
     @Provides
+    fun provideVisitedLogDao(database: KliqDatabase): com.kliq.app.data.local.dao.VisitedLogDao = database.visitedLogDao()
+
+    @Provides
     @Singleton
     fun provideApiService(): KliqApiService {
         return Retrofit.Builder()

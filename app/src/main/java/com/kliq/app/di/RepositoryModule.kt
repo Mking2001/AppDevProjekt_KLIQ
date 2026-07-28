@@ -71,4 +71,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindSocialRepository(impl: com.kliq.app.data.repository.SocialRepositoryImpl): com.kliq.app.data.repository.SocialRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindVisitedLogRepository(impl: com.kliq.app.data.repository.VisitedLogRepositoryImpl): com.kliq.app.data.repository.VisitedLogRepository
 }
