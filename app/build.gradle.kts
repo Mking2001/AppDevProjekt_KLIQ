@@ -119,6 +119,14 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.5.0")
     implementation("com.google.zxing:core:3.5.3")
 
+    // CameraX & ML Kit Barcode Scanning
+    val cameraxVersion = "1.3.1"
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+
     // Coroutines Play Services (for .await() on Tasks)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 

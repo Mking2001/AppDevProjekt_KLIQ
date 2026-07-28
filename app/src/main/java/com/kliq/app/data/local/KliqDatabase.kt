@@ -8,10 +8,12 @@ import com.kliq.app.data.local.dao.ClubDao
 import com.kliq.app.data.local.dao.EventDao
 import com.kliq.app.data.local.dao.LocationDao
 import com.kliq.app.data.local.dao.ReviewDao
+import com.kliq.app.data.local.dao.SocialDao
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.local.entities.ChatEntity
 import com.kliq.app.data.local.entities.ClubEntity
 import com.kliq.app.data.local.entities.EventEntity
+import com.kliq.app.data.local.entities.FriendEntity
 import com.kliq.app.data.local.entities.LocationEntity
 import com.kliq.app.data.local.entities.MessageEntity
 import com.kliq.app.data.local.entities.ReviewEntity
@@ -27,9 +29,10 @@ import com.kliq.app.data.local.entities.UserPreferencesEntity
         ReviewEntity::class,
         ChatEntity::class,
         MessageEntity::class,
-        LocationEntity::class
+        LocationEntity::class,
+        FriendEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -40,4 +43,5 @@ abstract class KliqDatabase : RoomDatabase() {
     abstract fun reviewDao(): ReviewDao
     abstract fun chatDao(): ChatDao
     abstract fun locationDao(): LocationDao
+    abstract fun socialDao(): SocialDao
 }

@@ -67,4 +67,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindQrCodeService(impl: QrCodeServiceImpl): QrCodeService
+
+    @Binds
+    @Singleton
+    abstract fun bindSocialRepository(impl: com.kliq.app.data.repository.SocialRepositoryImpl): com.kliq.app.data.repository.SocialRepository
 }
