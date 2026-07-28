@@ -231,7 +231,7 @@ fun StarRatingTestScreen(
             },
             onReviewTextChanged = { newText ->
                 if (newText.length <= ratingUiState.maxTextLength) {
-                    ratingUiState = ratingUiState.copy(reviewText = newText)
+                    ratingUiState = ratingUiState.copy(text = newText)
                 }
             },
             onSubmit = {
