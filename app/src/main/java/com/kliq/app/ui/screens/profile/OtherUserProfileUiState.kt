@@ -26,6 +26,7 @@ data class OtherUserProfileUiState(
     val isReported: Boolean = false,
     val isRatingSheetVisible: Boolean = false,
     val isReportDialogVisible: Boolean = false,
+    val isBlockConfirmationDialogVisible: Boolean = false,
     val isSubmittingRating: Boolean = false,
     val errorMessage: String? = null,
     val actionSuccessMessage: String? = null

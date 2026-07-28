@@ -53,8 +53,9 @@ class OtherUserProfileViewModel @Inject constructor(
                 userRepository.getUserById(userId),
                 userRepository.getUserPreferences(userId),
                 reviewRepository.getReviewsForTargetUser(userId),
-                reviewRepository.getAverageRatingForTargetUser(userId)
-            ) { userEntity, userPrefs, reviewsList, avgRating ->
+                reviewRepository.getAverageRatingForTargetUser(userId),
+                userRepository.isUserBlocked("current_user", userId)
+            ) { userEntity, userPrefs, reviewsList, avgRating, isBlocked ->
                 if (userEntity != null) {
                     val actualAvg = avgRating ?: if (reviewsList.isNotEmpty()) {
                         reviewsList.map { it.rating }.average()
@@ -76,7 +77,7 @@ class OtherUserProfileViewModel @Inject constructor(
                         averageRating = actualAvg,
                         reviewCount = reviewsList.size,
                         reviews = reviewsList,
-                        isBlocked = false,
+                        isBlocked = isBlocked,
                         isReported = false,
                         errorMessage = null
                     )
@@ -198,8 +199,10 @@ class OtherUserProfileViewModel @Inject constructor(
         _uiState.update { it.copy(isReportDialogVisible = false) }
     }
 
-    fun reportUser(reason: String) {
+    fun reportUser(reason: String, details: String = "") {
+        val targetId = _uiState.value.userId
         viewModelScope.launch {
+            userRepository.reportUser("current_user", targetId, reason, details)
             _uiState.update {
                 it.copy(
                     isReported = true,
@@ -210,18 +213,45 @@ class OtherUserProfileViewModel @Inject constructor(
         }
     }
 
+    fun openBlockConfirmationDialog() {
+        _uiState.update { it.copy(isBlockConfirmationDialogVisible = true) }
+    }
+
+    fun closeBlockConfirmationDialog() {
+        _uiState.update { it.copy(isBlockConfirmationDialogVisible = false) }
+    }
+
     fun toggleBlockUser() {
+        if (_uiState.value.isBlocked) {
+            unblockUser()
+        } else {
+            openBlockConfirmationDialog()
+        }
+    }
+
+    fun confirmBlockUser(reason: String? = null) {
+        val targetId = _uiState.value.userId
         viewModelScope.launch {
-            val nextBlockedState = !_uiState.value.isBlocked
-            val message = if (nextBlockedState) {
-                "Nutzer wurde blockiert."
-            } else {
-                "Blockierung aufgehoben."
-            }
+            userRepository.blockUser("current_user", targetId, reason)
             _uiState.update {
                 it.copy(
-                    isBlocked = nextBlockedState,
-                    actionSuccessMessage = message
+                    isBlocked = true,
+                    isBlockConfirmationDialogVisible = false,
+                    actionSuccessMessage = "Nutzer wurde blockiert."
+                )
+            }
+        }
+    }
+
+    fun unblockUser() {
+        val targetId = _uiState.value.userId
+        viewModelScope.launch {
+            userRepository.unblockUser("current_user", targetId)
+            _uiState.update {
+                it.copy(
+                    isBlocked = false,
+                    isBlockConfirmationDialogVisible = false,
+                    actionSuccessMessage = "Blockierung aufgehoben."
                 )
             }
         }

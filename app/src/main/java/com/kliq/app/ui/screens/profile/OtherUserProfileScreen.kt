@@ -304,11 +304,20 @@ fun OtherUserProfileScreen(
             }
 
             if (uiState.isReportDialogVisible) {
-                ReportUserModalDialog(
+                com.kliq.app.ui.components.UserReportBottomSheet(
+                    targetUsername = uiState.username,
                     onDismiss = { viewModel.closeReportDialog() },
-                    onConfirmReport = { reason ->
-                        viewModel.reportUser(reason)
+                    onSubmitReport = { reason, details ->
+                        viewModel.reportUser(reason, details)
                     }
+                )
+            }
+
+            if (uiState.isBlockConfirmationDialogVisible) {
+                com.kliq.app.ui.components.BlockConfirmationDialog(
+                    username = uiState.username,
+                    onDismiss = { viewModel.closeBlockConfirmationDialog() },
+                    onConfirmBlock = { viewModel.confirmBlockUser() }
                 )
             }
         }
