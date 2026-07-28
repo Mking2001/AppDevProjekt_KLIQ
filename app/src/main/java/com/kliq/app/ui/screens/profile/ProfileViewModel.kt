@@ -48,7 +48,7 @@ data class ProfileUiState(
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val qrCodeService: QrCodeService? = null
+    private val qrCodeService: QrCodeService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState())
@@ -123,15 +123,11 @@ class ProfileViewModel @Inject constructor(
 
     fun showQrCodeModal() {
         _uiState.update { it.copy(isQrModalVisible = true, isGeneratingQrCode = true) }
-        val service = qrCodeService ?: run {
-            _uiState.update { it.copy(isGeneratingQrCode = false) }
-            return
-        }
         val targetId = _uiState.value.userId
 
         viewModelScope.launch {
-            val payload = service.generateProfileQrPayload(targetId)
-            val result = service.generateQrCodeBitmap(targetId)
+            val payload = qrCodeService.generateProfileQrPayload(targetId)
+            val result = qrCodeService.generateQrCodeBitmap(targetId)
 
             result.onSuccess { bitmap ->
                 _uiState.update {

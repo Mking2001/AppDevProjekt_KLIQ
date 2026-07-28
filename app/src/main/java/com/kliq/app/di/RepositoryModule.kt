@@ -12,6 +12,8 @@ import com.kliq.app.data.repository.ReviewRepository
 import com.kliq.app.data.repository.ReviewRepositoryImpl
 import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.data.repository.UserRepositoryImpl
+import com.kliq.app.service.QrCodeService
+import com.kliq.app.service.QrCodeServiceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -61,4 +63,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindRatingRepository(impl: com.kliq.app.data.repository.RatingRepositoryImpl): com.kliq.app.data.repository.RatingRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindQrCodeService(impl: QrCodeServiceImpl): QrCodeService
 }

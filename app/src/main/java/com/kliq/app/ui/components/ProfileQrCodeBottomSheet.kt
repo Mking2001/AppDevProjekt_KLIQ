@@ -66,12 +66,12 @@ fun ProfileQrCodeBottomSheet(
         val activity = context.findActivity()
         val originalBrightness = activity?.window?.attributes?.screenBrightness
 
-        activity?.window?.attributes = activity.window.attributes?.apply {
+        activity?.window?.attributes = activity?.window?.attributes?.apply {
             screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_FULL
         }
 
         onDispose {
-            activity?.window?.attributes = activity.window.attributes?.apply {
+            activity?.window?.attributes = activity?.window?.attributes?.apply {
                 screenBrightness = originalBrightness ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
             }
         }

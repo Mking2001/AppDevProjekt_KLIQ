@@ -163,12 +163,6 @@ class ReviewRepositoryImpl @Inject constructor(
         Result.success(entity.toDomain())
     }
 
-    override fun getReviewsForTargetUser(targetUserId: String): Flow<List<Review>> {
-        return reviewDao.getReviewsForTargetUser(targetUserId).map { entities ->
-            entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
-    }
-
     override suspend fun submitVerifiedUserComment(
         reviewerUserId: String,
         targetUserId: String,

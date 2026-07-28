@@ -29,8 +29,6 @@ interface ReviewRepository {
         qrToken: String
     ): Result<Review>
 
-    fun getReviewsForTargetUser(targetUserId: String): Flow<List<Review>>
-
     suspend fun submitVerifiedUserComment(
         reviewerUserId: String,
         targetUserId: String,
