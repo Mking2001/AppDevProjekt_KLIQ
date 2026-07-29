@@ -164,6 +164,18 @@ class ChatRepositoryImpl @Inject constructor(
         chatDao.updateMessageStatus(messageId, status)
     }
 
+    override suspend fun markMessageAsDelivered(messageId: String) = withContext(Dispatchers.IO) {
+        chatDao.markMessageAsDelivered(messageId = messageId, timestampMs = System.currentTimeMillis())
+    }
+
+    override suspend fun markMessageAsRead(messageId: String) = withContext(Dispatchers.IO) {
+        chatDao.markMessageAsRead(messageId = messageId, timestampMs = System.currentTimeMillis())
+    }
+
+    override suspend fun markAllSentMessagesAsDelivered(chatId: String) = withContext(Dispatchers.IO) {
+        chatDao.markAllSentMessagesAsDelivered(chatId = chatId, timestampMs = System.currentTimeMillis())
+    }
+
     override suspend fun markChatAsRead(chatId: String) = withContext(Dispatchers.IO) {
         chatDao.markChatAsRead(chatId)
     }
@@ -273,6 +285,18 @@ class ChatRepositoryImpl @Inject constructor(
         directMessageDao.updateDeliveryStatus(messageId, status)
     }
 
+    override suspend fun markDirectMessageAsDelivered(messageId: String) = withContext(Dispatchers.IO) {
+        directMessageDao.markDirectMessageAsDelivered(messageId = messageId, timestampMs = System.currentTimeMillis())
+    }
+
+    override suspend fun markDirectMessageAsRead(messageId: String) = withContext(Dispatchers.IO) {
+        directMessageDao.markDirectMessageAsRead(messageId = messageId, timestampMs = System.currentTimeMillis())
+    }
+
+    override suspend fun markDirectConversationAsDelivered(senderId: String, receiverId: String) = withContext(Dispatchers.IO) {
+        directMessageDao.markConversationAsDelivered(senderId = senderId, receiverId = receiverId, timestampMs = System.currentTimeMillis())
+    }
+
     override suspend fun markDirectConversationAsRead(senderId: String, receiverId: String) = withContext(Dispatchers.IO) {
         directMessageDao.markConversationAsRead(senderId = senderId, receiverId = receiverId)
     }
@@ -360,6 +384,8 @@ class ChatRepositoryImpl @Inject constructor(
             mediaHeight = mediaHeight,
             captionText = caption,
             status = status,
+            deliveredAtMs = deliveredAtMs,
+            readAtMs = readAtMs,
             isMine = isMine
         )
     }
@@ -373,6 +399,8 @@ class ChatRepositoryImpl @Inject constructor(
             timestamp = timestamp,
             timestampIso = timestampIso.ifBlank { formatMsToIso(timestamp) },
             deliveryStatus = deliveryStatus,
+            deliveredAtMs = deliveredAtMs,
+            readAtMs = readAtMs,
             isEncrypted = isEncrypted,
             encryptionAlgorithm = encryptionAlgorithm,
             mediaUrl = mediaUrl,

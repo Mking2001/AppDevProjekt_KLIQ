@@ -35,6 +35,9 @@ interface ChatRepository {
     ): Result<ChatMessage>
 
     suspend fun updateMessageStatus(messageId: String, status: MessageStatus)
+    suspend fun markMessageAsDelivered(messageId: String)
+    suspend fun markMessageAsRead(messageId: String)
+    suspend fun markAllSentMessagesAsDelivered(chatId: String)
     suspend fun markChatAsRead(chatId: String)
     fun getDirectMessages(currentUserId: String, targetUserId: String): Flow<List<DirectMessage>>
     fun getUnreadDirectMessages(userId: String): Flow<List<DirectMessage>>
@@ -62,6 +65,9 @@ interface ChatRepository {
     suspend fun receiveDirectMessage(message: DirectMessage): Result<Unit>
     suspend fun syncDirectMessages(userId: String, targetUserId: String): Result<Unit>
     suspend fun updateDirectMessageStatus(messageId: String, status: MessageStatus)
+    suspend fun markDirectMessageAsDelivered(messageId: String)
+    suspend fun markDirectMessageAsRead(messageId: String)
+    suspend fun markDirectConversationAsDelivered(senderId: String, receiverId: String)
     suspend fun markDirectConversationAsRead(senderId: String, receiverId: String)
     fun getCityChatForLocation(location: com.kliq.app.data.model.LocationData): Flow<com.kliq.app.data.model.ChatListItem>
     suspend fun syncPublicCityMessages(chatId: String): Result<Unit>
