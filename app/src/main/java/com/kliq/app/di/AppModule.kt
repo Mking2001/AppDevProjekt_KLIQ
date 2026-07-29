@@ -117,4 +117,10 @@ object AppModule {
     fun provideUserDistanceFormatter(): com.kliq.app.util.UserDistanceFormatter {
         return com.kliq.app.util.UserDistanceFormatter()
     }
+
+    @Provides
+    @Singleton
+    fun provideImageCompressor(): com.kliq.app.util.ImageCompressor {
+        return com.kliq.app.util.ImageCompressor()
+    }
 }
