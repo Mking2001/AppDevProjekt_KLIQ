@@ -1,5 +1,7 @@
 package com.kliq.app.di
 
+import com.kliq.app.data.datasource.GroupPresenceDataSource
+import com.kliq.app.data.datasource.GroupPresenceDataSourceImpl
 import com.kliq.app.data.repository.ChatRepository
 import com.kliq.app.data.repository.ChatRepositoryImpl
 import com.kliq.app.data.repository.ClubAndEventRepository
@@ -8,6 +10,8 @@ import com.kliq.app.data.repository.ClubRepository
 import com.kliq.app.data.repository.ClubRepositoryImpl
 import com.kliq.app.data.repository.EventRepository
 import com.kliq.app.data.repository.EventRepositoryImpl
+import com.kliq.app.data.repository.GroupPresenceRepository
+import com.kliq.app.data.repository.GroupPresenceRepositoryImpl
 import com.kliq.app.data.repository.ReviewRepository
 import com.kliq.app.data.repository.ReviewRepositoryImpl
 import com.kliq.app.data.repository.UserRepository
@@ -79,4 +83,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindPushNotificationRepository(impl: com.kliq.app.data.repository.PushNotificationRepositoryImpl): com.kliq.app.data.repository.PushNotificationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindGroupPresenceDataSource(impl: GroupPresenceDataSourceImpl): GroupPresenceDataSource
+
+    @Binds
+    @Singleton
+    abstract fun bindGroupPresenceRepository(impl: GroupPresenceRepositoryImpl): GroupPresenceRepository
 }
