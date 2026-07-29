@@ -323,11 +323,29 @@ fun ChatBubble(
                         }
                     )
                     if (message.isMine) {
-                        val isRead = message.status == MessageStatus.READ
+                        val iconVector = when (message.status) {
+                            MessageStatus.SENT -> Icons.Default.Done
+                            MessageStatus.DELIVERED, MessageStatus.READ -> Icons.Default.DoneAll
+                        }
+                        val targetTint = when (message.status) {
+                            MessageStatus.READ -> PurplePrimaryLight
+                            MessageStatus.DELIVERED -> Color.White.copy(alpha = 0.95f)
+                            MessageStatus.SENT -> Color.White.copy(alpha = 0.6f)
+                        }
+                        val animatedTint by animateColorAsState(
+                            targetValue = targetTint,
+                            animationSpec = tween(durationMillis = 300),
+                            label = "StatusTintAnimation"
+                        )
+                        val statusDescription = when (message.status) {
+                            MessageStatus.READ -> "Gelesen"
+                            MessageStatus.DELIVERED -> "Zugestellt"
+                            MessageStatus.SENT -> "Gesendet"
+                        }
                         Icon(
-                            imageVector = if (isRead) Icons.Default.DoneAll else Icons.Default.Done,
-                            contentDescription = if (isRead) "Gelesen" else "Gesendet",
-                            tint = if (isRead) PurplePrimaryLight else Color.White.copy(alpha = 0.75f),
+                            imageVector = iconVector,
+                            contentDescription = statusDescription,
+                            tint = animatedTint,
                             modifier = Modifier.size(14.dp)
                         )
                     }

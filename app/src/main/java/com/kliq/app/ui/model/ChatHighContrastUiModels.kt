@@ -33,6 +33,8 @@ data class MessageHighContrastBubbleState(
     val textColorHex: String = ChatHighContrastPalette.HighContrastTextPrimary,
     val statusIconText: String,
     val statusIconColorHex: String,
+    val deliveredAtMs: Long? = null,
+    val readAtMs: Long? = null,
     val showSenderHeader: Boolean
 )
 
@@ -74,6 +76,8 @@ fun ChatMessage.toHighContrastBubbleState(isGroupChat: Boolean = false): Message
         bubbleBackgroundColorHex = bubbleBg,
         statusIconText = statusText,
         statusIconColorHex = statusColor,
+        deliveredAtMs = deliveredAtMs,
+        readAtMs = readAtMs,
         showSenderHeader = isGroupChat && !isMine
     )
 }
