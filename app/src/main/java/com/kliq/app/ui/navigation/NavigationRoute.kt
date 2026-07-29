@@ -98,6 +98,15 @@ object ChatRoutes {
 
     /** Argument-Name für die Chat-ID im NavGraph */
     const val ARG_CHAT_ID = "chatId"
+
+    /** Route fuer den 1-zu-1 Private Chat Screen mit receiverId-Parameter */
+    const val PRIVATE_CHAT = "private_chat/{receiverId}"
+
+    /** Erzeugt die konkrete Route fuer 1-zu-1 Private Messaging */
+    fun privateChat(receiverId: String): String = "private_chat/$receiverId"
+
+    /** Argument-Name fuer die Empfaenger-ID im NavGraph */
+    const val ARG_RECEIVER_ID = "receiverId"
 }
 
 /**
