@@ -42,6 +42,15 @@ interface ChatDao {
     @Query("UPDATE messages SET status = :status WHERE id = :messageId")
     suspend fun updateMessageStatus(messageId: String, status: MessageStatus)
 
+    @Query("UPDATE messages SET status = :status, deliveredAtMs = :timestampMs WHERE id = :messageId AND status = 'SENT'")
+    suspend fun markMessageAsDelivered(messageId: String, status: MessageStatus = MessageStatus.DELIVERED, timestampMs: Long)
+
+    @Query("UPDATE messages SET status = 'READ', readAtMs = :timestampMs WHERE id = :messageId AND status != 'READ'")
+    suspend fun markMessageAsRead(messageId: String, timestampMs: Long)
+
+    @Query("UPDATE messages SET status = 'DELIVERED', deliveredAtMs = :timestampMs WHERE chatId = :chatId AND isMine = 1 AND status = 'SENT'")
+    suspend fun markAllSentMessagesAsDelivered(chatId: String, timestampMs: Long)
+
     @Query("UPDATE chats SET lastMessageText = :text, lastMessageTimestampMs = :timestampMs, lastMessageTimestampIso = :timestampIso, unreadCount = unreadCount + :unreadIncrement WHERE id = :chatId")
     suspend fun updateChatLastMessage(
         chatId: String,

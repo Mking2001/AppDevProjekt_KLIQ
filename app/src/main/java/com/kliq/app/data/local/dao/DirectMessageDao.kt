@@ -45,6 +45,21 @@ interface DirectMessageDao {
     @Query("UPDATE direct_messages SET deliveryStatus = :status WHERE messageId = :messageId")
     suspend fun updateDeliveryStatus(messageId: String, status: MessageStatus)
 
+    @Query("UPDATE direct_messages SET deliveryStatus = :status, deliveredAtMs = :timestampMs WHERE messageId = :messageId AND deliveryStatus = 'SENT'")
+    suspend fun markDirectMessageAsDelivered(messageId: String, status: MessageStatus = MessageStatus.DELIVERED, timestampMs: Long)
+
+    @Query("UPDATE direct_messages SET deliveryStatus = 'READ', readAtMs = :timestampMs WHERE messageId = :messageId AND deliveryStatus != 'READ'")
+    suspend fun markDirectMessageAsRead(messageId: String, timestampMs: Long)
+
+    @Query("""
+        UPDATE direct_messages 
+        SET deliveryStatus = 'DELIVERED', deliveredAtMs = :timestampMs 
+        WHERE senderId = :senderId 
+          AND receiverId = :receiverId 
+          AND deliveryStatus = 'SENT'
+    """)
+    suspend fun markConversationAsDelivered(senderId: String, receiverId: String, timestampMs: Long)
+
     @Query("""
         UPDATE direct_messages 
         SET deliveryStatus = 'READ' 

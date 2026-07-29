@@ -38,6 +38,8 @@ data class MessageEntity(
     val mediaHeight: Int = 0,
     val caption: String? = null,
     val status: MessageStatus = MessageStatus.SENT,
+    val deliveredAtMs: Long? = null,
+    val readAtMs: Long? = null,
     val isMine: Boolean,
     val replyToMessageId: String? = null,
     val isEdited: Boolean = false

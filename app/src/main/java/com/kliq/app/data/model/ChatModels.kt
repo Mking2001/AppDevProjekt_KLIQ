@@ -117,6 +117,8 @@ data class ChatMessage(
     val mediaHeight: Int = 0,
     val captionText: String? = null,
     val status: MessageStatus = MessageStatus.SENT,
+    val deliveredAtMs: Long? = null,
+    val readAtMs: Long? = null,
     val isMine: Boolean,
     val dateHeader: String? = null
 )
@@ -129,6 +131,8 @@ data class DirectMessage(
     val timestamp: Long = System.currentTimeMillis(),
     val timestampIso: String = formatMsToIso(timestamp),
     val deliveryStatus: MessageStatus = MessageStatus.SENT,
+    val deliveredAtMs: Long? = null,
+    val readAtMs: Long? = null,
     val isEncrypted: Boolean = true,
     val encryptionAlgorithm: String = "AES-256-GCM",
     val mediaUrl: String? = null,
