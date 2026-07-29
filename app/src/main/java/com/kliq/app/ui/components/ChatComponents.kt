@@ -49,7 +49,7 @@ import com.kliq.app.ui.theme.PurplePrimaryLight
 
 @Composable
 fun ChatListItem(
-    conversation: ChatConversation,
+    item: com.kliq.app.data.model.ChatListItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -64,7 +64,7 @@ fun ChatListItem(
             modifier = Modifier
                 .size(56.dp)
                 .then(
-                    if (conversation.chatType == ChatType.PUBLIC_CITY) {
+                    if (item.chatType == ChatType.PUBLIC_CITY) {
                         Modifier.border(
                             width = 2.dp,
                             brush = Brush.linearGradient(
@@ -74,19 +74,19 @@ fun ChatListItem(
                         )
                     } else Modifier
                 )
-                .padding(if (conversation.chatType == ChatType.PUBLIC_CITY) 3.dp else 0.dp)
+                .padding(if (item.chatType == ChatType.PUBLIC_CITY) 3.dp else 0.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = conversation.avatarInitial,
+                text = item.avatarInitial,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
 
-            if (conversation.chatType == ChatType.PRIVATE && conversation.isOnline) {
+            if (item.chatType == ChatType.PRIVATE && item.userStatus == com.kliq.app.data.model.UserStatus.ONLINE) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -104,16 +104,16 @@ fun ChatListItem(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = conversation.name,
+                text = item.title,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = if (conversation.unreadCount > 0) FontWeight.Bold else FontWeight.Medium,
+                fontWeight = if (item.unreadCount > 0) FontWeight.Bold else FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = conversation.lastMessageText,
+                text = item.lastMessage.text,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -128,16 +128,16 @@ fun ChatListItem(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = conversation.lastMessageTimestampIso.take(16).replace("T", " "),
+                text = item.lastMessage.timestampIso.take(16).replace("T", " "),
                 style = MaterialTheme.typography.labelSmall,
-                color = if (conversation.unreadCount > 0) {
+                color = if (item.unreadCount > 0) {
                     MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 }
             )
 
-            if (conversation.unreadCount > 0) {
+            if (item.unreadCount > 0) {
                 Box(
                     modifier = Modifier
                         .size(22.dp)
@@ -146,8 +146,8 @@ fun ChatListItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (conversation.unreadCount > 99) "99+"
-                        else conversation.unreadCount.toString(),
+                        text = if (item.unreadCount > 99) "99+"
+                        else item.unreadCount.toString(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Bold
@@ -157,6 +157,20 @@ fun ChatListItem(
         }
     }
 }
+
+@Composable
+fun ChatListItem(
+    conversation: ChatConversation,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ChatListItem(
+        item = conversation.toChatListItem(),
+        onClick = onClick,
+        modifier = modifier
+    )
+}
+
 
 @Composable
 fun ChatBubble(
