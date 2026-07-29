@@ -65,4 +65,18 @@ class RoomConverters {
         if (value.isNullOrEmpty()) return emptyList()
         return value.split("|||")
     }
+
+    @TypeConverter
+    fun fromMessageType(messageType: com.kliq.app.data.model.MessageType?): String {
+        return messageType?.name ?: com.kliq.app.data.model.MessageType.TEXT.name
+    }
+
+    @TypeConverter
+    fun toMessageType(value: String?): com.kliq.app.data.model.MessageType {
+        return try {
+            if (value != null) com.kliq.app.data.model.MessageType.valueOf(value) else com.kliq.app.data.model.MessageType.TEXT
+        } catch (e: Exception) {
+            com.kliq.app.data.model.MessageType.TEXT
+        }
+    }
 }

@@ -54,6 +54,7 @@ class PrivateChatMessagingScenarioTest {
 
         val context = ApplicationProvider.getApplicationContext<Context>()
         db = Room.inMemoryDatabaseBuilder(context, KliqDatabase::class.java)
+            .fallbackToDestructiveMigration()
             .allowMainThreadQueries()
             .build()
 

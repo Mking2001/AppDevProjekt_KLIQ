@@ -62,11 +62,18 @@ import com.kliq.app.ui.theme.DarkSurface
 import com.kliq.app.ui.theme.DarkSurfaceVariant
 import com.kliq.app.ui.theme.ErrorRed
 import com.kliq.app.ui.theme.PurplePrimaryLight
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import com.kliq.app.ui.components.AttachmentOptionsSheet
+import com.kliq.app.ui.components.ImageAttachmentPreviewDialog
 
 /**
  * Chat-Detail-Screen mit Nachrichtenverlauf, Kontextmenü ("Nutzer melden", "Nutzer blockieren"),
  * Reporting Modal Bottom Sheet & Blockier-Bestätigungsdialog.
  */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailScreen(
@@ -77,6 +84,26 @@ fun ChatDetailScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        uri?.let { viewModel.onImageSelected(it.toString()) }
+    }
+
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap ->
+        if (bitmap != null) {
+            val tempFile = java.io.File(context.cacheDir, "camera_cap_${System.currentTimeMillis()}.jpg")
+            val fos = java.io.FileOutputStream(tempFile)
+            bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, fos)
+            fos.flush()
+            fos.close()
+            viewModel.onImageSelected(tempFile.toURI().toString())
+        }
+    }
 
     LaunchedEffect(chatId) {
         viewModel.loadConversation(chatId)
@@ -122,6 +149,7 @@ fun ChatDetailScreen(
                     value = uiState.currentInput,
                     onValueChange = viewModel::onInputChanged,
                     onSend = viewModel::onSendMessage,
+                    onAttachClick = { viewModel.openAttachmentSheet() },
                     modifier = Modifier.imePadding()
                 )
             }
@@ -147,6 +175,31 @@ fun ChatDetailScreen(
                     }
                     ChatBubble(message = message)
                 }
+            }
+
+            if (uiState.isAttachmentSheetVisible) {
+                AttachmentOptionsSheet(
+                    onOptionGallery = {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
+                    onOptionCamera = {
+                        cameraLauncher.launch(null)
+                    },
+                    onDismiss = { viewModel.closeAttachmentSheet() }
+                )
+            }
+
+            if (uiState.selectedImageUri != null) {
+                ImageAttachmentPreviewDialog(
+                    imageUri = uiState.selectedImageUri!!,
+                    caption = uiState.imageCaption,
+                    onCaptionChange = viewModel::onImageCaptionChanged,
+                    isUploading = uiState.isCompressingImage,
+                    onSend = { viewModel.sendSelectedImage(context) },
+                    onDismiss = { viewModel.clearSelectedImage() }
+                )
             }
 
             if (uiState.isReportDialogVisible) {

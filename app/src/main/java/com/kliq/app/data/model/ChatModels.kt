@@ -10,6 +10,11 @@ enum class ChatType {
     PUBLIC_CITY
 }
 
+enum class MessageType {
+    TEXT,
+    IMAGE
+}
+
 enum class MessageStatus {
     SENT,
     DELIVERED,
@@ -105,6 +110,12 @@ data class ChatMessage(
     val timestampMs: Long = System.currentTimeMillis(),
     val timestampIso: String = formatMsToIso(timestampMs),
     val mediaUrl: String? = null,
+    val messageType: MessageType = if (mediaUrl.isNullOrBlank()) MessageType.TEXT else MessageType.IMAGE,
+    val thumbnailUrl: String? = null,
+    val aspectRatio: Float = 1.0f,
+    val mediaWidth: Int = 0,
+    val mediaHeight: Int = 0,
+    val captionText: String? = null,
     val status: MessageStatus = MessageStatus.SENT,
     val isMine: Boolean,
     val dateHeader: String? = null
@@ -121,6 +132,12 @@ data class DirectMessage(
     val isEncrypted: Boolean = true,
     val encryptionAlgorithm: String = "AES-256-GCM",
     val mediaUrl: String? = null,
+    val messageType: MessageType = if (mediaUrl.isNullOrBlank()) MessageType.TEXT else MessageType.IMAGE,
+    val thumbnailUrl: String? = null,
+    val aspectRatio: Float = 1.0f,
+    val mediaWidth: Int = 0,
+    val mediaHeight: Int = 0,
+    val captionText: String? = null,
     val isMine: Boolean = false
 )
 

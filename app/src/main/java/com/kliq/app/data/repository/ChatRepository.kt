@@ -25,7 +25,13 @@ interface ChatRepository {
         senderUserId: String,
         senderName: String,
         text: String,
-        mediaUrl: String
+        mediaUrl: String?,
+        messageType: com.kliq.app.data.model.MessageType = com.kliq.app.data.model.MessageType.IMAGE,
+        thumbnailUrl: String? = null,
+        aspectRatio: Float = 1.0f,
+        mediaWidth: Int = 0,
+        mediaHeight: Int = 0,
+        captionText: String? = null
     ): Result<ChatMessage>
 
     suspend fun updateMessageStatus(messageId: String, status: MessageStatus)
@@ -39,6 +45,18 @@ interface ChatRepository {
         text: String,
         isEncrypted: Boolean = true,
         mediaUrl: String? = null
+    ): Result<DirectMessage>
+
+    suspend fun sendDirectMediaMessage(
+        senderId: String,
+        receiverId: String,
+        mediaUrl: String,
+        messageType: com.kliq.app.data.model.MessageType = com.kliq.app.data.model.MessageType.IMAGE,
+        thumbnailUrl: String? = null,
+        aspectRatio: Float = 1.0f,
+        mediaWidth: Int = 0,
+        mediaHeight: Int = 0,
+        captionText: String? = null
     ): Result<DirectMessage>
 
     suspend fun receiveDirectMessage(message: DirectMessage): Result<Unit>

@@ -85,14 +85,26 @@ class ChatRepositoryImpl @Inject constructor(
         senderUserId: String,
         senderName: String,
         text: String,
-        mediaUrl: String
+        mediaUrl: String?,
+        messageType: com.kliq.app.data.model.MessageType,
+        thumbnailUrl: String?,
+        aspectRatio: Float,
+        mediaWidth: Int,
+        mediaHeight: Int,
+        captionText: String?
     ): Result<ChatMessage> = withContext(Dispatchers.IO) {
         sendInternalMessage(
             chatId = chatId,
             senderUserId = senderUserId,
             senderName = senderName,
             text = text,
-            mediaUrl = mediaUrl
+            mediaUrl = mediaUrl,
+            messageType = messageType,
+            thumbnailUrl = thumbnailUrl,
+            aspectRatio = aspectRatio,
+            mediaWidth = mediaWidth,
+            mediaHeight = mediaHeight,
+            captionText = captionText
         )
     }
 
@@ -101,7 +113,13 @@ class ChatRepositoryImpl @Inject constructor(
         senderUserId: String,
         senderName: String,
         text: String,
-        mediaUrl: String?
+        mediaUrl: String?,
+        messageType: com.kliq.app.data.model.MessageType = if (mediaUrl.isNullOrBlank()) com.kliq.app.data.model.MessageType.TEXT else com.kliq.app.data.model.MessageType.IMAGE,
+        thumbnailUrl: String? = null,
+        aspectRatio: Float = 1.0f,
+        mediaWidth: Int = 0,
+        mediaHeight: Int = 0,
+        captionText: String? = null
     ): Result<ChatMessage> = withContext(Dispatchers.IO) {
         try {
             val nowMs = System.currentTimeMillis()
@@ -112,16 +130,22 @@ class ChatRepositoryImpl @Inject constructor(
                 chatId = chatId,
                 senderUserId = senderUserId,
                 senderName = senderName,
-                text = text,
+                text = text.ifBlank { captionText ?: "" },
                 timestampMs = nowMs,
                 timestampIso = nowIso,
                 mediaUrl = mediaUrl,
+                messageType = messageType,
+                thumbnailUrl = thumbnailUrl,
+                aspectRatio = aspectRatio,
+                mediaWidth = mediaWidth,
+                mediaHeight = mediaHeight,
+                caption = captionText,
                 status = MessageStatus.SENT,
                 isMine = true
             )
 
             chatDao.insertMessage(messageEntity)
-            val previewText = if (!mediaUrl.isNullOrBlank()) "📷 Foto" else text
+            val previewText = if (messageType == com.kliq.app.data.model.MessageType.IMAGE || !mediaUrl.isNullOrBlank()) "📷 Foto" else text
             chatDao.updateChatLastMessage(
                 chatId = chatId,
                 text = previewText,
@@ -261,6 +285,48 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun sendDirectMediaMessage(
+        senderId: String,
+        receiverId: String,
+        mediaUrl: String,
+        messageType: com.kliq.app.data.model.MessageType,
+        thumbnailUrl: String?,
+        aspectRatio: Float,
+        mediaWidth: Int,
+        mediaHeight: Int,
+        captionText: String?
+    ): Result<DirectMessage> = withContext(Dispatchers.IO) {
+        try {
+            val nowMs = System.currentTimeMillis()
+            val nowIso = formatMsToIso(nowMs)
+            val msgId = UUID.randomUUID().toString()
+
+            val entity = DirectMessageEntity(
+                messageId = msgId,
+                senderId = senderId,
+                receiverId = receiverId,
+                text = captionText ?: "📷 Foto",
+                timestamp = nowMs,
+                timestampIso = nowIso,
+                deliveryStatus = MessageStatus.SENT,
+                isEncrypted = true,
+                encryptionAlgorithm = "AES-256-GCM",
+                mediaUrl = mediaUrl,
+                messageType = messageType,
+                thumbnailUrl = thumbnailUrl,
+                aspectRatio = aspectRatio,
+                mediaWidth = mediaWidth,
+                mediaHeight = mediaHeight,
+                caption = captionText
+            )
+
+            directMessageDao.insertDirectMessage(entity)
+            Result.success(entity.toDomain(isMine = true))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun ChatEntity.toDomain(): ChatConversation {
         return ChatConversation(
             id = id,
@@ -287,6 +353,12 @@ class ChatRepositoryImpl @Inject constructor(
             timestampMs = timestampMs,
             timestampIso = timestampIso.ifBlank { formatMsToIso(timestampMs) },
             mediaUrl = mediaUrl,
+            messageType = messageType,
+            thumbnailUrl = thumbnailUrl,
+            aspectRatio = aspectRatio,
+            mediaWidth = mediaWidth,
+            mediaHeight = mediaHeight,
+            captionText = caption,
             status = status,
             isMine = isMine
         )
@@ -304,6 +376,12 @@ class ChatRepositoryImpl @Inject constructor(
             isEncrypted = isEncrypted,
             encryptionAlgorithm = encryptionAlgorithm,
             mediaUrl = mediaUrl,
+            messageType = messageType,
+            thumbnailUrl = thumbnailUrl,
+            aspectRatio = aspectRatio,
+            mediaWidth = mediaWidth,
+            mediaHeight = mediaHeight,
+            captionText = caption,
             isMine = isMine
         )
     }

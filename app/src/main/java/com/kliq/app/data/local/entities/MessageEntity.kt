@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.kliq.app.data.model.MessageStatus
+import com.kliq.app.data.model.MessageType
 
 @Entity(
     tableName = "messages",
@@ -30,6 +31,12 @@ data class MessageEntity(
     val timestampMs: Long,
     val timestampIso: String = "",
     val mediaUrl: String? = null,
+    val messageType: MessageType = MessageType.TEXT,
+    val thumbnailUrl: String? = null,
+    val aspectRatio: Float = 1.0f,
+    val mediaWidth: Int = 0,
+    val mediaHeight: Int = 0,
+    val caption: String? = null,
     val status: MessageStatus = MessageStatus.SENT,
     val isMine: Boolean,
     val replyToMessageId: String? = null,
