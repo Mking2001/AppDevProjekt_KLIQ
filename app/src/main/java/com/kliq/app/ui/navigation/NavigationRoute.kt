@@ -121,6 +121,14 @@ object ChatRoutes {
 
     /** Argument-Name fuer die Empfaenger-ID im NavGraph */
     const val ARG_RECEIVER_ID = "receiverId"
+
+    /** Deep Link URI Muster für Push-Benachrichtigungen */
+    const val DEEP_LINK_URI_PATTERN = "kliq://chat/{chatId}?senderId={senderId}&type={type}"
+
+    /** Erzeugt ein Deep-Link-Uri-String für einen konkreten Chat */
+    fun createDeepLinkUriString(chatId: String, senderId: String = "", type: String = "direct_message"): String {
+        return "kliq://chat/$chatId?senderId=$senderId&type=$type"
+    }
 }
 
 /**
