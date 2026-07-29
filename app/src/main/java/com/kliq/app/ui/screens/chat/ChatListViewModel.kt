@@ -21,12 +21,18 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import com.kliq.app.data.repository.LocationRepository
+import com.kliq.app.data.util.CityChatConfig
+import com.kliq.app.data.util.CityChatLocationMapper
+
 data class ChatListUiState(
     val publicChats: List<ChatListItem> = emptyList(),
     val privateChats: List<ChatListItem> = emptyList(),
     val selectedTab: ChatType = ChatType.PUBLIC_CITY,
     val searchQuery: String = "",
     val isSearchActive: Boolean = false,
+    val activeGpsCityChat: ChatListItem? = null,
+    val isCitySwitcherOpen: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -34,7 +40,8 @@ data class ChatListUiState(
 @HiltViewModel
 class ChatListViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val chatRepository: ChatRepository? = null
+    private val chatRepository: ChatRepository? = null,
+    private val locationRepository: LocationRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatListUiState())
@@ -47,6 +54,7 @@ class ChatListViewModel @Inject constructor(
     init {
         loadInitialData()
         observeBlockedUsers()
+        observeLocationUpdates()
     }
 
     private fun loadInitialData() {
@@ -217,6 +225,53 @@ class ChatListViewModel @Inject constructor(
 
     fun onUndoDelete(chat: ChatConversation) {
         onUndoDelete(chat.toChatListItem())
+    }
+
+    private fun observeLocationUpdates() {
+        val locRepo = locationRepository ?: return
+        viewModelScope.launch {
+            locRepo.locationUpdates.collect { location ->
+                val resolvedConfig = CityChatLocationMapper.resolveCityForLocation(location)
+                val distance = if (location != null) {
+                    CityChatLocationMapper.calculateDistanceInKm(
+                        location.latitude, location.longitude,
+                        resolvedConfig.latitude, resolvedConfig.longitude
+                    )
+                } else 2.5
+
+                val gpsAssignedItem = CityChatLocationMapper.buildCityChatListItem(
+                    config = resolvedConfig,
+                    distanceKm = distance,
+                    isGpsAssigned = true
+                )
+
+                _uiState.update { it.copy(activeGpsCityChat = gpsAssignedItem) }
+            }
+        }
+    }
+
+    fun openCitySwitcher() {
+        _uiState.update { it.copy(isCitySwitcherOpen = true) }
+    }
+
+    fun closeCitySwitcher() {
+        _uiState.update { it.copy(isCitySwitcherOpen = false) }
+    }
+
+    fun selectCityChat(config: CityChatConfig) {
+        val newItem = CityChatLocationMapper.buildCityChatListItem(
+            config = config,
+            distanceKm = 0.0,
+            isGpsAssigned = false
+        )
+        rawPublicChats = listOf(newItem) + rawPublicChats.filter { it.id != newItem.id }
+        _uiState.update { 
+            it.copy(
+                activeGpsCityChat = newItem,
+                isCitySwitcherOpen = false
+            )
+        }
+        applyFilters()
     }
 }
 

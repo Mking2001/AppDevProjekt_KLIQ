@@ -237,10 +237,25 @@ fun ChatListScreen(
                 }
             }
 
+            if (uiState.selectedTab == ChatType.PUBLIC_CITY) {
+                com.kliq.app.ui.components.CityChatHeaderBanner(
+                    activeCityChat = uiState.activeGpsCityChat ?: uiState.publicChats.firstOrNull(),
+                    onSwitchCityClick = viewModel::openCitySwitcher
+                )
+            }
+
             val chats = if (uiState.selectedTab == ChatType.PUBLIC_CITY) {
                 uiState.publicChats
             } else {
                 uiState.privateChats
+            }
+
+            if (uiState.isCitySwitcherOpen) {
+                com.kliq.app.ui.components.CityChatSwitcherSheet(
+                    supportedCities = com.kliq.app.data.util.CityChatLocationMapper.SUPPORTED_CITIES,
+                    onCitySelected = viewModel::selectCityChat,
+                    onDismiss = viewModel::closeCitySwitcher
+                )
             }
 
             if (chats.isEmpty()) {

@@ -39,7 +39,10 @@ data class ChatListItem(
     val avatarUrl: String? = null,
     val unreadCount: Int = 0,
     val chatType: ChatType,
-    val userStatus: UserStatus = UserStatus.OFFLINE
+    val userStatus: UserStatus = UserStatus.OFFLINE,
+    val distanceKm: Double? = null,
+    val onlineMembersCount: Int = 0,
+    val isGpsAssigned: Boolean = false
 )
 
 data class ChatConversation(

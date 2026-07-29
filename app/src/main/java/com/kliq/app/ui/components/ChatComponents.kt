@@ -392,3 +392,174 @@ fun ChatDateDivider(
         )
     }
 }
+
+@Composable
+fun CityChatHeaderBanner(
+    activeCityChat: com.kliq.app.data.model.ChatListItem?,
+    onSwitchCityClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val cityTitle = activeCityChat?.title ?: "Berlin - Tonight"
+    val onlineCount = activeCityChat?.onlineMembersCount ?: 248
+    val distanceText = activeCityChat?.distanceKm?.let { String.format("%.1f km entfernt", it) } ?: "GPS-aktiv"
+
+    androidx.compose.material3.Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            brush = Brush.linearGradient(
+                colors = listOf(PurplePrimaryLight.copy(alpha = 0.6f), PurplePrimary.copy(alpha = 0.2f))
+            )
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(PurplePrimary.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "📍",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = cityTitle,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "⚡ $onlineCount Feiernde online • $distanceText",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            androidx.compose.material3.TextButton(onClick = onSwitchCityClick) {
+                Text(
+                    text = "Wechseln",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = PurplePrimaryLight,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun CityChatSwitcherSheet(
+    supportedCities: List<com.kliq.app.data.util.CityChatConfig>,
+    onCitySelected: (com.kliq.app.data.util.CityChatConfig) -> Unit,
+    onDismiss: () -> Unit
+) {
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp, top = 8.dp, start = 20.dp, end = 20.dp)
+        ) {
+            Text(
+                text = "Öffentlichen Stadt-Chat wählen",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Tritt dem Chat deiner aktuellen Stadt oder Partymetropole bei:",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            supportedCities.forEach { city ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                        .clickable { onCitySelected(city) }
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = city.avatarInitial,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = PurplePrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column {
+                            Text(
+                                text = city.title,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "${city.defaultOnlineCount} Feiernde aktiv",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "Beitreten",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PurplePrimaryLight,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                androidx.compose.material3.Divider(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f),
+                    thickness = 0.5.dp
+                )
+            }
+        }
+    }
+}
