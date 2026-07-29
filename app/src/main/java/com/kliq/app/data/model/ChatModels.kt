@@ -110,6 +110,20 @@ data class ChatMessage(
     val dateHeader: String? = null
 )
 
+data class DirectMessage(
+    val messageId: String,
+    val senderId: String,
+    val receiverId: String,
+    val text: String,
+    val timestamp: Long = System.currentTimeMillis(),
+    val timestampIso: String = formatMsToIso(timestamp),
+    val deliveryStatus: MessageStatus = MessageStatus.SENT,
+    val isEncrypted: Boolean = true,
+    val encryptionAlgorithm: String = "AES-256-GCM",
+    val mediaUrl: String? = null,
+    val isMine: Boolean = false
+)
+
 fun formatMsToIso(timestampMs: Long): String {
     val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
     sdf.timeZone = TimeZone.getTimeZone("UTC")

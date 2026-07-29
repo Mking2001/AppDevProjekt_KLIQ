@@ -5,6 +5,7 @@ import com.kliq.app.data.local.DatabaseMigrationManager
 import com.kliq.app.data.local.KliqDatabase
 import com.kliq.app.data.local.dao.ChatDao
 import com.kliq.app.data.local.dao.ClubDao
+import com.kliq.app.data.local.dao.DirectMessageDao
 import com.kliq.app.data.local.dao.EventDao
 import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.UserDao
@@ -44,6 +45,9 @@ object AppModule {
 
     @Provides
     fun provideChatDao(database: KliqDatabase): ChatDao = database.chatDao()
+
+    @Provides
+    fun provideDirectMessageDao(database: KliqDatabase): DirectMessageDao = database.directMessageDao()
 
     @Provides
     fun provideLocationDao(database: KliqDatabase): com.kliq.app.data.local.dao.LocationDao = database.locationDao()

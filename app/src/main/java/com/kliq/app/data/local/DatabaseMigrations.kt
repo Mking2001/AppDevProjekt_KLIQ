@@ -147,6 +147,12 @@ object DatabaseMigrations {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE `user_preferences` ADD COLUMN `smokingHabit` TEXT NOT NULL DEFAULT 'NEVER'")
             db.execSQL("ALTER TABLE `user_preferences` ADD COLUMN `drinkingHabit` TEXT NOT NULL DEFAULT 'NEVER'")
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `direct_messages` (`messageId` TEXT NOT NULL, `senderId` TEXT NOT NULL, `receiverId` TEXT NOT NULL, `text` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `timestampIso` TEXT NOT NULL DEFAULT '', `deliveryStatus` TEXT NOT NULL DEFAULT 'SENT', `isEncrypted` INTEGER NOT NULL DEFAULT 1, `encryptionAlgorithm` TEXT NOT NULL DEFAULT 'AES-256-GCM', `mediaUrl` TEXT DEFAULT NULL, PRIMARY KEY(`messageId`))"
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_direct_messages_senderId` ON `direct_messages` (`senderId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_direct_messages_receiverId` ON `direct_messages` (`receiverId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_direct_messages_timestamp` ON `direct_messages` (`timestamp`)")
         }
     }
 

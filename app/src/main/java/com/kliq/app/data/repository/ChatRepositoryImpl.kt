@@ -1,10 +1,13 @@
 package com.kliq.app.data.repository
 
 import com.kliq.app.data.local.dao.ChatDao
+import com.kliq.app.data.local.dao.DirectMessageDao
 import com.kliq.app.data.local.entities.ChatEntity
+import com.kliq.app.data.local.entities.DirectMessageEntity
 import com.kliq.app.data.local.entities.MessageEntity
 import com.kliq.app.data.model.ChatConversation
 import com.kliq.app.data.model.ChatMessage
+import com.kliq.app.data.model.DirectMessage
 import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.model.formatMsToIso
 import com.kliq.app.data.remote.KliqApiService
@@ -20,6 +23,7 @@ import javax.inject.Singleton
 @Singleton
 class ChatRepositoryImpl @Inject constructor(
     private val chatDao: ChatDao,
+    private val directMessageDao: DirectMessageDao,
     private val apiService: KliqApiService? = null
 ) : ChatRepository {
 
@@ -140,6 +144,85 @@ class ChatRepositoryImpl @Inject constructor(
         chatDao.markChatAsRead(chatId)
     }
 
+    override fun getDirectMessages(currentUserId: String, targetUserId: String): Flow<List<DirectMessage>> {
+        return directMessageDao.getDirectMessagesBetweenUsers(currentUserId, targetUserId).map { entities ->
+            entities.map { entity ->
+                entity.toDomain(isMine = entity.senderId == currentUserId)
+            }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override fun getUnreadDirectMessages(userId: String): Flow<List<DirectMessage>> {
+        return directMessageDao.getUnreadDirectMessages(userId).map { entities ->
+            entities.map { it.toDomain(isMine = false) }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override fun getUnreadCountForUser(userId: String): Flow<Int> {
+        return directMessageDao.getUnreadCountForUser(userId).flowOn(Dispatchers.IO)
+    }
+
+    override suspend fun sendDirectMessage(
+        senderId: String,
+        receiverId: String,
+        text: String,
+        isEncrypted: Boolean,
+        mediaUrl: String?
+    ): Result<DirectMessage> = withContext(Dispatchers.IO) {
+        try {
+            val nowMs = System.currentTimeMillis()
+            val nowIso = formatMsToIso(nowMs)
+            val msgId = UUID.randomUUID().toString()
+
+            val entity = DirectMessageEntity(
+                messageId = msgId,
+                senderId = senderId,
+                receiverId = receiverId,
+                text = text,
+                timestamp = nowMs,
+                timestampIso = nowIso,
+                deliveryStatus = MessageStatus.SENT,
+                isEncrypted = isEncrypted,
+                encryptionAlgorithm = if (isEncrypted) "AES-256-GCM" else "NONE",
+                mediaUrl = mediaUrl
+            )
+
+            directMessageDao.insertDirectMessage(entity)
+            Result.success(entity.toDomain(isMine = true))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun receiveDirectMessage(message: DirectMessage): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val entity = DirectMessageEntity(
+                messageId = message.messageId,
+                senderId = message.senderId,
+                receiverId = message.receiverId,
+                text = message.text,
+                timestamp = message.timestamp,
+                timestampIso = message.timestampIso,
+                deliveryStatus = MessageStatus.DELIVERED,
+                isEncrypted = message.isEncrypted,
+                encryptionAlgorithm = message.encryptionAlgorithm,
+                mediaUrl = message.mediaUrl
+            )
+            directMessageDao.insertDirectMessage(entity)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun syncDirectMessages(userId: String, targetUserId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override fun getCityChatForLocation(location: com.kliq.app.data.model.LocationData): Flow<com.kliq.app.data.model.ChatListItem> {
         val resolvedConfig = com.kliq.app.data.util.CityChatLocationMapper.resolveCityForLocation(location)
         val distance = com.kliq.app.data.util.CityChatLocationMapper.calculateDistanceInKm(
@@ -160,6 +243,14 @@ class ChatRepositoryImpl @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun updateDirectMessageStatus(messageId: String, status: MessageStatus) = withContext(Dispatchers.IO) {
+        directMessageDao.updateDeliveryStatus(messageId, status)
+    }
+
+    override suspend fun markDirectConversationAsRead(senderId: String, receiverId: String) = withContext(Dispatchers.IO) {
+        directMessageDao.markConversationAsRead(senderId = senderId, receiverId = receiverId)
     }
 
     override suspend fun joinPublicCityChat(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
@@ -197,6 +288,22 @@ class ChatRepositoryImpl @Inject constructor(
             timestampIso = timestampIso.ifBlank { formatMsToIso(timestampMs) },
             mediaUrl = mediaUrl,
             status = status,
+            isMine = isMine
+        )
+    }
+
+    private fun DirectMessageEntity.toDomain(isMine: Boolean): DirectMessage {
+        return DirectMessage(
+            messageId = messageId,
+            senderId = senderId,
+            receiverId = receiverId,
+            text = text,
+            timestamp = timestamp,
+            timestampIso = timestampIso.ifBlank { formatMsToIso(timestamp) },
+            deliveryStatus = deliveryStatus,
+            isEncrypted = isEncrypted,
+            encryptionAlgorithm = encryptionAlgorithm,
+            mediaUrl = mediaUrl,
             isMine = isMine
         )
     }

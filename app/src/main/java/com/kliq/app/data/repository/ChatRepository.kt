@@ -2,6 +2,7 @@ package com.kliq.app.data.repository
 
 import com.kliq.app.data.model.ChatConversation
 import com.kliq.app.data.model.ChatMessage
+import com.kliq.app.data.model.DirectMessage
 import com.kliq.app.data.model.MessageStatus
 import kotlinx.coroutines.flow.Flow
 
@@ -29,6 +30,21 @@ interface ChatRepository {
 
     suspend fun updateMessageStatus(messageId: String, status: MessageStatus)
     suspend fun markChatAsRead(chatId: String)
+    fun getDirectMessages(currentUserId: String, targetUserId: String): Flow<List<DirectMessage>>
+    fun getUnreadDirectMessages(userId: String): Flow<List<DirectMessage>>
+    fun getUnreadCountForUser(userId: String): Flow<Int>
+    suspend fun sendDirectMessage(
+        senderId: String,
+        receiverId: String,
+        text: String,
+        isEncrypted: Boolean = true,
+        mediaUrl: String? = null
+    ): Result<DirectMessage>
+
+    suspend fun receiveDirectMessage(message: DirectMessage): Result<Unit>
+    suspend fun syncDirectMessages(userId: String, targetUserId: String): Result<Unit>
+    suspend fun updateDirectMessageStatus(messageId: String, status: MessageStatus)
+    suspend fun markDirectConversationAsRead(senderId: String, receiverId: String)
     fun getCityChatForLocation(location: com.kliq.app.data.model.LocationData): Flow<com.kliq.app.data.model.ChatListItem>
     suspend fun syncPublicCityMessages(chatId: String): Result<Unit>
     suspend fun joinPublicCityChat(chatId: String): Result<Unit>

@@ -45,6 +45,8 @@ import androidx.compose.ui.unit.dp
 import com.kliq.app.data.model.ChatConversation
 import com.kliq.app.data.model.ChatMessage
 import com.kliq.app.data.model.ChatType
+import com.kliq.app.data.model.MessageStatus
+import com.kliq.app.data.model.toChatListItem
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryDark
 import com.kliq.app.ui.theme.PurplePrimaryLight
