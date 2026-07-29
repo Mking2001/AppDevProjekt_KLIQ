@@ -137,6 +137,23 @@ object DatabaseMigrations {
         }
     }
 
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Placeholder for schema sync
+        }
+    }
+
+    val MIGRATION_8_9 = object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `direct_messages` (`messageId` TEXT NOT NULL, `senderId` TEXT NOT NULL, `receiverId` TEXT NOT NULL, `text` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `timestampIso` TEXT NOT NULL DEFAULT '', `deliveryStatus` TEXT NOT NULL DEFAULT 'SENT', `isEncrypted` INTEGER NOT NULL DEFAULT 1, `encryptionAlgorithm` TEXT NOT NULL DEFAULT 'AES-256-GCM', `mediaUrl` TEXT DEFAULT NULL, PRIMARY KEY(`messageId`))"
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_direct_messages_senderId` ON `direct_messages` (`senderId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_direct_messages_receiverId` ON `direct_messages` (`receiverId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_direct_messages_timestamp` ON `direct_messages` (`timestamp`)")
+        }
+    }
+
     // Array of all migrations. Scalable strategy for providing them to the builder.
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_1_2,
@@ -144,6 +161,8 @@ object DatabaseMigrations {
         MIGRATION_3_4,
         MIGRATION_4_5,
         MIGRATION_5_6,
-        MIGRATION_6_7
+        MIGRATION_6_7,
+        MIGRATION_7_8,
+        MIGRATION_8_9
     )
 }
