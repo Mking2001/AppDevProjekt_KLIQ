@@ -1,9 +1,12 @@
 package com.kliq.app.ui.screens.map
 
+import android.Manifest
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,7 +14,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,56 +21,71 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MapStyleOptions
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.MapProperties
+import com.google.maps.android.compose.MapUiSettings
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
+import com.kliq.app.data.model.LocationPermissionState
+import com.kliq.app.data.model.MapCameraAnimationEvent
+import kotlinx.coroutines.flow.collectLatest
 import com.kliq.app.ui.components.KliqCategoryChip
+import com.kliq.app.ui.components.LocationPermanentlyDeniedDialog
+import com.kliq.app.ui.components.LocationRationaleDialog
+import com.kliq.app.ui.components.MapFilterSegmentedControl
 import com.kliq.app.ui.components.MapQuickViewCard
+import com.kliq.app.ui.components.UserQuickViewCard
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
-import com.kliq.app.ui.theme.PurplePrimary
-import com.kliq.app.ui.theme.PurplePrimaryLight
-import com.kliq.app.util.HapticFeedbackUtils
+import com.kliq.app.viewmodel.PermissionViewModel
 
 /**
- * Map-Screen mit Karten-Platzhalter, Filter-Chips,
- * Location-Button und Bottom-Sheet-Peek für nahegelegene Venues.
+ * Native Map Screen integrating Google Maps Compose SDK with custom dark-purple JSON styling,
+ * custom Kliq purple club pins, circular user profile markers, performance marker clustering,
+ * interactive quick view cards, and location filter mode switching (Public Events vs Private Locations).
  *
- * Der Map-Screen verwendet keine Top-Bar (showTopBar = false),
- * da die Kartenansicht den gesamten Bildschirm einnimmt.
- *
- * @param topBarState Aktueller Top-Bar UI-State.
- * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
- * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
- * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
- * @param viewModel Hilt-injiziertes [MapViewModel].
+ * @param topBarState Top bar UI state.
+ * @param onToggleMenu Callback for menu toggle.
+ * @param onDismissMenu Callback for menu dismiss.
+ * @param onMenuAction Callback for menu actions.
+ * @param viewModel Hilt-injected [MapViewModel].
+ * @param permissionViewModel Hilt-injected [PermissionViewModel].
  */
 @Composable
 fun MapScreen(
@@ -76,36 +93,234 @@ fun MapScreen(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
-    viewModel: MapViewModel = hiltViewModel()
+    viewModel: MapViewModel = hiltViewModel(),
+    permissionViewModel: PermissionViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val permissionUiState by permissionViewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(
+            LatLng(uiState.cameraPosition.latitude, uiState.cameraPosition.longitude),
+            uiState.cameraPosition.zoom
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        viewModel.cameraEventFlow.collectLatest { event ->
+            when (event) {
+                is MapCameraAnimationEvent.AnimateToLocation -> {
+                    val cameraPosition = CameraPosition.Builder()
+                        .target(LatLng(event.latitude, event.longitude))
+                        .zoom(event.zoom)
+                        .tilt(event.tilt)
+                        .bearing(event.bearing)
+                        .build()
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newCameraPosition(cameraPosition),
+                        durationMs = event.durationMs
+                    )
+                }
+                is MapCameraAnimationEvent.AnimateToBounds -> {
+                    val bounds = LatLngBounds(
+                        LatLng(event.bounds.southWestLat, event.bounds.southWestLng),
+                        LatLng(event.bounds.northEastLat, event.bounds.northEastLng)
+                    )
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newLatLngBounds(bounds, event.paddingPx),
+                        durationMs = event.durationMs
+                    )
+                }
+                is MapCameraAnimationEvent.AnimateTiltRotation -> {
+                    val currentPos = cameraPositionState.position
+                    val cameraPosition = CameraPosition.Builder()
+                        .target(currentPos.target)
+                        .zoom(currentPos.zoom)
+                        .tilt(event.tilt)
+                        .bearing(event.bearing)
+                        .build()
+                    cameraPositionState.animate(
+                        update = CameraUpdateFactory.newCameraPosition(cameraPosition),
+                        durationMs = event.durationMs
+                    )
+                }
+                is MapCameraAnimationEvent.SnapToPosition -> {
+                    cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                        LatLng(event.latitude, event.longitude),
+                        event.zoom
+                    )
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(cameraPositionState.isMoving) {
+        if (!cameraPositionState.isMoving) {
+            val target = cameraPositionState.position.target
+            val zoom = cameraPositionState.position.zoom
+            viewModel.onCameraMoved(target.latitude, target.longitude, zoom)
+        }
+    }
+
+    val mapProperties = remember(uiState.styleConfig) {
+        val styleOptions = try {
+            MapStyleOptions.loadRawResourceStyle(context, uiState.styleConfig.styleRawResId)
+        } catch (e: Exception) {
+            null
+        }
+        MapProperties(
+            mapStyleOptions = styleOptions,
+            isBuildingEnabled = uiState.styleConfig.isBuildingEnabled,
+            isIndoorEnabled = uiState.styleConfig.isIndoorEnabled,
+            isMyLocationEnabled = uiState.isLocationEnabled
+        )
+    }
+
+    val mapUiSettings = remember {
+        MapUiSettings(
+            zoomControlsEnabled = false,
+            myLocationButtonEnabled = false,
+            compassEnabled = true,
+            rotationGesturesEnabled = true,
+            scrollGesturesEnabled = true,
+            tiltGesturesEnabled = true,
+            zoomGesturesEnabled = true
+        )
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val isGranted = permissions.values.any { it }
+        val activity = context as? Activity
+        val shouldShowRationale = activity?.let {
+            ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.ACCESS_FINE_LOCATION) ||
+            ActivityCompat.shouldShowRequestPermissionRationale(it, Manifest.permission.ACCESS_COARSE_LOCATION)
+        } ?: false
+
+        permissionViewModel.onPermissionResult(isGranted, shouldShowRationale)
+        if (isGranted) {
+            viewModel.onLocationRequested()
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Dunkel gestylte Karten-Mockup-Fläche mit Rasterlinien und interaktiven Markern
-        MapPlaceholder(
-            venues = uiState.nearbyVenues,
-            onVenueLongPress = { viewModel.onMarkerLongPressed(it) },
-            modifier = Modifier.fillMaxSize()
-        )
-
-        // Filter-Chips am oberen Rand über der Karte
-        LazyRow(
-            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.align(Alignment.TopStart)
+        // Native Google Map SDK Component
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            properties = mapProperties,
+            uiSettings = mapUiSettings,
+            onMapLoaded = { viewModel.onMapLoaded() },
+            onMapClick = { viewModel.onQuickViewDismissed() }
         ) {
-            itemsIndexed(uiState.filters) { index, filter ->
-                KliqCategoryChip(
-                    label = filter,
-                    selected = uiState.selectedFilter == index,
-                    onClick = { viewModel.onFilterSelected(index) }
-                )
+            // Render Custom Kliq User Profile Markers (Only if showPrivateLocations is enabled)
+            if (uiState.showPrivateLocations) {
+                uiState.userMarkers.forEach { userMarker ->
+                    val userIcon = remember(userMarker.username, userMarker.isOnline) {
+                        MarkerBitmapHelper.getUserMarkerBitmap(
+                            username = userMarker.username,
+                            isOnline = userMarker.isOnline
+                        )
+                    }
+                    Marker(
+                        state = MarkerState(position = LatLng(userMarker.latitude, userMarker.longitude)),
+                        title = userMarker.username,
+                        snippet = userMarker.statusMessage ?: if (userMarker.isOnline) "Online" else "Zuletzt aktiv",
+                        icon = userIcon,
+                        onClick = {
+                            viewModel.onUserMarkerClicked(userMarker)
+                            true
+                        }
+                    )
+                }
+            }
+
+            // Render Clustered & Single Kliq Club Markers (Only if showPublicEvents is enabled)
+            if (uiState.showPublicEvents) {
+                uiState.clusteredMarkers.forEach { markerItem ->
+                    when (markerItem) {
+                        is ClusterMarkerUiState.SingleNode -> {
+                            val venue = markerItem.venue
+                            val clubIcon = remember(venue.category, venue.activeEventTitle) {
+                                MarkerBitmapHelper.getClubMarkerBitmap(
+                                    category = venue.category,
+                                    hasActiveEvent = venue.activeEventTitle != null
+                                )
+                            }
+                            Marker(
+                                state = MarkerState(position = markerItem.position),
+                                title = venue.name,
+                                snippet = "${venue.category} · ${venue.distance} · ★ ${venue.rating}" +
+                                        (venue.activeEventTitle?.let { " · 🎉 $it" } ?: ""),
+                                icon = clubIcon,
+                                onClick = {
+                                    viewModel.onMarkerClicked(venue)
+                                    true
+                                }
+                            )
+                        }
+                        is ClusterMarkerUiState.ClusterNode -> {
+                            val clusterIcon = remember(markerItem.count, markerItem.primaryCategory) {
+                                MarkerBitmapHelper.getClusterMarkerBitmap(
+                                    count = markerItem.count,
+                                    primaryCategory = markerItem.primaryCategory
+                                )
+                            }
+                            Marker(
+                                state = MarkerState(position = markerItem.position),
+                                title = "${markerItem.count} Standorte in der Nähe",
+                                snippet = "${markerItem.primaryCategory}-Gruppe · Tippen zum Heranzoomen",
+                                icon = clusterIcon,
+                                onClick = {
+                                    viewModel.onClusterClicked(markerItem)
+                                    true
+                                }
+                            )
+                        }
+                    }
+                }
             }
         }
 
-        // Location-FAB rechts unten
+        // Floating Top Filter Controls (MapLocationFilterMode & Category Sub-Chips)
+        Column(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+        ) {
+            MapFilterSegmentedControl(
+                selectedMode = uiState.locationFilterMode,
+                onModeSelected = { viewModel.onLocationFilterModeSelected(it) }
+            )
+
+            if (uiState.showPublicEvents) {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    itemsIndexed(uiState.filters) { index, filter ->
+                        KliqCategoryChip(
+                            label = filter,
+                            selected = uiState.selectedFilter == index,
+                            onClick = { viewModel.onFilterSelected(index) }
+                        )
+                    }
+                }
+            }
+        }
+
+        // Location FAB
         FloatingActionButton(
-            onClick = { viewModel.onLocationRequested() },
+            onClick = {
+                if (permissionUiState.permissionState is LocationPermissionState.Granted) {
+                    viewModel.onLocationRequested()
+                } else {
+                    permissionViewModel.onRequestPermissionClicked(context)
+                }
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(end = 16.dp, bottom = 240.dp),
@@ -113,152 +328,80 @@ fun MapScreen(
             contentColor = MaterialTheme.colorScheme.primary,
             elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
         ) {
-            Icon(
-                imageVector = Icons.Filled.MyLocation,
-                contentDescription = "Mein Standort"
-            )
+            if (uiState.isLoadingLocation) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 2.5.dp
+                )
+            } else {
+                Icon(
+                    imageVector = Icons.Filled.MyLocation,
+                    contentDescription = "Mein Standort"
+                )
+            }
         }
 
-        // Bottom-Sheet-Peek mit nahegelegenen Venues
+        // Bottom Sheet Peek for nearby venues
         VenueBottomSheet(
             venues = uiState.nearbyVenues,
+            onVenueClick = { viewModel.onMarkerClicked(it) },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
 
-        // Quick View Card (Overlay)
+        // Overlay Quick View Card for selected club venue
         MapQuickViewCard(
             venue = uiState.selectedVenue,
             isVisible = uiState.selectedVenue != null,
             onDismiss = { viewModel.onQuickViewDismissed() },
-            onNavigateDetails = { /* TODO */ },
+            onNavigateDetails = { /* Navigate to Venue Detail */ },
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 80.dp)
+                .padding(top = 135.dp)
         )
-    }
-}
 
-/**
- * Karten-Platzhalter mit dunklem Hintergrund und Rasterlinien.
- * Simuliert eine Kartenansicht bis die echte Google Maps Integration erfolgt.
- */
-@Composable
-private fun MapPlaceholder(
-    venues: List<VenueItemUi>,
-    onVenueLongPress: (VenueItemUi) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val gridColor = PurplePrimary.copy(alpha = 0.08f)
-    val dotColor = PurplePrimaryLight.copy(alpha = 0.15f)
-    val view = LocalView.current
-
-    BoxWithConstraints(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.background)
-            .drawBehind {
-                val gridSpacing = 60.dp.toPx()
-                val dashEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-
-                // Vertikale Linien
-                var x = 0f
-                while (x < size.width) {
-                    drawLine(
-                        color = gridColor,
-                        start = Offset(x, 0f),
-                        end = Offset(x, size.height),
-                        strokeWidth = 1f,
-                        pathEffect = dashEffect
-                    )
-                    x += gridSpacing
-                }
-
-                // Horizontale Linien
-                var y = 0f
-                while (y < size.height) {
-                    drawLine(
-                        color = gridColor,
-                        start = Offset(0f, y),
-                        end = Offset(size.width, y),
-                        strokeWidth = 1f,
-                        pathEffect = dashEffect
-                    )
-                    y += gridSpacing
-                }
-            }
-    ) {
-        val w = maxWidth
-        val h = maxHeight
-        
-        val relativePoints = listOf(
-            Offset(0.3f, 0.25f),
-            Offset(0.6f, 0.35f),
-            Offset(0.45f, 0.5f),
-            Offset(0.7f, 0.2f),
-            Offset(0.2f, 0.45f)
+        // Overlay Quick View Card for selected user marker
+        UserQuickViewCard(
+            user = uiState.selectedUser,
+            isVisible = uiState.selectedUser != null,
+            onDismiss = { viewModel.onUserQuickViewDismissed() },
+            onSendMessage = { /* Trigger chat navigation */ },
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 135.dp)
         )
-        
-        venues.forEachIndexed { index, venue ->
-            val relPoint = relativePoints[index % relativePoints.size]
-            Box(
-                modifier = Modifier
-                    .offset(x = w * relPoint.x - 12.dp, y = h * relPoint.y - 12.dp)
-                    .size(24.dp)
-                    .clip(CircleShape)
-                    .background(dotColor)
-                    .pointerInput(venue.id) {
-                        detectTapGestures(
-                            onLongPress = {
-                                HapticFeedbackUtils.triggerHeavyImpact(view)
-                                onVenueLongPress(venue)
-                            }
-                        )
-                    },
-                contentAlignment = Alignment.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(PurplePrimaryLight.copy(alpha = 0.4f))
+
+        // Custom Kliq Location Rationale Dialog
+        LocationRationaleDialog(
+            isVisible = permissionUiState.showRationaleDialog,
+            onConfirmActivate = {
+                permissionViewModel.onRationaleDismissed()
+                permissionLauncher.launch(
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    )
                 )
-            }
-        }
-        // Zentraler Standort-Marker
-        Column(modifier = Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = Icons.Filled.LocationOn,
-                contentDescription = "Standort",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(48.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                PurplePrimary.copy(alpha = 0.6f),
-                                PurplePrimary.copy(alpha = 0.0f)
-                            )
-                        )
-                    )
-            )
-        }
+            },
+            onDismiss = { permissionViewModel.onRationaleDismissed() }
+        )
+
+        // Custom Permanently Denied Settings Deep-Link Dialog
+        LocationPermanentlyDeniedDialog(
+            isVisible = permissionUiState.showPermanentlyDeniedDialog,
+            onOpenSettings = { permissionViewModel.onOpenSettingsClicked(context) },
+            onDismiss = { permissionViewModel.onPermanentlyDeniedDismissed() }
+        )
     }
 }
 
 /**
- * Bottom-Sheet-Peek mit nahegelegenen Venues.
- * Abgerundete Karte am unteren Bildschirmrand mit einer
- * scrollbaren Liste von Venue-Karten.
- *
- * @param venues Liste der Venue-Platzhalter.
- * @param modifier Optionaler Modifier.
+ * Bottom-Sheet-Peek with scrollable list of nearby venues.
  */
 @Composable
 private fun VenueBottomSheet(
     venues: List<VenueItemUi>,
+    onVenueClick: (VenueItemUi) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -270,7 +413,6 @@ private fun VenueBottomSheet(
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
         Column(modifier = Modifier.padding(top = 8.dp)) {
-            // Drag-Handle-Indikator
             Box(
                 modifier = Modifier
                     .width(40.dp)
@@ -283,7 +425,7 @@ private fun VenueBottomSheet(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "In deiner Nähe",
+                text = "In deiner Nähe (${venues.size})",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -292,14 +434,13 @@ private fun VenueBottomSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Scrollbare Venue-Liste
             LazyColumn(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.height(160.dp)
             ) {
                 items(venues, key = { it.id }) { venue ->
-                    VenueCard(venue = venue)
+                    VenueCard(venue = venue, onClick = { onVenueClick(venue) })
                 }
             }
         }
@@ -307,12 +448,16 @@ private fun VenueBottomSheet(
 }
 
 /**
- * Einzelne Venue-Karte mit Name, Kategorie,
- * Entfernung und Bewertung.
+ * Individual Venue Card item.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun VenueCard(venue: VenueItemUi) {
+private fun VenueCard(
+    venue: VenueItemUi,
+    onClick: () -> Unit
+) {
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
@@ -323,7 +468,6 @@ private fun VenueCard(venue: VenueItemUi) {
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Venue-Icon-Platzhalter
             Box(
                 modifier = Modifier
                     .size(44.dp)
@@ -332,7 +476,7 @@ private fun VenueCard(venue: VenueItemUi) {
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Filled.LocationOn,
+                    imageVector = if (venue.activeEventTitle != null) Icons.Filled.Event else Icons.Filled.LocationOn,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.size(24.dp)
@@ -349,13 +493,12 @@ private fun VenueCard(venue: VenueItemUi) {
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${venue.category} · ${venue.distance}",
+                    text = "${venue.category} · ${venue.distance}" + (venue.activeEventTitle?.let { " · 🎉 $it" } ?: ""),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
-            // Bewertung mit Stern-Icon
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Filled.Star,

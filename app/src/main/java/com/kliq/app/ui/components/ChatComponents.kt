@@ -20,6 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -49,7 +51,7 @@ import com.kliq.app.ui.theme.PurplePrimaryLight
 
 @Composable
 fun ChatListItem(
-    conversation: ChatConversation,
+    item: com.kliq.app.data.model.ChatListItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -64,7 +66,7 @@ fun ChatListItem(
             modifier = Modifier
                 .size(56.dp)
                 .then(
-                    if (conversation.chatType == ChatType.PUBLIC_CITY) {
+                    if (item.chatType == ChatType.PUBLIC_CITY) {
                         Modifier.border(
                             width = 2.dp,
                             brush = Brush.linearGradient(
@@ -74,19 +76,19 @@ fun ChatListItem(
                         )
                     } else Modifier
                 )
-                .padding(if (conversation.chatType == ChatType.PUBLIC_CITY) 3.dp else 0.dp)
+                .padding(if (item.chatType == ChatType.PUBLIC_CITY) 3.dp else 0.dp)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = conversation.avatarInitial,
+                text = item.avatarInitial,
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
             )
 
-            if (conversation.chatType == ChatType.PRIVATE && conversation.isOnline) {
+            if (item.chatType == ChatType.PRIVATE && item.userStatus == com.kliq.app.data.model.UserStatus.ONLINE) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -104,16 +106,16 @@ fun ChatListItem(
 
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = conversation.name,
+                text = item.title,
                 style = MaterialTheme.typography.titleSmall,
-                fontWeight = if (conversation.unreadCount > 0) FontWeight.Bold else FontWeight.Medium,
+                fontWeight = if (item.unreadCount > 0) FontWeight.Bold else FontWeight.Medium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
-                text = conversation.lastMessageText,
+                text = item.lastMessage.text,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -128,16 +130,16 @@ fun ChatListItem(
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
-                text = conversation.lastMessageTimestampIso.take(16).replace("T", " "),
+                text = item.lastMessage.timestampIso.take(16).replace("T", " "),
                 style = MaterialTheme.typography.labelSmall,
-                color = if (conversation.unreadCount > 0) {
+                color = if (item.unreadCount > 0) {
                     MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 }
             )
 
-            if (conversation.unreadCount > 0) {
+            if (item.unreadCount > 0) {
                 Box(
                     modifier = Modifier
                         .size(22.dp)
@@ -146,8 +148,8 @@ fun ChatListItem(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (conversation.unreadCount > 99) "99+"
-                        else conversation.unreadCount.toString(),
+                        text = if (item.unreadCount > 99) "99+"
+                        else item.unreadCount.toString(),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onPrimary,
                         fontWeight = FontWeight.Bold
@@ -157,6 +159,20 @@ fun ChatListItem(
         }
     }
 }
+
+@Composable
+fun ChatListItem(
+    conversation: ChatConversation,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    ChatListItem(
+        item = conversation.toChatListItem(),
+        onClick = onClick,
+        modifier = modifier
+    )
+}
+
 
 @Composable
 fun ChatBubble(
@@ -171,11 +187,11 @@ fun ChatBubble(
             Text(
                 text = message.senderName,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
+                color = PurplePrimaryLight,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(
                     start = 12.dp,
-                    bottom = 2.dp
+                    bottom = 4.dp
                 )
             )
         }
@@ -193,7 +209,7 @@ fun ChatBubble(
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             },
-            tonalElevation = if (message.isMine) 0.dp else 1.dp
+            tonalElevation = if (message.isMine) 0.dp else 2.dp
         ) {
             Column(
                 modifier = Modifier.padding(
@@ -210,17 +226,36 @@ fun ChatBubble(
                         MaterialTheme.colorScheme.onSurface
                     }
                 )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = message.timestampIso.take(16).replace("T", " "),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (message.isMine) {
-                        Color.White.copy(alpha = 0.7f)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.align(Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    val timeText = if (message.timestampIso.length >= 16) {
+                        message.timestampIso.substring(11, 16)
                     } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    },
-                    modifier = Modifier.align(Alignment.End)
-                )
+                        message.timestampIso
+                    }
+                    Text(
+                        text = timeText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (message.isMine) {
+                            Color.White.copy(alpha = 0.75f)
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        }
+                    )
+                    if (message.isMine) {
+                        val isRead = message.status == MessageStatus.READ
+                        Icon(
+                            imageVector = if (isRead) Icons.Default.DoneAll else Icons.Default.Done,
+                            contentDescription = if (isRead) "Gelesen" else "Gesendet",
+                            tint = if (isRead) PurplePrimaryLight else Color.White.copy(alpha = 0.75f),
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
             }
         }
     }
@@ -355,5 +390,176 @@ fun ChatDateDivider(
                     MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
                 )
         )
+    }
+}
+
+@Composable
+fun CityChatHeaderBanner(
+    activeCityChat: com.kliq.app.data.model.ChatListItem?,
+    onSwitchCityClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val cityTitle = activeCityChat?.title ?: "Berlin - Tonight"
+    val onlineCount = activeCityChat?.onlineMembersCount ?: 248
+    val distanceText = activeCityChat?.distanceKm?.let { String.format("%.1f km entfernt", it) } ?: "GPS-aktiv"
+
+    androidx.compose.material3.Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            brush = Brush.linearGradient(
+                colors = listOf(PurplePrimaryLight.copy(alpha = 0.6f), PurplePrimary.copy(alpha = 0.2f))
+            )
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(PurplePrimary.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "📍",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = cityTitle,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "⚡ $onlineCount Feiernde online • $distanceText",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            androidx.compose.material3.TextButton(onClick = onSwitchCityClick) {
+                Text(
+                    text = "Wechseln",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = PurplePrimaryLight,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@Composable
+fun CityChatSwitcherSheet(
+    supportedCities: List<com.kliq.app.data.util.CityChatConfig>,
+    onCitySelected: (com.kliq.app.data.util.CityChatConfig) -> Unit,
+    onDismiss: () -> Unit
+) {
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 32.dp, top = 8.dp, start = 20.dp, end = 20.dp)
+        ) {
+            Text(
+                text = "Öffentlichen Stadt-Chat wählen",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Tritt dem Chat deiner aktuellen Stadt oder Partymetropole bei:",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            supportedCities.forEach { city ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(12.dp))
+                        .clickable { onCitySelected(city) }
+                        .padding(horizontal = 12.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = city.avatarInitial,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = PurplePrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column {
+                            Text(
+                                text = city.title,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "${city.defaultOnlineCount} Feiernde aktiv",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "Beitreten",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = PurplePrimaryLight,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                androidx.compose.material3.Divider(
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f),
+                    thickness = 0.5.dp
+                )
+            }
+        }
     }
 }

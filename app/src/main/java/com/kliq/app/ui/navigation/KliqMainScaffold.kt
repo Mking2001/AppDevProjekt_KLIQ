@@ -36,11 +36,16 @@ import com.kliq.app.ui.screens.explore.ExploreScreen
 import com.kliq.app.ui.screens.home.HomeScreen
 import com.kliq.app.ui.screens.map.MapScreen
 import com.kliq.app.ui.screens.notifications.NotificationsScreen
+import com.kliq.app.ui.screens.onboarding.ConsumptionHabitsScreen
+import com.kliq.app.ui.screens.onboarding.IntentMatchingScreen
 import com.kliq.app.ui.screens.onboarding.ProfileCreationScreen
+import com.kliq.app.ui.screens.profile.OtherUserProfileScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
+import com.kliq.app.ui.screens.qr.QRScannerScreen
 import com.kliq.app.ui.screens.splash.SplashScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationViewModel
+import com.kliq.app.viewmodel.AuthViewModel
 import com.kliq.app.viewmodel.ThemeViewModel
 
 val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
@@ -56,6 +61,7 @@ fun KliqMainScaffold(
     navigationViewModel: NavigationViewModel = hiltViewModel(),
     topBarViewModel: TopBarViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
+    authViewModel: AuthViewModel = hiltViewModel(),
     navController: NavHostController = rememberNavController()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -68,7 +74,8 @@ fun KliqMainScaffold(
         ChatRoutes.CHAT_LIST,
         ChatRoutes.CHAT_DETAIL,
         CoreRoutes.SPLASH,
-        CoreRoutes.PHONE_LOGIN
+        CoreRoutes.PHONE_LOGIN,
+        ProfileRoutes.QR_SCANNER
     )
 
     if (currentRoute != navigationState.currentRoute) {
@@ -108,6 +115,7 @@ fun KliqMainScaffold(
                 currentRoute = currentRoute,
                 previousRoute = navigationState.previousRoute,
                 topBarState = topBarState,
+                authViewModel = authViewModel,
                 onToggleMenu = topBarViewModel::toggleMenu,
                 onDismissMenu = topBarViewModel::dismissMenu,
                 onMenuAction = { action ->
@@ -121,9 +129,10 @@ fun KliqMainScaffold(
                         TopBarMenuAction.ToggleTheme -> { themeViewModel.toggleTheme() }
                         TopBarMenuAction.About -> { /* About-Dialog anzeigen */ }
                         TopBarMenuAction.Logout -> {
-                            navController.navigate(
-                                NavigationRoute.verificationRoute("+49 176 12345678")
-                            )
+                            authViewModel.logout()
+                            navController.navigate(CoreRoutes.PHONE_LOGIN) {
+                                popUpTo(0) { inclusive = true }
+                            }
                         }
                     }
                 },
@@ -149,6 +158,7 @@ private fun KliqNavHost(
     currentRoute: String,
     previousRoute: String?,
     topBarState: TopBarUiState,
+    authViewModel: AuthViewModel,
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
@@ -171,7 +181,13 @@ private fun KliqNavHost(
     ) {
         composable(CoreRoutes.SPLASH) {
             SplashScreen(
-                onSplashFinished = {
+                authViewModel = authViewModel,
+                onNavigateToHome = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(CoreRoutes.SPLASH) { inclusive = true }
+                    }
+                },
+                onNavigateToPhoneLogin = {
                     navController.navigate(CoreRoutes.PHONE_LOGIN) {
                         popUpTo(CoreRoutes.SPLASH) { inclusive = true }
                     }
@@ -226,14 +242,37 @@ private fun KliqNavHost(
                 topBarState = topBarState,
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
-                onMenuAction = onMenuAction
+                onMenuAction = onMenuAction,
+                onNavigateToQrScanner = {
+                    navController.navigate(ProfileRoutes.QR_SCANNER) {
+                        launchSingleTop = true
+                    }
+                }
             )
         }
         composable(NavigationRoute.ProfileCreation.route) {
             ProfileCreationScreen(
                 onProfileCreated = {
-                    navController.navigate(NavigationRoute.Home.route) {
+                    navController.navigate(NavigationRoute.IntentMatching.route) {
                         popUpTo(NavigationRoute.ProfileCreation.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(NavigationRoute.IntentMatching.route) {
+            IntentMatchingScreen(
+                onIntentConfirmed = {
+                    navController.navigate(NavigationRoute.ConsumptionHabits.route) {
+                        popUpTo(NavigationRoute.IntentMatching.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(NavigationRoute.ConsumptionHabits.route) {
+            ConsumptionHabitsScreen(
+                onHabitsConfirmed = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(NavigationRoute.ConsumptionHabits.route) { inclusive = true }
                     }
                 }
             )
@@ -292,6 +331,33 @@ private fun KliqNavHost(
             ClubDetailScreen(
                 clubId = clubId,
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = ProfileRoutes.OTHER_USER_PROFILE,
+            arguments = listOf(
+                navArgument(ProfileRoutes.ARG_USER_ID) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString(ProfileRoutes.ARG_USER_ID) ?: ""
+            OtherUserProfileScreen(
+                userId = userId,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToChat = { targetUserId ->
+                    navController.navigate(ChatRoutes.chatDetail("chat_$targetUserId"))
+                }
+            )
+        }
+
+        composable(ProfileRoutes.QR_SCANNER) {
+            QRScannerScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(userId))
+                }
             )
         }
     }

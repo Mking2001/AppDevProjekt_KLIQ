@@ -19,7 +19,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class PhoneLoginViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val sessionRepository: com.kliq.app.data.repository.SessionRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PhoneLoginUiState())
@@ -117,7 +118,15 @@ class PhoneLoginViewModel @Inject constructor(
                 otpCode = currentState.otpCode
             )
 
-            result.onSuccess {
+            result.onSuccess { user ->
+                sessionRepository?.let { repo ->
+                    viewModelScope.launch {
+                        repo.saveSession(
+                            token = "auth_token_${user.id}_${System.currentTimeMillis()}",
+                            userId = user.id
+                        )
+                    }
+                }
                 _uiState.update { state ->
                     state.copy(
                         isLoading = false,

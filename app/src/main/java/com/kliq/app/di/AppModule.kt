@@ -50,6 +50,18 @@ object AppModule {
     fun provideDirectMessageDao(database: KliqDatabase): DirectMessageDao = database.directMessageDao()
 
     @Provides
+    fun provideLocationDao(database: KliqDatabase): com.kliq.app.data.local.dao.LocationDao = database.locationDao()
+
+    @Provides
+    fun provideSocialDao(database: KliqDatabase): com.kliq.app.data.local.dao.SocialDao = database.socialDao()
+
+    @Provides
+    fun provideVisitedLogDao(database: KliqDatabase): com.kliq.app.data.local.dao.VisitedLogDao = database.visitedLogDao()
+
+    @Provides
+    fun provideBlockedUserDao(database: KliqDatabase): com.kliq.app.data.local.dao.BlockedUserDao = database.blockedUserDao()
+
+    @Provides
     @Singleton
     fun provideApiService(): KliqApiService {
         return Retrofit.Builder()
@@ -63,5 +75,46 @@ object AppModule {
     @Singleton
     fun provideSmsVerificationService(): SmsVerificationService {
         return MockSmsVerificationService()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSessionStorage(encryptedSessionStorage: com.kliq.app.data.local.security.EncryptedSessionStorage): com.kliq.app.data.local.security.SessionStorage {
+        return encryptedSessionStorage
+    }
+
+    @Provides
+    fun provideIoDispatcher(): kotlinx.coroutines.CoroutineDispatcher {
+        return kotlinx.coroutines.Dispatchers.IO
+    }
+
+    @Provides
+    @Singleton
+    fun providePermissionManager(impl: com.kliq.app.util.PermissionManagerImpl): com.kliq.app.util.PermissionManager {
+        return impl
+    }
+
+    @Provides
+    @Singleton
+    fun provideGeofenceManager(impl: com.kliq.app.util.GeofenceManagerImpl): com.kliq.app.util.GeofenceManager {
+        return impl
+    }
+
+    @Provides
+    @Singleton
+    fun provideVerificationService(impl: com.kliq.app.service.VerificationServiceImpl): com.kliq.app.service.VerificationService {
+        return impl
+    }
+
+    @Provides
+    @Singleton
+    fun provideCalculateUserDistanceUseCase(): com.kliq.app.domain.usecase.CalculateUserDistanceUseCase {
+        return com.kliq.app.domain.usecase.CalculateUserDistanceUseCase()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserDistanceFormatter(): com.kliq.app.util.UserDistanceFormatter {
+        return com.kliq.app.util.UserDistanceFormatter()
     }
 }

@@ -12,6 +12,8 @@ import com.kliq.app.data.repository.ReviewRepository
 import com.kliq.app.data.repository.ReviewRepositoryImpl
 import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.data.repository.UserRepositoryImpl
+import com.kliq.app.service.QrCodeService
+import com.kliq.app.service.QrCodeServiceImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -45,4 +47,32 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChatRepository(impl: ChatRepositoryImpl): ChatRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSessionRepository(impl: com.kliq.app.data.repository.SessionRepositoryImpl): com.kliq.app.data.repository.SessionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLocationRepository(impl: com.kliq.app.data.repository.LocationRepositoryImpl): com.kliq.app.data.repository.LocationRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindGeofenceRepository(impl: com.kliq.app.data.repository.GeofenceRepositoryImpl): com.kliq.app.data.repository.GeofenceRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRatingRepository(impl: com.kliq.app.data.repository.RatingRepositoryImpl): com.kliq.app.data.repository.RatingRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindQrCodeService(impl: QrCodeServiceImpl): QrCodeService
+
+    @Binds
+    @Singleton
+    abstract fun bindSocialRepository(impl: com.kliq.app.data.repository.SocialRepositoryImpl): com.kliq.app.data.repository.SocialRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindVisitedLogRepository(impl: com.kliq.app.data.repository.VisitedLogRepositoryImpl): com.kliq.app.data.repository.VisitedLogRepository
 }

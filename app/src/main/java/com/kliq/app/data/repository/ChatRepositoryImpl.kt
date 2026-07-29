@@ -223,12 +223,42 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun getCityChatForLocation(location: com.kliq.app.data.model.LocationData): Flow<com.kliq.app.data.model.ChatListItem> {
+        val resolvedConfig = com.kliq.app.data.util.CityChatLocationMapper.resolveCityForLocation(location)
+        val distance = com.kliq.app.data.util.CityChatLocationMapper.calculateDistanceInKm(
+            location.latitude, location.longitude,
+            resolvedConfig.latitude, resolvedConfig.longitude
+        )
+        val item = com.kliq.app.data.util.CityChatLocationMapper.buildCityChatListItem(
+            config = resolvedConfig,
+            distanceKm = distance,
+            isGpsAssigned = true
+        )
+        return kotlinx.coroutines.flow.flowOf(item).flowOn(Dispatchers.IO)
+    }
+
+    override suspend fun syncPublicCityMessages(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun updateDirectMessageStatus(messageId: String, status: MessageStatus) = withContext(Dispatchers.IO) {
         directMessageDao.updateDeliveryStatus(messageId, status)
     }
 
     override suspend fun markDirectConversationAsRead(senderId: String, receiverId: String) = withContext(Dispatchers.IO) {
         directMessageDao.markConversationAsRead(senderId = senderId, receiverId = receiverId)
+    }
+
+    override suspend fun joinPublicCityChat(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     private fun ChatEntity.toDomain(): ChatConversation {

@@ -30,7 +30,6 @@ interface ChatRepository {
 
     suspend fun updateMessageStatus(messageId: String, status: MessageStatus)
     suspend fun markChatAsRead(chatId: String)
-
     fun getDirectMessages(currentUserId: String, targetUserId: String): Flow<List<DirectMessage>>
     fun getUnreadDirectMessages(userId: String): Flow<List<DirectMessage>>
     fun getUnreadCountForUser(userId: String): Flow<Int>
@@ -46,4 +45,7 @@ interface ChatRepository {
     suspend fun syncDirectMessages(userId: String, targetUserId: String): Result<Unit>
     suspend fun updateDirectMessageStatus(messageId: String, status: MessageStatus)
     suspend fun markDirectConversationAsRead(senderId: String, receiverId: String)
+    fun getCityChatForLocation(location: com.kliq.app.data.model.LocationData): Flow<com.kliq.app.data.model.ChatListItem>
+    suspend fun syncPublicCityMessages(chatId: String): Result<Unit>
+    suspend fun joinPublicCityChat(chatId: String): Result<Unit>
 }

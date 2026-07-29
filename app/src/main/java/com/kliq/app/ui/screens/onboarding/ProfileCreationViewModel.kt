@@ -1,8 +1,11 @@
 package com.kliq.app.ui.screens.onboarding
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.repository.UserRepository
+import com.kliq.app.data.util.ImageCompressor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -88,6 +91,46 @@ class ProfileCreationViewModel @Inject constructor(
         }
     }
 
+    fun onImageSelected(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isProcessingImage = true, errorMessage = null) }
+            val compressor = ImageCompressor(context)
+            val result = compressor.compressAndSaveImage(uri)
+
+            result.onSuccess { savedPath ->
+                _uiState.update {
+                    it.copy(
+                        profilePictureUrl = savedPath,
+                        isProcessingImage = false
+                    )
+                }
+            }.onFailure { exception ->
+                _uiState.update {
+                    it.copy(
+                        isProcessingImage = false,
+                        errorMessage = exception.localizedMessage ?: "Fehler beim Verarbeiten des Bildes."
+                    )
+                }
+            }
+        }
+    }
+
+    fun onProfilePictureUrlSet(url: String?) {
+        _uiState.update { it.copy(profilePictureUrl = url) }
+    }
+
+    fun onPermissionDenied(permission: String) {
+        val message = when {
+            permission.contains("CAMERA") -> "Kamerazugriff wurde verweigert. Erteile die Berechtigung in den Einstellungen."
+            else -> "Zugriff auf Fotos wurde verweigert. Erteile die Berechtigung in den Einstellungen."
+        }
+        _uiState.update { it.copy(permissionDeniedMessage = message, errorMessage = message) }
+    }
+
+    fun onPermissionMessageDismissed() {
+        _uiState.update { it.copy(permissionDeniedMessage = null) }
+    }
+
     fun onSaveProfile(userId: String = "current_user") {
         val currentState = _uiState.value
         if (!calculateIsFormValid(currentState)) return
@@ -100,7 +143,8 @@ class ProfileCreationViewModel @Inject constructor(
                     username = currentState.username.trim(),
                     age = currentState.age.trim().toInt(),
                     hometown = currentState.hometown.trim(),
-                    bio = currentState.bio.trim()
+                    bio = currentState.bio.trim(),
+                    profilePictureUrl = currentState.profilePictureUrl
                 )
                 _uiState.update {
                     it.copy(

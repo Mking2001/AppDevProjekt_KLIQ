@@ -67,6 +67,20 @@ sealed class NavigationRoute(
         unselectedIcon = Icons.Outlined.Person
     )
 
+    data object IntentMatching : NavigationRoute(
+        route = "onboarding/intent_matching",
+        label = "Such-Präferenzen",
+        selectedIcon = Icons.Filled.Person,
+        unselectedIcon = Icons.Outlined.Person
+    )
+
+    data object ConsumptionHabits : NavigationRoute(
+        route = "onboarding/consumption_habits",
+        label = "Konsum-Gewohnheiten",
+        selectedIcon = Icons.Filled.Person,
+        unselectedIcon = Icons.Outlined.Person
+    )
+
     companion object {
         /** Route-Template für den SMS-Verifizierungs-Screen. Erwartet phoneNumber als Argument. */
         const val VERIFICATION_ROUTE = "verification/{phoneNumber}"
@@ -126,4 +140,16 @@ object ClubRoutes {
     fun clubDetail(clubId: String): String = "club_detail/$clubId"
     
     const val ARG_CLUB_ID = "clubId"
+}
+
+/**
+ * Routen für Benutzer-Profile, Scanner und Details.
+ */
+object ProfileRoutes {
+    const val OTHER_USER_PROFILE = "profile/other/{userId}"
+    const val QR_SCANNER = "profile/qr_scanner"
+
+    fun otherUserProfile(userId: String): String = "profile/other/$userId"
+
+    const val ARG_USER_ID = "userId"
 }

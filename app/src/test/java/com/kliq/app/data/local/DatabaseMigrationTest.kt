@@ -269,6 +269,57 @@ class DatabaseMigrationTest {
         db.close()
     }
 
+    @Test
+    fun migrate8To9_addsSmokingAndDrinkingHabitColumns() {
+        val configV8 = SupportSQLiteOpenHelper.Configuration.builder(context)
+            .name(TEST_DB_NAME)
+            .callback(object : SupportSQLiteOpenHelper.Callback(8) {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `users` (`id` TEXT NOT NULL, `username` TEXT NOT NULL, `email` TEXT NOT NULL, PRIMARY KEY(`id`))"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `user_preferences` (`userId` TEXT NOT NULL, `isDarkMode` INTEGER NOT NULL DEFAULT 0, `searchRadiusKm` INTEGER NOT NULL DEFAULT 10, `pushNotificationsEnabled` INTEGER NOT NULL DEFAULT 1, `searchIntent` TEXT NOT NULL DEFAULT 'BOTH', PRIMARY KEY(`userId`))"
+                    )
+                }
+
+                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+            })
+            .build()
+
+        val helperV8 = FrameworkSQLiteOpenHelperFactory().create(configV8)
+        val dbV8 = helperV8.writableDatabase
+
+        dbV8.execSQL("INSERT INTO `users` (`id`, `username`, `email`) VALUES ('u8', 'test_user', 'test@kliq.app')")
+        dbV8.execSQL("INSERT INTO `user_preferences` (`userId`, `searchIntent`) VALUES ('u8', 'DATING')")
+        helperV8.close()
+
+        val configV9 = SupportSQLiteOpenHelper.Configuration.builder(context)
+            .name(TEST_DB_NAME)
+            .callback(object : SupportSQLiteOpenHelper.Callback(9) {
+                override fun onCreate(db: SupportSQLiteDatabase) {}
+
+                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                    if (oldVersion == 8 && newVersion == 9) {
+                        DatabaseMigrations.MIGRATION_8_9.migrate(db)
+                    }
+                }
+            })
+            .build()
+
+        val helperV9 = FrameworkSQLiteOpenHelperFactory().create(configV9)
+        val dbV9 = helperV9.writableDatabase
+
+        val prefCursor = dbV9.query("SELECT * FROM `user_preferences` WHERE `userId` = 'u8'")
+        assertTrue(prefCursor.moveToFirst())
+        assertEquals("DATING", prefCursor.getString(prefCursor.getColumnIndexOrThrow("searchIntent")))
+        assertEquals("NEVER", prefCursor.getString(prefCursor.getColumnIndexOrThrow("smokingHabit")))
+        assertEquals("NEVER", prefCursor.getString(prefCursor.getColumnIndexOrThrow("drinkingHabit")))
+        prefCursor.close()
+
+        helperV9.close()
+    }
+
     private fun createV6Schema(db: SupportSQLiteDatabase) {
         db.execSQL(
             "CREATE TABLE IF NOT EXISTS `users` (" +

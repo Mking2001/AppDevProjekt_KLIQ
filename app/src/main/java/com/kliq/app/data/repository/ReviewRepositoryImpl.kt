@@ -47,6 +47,20 @@ class ReviewRepositoryImpl @Inject constructor(
         return reviewDao.getAverageRatingForClub(clubId).flowOn(Dispatchers.IO)
     }
 
+    override fun getReviewsForTargetUser(targetUserId: String): Flow<List<Review>> {
+        return reviewDao.getReviewsForTargetUser(targetUserId).map { entities ->
+            entities.map { it.toDomain() }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override fun getAverageRatingForTargetUser(targetUserId: String): Flow<Double?> {
+        return reviewDao.getAverageRatingForTargetUser(targetUserId).flowOn(Dispatchers.IO)
+    }
+
+    override fun getReviewCountForTargetUser(targetUserId: String): Flow<Int> {
+        return reviewDao.getReviewCountForTargetUser(targetUserId).flowOn(Dispatchers.IO)
+    }
+
     override suspend fun syncReviewsForClub(clubId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             Result.success(Unit)
@@ -143,6 +157,41 @@ class ReviewRepositoryImpl @Inject constructor(
             timestamp = System.currentTimeMillis(),
             verificationMethod = ReviewVerificationMethod.UNVERIFIED,
             isVerified = false
+        )
+
+        reviewDao.insertReview(entity)
+        Result.success(entity.toDomain())
+    }
+
+    override suspend fun submitVerifiedUserComment(
+        reviewerUserId: String,
+        targetUserId: String,
+        rating: Int,
+        text: String,
+        verificationMethod: ReviewVerificationMethod,
+        qrToken: String?
+    ): Result<Review> = withContext(Dispatchers.IO) {
+        if (text.isBlank() || text.length > 280) {
+            return@withContext Result.failure(IllegalArgumentException("Kommentar muss zwischen 1 und 280 Zeichen enthalten."))
+        }
+        if (!antiSpamValidator.isRatingValid(rating)) {
+            return@withContext Result.failure(IllegalArgumentException("Rating muss zwischen 1 und 5 Sternen liegen."))
+        }
+        if (verificationMethod == ReviewVerificationMethod.UNVERIFIED) {
+            return@withContext Result.failure(IllegalStateException("Sicherheits-Sperre: Kommentare dürfen nur bei verifizierter physischer Nähe (GPS) oder QR-Scan abgegeben werden."))
+        }
+
+        val entity = ReviewEntity(
+            id = UUID.randomUUID().toString(),
+            reviewerUserId = reviewerUserId,
+            targetUserId = targetUserId,
+            rating = rating,
+            text = text.trim(),
+            timestamp = System.currentTimeMillis(),
+            verificationMethod = verificationMethod,
+            isVerified = true,
+            reviewerUsername = "Kliq-User",
+            reviewerAvatarUrl = null
         )
 
         reviewDao.insertReview(entity)

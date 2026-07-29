@@ -139,18 +139,48 @@ object DatabaseMigrations {
 
     val MIGRATION_7_8 = object : Migration(7, 8) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // Placeholder for schema sync
+            db.execSQL("ALTER TABLE `user_preferences` ADD COLUMN `searchIntent` TEXT NOT NULL DEFAULT 'BOTH'")
         }
     }
 
     val MIGRATION_8_9 = object : Migration(8, 9) {
         override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `user_preferences` ADD COLUMN `smokingHabit` TEXT NOT NULL DEFAULT 'NEVER'")
+            db.execSQL("ALTER TABLE `user_preferences` ADD COLUMN `drinkingHabit` TEXT NOT NULL DEFAULT 'NEVER'")
             db.execSQL(
                 "CREATE TABLE IF NOT EXISTS `direct_messages` (`messageId` TEXT NOT NULL, `senderId` TEXT NOT NULL, `receiverId` TEXT NOT NULL, `text` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `timestampIso` TEXT NOT NULL DEFAULT '', `deliveryStatus` TEXT NOT NULL DEFAULT 'SENT', `isEncrypted` INTEGER NOT NULL DEFAULT 1, `encryptionAlgorithm` TEXT NOT NULL DEFAULT 'AES-256-GCM', `mediaUrl` TEXT DEFAULT NULL, PRIMARY KEY(`messageId`))"
             )
             db.execSQL("CREATE INDEX IF NOT EXISTS `index_direct_messages_senderId` ON `direct_messages` (`senderId`)")
             db.execSQL("CREATE INDEX IF NOT EXISTS `index_direct_messages_receiverId` ON `direct_messages` (`receiverId`)")
             db.execSQL("CREATE INDEX IF NOT EXISTS `index_direct_messages_timestamp` ON `direct_messages` (`timestamp`)")
+        }
+    }
+
+    val MIGRATION_9_10 = object : Migration(9, 10) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `user_locations` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `accuracy` REAL NOT NULL, `timestampMs` INTEGER NOT NULL, `speed` REAL NOT NULL DEFAULT 0.0)"
+            )
+        }
+    }
+
+    val MIGRATION_12_13 = object : Migration(12, 13) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `visited_logs` (`id` TEXT NOT NULL, `userId` TEXT NOT NULL, `clubId` TEXT NOT NULL, `clubName` TEXT NOT NULL, `visitedAtTimestamp` INTEGER NOT NULL, `isVerifiedByGps` INTEGER NOT NULL, PRIMARY KEY(`id`))"
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_visited_logs_userId` ON `visited_logs` (`userId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_visited_logs_clubId` ON `visited_logs` (`clubId`)")
+        }
+    }
+
+    val MIGRATION_13_14 = object : Migration(13, 14) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "CREATE TABLE IF NOT EXISTS `blocked_users` (`userId` TEXT NOT NULL, `blockedUserId` TEXT NOT NULL, `reason` TEXT, `blockedAtTimestampMs` INTEGER NOT NULL, PRIMARY KEY(`userId`, `blockedUserId`))"
+            )
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_blocked_users_userId` ON `blocked_users` (`userId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_blocked_users_blockedUserId` ON `blocked_users` (`blockedUserId`)")
         }
     }
 
@@ -163,6 +193,9 @@ object DatabaseMigrations {
         MIGRATION_5_6,
         MIGRATION_6_7,
         MIGRATION_7_8,
-        MIGRATION_8_9
+        MIGRATION_8_9,
+        MIGRATION_9_10,
+        MIGRATION_12_13,
+        MIGRATION_13_14
     )
 }
