@@ -1,5 +1,16 @@
 package com.kliq.app.data.model
 
+enum class UserStatus {
+    ONLINE,
+    OFFLINE,
+    AWAY
+}
+
+enum class ChatType {
+    PRIVATE,
+    PUBLIC_CITY
+}
+
 enum class GroupMemberRole {
     MEMBER,
     MODERATOR,
