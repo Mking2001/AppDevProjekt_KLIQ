@@ -75,6 +75,7 @@ class GroupPresenceScenarioTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val initialOnlineCount = viewModel.uiState.value.totalOnlineCount
+        assertTrue(initialOnlineCount > 0)
 
         // Simulating status change of current user to AWAY
         viewModel.updateMyPresenceStatus(UserStatus.AWAY)

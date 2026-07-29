@@ -46,16 +46,30 @@ class GroupPresenceDataSourceImpl @Inject constructor() : GroupPresenceDataSourc
     ): Result<Unit> {
         val flow = presenceMap[chatId] ?: return Result.failure(IllegalArgumentException("Chat nicht gefunden"))
         val currentSummary = flow.value
-        val updatedMembers = currentSummary.members.map { member ->
-            if (member.userId == userId) {
-                member.copy(
-                    status = status,
-                    lastActiveTimestampMs = System.currentTimeMillis()
-                )
-            } else {
-                member
+        val memberExists = currentSummary.members.any { it.userId == userId }
+        val updatedMembers = if (memberExists) {
+            currentSummary.members.map { member ->
+                if (member.userId == userId) {
+                    member.copy(
+                        status = status,
+                        lastActiveTimestampMs = System.currentTimeMillis()
+                    )
+                } else {
+                    member
+                }
             }
+        } else {
+            currentSummary.members + GroupMemberPresence(
+                userId = userId,
+                displayName = if (userId == "current_user") "Du" else "Nutzer #$userId",
+                avatarInitial = if (userId == "current_user") "D" else "N",
+                status = status,
+                role = GroupMemberRole.MEMBER,
+                statusMessage = "Aktiv im Chat",
+                distanceKm = 0.0
+            )
         }
+
         val onlineCount = updatedMembers.count { it.status == UserStatus.ONLINE || it.status == UserStatus.AWAY }
         flow.value = currentSummary.copy(
             totalOnlineCount = onlineCount,
@@ -76,6 +90,7 @@ class GroupPresenceDataSourceImpl @Inject constructor() : GroupPresenceDataSourc
             totalOnlineCount = 248,
             totalMembersCount = 1420,
             members = listOf(
+                GroupMemberPresence("current_user", "Du (Ich)", null, "D", UserStatus.ONLINE, GroupMemberRole.MEMBER, "Online im Chat", 0.0),
                 GroupMemberPresence("u_1", "Elena M.", null, "E", UserStatus.ONLINE, GroupMemberRole.HOST, "Vor Ort @ Watergate", 0.4),
                 GroupMemberPresence("u_2", "Lukas K.", null, "L", UserStatus.ONLINE, GroupMemberRole.MODERATOR, "Cruising in Mitte", 1.2),
                 GroupMemberPresence("u_3", "Sophie W.", null, "S", UserStatus.ONLINE, GroupMemberRole.VIP, "Techno & Vibes ✨", 0.8),
@@ -93,6 +108,7 @@ class GroupPresenceDataSourceImpl @Inject constructor() : GroupPresenceDataSourc
             totalOnlineCount = 184,
             totalMembersCount = 980,
             members = listOf(
+                GroupMemberPresence("current_user", "Du (Ich)", null, "D", UserStatus.ONLINE, GroupMemberRole.MEMBER, "Online im Chat", 0.0),
                 GroupMemberPresence("u_20", "Korbinian W.", null, "K", UserStatus.ONLINE, GroupMemberRole.HOST, "Pacha München 💃", 0.6),
                 GroupMemberPresence("u_21", "Anna L.", null, "A", UserStatus.ONLINE, GroupMemberRole.MODERATOR, "Glockenbachviertel", 1.1),
                 GroupMemberPresence("u_22", "Florian S.", null, "F", UserStatus.ONLINE, GroupMemberRole.MEMBER, "089 Bar warmup", 1.4)
