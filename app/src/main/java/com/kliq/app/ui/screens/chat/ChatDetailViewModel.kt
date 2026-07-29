@@ -15,12 +15,22 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+import android.content.Context
+import android.net.Uri
+import com.kliq.app.data.model.MessageType
+import com.kliq.app.util.ImageCompressor
+import javax.inject.Inject
+
 data class ChatDetailUiState(
     val conversationName: String = "",
     val conversationInitial: String = "",
     val targetUserId: String = "",
     val messages: List<ChatMessage> = emptyList(),
     val currentInput: String = "",
+    val selectedImageUri: String? = null,
+    val imageCaption: String = "",
+    val isCompressingImage: Boolean = false,
+    val isAttachmentSheetVisible: Boolean = false,
     val isOnline: Boolean = false,
     val isBlocked: Boolean = false,
     val isReportDialogVisible: Boolean = false,
@@ -31,7 +41,8 @@ data class ChatDetailUiState(
 
 @HiltViewModel
 class ChatDetailViewModel @Inject constructor(
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val imageCompressor: ImageCompressor
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatDetailUiState())
@@ -90,6 +101,83 @@ class ChatDetailViewModel @Inject constructor(
                 messages = state.messages + newMessage,
                 currentInput = ""
             )
+        }
+    }
+
+    fun openAttachmentSheet() {
+        if (_uiState.value.isBlocked) return
+        _uiState.update { it.copy(isAttachmentSheetVisible = true) }
+    }
+
+    fun closeAttachmentSheet() {
+        _uiState.update { it.copy(isAttachmentSheetVisible = false) }
+    }
+
+    fun onImageSelected(uri: String) {
+        _uiState.update {
+            it.copy(
+                selectedImageUri = uri,
+                imageCaption = "",
+                isAttachmentSheetVisible = false
+            )
+        }
+    }
+
+    fun onImageCaptionChanged(caption: String) {
+        _uiState.update { it.copy(imageCaption = caption) }
+    }
+
+    fun clearSelectedImage() {
+        _uiState.update { it.copy(selectedImageUri = null, imageCaption = "", isCompressingImage = false) }
+    }
+
+    fun sendSelectedImage(context: Context) {
+        val imageUriString = _uiState.value.selectedImageUri ?: return
+        if (_uiState.value.isBlocked) return
+
+        _uiState.update { it.copy(isCompressingImage = true) }
+
+        viewModelScope.launch {
+            try {
+                val uri = Uri.parse(imageUriString)
+                val compressedResult = imageCompressor.compressAndSaveImage(context, uri)
+                val now = System.currentTimeMillis()
+
+                val newMediaMessage = ChatMessage(
+                    id = "msg_${messageCounter++}",
+                    chatId = currentChatId.ifBlank { "mock_chat" },
+                    senderUserId = "usr_current",
+                    senderName = "Du",
+                    text = _uiState.value.imageCaption.ifBlank { "📷 Foto" },
+                    timestampMs = now,
+                    timestampIso = formatMsToIso(now),
+                    mediaUrl = compressedResult.mediaUrl,
+                    thumbnailUrl = compressedResult.thumbnailUrl,
+                    aspectRatio = compressedResult.aspectRatio,
+                    mediaWidth = compressedResult.width,
+                    mediaHeight = compressedResult.height,
+                    captionText = _uiState.value.imageCaption,
+                    messageType = MessageType.IMAGE,
+                    status = MessageStatus.SENT,
+                    isMine = true
+                )
+
+                _uiState.update { state ->
+                    state.copy(
+                        messages = state.messages + newMediaMessage,
+                        selectedImageUri = null,
+                        imageCaption = "",
+                        isCompressingImage = false
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isCompressingImage = false,
+                        errorMessage = "Fehler beim Komprimieren/Senden des Bildes: ${e.localizedMessage}"
+                    )
+                }
+            }
         }
     }
 
