@@ -20,6 +20,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -185,11 +187,11 @@ fun ChatBubble(
             Text(
                 text = message.senderName,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.primary,
+                color = PurplePrimaryLight,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(
                     start = 12.dp,
-                    bottom = 2.dp
+                    bottom = 4.dp
                 )
             )
         }
@@ -207,7 +209,7 @@ fun ChatBubble(
             } else {
                 MaterialTheme.colorScheme.surfaceVariant
             },
-            tonalElevation = if (message.isMine) 0.dp else 1.dp
+            tonalElevation = if (message.isMine) 0.dp else 2.dp
         ) {
             Column(
                 modifier = Modifier.padding(
@@ -224,17 +226,36 @@ fun ChatBubble(
                         MaterialTheme.colorScheme.onSurface
                     }
                 )
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = message.timestampIso.take(16).replace("T", " "),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (message.isMine) {
-                        Color.White.copy(alpha = 0.7f)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier.align(Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    val timeText = if (message.timestampIso.length >= 16) {
+                        message.timestampIso.substring(11, 16)
                     } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                    },
-                    modifier = Modifier.align(Alignment.End)
-                )
+                        message.timestampIso
+                    }
+                    Text(
+                        text = timeText,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (message.isMine) {
+                            Color.White.copy(alpha = 0.75f)
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        }
+                    )
+                    if (message.isMine) {
+                        val isRead = message.status == MessageStatus.READ
+                        Icon(
+                            imageVector = if (isRead) Icons.Default.DoneAll else Icons.Default.Done,
+                            contentDescription = if (isRead) "Gelesen" else "Gesendet",
+                            tint = if (isRead) PurplePrimaryLight else Color.White.copy(alpha = 0.75f),
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
             }
         }
     }
