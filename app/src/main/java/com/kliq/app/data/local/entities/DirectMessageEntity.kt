@@ -26,6 +26,8 @@ data class DirectMessageEntity(
     val timestamp: Long,
     val timestampIso: String = "",
     val deliveryStatus: MessageStatus = MessageStatus.SENT,
+    val deliveredAtMs: Long? = null,
+    val readAtMs: Long? = null,
     val isEncrypted: Boolean = true,
     val encryptionAlgorithm: String = "AES-256-GCM",
     val mediaUrl: String? = null,
