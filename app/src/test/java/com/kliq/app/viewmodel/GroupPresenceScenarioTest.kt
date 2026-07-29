@@ -8,7 +8,8 @@ import com.kliq.app.data.repository.GroupPresenceRepositoryImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -22,13 +23,14 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupPresenceScenarioTest {
 
-    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var testDispatcher: TestDispatcher
     private lateinit var dataSource: GroupPresenceDataSourceImpl
     private lateinit var repository: GroupPresenceRepositoryImpl
     private lateinit var viewModel: GroupPresenceViewModel
 
     @Before
     fun setUp() {
+        testDispatcher = UnconfinedTestDispatcher()
         Dispatchers.setMain(testDispatcher)
         dataSource = GroupPresenceDataSourceImpl()
         repository = GroupPresenceRepositoryImpl(dataSource)
@@ -41,10 +43,9 @@ class GroupPresenceScenarioTest {
     }
 
     @Test
-    fun step1_simulateUserJoinPublicCityChat() = runTest {
+    fun step1_simulateUserJoinPublicCityChat() = runTest(testDispatcher) {
         val chatId = "pub_1" // Berlin - Tonight
         viewModel.loadGroupPresence(chatId)
-        testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertEquals("pub_1", state.chatId)
@@ -53,10 +54,9 @@ class GroupPresenceScenarioTest {
     }
 
     @Test
-    fun step2_generateAndVerifyMockPresenceDataWithDifferentStates() = runTest {
+    fun step2_generateAndVerifyMockPresenceDataWithDifferentStates() = runTest(testDispatcher) {
         val chatId = "pub_1"
         viewModel.loadGroupPresence(chatId)
-        testDispatcher.scheduler.advanceUntilIdle()
 
         val members = viewModel.uiState.value.onlineMembers
         val hasOnline = members.any { it.status == UserStatus.ONLINE }
@@ -69,17 +69,15 @@ class GroupPresenceScenarioTest {
     }
 
     @Test
-    fun step3_verifyDynamicPresenceHeaderAndBadgeReactivity() = runTest {
+    fun step3_verifyDynamicPresenceHeaderAndBadgeReactivity() = runTest(testDispatcher) {
         val chatId = "pub_1"
         viewModel.loadGroupPresence(chatId)
-        testDispatcher.scheduler.advanceUntilIdle()
 
         val initialOnlineCount = viewModel.uiState.value.totalOnlineCount
         assertTrue(initialOnlineCount > 0)
 
         // Simulating status change of current user to AWAY
         viewModel.updateMyPresenceStatus(UserStatus.AWAY)
-        testDispatcher.scheduler.advanceUntilIdle()
 
         val updatedState = viewModel.uiState.value
         assertEquals(UserStatus.AWAY, updatedState.myPresenceStatus)
@@ -87,15 +85,14 @@ class GroupPresenceScenarioTest {
         // Verify repository reflects update without delay
         val summary = repository.observeGroupPresence(chatId).first()
         val currentUserMember = summary.members.find { it.userId == "current_user" }
-        assertNotNull(currentUserMember)
+        assertNotNull("current_user should be present in city presence summary", currentUserMember)
         assertEquals(UserStatus.AWAY, currentUserMember?.status)
     }
 
     @Test
-    fun step4_verifyFilteringAndAccessibilityMetadata() = runTest {
+    fun step4_verifyFilteringAndAccessibilityMetadata() = runTest(testDispatcher) {
         val chatId = "pub_1"
         viewModel.loadGroupPresence(chatId)
-        testDispatcher.scheduler.advanceUntilIdle()
 
         // Filter for specific user
         viewModel.onSearchQueryChanged("Sophie")

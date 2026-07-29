@@ -5,7 +5,8 @@ import com.kliq.app.data.model.UserStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -19,12 +20,13 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupPresenceRepositoryTest {
 
-    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var testDispatcher: TestDispatcher
     private lateinit var dataSource: GroupPresenceDataSourceImpl
     private lateinit var repository: GroupPresenceRepositoryImpl
 
     @Before
     fun setUp() {
+        testDispatcher = UnconfinedTestDispatcher()
         Dispatchers.setMain(testDispatcher)
         dataSource = GroupPresenceDataSourceImpl()
         repository = GroupPresenceRepositoryImpl(dataSource)
@@ -36,7 +38,7 @@ class GroupPresenceRepositoryTest {
     }
 
     @Test
-    fun observeGroupPresence_returnsDefaultBerlinPresence() = runTest {
+    fun observeGroupPresence_returnsDefaultBerlinPresence() = runTest(testDispatcher) {
         val summary = repository.observeGroupPresence("pub_1").first()
 
         assertNotNull(summary)
@@ -46,7 +48,7 @@ class GroupPresenceRepositoryTest {
     }
 
     @Test
-    fun filterActiveMembers_returnsFilteredList() = runTest {
+    fun filterActiveMembers_returnsFilteredList() = runTest(testDispatcher) {
         val filtered = repository.filterActiveMembers("pub_1", "Lukas").first()
 
         assertEquals(1, filtered.size)
@@ -54,7 +56,7 @@ class GroupPresenceRepositoryTest {
     }
 
     @Test
-    fun updatePresenceStatus_updatesOnlineCountAndStatus() = runTest {
+    fun updatePresenceStatus_updatesOnlineCountAndStatus() = runTest(testDispatcher) {
         val result = repository.updatePresenceStatus("pub_1", "u_1", UserStatus.AWAY)
 
         assertTrue(result.isSuccess)

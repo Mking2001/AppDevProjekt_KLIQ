@@ -5,7 +5,8 @@ import com.kliq.app.data.model.UserStatus
 import com.kliq.app.data.repository.GroupPresenceRepositoryImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -20,12 +21,13 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class GroupPresenceViewModelTest {
 
-    private val testDispatcher = StandardTestDispatcher()
+    private lateinit var testDispatcher: TestDispatcher
     private lateinit var repository: GroupPresenceRepositoryImpl
     private lateinit var viewModel: GroupPresenceViewModel
 
     @Before
     fun setUp() {
+        testDispatcher = UnconfinedTestDispatcher()
         Dispatchers.setMain(testDispatcher)
         val dataSource = GroupPresenceDataSourceImpl()
         repository = GroupPresenceRepositoryImpl(dataSource)
@@ -48,9 +50,8 @@ class GroupPresenceViewModelTest {
     }
 
     @Test
-    fun loadGroupPresence_populatesOnlineCountAndMembers() = runTest {
+    fun loadGroupPresence_populatesOnlineCountAndMembers() = runTest(testDispatcher) {
         viewModel.loadGroupPresence("pub_1")
-        testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertEquals("pub_1", state.chatId)
@@ -61,10 +62,8 @@ class GroupPresenceViewModelTest {
     }
 
     @Test
-    fun onSearchQueryChanged_filtersParticipantList() = runTest {
+    fun onSearchQueryChanged_filtersParticipantList() = runTest(testDispatcher) {
         viewModel.loadGroupPresence("pub_1")
-        testDispatcher.scheduler.advanceUntilIdle()
-
         viewModel.onSearchQueryChanged("Elena")
 
         val state = viewModel.uiState.value
@@ -85,10 +84,8 @@ class GroupPresenceViewModelTest {
     }
 
     @Test
-    fun updateMyPresenceStatus_updatesLocalAndRemoteState() = runTest {
+    fun updateMyPresenceStatus_updatesLocalAndRemoteState() = runTest(testDispatcher) {
         viewModel.loadGroupPresence("pub_1")
-        testDispatcher.scheduler.advanceUntilIdle()
-
         viewModel.updateMyPresenceStatus(UserStatus.AWAY)
 
         assertEquals(UserStatus.AWAY, viewModel.uiState.value.myPresenceStatus)
