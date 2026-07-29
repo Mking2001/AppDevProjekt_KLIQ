@@ -57,7 +57,7 @@ class AsyncDatabaseOperationTest {
         val antiSpamValidator = AntiSpamReviewValidator()
 
         clubAndEventRepository = ClubAndEventRepositoryImpl(clubDao, eventDao, null)
-        chatRepository = ChatRepositoryImpl(chatDao, null)
+        chatRepository = ChatRepositoryImpl(chatDao, db.directMessageDao(), null)
         reviewRepository = ReviewRepositoryImpl(reviewDao, clubDao, antiSpamValidator, null)
     }
 

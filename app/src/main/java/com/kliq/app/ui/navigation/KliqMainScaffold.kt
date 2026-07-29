@@ -1,5 +1,6 @@
 package com.kliq.app.ui.navigation
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -28,6 +29,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.navDeepLink
+import com.kliq.app.data.model.ChatPushPayload
 import com.kliq.app.ui.screens.auth.PhoneLoginScreen
 import com.kliq.app.ui.screens.chat.ChatDetailScreen
 import com.kliq.app.ui.screens.chat.ChatListScreen
@@ -58,6 +61,7 @@ val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
  */
 @Composable
 fun KliqMainScaffold(
+    initialIntent: Intent? = null,
     navigationViewModel: NavigationViewModel = hiltViewModel(),
     topBarViewModel: TopBarViewModel = hiltViewModel(),
     themeViewModel: ThemeViewModel = hiltViewModel(),
@@ -84,6 +88,21 @@ fun KliqMainScaffold(
 
     LaunchedEffect(currentRoute) {
         topBarViewModel.updateTitleForRoute(currentRoute)
+    }
+
+    LaunchedEffect(initialIntent) {
+        initialIntent?.let { intent ->
+            if (intent.action == Intent.ACTION_VIEW && intent.data != null) {
+                navController.handleDeepLink(intent)
+            } else {
+                val chatId = intent.getStringExtra(ChatPushPayload.KEY_CHAT_ID)
+                if (!chatId.isNullOrBlank()) {
+                    navController.navigate(ChatRoutes.chatDetail(chatId)) {
+                        launchSingleTop = true
+                    }
+                }
+            }
+        }
     }
 
     CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
@@ -309,6 +328,11 @@ private fun KliqNavHost(
             arguments = listOf(
                 navArgument(ChatRoutes.ARG_CHAT_ID) {
                     type = NavType.StringType
+                }
+            ),
+            deepLinks = listOf(
+                navDeepLink {
+                    uriPattern = ChatRoutes.DEEP_LINK_URI_PATTERN
                 }
             )
         ) { backStackEntry ->

@@ -47,7 +47,7 @@ class AsyncDatabaseConcurrencyUnitTest {
             .build()
 
         clubAndEventRepository = ClubAndEventRepositoryImpl(db.clubDao(), db.eventDao(), null)
-        chatRepository = ChatRepositoryImpl(db.chatDao(), null)
+        chatRepository = ChatRepositoryImpl(db.chatDao(), db.directMessageDao(), null)
     }
 
     @After
