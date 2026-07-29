@@ -252,7 +252,8 @@ private fun KliqNavHost(
                     navController.navigate(NavigationRoute.Home.route) {
                         popUpTo(0) { inclusive = true }
                     }
-                }
+                },
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
