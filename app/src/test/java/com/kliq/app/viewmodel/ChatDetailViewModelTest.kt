@@ -23,6 +23,7 @@ class ChatDetailViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val userRepository: UserRepository = mock(UserRepository::class.java)
+    private val imageCompressor: com.kliq.app.util.ImageCompressor = mock(com.kliq.app.util.ImageCompressor::class.java)
     private lateinit var viewModel: ChatDetailViewModel
 
     @Before
@@ -30,7 +31,7 @@ class ChatDetailViewModelTest {
         Dispatchers.setMain(testDispatcher)
         `when`(userRepository.isUserBlocked("current_user", "usr_3")).thenReturn(flowOf(false))
         `when`(userRepository.isUserBlocked("current_user", "usr_pub_group")).thenReturn(flowOf(false))
-        viewModel = ChatDetailViewModel(userRepository)
+        viewModel = ChatDetailViewModel(userRepository, imageCompressor)
     }
 
     @After

@@ -184,6 +184,24 @@ object DatabaseMigrations {
         }
     }
 
+    val MIGRATION_14_15 = object : Migration(14, 15) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `messages` ADD COLUMN `messageType` TEXT NOT NULL DEFAULT 'TEXT'")
+            db.execSQL("ALTER TABLE `messages` ADD COLUMN `thumbnailUrl` TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE `messages` ADD COLUMN `aspectRatio` REAL NOT NULL DEFAULT 1.0")
+            db.execSQL("ALTER TABLE `messages` ADD COLUMN `mediaWidth` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `messages` ADD COLUMN `mediaHeight` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `messages` ADD COLUMN `caption` TEXT DEFAULT NULL")
+
+            db.execSQL("ALTER TABLE `direct_messages` ADD COLUMN `messageType` TEXT NOT NULL DEFAULT 'TEXT'")
+            db.execSQL("ALTER TABLE `direct_messages` ADD COLUMN `thumbnailUrl` TEXT DEFAULT NULL")
+            db.execSQL("ALTER TABLE `direct_messages` ADD COLUMN `aspectRatio` REAL NOT NULL DEFAULT 1.0")
+            db.execSQL("ALTER TABLE `direct_messages` ADD COLUMN `mediaWidth` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `direct_messages` ADD COLUMN `mediaHeight` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `direct_messages` ADD COLUMN `caption` TEXT DEFAULT NULL")
+        }
+    }
+
     // Array of all migrations. Scalable strategy for providing them to the builder.
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_1_2,
@@ -196,6 +214,7 @@ object DatabaseMigrations {
         MIGRATION_8_9,
         MIGRATION_9_10,
         MIGRATION_12_13,
-        MIGRATION_13_14
+        MIGRATION_13_14,
+        MIGRATION_14_15
     )
 }
