@@ -33,6 +33,23 @@
             android:foregroundServiceType="location"
             android:exported="false" />
 
+        <!-- Kliq Firebase Push Notification Service -->
+        <service
+            android:name=".service.notification.KliqFirebaseMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- Default Push Notification Channel & Icon -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="kliq_direct_messages_channel" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
+
         <!-- Kliq Geofence Event BroadcastReceiver -->
         <receiver
             android:name=".service.GeofenceBroadcastReceiver"
