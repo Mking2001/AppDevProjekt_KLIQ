@@ -115,10 +115,22 @@ class PrivateChatViewModel @Inject constructor(
                 isEncrypted = _uiState.value.isEncryptedSession
             )
 
-            result.onSuccess {
+            result.onSuccess { message ->
                 _uiState.update { state -> state.copy(currentInput = "") }
+                simulateStatusTransitions(message.messageId)
             }.onFailure { error ->
                 _uiState.update { state -> state.copy(errorMessage = error.localizedMessage) }
+            }
+        }
+    }
+
+    private fun simulateStatusTransitions(messageId: String) {
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(1200)
+            chatRepository.markDirectMessageAsDelivered(messageId)
+            if (_uiState.value.isOnline) {
+                kotlinx.coroutines.delay(2000)
+                chatRepository.markDirectMessageAsRead(messageId)
             }
         }
     }

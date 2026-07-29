@@ -100,6 +100,34 @@ class ChatDetailViewModel @Inject constructor(
                 currentInput = ""
             )
         }
+
+        simulateMessageStatusTransition(newMessage.id)
+    }
+
+    private fun simulateMessageStatusTransition(messageId: String) {
+        viewModelScope.launch {
+            kotlinx.coroutines.delay(1200)
+            _uiState.update { state ->
+                val updatedMessages = state.messages.map { msg ->
+                    if (msg.id == messageId) {
+                        msg.copy(status = MessageStatus.DELIVERED, deliveredAtMs = System.currentTimeMillis())
+                    } else msg
+                }
+                state.copy(messages = updatedMessages)
+            }
+
+            if (_uiState.value.isOnline) {
+                kotlinx.coroutines.delay(2000)
+                _uiState.update { state ->
+                    val updatedMessages = state.messages.map { msg ->
+                        if (msg.id == messageId) {
+                            msg.copy(status = MessageStatus.READ, readAtMs = System.currentTimeMillis())
+                        } else msg
+                    }
+                    state.copy(messages = updatedMessages)
+                }
+            }
+        }
     }
 
     fun openAttachmentSheet() {
