@@ -1,6 +1,7 @@
 package com.kliq.app.data.repository
 
 import com.kliq.app.data.model.Club
+import com.kliq.app.data.model.GenderRatio
 import kotlinx.coroutines.flow.Flow
 
 interface ClubRepository {
@@ -11,4 +12,6 @@ interface ClubRepository {
     suspend fun toggleFavorite(clubId: String, currentFavoriteState: Boolean)
     suspend fun searchExternalClubs(query: String, userLat: Double? = null, userLon: Double? = null, radiusKm: Int = 25): Result<List<Club>>
     suspend fun isUserWithinGeofence(clubId: String, userLat: Double, userLon: Double): Boolean
+    fun getClubGenderRatio(clubId: String, timeWindowMs: Long = 14400000L): Flow<GenderRatio>
+    suspend fun calculateClubGenderRatio(clubId: String, timeWindowMs: Long = 14400000L): GenderRatio
 }

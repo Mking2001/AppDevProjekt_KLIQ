@@ -3,13 +3,17 @@ package com.kliq.app.data.repository
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.kliq.app.data.local.dao.ClubDao
+import com.kliq.app.data.local.dao.VisitedLogDao
 import com.kliq.app.data.local.entities.ClubEntity
 import com.kliq.app.data.model.Club
+import com.kliq.app.data.model.Gender
+import com.kliq.app.data.model.GenderRatio
 import com.kliq.app.data.model.GpsLocation
 import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toDomain
 import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toEntity
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
@@ -22,7 +26,9 @@ import javax.inject.Singleton
 @Singleton
 class ClubRepositoryImpl @Inject constructor(
     private val clubDao: ClubDao,
-    private val apiService: KliqApiService
+    private val visitedLogDao: VisitedLogDao,
+    private val apiService: KliqApiService,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ClubRepository {
 
     private val gson = Gson()
@@ -87,6 +93,55 @@ class ClubRepositoryImpl @Inject constructor(
             userLat, userLon, clubEntity.latitude, clubEntity.longitude
         )
         distanceMeters <= clubEntity.geofenceRadiusMeters
+    }
+
+    override fun getClubGenderRatio(clubId: String, timeWindowMs: Long): Flow<GenderRatio> {
+        val sinceTimestamp = System.currentTimeMillis() - timeWindowMs
+        return visitedLogDao.getGenderCountsForClub(clubId, sinceTimestamp).map { counts ->
+            var male = 0
+            var female = 0
+            var diverse = 0
+
+            for (item in counts) {
+                val genderEnum = Gender.fromString(item.gender)
+                when (genderEnum) {
+                    Gender.MALE -> male += item.count
+                    Gender.FEMALE -> female += item.count
+                    Gender.DIVERSE, Gender.OTHER -> diverse += item.count
+                    else -> {}
+                }
+            }
+
+            GenderRatio.calculate(
+                maleCount = male,
+                femaleCount = female,
+                diverseCount = diverse
+            )
+        }.flowOn(ioDispatcher)
+    }
+
+    override suspend fun calculateClubGenderRatio(clubId: String, timeWindowMs: Long): GenderRatio = withContext(ioDispatcher) {
+        val sinceTimestamp = System.currentTimeMillis() - timeWindowMs
+        val counts = visitedLogDao.getGenderCountsForClub(clubId, sinceTimestamp).firstOrNull() ?: emptyList()
+        var male = 0
+        var female = 0
+        var diverse = 0
+
+        for (item in counts) {
+            val genderEnum = Gender.fromString(item.gender)
+            when (genderEnum) {
+                Gender.MALE -> male += item.count
+                Gender.FEMALE -> female += item.count
+                Gender.DIVERSE, Gender.OTHER -> diverse += item.count
+                else -> {}
+            }
+        }
+
+        GenderRatio.calculate(
+            maleCount = male,
+            femaleCount = female,
+            diverseCount = diverse
+        )
     }
 
     private fun calculateDistanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
