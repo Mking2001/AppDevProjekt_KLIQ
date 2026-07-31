@@ -206,9 +206,11 @@ object DatabaseMigrations {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE `messages` ADD COLUMN `deliveredAtMs` INTEGER DEFAULT NULL")
             db.execSQL("ALTER TABLE `messages` ADD COLUMN `readAtMs` INTEGER DEFAULT NULL")
+            db.execSQL("ALTER TABLE `messages` ADD COLUMN `audioDurationMs` INTEGER NOT NULL DEFAULT 0")
 
             db.execSQL("ALTER TABLE `direct_messages` ADD COLUMN `deliveredAtMs` INTEGER DEFAULT NULL")
             db.execSQL("ALTER TABLE `direct_messages` ADD COLUMN `readAtMs` INTEGER DEFAULT NULL")
+            db.execSQL("ALTER TABLE `direct_messages` ADD COLUMN `audioDurationMs` INTEGER NOT NULL DEFAULT 0")
         }
     }
 

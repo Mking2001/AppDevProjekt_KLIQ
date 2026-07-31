@@ -37,6 +37,7 @@ data class MessageEntity(
     val mediaWidth: Int = 0,
     val mediaHeight: Int = 0,
     val caption: String? = null,
+    val audioDurationMs: Long = 0L,
     val status: MessageStatus = MessageStatus.SENT,
     val deliveredAtMs: Long? = null,
     val readAtMs: Long? = null,

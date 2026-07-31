@@ -41,7 +41,7 @@ import com.kliq.app.data.local.entities.VisitedLogEntity
         VisitedLogEntity::class,
         BlockedUserEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
