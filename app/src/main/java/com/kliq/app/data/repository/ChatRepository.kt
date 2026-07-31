@@ -34,6 +34,14 @@ interface ChatRepository {
         captionText: String? = null
     ): Result<ChatMessage>
 
+    suspend fun sendVoiceMessage(
+        chatId: String,
+        senderUserId: String,
+        senderName: String,
+        audioUrl: String,
+        audioDurationMs: Long
+    ): Result<ChatMessage>
+
     suspend fun updateMessageStatus(messageId: String, status: MessageStatus)
     suspend fun markMessageAsDelivered(messageId: String)
     suspend fun markMessageAsRead(messageId: String)
@@ -60,6 +68,13 @@ interface ChatRepository {
         mediaWidth: Int = 0,
         mediaHeight: Int = 0,
         captionText: String? = null
+    ): Result<DirectMessage>
+
+    suspend fun sendDirectVoiceMessage(
+        senderId: String,
+        receiverId: String,
+        audioUrl: String,
+        audioDurationMs: Long
     ): Result<DirectMessage>
 
     suspend fun receiveDirectMessage(message: DirectMessage): Result<Unit>

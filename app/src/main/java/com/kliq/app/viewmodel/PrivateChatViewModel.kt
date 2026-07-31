@@ -124,6 +124,33 @@ class PrivateChatViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Sendet eine 1-zu-1 Sprachnachricht an den Empfaenger.
+     */
+    fun sendVoiceMessage(
+        receiverId: String = _uiState.value.receiverId,
+        audioUrl: String,
+        audioDurationMs: Long
+    ) {
+        val currentUserId = _uiState.value.currentUserId
+        if (currentUserId.isBlank() || receiverId.isBlank() || audioUrl.isBlank()) return
+
+        viewModelScope.launch {
+            val result = chatRepository.sendDirectVoiceMessage(
+                senderId = currentUserId,
+                receiverId = receiverId,
+                audioUrl = audioUrl,
+                audioDurationMs = audioDurationMs
+            )
+
+            result.onSuccess { message ->
+                simulateStatusTransitions(message.messageId)
+            }.onFailure { error ->
+                _uiState.update { state -> state.copy(errorMessage = error.localizedMessage) }
+            }
+        }
+    }
+
     private fun simulateStatusTransitions(messageId: String) {
         viewModelScope.launch {
             kotlinx.coroutines.delay(1200)

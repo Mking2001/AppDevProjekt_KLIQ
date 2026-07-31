@@ -109,6 +109,24 @@ class ChatDetailViewModel @Inject constructor(
         }
     }
 
+    fun sendVoiceMessage(audioUrl: String, audioDurationMs: Long) {
+        val chatId = _uiState.value.chatId ?: return
+        if (audioUrl.isBlank()) return
+
+        viewModelScope.launch {
+            val result = chatRepository.sendVoiceMessage(
+                chatId = chatId,
+                senderUserId = _uiState.value.currentUserId,
+                senderName = _uiState.value.currentUserName,
+                audioUrl = audioUrl,
+                audioDurationMs = audioDurationMs
+            )
+            result.onFailure { error ->
+                _uiState.update { it.copy(errorMessage = error.localizedMessage) }
+            }
+        }
+    }
+
     fun markMessagesAsRead() {
         val chatId = _uiState.value.chatId ?: return
         viewModelScope.launch {

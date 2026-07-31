@@ -17,6 +17,11 @@ import android.content.Context
 import android.net.Uri
 import com.kliq.app.data.model.MessageType
 import com.kliq.app.util.ImageCompressor
+import com.kliq.app.util.VoicePlayerManager
+import com.kliq.app.util.VoiceRecorderManager
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import javax.inject.Inject
 
 data class ChatDetailUiState(
@@ -29,6 +34,13 @@ data class ChatDetailUiState(
     val imageCaption: String = "",
     val isCompressingImage: Boolean = false,
     val isAttachmentSheetVisible: Boolean = false,
+    val isRecordingVoice: Boolean = false,
+    val recordingDurationMs: Long = 0L,
+    val recordingAmplitudes: List<Float> = emptyList(),
+    val playingMessageId: String? = null,
+    val isPlayingVoice: Boolean = false,
+    val voicePlaybackPositionMs: Long = 0L,
+    val voicePlaybackDurationMs: Long = 0L,
     val isOnline: Boolean = false,
     val isBlocked: Boolean = false,
     val isReportDialogVisible: Boolean = false,
@@ -40,7 +52,9 @@ data class ChatDetailUiState(
 @HiltViewModel
 class ChatDetailViewModel @Inject constructor(
     private val userRepository: UserRepository,
-    private val imageCompressor: ImageCompressor
+    private val imageCompressor: ImageCompressor,
+    private val voiceRecorderManager: VoiceRecorderManager,
+    private val voicePlayerManager: VoicePlayerManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatDetailUiState())
@@ -48,6 +62,7 @@ class ChatDetailViewModel @Inject constructor(
 
     private var messageCounter = 100
     private var currentChatId: String = ""
+    private var recordingTickerJob: Job? = null
 
     fun loadConversation(chatId: String) {
         currentChatId = chatId
@@ -274,6 +289,137 @@ class ChatDetailViewModel @Inject constructor(
 
     fun dismissMessage() {
         _uiState.update { it.copy(errorMessage = null, actionSuccessMessage = null) }
+    }
+
+    fun startVoiceRecording(context: Context) {
+        if (_uiState.value.isBlocked) return
+        val success = voiceRecorderManager.startRecording(context)
+        if (!success) {
+            _uiState.update { it.copy(errorMessage = "Sprachaufnahme konnte nicht gestartet werden.") }
+            return
+        }
+
+        _uiState.update {
+            it.copy(
+                isRecordingVoice = true,
+                recordingDurationMs = 0L,
+                recordingAmplitudes = emptyList()
+            )
+        }
+
+        recordingTickerJob?.cancel()
+        recordingTickerJob = viewModelScope.launch {
+            val startTime = System.currentTimeMillis()
+            while (isActive && voiceRecorderManager.isRecording) {
+                val duration = System.currentTimeMillis() - startTime
+                val amp = voiceRecorderManager.getMaxAmplitudeNormalized()
+                _uiState.update { state ->
+                    val updatedAmplitudes = (state.recordingAmplitudes + amp).takeLast(30)
+                    state.copy(
+                        recordingDurationMs = duration,
+                        recordingAmplitudes = updatedAmplitudes
+                    )
+                }
+                delay(100)
+            }
+        }
+    }
+
+    fun stopAndSendVoiceRecording() {
+        recordingTickerJob?.cancel()
+        recordingTickerJob = null
+
+        val result = voiceRecorderManager.stopRecording()
+        _uiState.update {
+            it.copy(
+                isRecordingVoice = false,
+                recordingDurationMs = 0L,
+                recordingAmplitudes = emptyList()
+            )
+        }
+
+        if (result != null) {
+            val now = System.currentTimeMillis()
+            val newVoiceMsg = ChatMessage(
+                id = "msg_${messageCounter++}",
+                chatId = currentChatId.ifBlank { "mock_chat" },
+                senderUserId = "usr_current",
+                senderName = "Du",
+                text = "🎤 Sprachnachricht",
+                timestampMs = now,
+                timestampIso = formatMsToIso(now),
+                mediaUrl = result.filePath,
+                messageType = MessageType.VOICE,
+                audioDurationMs = result.durationMs,
+                status = MessageStatus.SENT,
+                isMine = true
+            )
+
+            _uiState.update { state ->
+                state.copy(messages = state.messages + newVoiceMsg)
+            }
+
+            simulateMessageStatusTransition(newVoiceMsg.id)
+        }
+    }
+
+    fun cancelVoiceRecording() {
+        recordingTickerJob?.cancel()
+        recordingTickerJob = null
+        voiceRecorderManager.cancelRecording()
+        _uiState.update {
+            it.copy(
+                isRecordingVoice = false,
+                recordingDurationMs = 0L,
+                recordingAmplitudes = emptyList()
+            )
+        }
+    }
+
+    fun togglePlayVoiceMessage(messageId: String, audioUrl: String?) {
+        if (audioUrl.isNullOrBlank()) return
+
+        if (_uiState.value.playingMessageId == messageId && _uiState.value.isPlayingVoice) {
+            voicePlayerManager.pause()
+            _uiState.update { it.copy(isPlayingVoice = false) }
+        } else {
+            voicePlayerManager.play(
+                messageId = messageId,
+                audioUrl = audioUrl,
+                onProgressUpdate = { currentMs, durationMs ->
+                    _uiState.update {
+                        it.copy(
+                            playingMessageId = messageId,
+                            isPlayingVoice = true,
+                            voicePlaybackPositionMs = currentMs,
+                            voicePlaybackDurationMs = durationMs
+                        )
+                    }
+                },
+                onCompletion = {
+                    _uiState.update {
+                        it.copy(
+                            playingMessageId = null,
+                            isPlayingVoice = false,
+                            voicePlaybackPositionMs = 0L,
+                            voicePlaybackDurationMs = 0L
+                        )
+                    }
+                }
+            )
+        }
+    }
+
+    fun seekVoiceMessage(positionMs: Long) {
+        voicePlayerManager.seekTo(positionMs)
+        _uiState.update { it.copy(voicePlaybackPositionMs = positionMs) }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        recordingTickerJob?.cancel()
+        voiceRecorderManager.release()
+        voicePlayerManager.release()
     }
 
     private fun getMockConversation(chatId: String): ConversationData {
