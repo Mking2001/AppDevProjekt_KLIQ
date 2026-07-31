@@ -25,18 +25,24 @@ import com.kliq.app.data.model.Club
 import com.kliq.app.data.model.ClubAnalytics
 import com.kliq.app.ui.navigation.LocalSnackbarHostState
 
+import com.kliq.app.ui.components.LiveVisitorStatsCard
+import com.kliq.app.viewmodel.ClubAnalyticsViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClubDetailScreen(
     clubId: String,
     onNavigateBack: () -> Unit,
-    viewModel: ClubViewModel = hiltViewModel()
+    viewModel: ClubViewModel = hiltViewModel(),
+    analyticsViewModel: ClubAnalyticsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val analyticsState by analyticsViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = LocalSnackbarHostState.current
 
     LaunchedEffect(clubId) {
         viewModel.loadClubDetails(clubId)
+        analyticsViewModel.observeClubAnalytics(clubId)
     }
 
     LaunchedEffect(uiState.errorMessage) {
@@ -100,7 +106,7 @@ fun ClubDetailScreen(
                         )
                     }
 
-                    AnalyticsSection(analytics = club.analytics)
+                    LiveVisitorStatsCard(state = analyticsState)
 
                     club.activeEvent?.let { event ->
                         EventSection(
