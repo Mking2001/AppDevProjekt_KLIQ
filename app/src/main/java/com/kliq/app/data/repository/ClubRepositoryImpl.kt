@@ -11,6 +11,9 @@ import com.kliq.app.data.model.GenderRatio
 import com.kliq.app.data.model.GpsLocation
 import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.remote.KliqApiService
+import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toDomain
+import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toEntity
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
@@ -24,7 +27,8 @@ import javax.inject.Singleton
 class ClubRepositoryImpl @Inject constructor(
     private val clubDao: ClubDao,
     private val visitedLogDao: VisitedLogDao,
-    private val apiService: KliqApiService
+    private val apiService: KliqApiService,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ClubRepository {
 
     private val gson = Gson()
@@ -113,10 +117,10 @@ class ClubRepositoryImpl @Inject constructor(
                 femaleCount = female,
                 diverseCount = diverse
             )
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
-    override suspend fun calculateClubGenderRatio(clubId: String, timeWindowMs: Long): GenderRatio = withContext(Dispatchers.IO) {
+    override suspend fun calculateClubGenderRatio(clubId: String, timeWindowMs: Long): GenderRatio = withContext(ioDispatcher) {
         val sinceTimestamp = System.currentTimeMillis() - timeWindowMs
         val counts = visitedLogDao.getGenderCountsForClub(clubId, sinceTimestamp).firstOrNull() ?: emptyList()
         var male = 0
