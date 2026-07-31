@@ -85,12 +85,10 @@ class ClubLiveVisitorStatsTest {
     @Test
     fun testObserveClubAnalytics_populatesLiveOccupancyMetrics() = runTest {
         val clubId = "club_berghain"
-        val mockGenderRatio = GenderRatio(
-            clubId = clubId,
-            femaleCount = 450,
+        val mockGenderRatio = GenderRatio.calculate(
             maleCount = 550,
-            diverseCount = 100,
-            totalVisitorsCount = 1100
+            femaleCount = 450,
+            diverseCount = 100
         )
 
         `when`(clubRepository.getClubGenderRatio(clubId)).thenReturn(flowOf(mockGenderRatio))
