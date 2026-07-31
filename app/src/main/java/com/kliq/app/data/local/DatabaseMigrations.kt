@@ -214,6 +214,12 @@ object DatabaseMigrations {
         }
     }
 
+    val MIGRATION_16_17 = object : Migration(16, 17) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `users` ADD COLUMN `gender` TEXT NOT NULL DEFAULT 'UNSPECIFIED'")
+        }
+    }
+
     // Array of all migrations. Scalable strategy for providing them to the builder.
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_1_2,
@@ -228,6 +234,7 @@ object DatabaseMigrations {
         MIGRATION_12_13,
         MIGRATION_13_14,
         MIGRATION_14_15,
-        MIGRATION_15_16
+        MIGRATION_15_16,
+        MIGRATION_16_17
     )
 }
