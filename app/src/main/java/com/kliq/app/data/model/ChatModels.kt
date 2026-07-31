@@ -12,7 +12,8 @@ enum class ChatType {
 
 enum class MessageType {
     TEXT,
-    IMAGE
+    IMAGE,
+    VOICE
 }
 
 enum class MessageStatus {
@@ -116,6 +117,7 @@ data class ChatMessage(
     val mediaWidth: Int = 0,
     val mediaHeight: Int = 0,
     val captionText: String? = null,
+    val audioDurationMs: Long = 0L,
     val status: MessageStatus = MessageStatus.SENT,
     val deliveredAtMs: Long? = null,
     val readAtMs: Long? = null,
@@ -142,6 +144,7 @@ data class DirectMessage(
     val mediaWidth: Int = 0,
     val mediaHeight: Int = 0,
     val captionText: String? = null,
+    val audioDurationMs: Long = 0L,
     val isMine: Boolean = false
 )
 

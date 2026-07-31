@@ -36,5 +36,6 @@ data class DirectMessageEntity(
     val aspectRatio: Float = 1.0f,
     val mediaWidth: Int = 0,
     val mediaHeight: Int = 0,
-    val caption: String? = null
+    val caption: String? = null,
+    val audioDurationMs: Long = 0L
 )

@@ -22,14 +22,24 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.DoneAll
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -199,9 +209,98 @@ fun ChatListItem(
 
 
 @Composable
+fun VoiceMessageBubble(
+    message: ChatMessage,
+    isPlaying: Boolean = false,
+    playbackPositionMs: Long = 0L,
+    playbackDurationMs: Long = 0L,
+    onPlayPauseClick: () -> Unit = {},
+    onSeek: ((Long) -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    val durationMs = if (message.audioDurationMs > 0) message.audioDurationMs else if (playbackDurationMs > 0) playbackDurationMs else 1000L
+    val currentPositionMs = if (isPlaying) playbackPositionMs else 0L
+    val progress = (currentPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(
+            onClick = onPlayPauseClick,
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(if (message.isMine) Color.White.copy(alpha = 0.25f) else PurplePrimary.copy(alpha = 0.2f))
+        ) {
+            Icon(
+                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                contentDescription = if (isPlaying) "Pause" else "Abspielen",
+                tint = if (message.isMine) Color.White else PurplePrimaryLight,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🎤 Sprachnachricht",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (message.isMine) Color.White else MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = formatDurationMs(if (isPlaying) currentPositionMs else durationMs),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (message.isMine) Color.White.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Slider(
+                value = progress,
+                onValueChange = { newProgress ->
+                    val targetMs = (newProgress * durationMs).toLong()
+                    onSeek?.invoke(targetMs)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(20.dp),
+                colors = SliderDefaults.colors(
+                    thumbColor = if (message.isMine) Color.White else PurplePrimaryLight,
+                    activeTrackColor = if (message.isMine) Color.White else PurplePrimary,
+                    inactiveTrackColor = if (message.isMine) Color.White.copy(alpha = 0.3f) else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+                )
+            )
+        }
+    }
+}
+
+fun formatDurationMs(ms: Long): String {
+    val totalSeconds = (ms / 1000).toInt()
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return String.format("%d:%02d", minutes, seconds)
+}
+
+@Composable
 fun ChatBubble(
     message: ChatMessage,
     onImageClick: ((String) -> Unit)? = null,
+    isPlayingVoice: Boolean = false,
+    voicePlaybackPositionMs: Long = 0L,
+    voicePlaybackDurationMs: Long = 0L,
+    onPlayPauseVoice: (() -> Unit)? = null,
+    onSeekVoice: ((Long) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var isFullscreenVisible by remember { mutableStateOf(false) }
@@ -223,7 +322,8 @@ fun ChatBubble(
             )
         }
 
-        val isImageMessage = message.messageType == MessageType.IMAGE || !message.mediaUrl.isNullOrBlank()
+        val isVoiceMessage = message.messageType == MessageType.VOICE
+        val isImageMessage = message.messageType == MessageType.IMAGE || (!isVoiceMessage && !message.mediaUrl.isNullOrBlank())
 
         Surface(
             modifier = Modifier.widthIn(max = 280.dp),
@@ -246,7 +346,16 @@ fun ChatBubble(
                     vertical = if (isImageMessage) 6.dp else 10.dp
                 )
             ) {
-                if (isImageMessage && !message.mediaUrl.isNullOrBlank()) {
+                if (isVoiceMessage) {
+                    VoiceMessageBubble(
+                        message = message,
+                        isPlaying = isPlayingVoice,
+                        playbackPositionMs = voicePlaybackPositionMs,
+                        playbackDurationMs = voicePlaybackDurationMs,
+                        onPlayPauseClick = { onPlayPauseVoice?.invoke() },
+                        onSeek = onSeekVoice
+                    )
+                } else if (isImageMessage && !message.mediaUrl.isNullOrBlank()) {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -369,12 +478,18 @@ fun ChatInputBar(
     onValueChange: (String) -> Unit,
     onSend: () -> Unit,
     onAttachClick: (() -> Unit)? = null,
+    isRecordingVoice: Boolean = false,
+    recordingDurationMs: Long = 0L,
+    recordingAmplitudes: List<Float> = emptyList(),
+    onStartRecordVoice: (() -> Unit)? = null,
+    onStopAndSendRecordVoice: (() -> Unit)? = null,
+    onCancelRecordVoice: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val hasText = value.isNotBlank()
 
     val sendButtonColor by animateColorAsState(
-        targetValue = if (hasText) PurplePrimary else PurplePrimary.copy(alpha = 0.3f),
+        targetValue = if (hasText || isRecordingVoice) PurplePrimary else PurplePrimary.copy(alpha = 0.3f),
         label = "sendButtonColor"
     )
 
@@ -399,76 +514,189 @@ fun ChatInputBar(
                     )
             )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                if (onAttachClick != null) {
+            if (isRecordingVoice) {
+                val infiniteTransition = rememberInfiniteTransition(label = "PulseTransition")
+                val pulseAlpha by infiniteTransition.animateFloat(
+                    initialValue = 0.3f,
+                    targetValue = 1.0f,
+                    animationSpec = infiniteRepeatable(
+                        animation = tween(600),
+                        repeatMode = RepeatMode.Reverse
+                    ),
+                    label = "PulseAlpha"
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        IconButton(
+                            onClick = { onCancelRecordVoice?.invoke() },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Aufnahme verwerfen",
+                                tint = Color(0xFFEF4444)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFFEF4444).copy(alpha = pulseAlpha))
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text(
+                            text = formatDurationMs(recordingDurationMs),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(3.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            val amplitudes = if (recordingAmplitudes.isNotEmpty()) recordingAmplitudes.takeLast(16) else listOf(0.2f, 0.4f, 0.7f, 0.3f, 0.6f, 0.8f, 0.4f, 0.2f)
+                            amplitudes.forEach { amp ->
+                                val h = (amp * 20.dp.value).coerceIn(4f, 24f)
+                                Box(
+                                    modifier = Modifier
+                                        .width(3.dp)
+                                        .height(h.dp)
+                                        .clip(RoundedCornerShape(2.dp))
+                                        .background(PurplePrimaryLight)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
                     IconButton(
-                        onClick = onAttachClick,
+                        onClick = { onStopAndSendRecordVoice?.invoke() },
                         modifier = Modifier
                             .size(44.dp)
-                            .clip(CircleShape)
+                            .clip(CircleShape),
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = PurplePrimary,
+                            contentColor = Color.White
+                        )
                     ) {
                         Icon(
-                            imageVector = Icons.Default.AttachFile,
-                            contentDescription = "Foto anhängen",
-                            tint = PurplePrimaryLight,
-                            modifier = Modifier.size(22.dp)
+                            imageVector = Icons.Filled.Send,
+                            contentDescription = "Sprachnachricht senden",
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
-
-                OutlinedTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    modifier = Modifier.weight(1f),
-                    placeholder = {
-                        Text(
-                            text = "Nachricht schreiben…",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                        )
-                    },
-                    shape = RoundedCornerShape(24.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = PurplePrimary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                        cursorColor = PurplePrimary,
-                        focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                    ),
-                    textStyle = MaterialTheme.typography.bodyMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurface
-                    ),
-                    maxLines = 4,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
-                    keyboardActions = KeyboardActions(
-                        onSend = { if (hasText) onSend() }
-                    )
-                )
-
-                IconButton(
-                    onClick = onSend,
-                    enabled = hasText,
+            } else {
+                Row(
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape),
-                    colors = IconButtonDefaults.iconButtonColors(
-                        containerColor = sendButtonColor,
-                        contentColor = Color.White,
-                        disabledContainerColor = PurplePrimary.copy(alpha = 0.3f),
-                        disabledContentColor = Color.White.copy(alpha = 0.5f)
-                    )
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Send,
-                        contentDescription = "Senden",
-                        modifier = Modifier.size(20.dp)
+                    if (onAttachClick != null) {
+                        IconButton(
+                            onClick = onAttachClick,
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AttachFile,
+                                contentDescription = "Foto anhängen",
+                                tint = PurplePrimaryLight,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = onValueChange,
+                        modifier = Modifier.weight(1f),
+                        placeholder = {
+                            Text(
+                                text = "Nachricht schreiben…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            )
+                        },
+                        shape = RoundedCornerShape(24.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PurplePrimary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                            cursorColor = PurplePrimary,
+                            focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                        ),
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
+                        maxLines = 4,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
+                        keyboardActions = KeyboardActions(
+                            onSend = { if (hasText) onSend() }
+                        )
                     )
+
+                    if (hasText || onStartRecordVoice == null) {
+                        IconButton(
+                            onClick = onSend,
+                            enabled = hasText,
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = sendButtonColor,
+                                contentColor = Color.White,
+                                disabledContainerColor = PurplePrimary.copy(alpha = 0.3f),
+                                disabledContentColor = Color.White.copy(alpha = 0.5f)
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Send,
+                                contentDescription = "Senden",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    } else {
+                        IconButton(
+                            onClick = { onStartRecordVoice() },
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = PurplePrimary,
+                                contentColor = Color.White
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Mic,
+                                contentDescription = "Sprachnachricht aufnehmen",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
