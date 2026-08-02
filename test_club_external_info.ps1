@@ -16,8 +16,8 @@ if (Test-Path "./gradlew.bat") {
 # 2. Ausführen der automatisierten Tests für Kapitel 7.6
 Write-Host "`n[Schritt 1] Ausführen der Unit- und ViewModel-Tests..." -ForegroundColor Yellow
 & $gradle testDebugUnitTest `
-    --tests "com.kliq.app.util.OpeningHoursHelperTest" `
-    --tests "com.kliq.app.viewmodel.ClubExternalInfoViewModelTest"
+    --tests "*OpeningHoursHelperTest*" `
+    --tests "*ClubExternalInfoViewModelTest*"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "`n[FEHLER] Testausführung für Kapitel 7.6 fehlgeschlagen!" -ForegroundColor Red
