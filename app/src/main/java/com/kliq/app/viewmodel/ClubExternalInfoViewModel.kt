@@ -20,7 +20,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ClubExternalInfoViewModel @Inject constructor(
-    private val clubRepository: ClubRepository? = null
+    private val clubRepository: ClubRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ClubExternalInfoUiState())
@@ -34,22 +34,18 @@ class ClubExternalInfoViewModel @Inject constructor(
 
         _uiState.update { it.copy(isLoading = true, errorMessage = null, clubId = clubId) }
 
-        if (clubRepository != null) {
-            viewModelScope.launch {
-                clubRepository.getClubById(clubId)
-                    .catch { e ->
-                        _uiState.update { it.copy(isLoading = false, errorMessage = e.message ?: "Fehler beim Laden") }
+        viewModelScope.launch {
+            clubRepository.getClubById(clubId)
+                .catch { e ->
+                    _uiState.update { it.copy(isLoading = false, errorMessage = e.message ?: "Fehler beim Laden") }
+                }
+                .collect { club ->
+                    if (club != null) {
+                        updateStateFromClub(club)
+                    } else {
+                        loadFallbackClubInfo(clubId)
                     }
-                    .collect { club ->
-                        if (club != null) {
-                            updateStateFromClub(club)
-                        } else {
-                            loadFallbackClubInfo(clubId)
-                        }
-                    }
-            }
-        } else {
-            loadFallbackClubInfo(clubId)
+                }
         }
     }
 
