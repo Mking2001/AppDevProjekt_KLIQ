@@ -62,6 +62,9 @@ object AppModule {
     fun provideBlockedUserDao(database: KliqDatabase): com.kliq.app.data.local.dao.BlockedUserDao = database.blockedUserDao()
 
     @Provides
+    fun provideClubOfferDao(database: KliqDatabase): com.kliq.app.data.local.dao.ClubOfferDao = database.clubOfferDao()
+
+    @Provides
     @Singleton
     fun provideApiService(): KliqApiService {
         return Retrofit.Builder()

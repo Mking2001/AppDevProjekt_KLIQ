@@ -15,11 +15,14 @@ import org.junit.Test
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
+import com.kliq.app.data.local.dao.VisitedLogDao
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ClubRepositorySearchTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val clubDao: ClubDao = mock(ClubDao::class.java)
+    private val visitedLogDao: VisitedLogDao = mock(VisitedLogDao::class.java)
     private val apiService: KliqApiService = mock(KliqApiService::class.java)
     private lateinit var repository: ClubRepositoryImpl
 
@@ -49,6 +52,7 @@ class ClubRepositorySearchTest {
     fun setUp() {
         repository = ClubRepositoryImpl(
             clubDao = clubDao,
+            visitedLogDao = visitedLogDao,
             apiService = apiService,
             ioDispatcher = testDispatcher
         )
