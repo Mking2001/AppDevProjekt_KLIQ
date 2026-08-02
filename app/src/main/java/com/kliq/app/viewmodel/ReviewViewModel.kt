@@ -2,9 +2,13 @@ package com.kliq.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kliq.app.data.model.Review
 import com.kliq.app.data.model.ReviewVerificationMethod
 import com.kliq.app.data.repository.ReviewRepository
+import com.kliq.app.ui.model.ReviewFilterState
 import com.kliq.app.ui.model.ReviewHighContrastItemState
+import com.kliq.app.ui.model.ReviewSortOption
+import com.kliq.app.ui.model.StarFilterOption
 import com.kliq.app.ui.model.toHighContrastUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +31,9 @@ data class ReviewUiState(
     val verifiedReviewsOnly: Boolean = false,
     val averageRating: Double = 0.0,
     val errorMessage: String? = null,
+
+    // Filter und Sortierung
+    val filterState: ReviewFilterState = ReviewFilterState(),
 
     // Kommentarsektions-Zustände (Kapitel 5.5)
     val commentInputText: String = "",
@@ -52,6 +59,8 @@ class ReviewViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ReviewUiState())
     val uiState: StateFlow<ReviewUiState> = _uiState.asStateFlow()
 
+    private var rawClubReviews: List<Review> = emptyList()
+
     fun loadReviewsForClub(clubId: String) {
         _uiState.update { it.copy(clubId = clubId, isLoading = true) }
 
@@ -60,7 +69,8 @@ class ReviewViewModel @Inject constructor(
                 reviewRepository.getReviewsForClub(clubId),
                 reviewRepository.getAverageRatingForClub(clubId)
             ) { reviewsList, avgRating ->
-                val uiReviews = reviewsList.map { it.toHighContrastUiState() }
+                rawClubReviews = reviewsList
+                val uiReviews = applyFilterAndSort(reviewsList, _uiState.value.filterState)
                 Pair(uiReviews, avgRating ?: 0.0)
             }
             .catch { throwable ->
@@ -76,6 +86,86 @@ class ReviewViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun setStarFilter(option: StarFilterOption) {
+        _uiState.update { state ->
+            val updatedFilterState = state.filterState.copy(selectedStarFilter = option)
+            val filteredList = applyFilterAndSort(rawClubReviews, updatedFilterState)
+            state.copy(
+                filterState = updatedFilterState,
+                reviews = filteredList
+            )
+        }
+    }
+
+    fun setSortOption(option: ReviewSortOption) {
+        _uiState.update { state ->
+            val updatedFilterState = state.filterState.copy(selectedSortOption = option)
+            val filteredList = applyFilterAndSort(rawClubReviews, updatedFilterState)
+            state.copy(
+                filterState = updatedFilterState,
+                reviews = filteredList
+            )
+        }
+    }
+
+    fun setVerifiedOnly(onlyVerified: Boolean) {
+        _uiState.update { state ->
+            val updatedFilterState = state.filterState.copy(onlyVerified = onlyVerified)
+            val filteredList = applyFilterAndSort(rawClubReviews, updatedFilterState)
+            state.copy(
+                filterState = updatedFilterState,
+                verifiedReviewsOnly = onlyVerified,
+                reviews = filteredList
+            )
+        }
+    }
+
+    fun resetFilters() {
+        _uiState.update { state ->
+            val defaultFilter = ReviewFilterState()
+            val filteredList = applyFilterAndSort(rawClubReviews, defaultFilter)
+            state.copy(
+                filterState = defaultFilter,
+                verifiedReviewsOnly = false,
+                reviews = filteredList
+            )
+        }
+    }
+
+    private fun applyFilterAndSort(
+        reviews: List<Review>,
+        filterState: ReviewFilterState
+    ): List<ReviewHighContrastItemState> {
+        var result = reviews
+
+        if (filterState.onlyVerified) {
+            result = result.filter { it.isVerified }
+        }
+
+        result = when (filterState.selectedStarFilter) {
+            StarFilterOption.ALL -> result
+            StarFilterOption.FIVE_STARS -> result.filter { it.rating == 5 }
+            StarFilterOption.FOUR_PLUS_STARS -> result.filter { it.rating >= 4 }
+            StarFilterOption.THREE_PLUS_STARS -> result.filter { it.rating >= 3 }
+            StarFilterOption.TWO_PLUS_STARS -> result.filter { it.rating >= 2 }
+            StarFilterOption.ONE_STAR -> result.filter { it.rating == 1 }
+        }
+
+        val sorted = when (filterState.selectedSortOption) {
+            ReviewSortOption.NEWEST_FIRST -> result.sortedByDescending { it.timestamp }
+            ReviewSortOption.OLDEST_FIRST -> result.sortedBy { it.timestamp }
+            ReviewSortOption.HIGHEST_RATING -> result.sortedWith(
+                compareByDescending<Review> { it.rating }.thenByDescending { it.timestamp }
+            )
+            ReviewSortOption.LOWEST_RATING -> result.sortedWith(
+                compareBy<Review> { it.rating }.thenByDescending { it.timestamp }
+            )
+            ReviewSortOption.MOST_HELPFUL -> result.sortedByDescending { it.timestamp }
+        }
+
+        return sorted.map { it.toHighContrastUiState() }
     }
 
     fun loadCommentsForUser(targetUserId: String) {
