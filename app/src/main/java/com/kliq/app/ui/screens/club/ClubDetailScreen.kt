@@ -25,24 +25,44 @@ import com.kliq.app.data.model.Club
 import com.kliq.app.data.model.ClubAnalytics
 import com.kliq.app.ui.navigation.LocalSnackbarHostState
 
+import com.kliq.app.ui.components.ClubEventOfferInfoBlock
+import com.kliq.app.ui.components.ClubOfferDetailBottomSheet
+import com.kliq.app.ui.components.LiveVisitorStatsCard
+import com.kliq.app.viewmodel.ClubAnalyticsViewModel
+import com.kliq.app.viewmodel.ClubEventOfferViewModel
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClubDetailScreen(
     clubId: String,
     onNavigateBack: () -> Unit,
-    viewModel: ClubViewModel = hiltViewModel()
+    viewModel: ClubViewModel = hiltViewModel(),
+    analyticsViewModel: ClubAnalyticsViewModel = hiltViewModel(),
+    eventOfferViewModel: ClubEventOfferViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val analyticsState by analyticsViewModel.uiState.collectAsStateWithLifecycle()
+    val eventOfferState by eventOfferViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = LocalSnackbarHostState.current
+    val sheetState = rememberModalBottomSheetState()
 
     LaunchedEffect(clubId) {
         viewModel.loadClubDetails(clubId)
+        analyticsViewModel.observeClubAnalytics(clubId)
+        eventOfferViewModel.loadEventsAndOffers(clubId)
     }
 
     LaunchedEffect(uiState.errorMessage) {
         uiState.errorMessage?.let { error ->
             snackbarHostState.showSnackbar(error)
             viewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(eventOfferState.codeCopiedMessage) {
+        eventOfferState.codeCopiedMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            eventOfferViewModel.clearCopiedMessage()
         }
     }
 
@@ -100,7 +120,13 @@ fun ClubDetailScreen(
                         )
                     }
 
-                    AnalyticsSection(analytics = club.analytics)
+                    LiveVisitorStatsCard(state = analyticsState)
+
+                    ClubEventOfferInfoBlock(
+                        state = eventOfferState,
+                        onOfferSelected = { eventOfferViewModel.selectOffer(it) },
+                        onEventSelected = { eventOfferViewModel.selectEvent(it) }
+                    )
 
                     club.activeEvent?.let { event ->
                         EventSection(
@@ -111,6 +137,15 @@ fun ClubDetailScreen(
                     }
 
                     OperatingHoursSection(club = club)
+                }
+
+                eventOfferState.selectedOffer?.let { offer ->
+                    ClubOfferDetailBottomSheet(
+                        offer = offer,
+                        onDismissRequest = { eventOfferViewModel.selectOffer(null) },
+                        onCodeCopied = { code -> eventOfferViewModel.onCodeCopied(code) },
+                        sheetState = sheetState
+                    )
                 }
             }
         }

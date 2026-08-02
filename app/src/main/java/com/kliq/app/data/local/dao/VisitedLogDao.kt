@@ -30,4 +30,22 @@ interface VisitedLogDao {
 
     @Query("DELETE FROM visited_logs WHERE userId = :userId")
     suspend fun clearVisitedLogsForUser(userId: String)
+
+    @Query("""
+        SELECT u.gender AS gender, COUNT(v.userId) AS count
+        FROM visited_logs v
+        INNER JOIN users u ON v.userId = u.id
+        WHERE v.clubId = :clubId AND v.isVerifiedByGps = 1 AND v.visitedAtTimestamp >= :sinceTimestamp
+        GROUP BY u.gender
+    """)
+    fun getGenderCountsForClub(clubId: String, sinceTimestamp: Long): Flow<List<GenderCountResult>>
+
+    @Query("SELECT * FROM visited_logs WHERE clubId = :clubId AND isVerifiedByGps = 1 AND visitedAtTimestamp >= :sinceTimestamp")
+    fun getVerifiedLogsForClub(clubId: String, sinceTimestamp: Long): Flow<List<VisitedLogEntity>>
 }
+
+data class GenderCountResult(
+    val gender: String,
+    val count: Int
+)
+

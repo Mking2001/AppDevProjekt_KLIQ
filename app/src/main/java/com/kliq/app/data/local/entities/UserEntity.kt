@@ -14,5 +14,6 @@ data class UserEntity(
     val bio: String? = null,
     val phoneNumber: String? = null,
     val isVerified: Boolean = false,
-    val updatedAtTimestampMs: Long = 0L
+    val updatedAtTimestampMs: Long = 0L,
+    val gender: String = "UNSPECIFIED"
 )

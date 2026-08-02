@@ -379,4 +379,64 @@ class DatabaseMigrationTest {
             "FOREIGN KEY(`chatId`) REFERENCES `chats`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)"
         )
     }
+
+    @Test
+    fun migrate15To16_addsAudioDurationMsAndStatusTimestamps() {
+        val configV15 = SupportSQLiteOpenHelper.Configuration.builder(context)
+            .name(TEST_DB_NAME)
+            .callback(object : SupportSQLiteOpenHelper.Callback(15) {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `messages` (`id` TEXT NOT NULL, `chatId` TEXT NOT NULL, `senderUserId` TEXT NOT NULL DEFAULT '', `senderName` TEXT NOT NULL, `text` TEXT NOT NULL, `timestampMs` INTEGER NOT NULL, `timestampIso` TEXT NOT NULL DEFAULT '', `mediaUrl` TEXT DEFAULT NULL, `messageType` TEXT NOT NULL DEFAULT 'TEXT', `thumbnailUrl` TEXT DEFAULT NULL, `aspectRatio` REAL NOT NULL DEFAULT 1.0, `mediaWidth` INTEGER NOT NULL DEFAULT 0, `mediaHeight` INTEGER NOT NULL DEFAULT 0, `caption` TEXT DEFAULT NULL, `status` TEXT NOT NULL DEFAULT 'SENT', `isMine` INTEGER NOT NULL, PRIMARY KEY(`id`))"
+                    )
+                    db.execSQL(
+                        "CREATE TABLE IF NOT EXISTS `direct_messages` (`messageId` TEXT NOT NULL, `senderId` TEXT NOT NULL, `receiverId` TEXT NOT NULL, `text` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `timestampIso` TEXT NOT NULL DEFAULT '', `deliveryStatus` TEXT NOT NULL DEFAULT 'SENT', `isEncrypted` INTEGER NOT NULL DEFAULT 1, `encryptionAlgorithm` TEXT NOT NULL DEFAULT 'AES-256-GCM', `mediaUrl` TEXT DEFAULT NULL, `messageType` TEXT NOT NULL DEFAULT 'TEXT', `thumbnailUrl` TEXT DEFAULT NULL, `aspectRatio` REAL NOT NULL DEFAULT 1.0, `mediaWidth` INTEGER NOT NULL DEFAULT 0, `mediaHeight` INTEGER NOT NULL DEFAULT 0, `caption` TEXT DEFAULT NULL, PRIMARY KEY(`messageId`))"
+                    )
+                }
+
+                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+            })
+            .build()
+
+        val helperV15 = FrameworkSQLiteOpenHelperFactory().create(configV15)
+        val dbV15 = helperV15.writableDatabase
+
+        dbV15.execSQL(
+            "INSERT INTO `messages` (`id`, `chatId`, `senderName`, `text`, `timestampMs`, `isMine`) VALUES ('m15', 'c1', 'Max', 'Hallo', 1000, 1)"
+        )
+        dbV15.execSQL(
+            "INSERT INTO `direct_messages` (`messageId`, `senderId`, `receiverId`, `text`, `timestamp`) VALUES ('dm15', 'u1', 'u2', 'Hey', 1000)"
+        )
+        helperV15.close()
+
+        val configV16 = SupportSQLiteOpenHelper.Configuration.builder(context)
+            .name(TEST_DB_NAME)
+            .callback(object : SupportSQLiteOpenHelper.Callback(16) {
+                override fun onCreate(db: SupportSQLiteDatabase) {}
+
+                override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
+                    if (oldVersion == 15 && newVersion == 16) {
+                        DatabaseMigrations.MIGRATION_15_16.migrate(db)
+                    }
+                }
+            })
+            .build()
+
+        val helperV16 = FrameworkSQLiteOpenHelperFactory().create(configV16)
+        val dbV16 = helperV16.writableDatabase
+
+        val msgCursor = dbV16.query("SELECT * FROM `messages` WHERE `id` = 'm15'")
+        assertTrue(msgCursor.moveToFirst())
+        assertEquals(0L, msgCursor.getLong(msgCursor.getColumnIndexOrThrow("audioDurationMs")))
+        assertTrue(msgCursor.isNull(msgCursor.getColumnIndexOrThrow("deliveredAtMs")))
+        msgCursor.close()
+
+        val dmCursor = dbV16.query("SELECT * FROM `direct_messages` WHERE `messageId` = 'dm15'")
+        assertTrue(dmCursor.moveToFirst())
+        assertEquals(0L, dmCursor.getLong(dmCursor.getColumnIndexOrThrow("audioDurationMs")))
+        assertTrue(dmCursor.isNull(dmCursor.getColumnIndexOrThrow("deliveredAtMs")))
+        dmCursor.close()
+
+        helperV16.close()
+    }
 }

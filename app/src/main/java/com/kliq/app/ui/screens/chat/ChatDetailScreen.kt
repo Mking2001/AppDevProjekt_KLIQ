@@ -37,7 +37,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.platform.LocalContext
 import com.kliq.app.data.model.ChatType
+import com.kliq.app.ui.components.AttachmentOptionsSheet
+import com.kliq.app.ui.components.ChatBubble
+import com.kliq.app.ui.components.ChatInputBar
 import com.kliq.app.ui.components.GroupPresenceHeader
 import com.kliq.app.ui.components.GroupPresenceParticipantSheet
 import com.kliq.app.ui.theme.DarkSurface
@@ -46,7 +51,7 @@ import com.kliq.app.viewmodel.GroupPresenceViewModel
 
 /**
  * ChatDetailScreen - Unterstützt sowohl Stadt-Gruppenchats mit Who's Online Präsenz-Modul (Kapitel 6.8)
- * als auch Direktnachrichten.
+ * als auch Direktnachrichten und Sprachnachrichten (Kapitel 6.9).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,22 +60,34 @@ fun ChatDetailScreen(
     chatTitle: String = "Berlin - Tonight",
     chatType: ChatType = ChatType.PUBLIC_CITY,
     onNavigateBack: () -> Unit,
+    chatViewModel: ChatDetailViewModel = hiltViewModel(),
     presenceViewModel: GroupPresenceViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val chatUiState by chatViewModel.uiState.collectAsStateWithLifecycle()
     val presenceUiState by presenceViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
 
     LaunchedEffect(chatId) {
+        chatViewModel.loadConversation(chatId)
         if (chatType == ChatType.PUBLIC_CITY) {
             presenceViewModel.loadGroupPresence(chatId)
         }
     }
 
-    LaunchedEffect(presenceUiState.errorMessage) {
-        presenceUiState.errorMessage?.let { msg ->
+    LaunchedEffect(chatUiState.errorMessage, presenceUiState.errorMessage) {
+        val error = chatUiState.errorMessage ?: presenceUiState.errorMessage
+        error?.let { msg ->
             snackbarHostState.showSnackbar(msg)
+            chatViewModel.dismissMessage()
             presenceViewModel.clearError()
+        }
+    }
+
+    LaunchedEffect(chatUiState.messages.size) {
+        if (chatUiState.messages.isNotEmpty()) {
+            listState.animateScrollToItem(chatUiState.messages.size - 1)
         }
     }
 
@@ -137,6 +154,20 @@ fun ChatDetailScreen(
                     titleContentColor = MaterialTheme.colorScheme.onSurface
                 )
             )
+        },
+        bottomBar = {
+            ChatInputBar(
+                value = chatUiState.currentInput,
+                onValueChange = chatViewModel::onInputChanged,
+                onSend = chatViewModel::onSendMessage,
+                onAttachClick = chatViewModel::openAttachmentSheet,
+                isRecordingVoice = chatUiState.isRecordingVoice,
+                recordingDurationMs = chatUiState.recordingDurationMs,
+                recordingAmplitudes = chatUiState.recordingAmplitudes,
+                onStartRecordVoice = { chatViewModel.startVoiceRecording(context) },
+                onStopAndSendRecordVoice = chatViewModel::stopAndSendVoiceRecording,
+                onCancelRecordVoice = chatViewModel::cancelVoiceRecording
+            )
         }
     ) { innerPadding ->
         Box(
@@ -150,13 +181,25 @@ fun ChatDetailScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                item {
-                    Text(
-                        text = "Willkommen im Chat $chatTitle",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                items(chatUiState.messages.size) { index ->
+                    val message = chatUiState.messages[index]
+                    ChatBubble(
+                        message = message,
+                        isPlayingVoice = chatUiState.playingMessageId == message.id && chatUiState.isPlayingVoice,
+                        voicePlaybackPositionMs = if (chatUiState.playingMessageId == message.id) chatUiState.voicePlaybackPositionMs else 0L,
+                        voicePlaybackDurationMs = if (chatUiState.playingMessageId == message.id) chatUiState.voicePlaybackDurationMs else 0L,
+                        onPlayPauseVoice = { chatViewModel.togglePlayVoiceMessage(message.id, message.mediaUrl) },
+                        onSeekVoice = { posMs -> chatViewModel.seekVoiceMessage(posMs) }
                     )
                 }
+            }
+
+            if (chatUiState.isAttachmentSheetVisible) {
+                AttachmentOptionsSheet(
+                    onOptionGallery = { },
+                    onOptionCamera = { },
+                    onDismiss = chatViewModel::closeAttachmentSheet
+                )
             }
 
             if (presenceUiState.isParticipantSheetExpanded) {

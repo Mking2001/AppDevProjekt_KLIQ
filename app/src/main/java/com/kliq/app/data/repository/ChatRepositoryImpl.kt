@@ -108,6 +108,24 @@ class ChatRepositoryImpl @Inject constructor(
         )
     }
 
+    override suspend fun sendVoiceMessage(
+        chatId: String,
+        senderUserId: String,
+        senderName: String,
+        audioUrl: String,
+        audioDurationMs: Long
+    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+        sendInternalMessage(
+            chatId = chatId,
+            senderUserId = senderUserId,
+            senderName = senderName,
+            text = "🎤 Sprachnachricht",
+            mediaUrl = audioUrl,
+            messageType = com.kliq.app.data.model.MessageType.VOICE,
+            audioDurationMs = audioDurationMs
+        )
+    }
+
     private suspend fun sendInternalMessage(
         chatId: String,
         senderUserId: String,
@@ -119,7 +137,8 @@ class ChatRepositoryImpl @Inject constructor(
         aspectRatio: Float = 1.0f,
         mediaWidth: Int = 0,
         mediaHeight: Int = 0,
-        captionText: String? = null
+        captionText: String? = null,
+        audioDurationMs: Long = 0L
     ): Result<ChatMessage> = withContext(Dispatchers.IO) {
         try {
             val nowMs = System.currentTimeMillis()
@@ -140,12 +159,17 @@ class ChatRepositoryImpl @Inject constructor(
                 mediaWidth = mediaWidth,
                 mediaHeight = mediaHeight,
                 caption = captionText,
+                audioDurationMs = audioDurationMs,
                 status = MessageStatus.SENT,
                 isMine = true
             )
 
             chatDao.insertMessage(messageEntity)
-            val previewText = if (messageType == com.kliq.app.data.model.MessageType.IMAGE || !mediaUrl.isNullOrBlank()) "📷 Foto" else text
+            val previewText = when (messageType) {
+                com.kliq.app.data.model.MessageType.IMAGE -> "📷 Foto"
+                com.kliq.app.data.model.MessageType.VOICE -> "🎤 Sprachnachricht"
+                else -> text
+            }
             chatDao.updateChatLastMessage(
                 chatId = chatId,
                 text = previewText,
@@ -351,6 +375,39 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun sendDirectVoiceMessage(
+        senderId: String,
+        receiverId: String,
+        audioUrl: String,
+        audioDurationMs: Long
+    ): Result<DirectMessage> = withContext(Dispatchers.IO) {
+        try {
+            val nowMs = System.currentTimeMillis()
+            val nowIso = formatMsToIso(nowMs)
+            val msgId = UUID.randomUUID().toString()
+
+            val entity = DirectMessageEntity(
+                messageId = msgId,
+                senderId = senderId,
+                receiverId = receiverId,
+                text = "🎤 Sprachnachricht",
+                timestamp = nowMs,
+                timestampIso = nowIso,
+                deliveryStatus = MessageStatus.SENT,
+                isEncrypted = true,
+                encryptionAlgorithm = "AES-256-GCM",
+                mediaUrl = audioUrl,
+                messageType = com.kliq.app.data.model.MessageType.VOICE,
+                audioDurationMs = audioDurationMs
+            )
+
+            directMessageDao.insertDirectMessage(entity)
+            Result.success(entity.toDomain(isMine = true))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun ChatEntity.toDomain(): ChatConversation {
         return ChatConversation(
             id = id,
@@ -383,6 +440,7 @@ class ChatRepositoryImpl @Inject constructor(
             mediaWidth = mediaWidth,
             mediaHeight = mediaHeight,
             captionText = caption,
+            audioDurationMs = audioDurationMs,
             status = status,
             deliveredAtMs = deliveredAtMs,
             readAtMs = readAtMs,
@@ -410,6 +468,7 @@ class ChatRepositoryImpl @Inject constructor(
             mediaWidth = mediaWidth,
             mediaHeight = mediaHeight,
             captionText = caption,
+            audioDurationMs = audioDurationMs,
             isMine = isMine
         )
     }
