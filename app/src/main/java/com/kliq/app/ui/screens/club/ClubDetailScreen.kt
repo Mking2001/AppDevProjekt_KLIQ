@@ -25,11 +25,13 @@ import com.kliq.app.data.model.Club
 import com.kliq.app.data.model.ClubAnalytics
 import com.kliq.app.ui.navigation.LocalSnackbarHostState
 
+import com.kliq.app.ui.components.ClubExternalInfoBlock
 import com.kliq.app.ui.components.ClubEventOfferInfoBlock
 import com.kliq.app.ui.components.ClubOfferDetailBottomSheet
 import com.kliq.app.ui.components.LiveVisitorStatsCard
 import com.kliq.app.viewmodel.ClubAnalyticsViewModel
 import com.kliq.app.viewmodel.ClubEventOfferViewModel
+import com.kliq.app.viewmodel.ClubExternalInfoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,11 +40,13 @@ fun ClubDetailScreen(
     onNavigateBack: () -> Unit,
     viewModel: ClubViewModel = hiltViewModel(),
     analyticsViewModel: ClubAnalyticsViewModel = hiltViewModel(),
-    eventOfferViewModel: ClubEventOfferViewModel = hiltViewModel()
+    eventOfferViewModel: ClubEventOfferViewModel = hiltViewModel(),
+    externalInfoViewModel: ClubExternalInfoViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val analyticsState by analyticsViewModel.uiState.collectAsStateWithLifecycle()
     val eventOfferState by eventOfferViewModel.uiState.collectAsStateWithLifecycle()
+    val externalInfoState by externalInfoViewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = LocalSnackbarHostState.current
     val sheetState = rememberModalBottomSheetState()
 
@@ -50,6 +54,7 @@ fun ClubDetailScreen(
         viewModel.loadClubDetails(clubId)
         analyticsViewModel.observeClubAnalytics(clubId)
         eventOfferViewModel.loadEventsAndOffers(clubId)
+        externalInfoViewModel.loadExternalClubInfo(clubId)
     }
 
     LaunchedEffect(uiState.errorMessage) {
@@ -136,7 +141,7 @@ fun ClubDetailScreen(
                         )
                     }
 
-                    OperatingHoursSection(club = club)
+                    ClubExternalInfoBlock(state = externalInfoState)
                 }
 
                 eventOfferState.selectedOffer?.let { offer ->
