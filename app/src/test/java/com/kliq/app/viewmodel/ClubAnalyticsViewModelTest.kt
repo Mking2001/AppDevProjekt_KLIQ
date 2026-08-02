@@ -104,6 +104,8 @@ class ClubAnalyticsViewModelTest {
         override fun getFavoriteClubs(): Flow<List<Club>> = flowOf(emptyList())
         override fun getClubById(clubId: String): Flow<Club?> = flowOf(null)
         override fun searchClubsLocal(query: String): Flow<List<Club>> = flowOf(emptyList())
+        override fun searchClubsFiltered(query: String, regionFilter: String?, genreFilter: String?): Flow<List<Club>> = flowOf(emptyList())
+        override fun searchRegionsAndCities(query: String): Flow<List<com.kliq.app.data.model.RegionSearchResult>> = flowOf(emptyList())
         override suspend fun toggleFavorite(clubId: String, currentFavoriteState: Boolean) {}
         override suspend fun searchExternalClubs(query: String, userLat: Double?, userLon: Double?, radiusKm: Int): Result<List<Club>> = Result.success(emptyList())
         override suspend fun isUserWithinGeofence(clubId: String, userLat: Double, userLon: Double): Boolean = false

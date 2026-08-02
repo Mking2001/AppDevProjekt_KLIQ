@@ -144,6 +144,7 @@ object CoreRoutes {
  */
 object ClubRoutes {
     const val CLUB_DETAIL = "club_detail/{clubId}"
+    const val CLUB_SEARCH = "club_search"
     
     fun clubDetail(clubId: String): String = "club_detail/$clubId"
     
