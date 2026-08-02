@@ -134,6 +134,8 @@ class ReviewCommentsSectionScenarioTest {
         override fun getClubsByCity(city: String): Flow<List<ClubEntity>> = flowOf(clubs.filter { it.city == city })
         override fun getClubById(clubId: String): Flow<ClubEntity?> = flowOf(clubs.find { it.id == clubId })
         override fun searchClubs(query: String): Flow<List<ClubEntity>> = flowOf(emptyList())
+        override fun searchClubsFiltered(query: String, region: String, category: String): Flow<List<ClubEntity>> = flowOf(emptyList())
+        override fun searchDistinctRegionsAndCities(query: String): Flow<List<String>> = flowOf(emptyList())
         override suspend fun insertClub(club: ClubEntity) { clubs.add(club) }
         override suspend fun insertClubs(clubsList: List<ClubEntity>) { clubs.addAll(clubsList) }
         override suspend fun updateFavoriteStatus(clubId: String, isFavorite: Boolean) {}

@@ -11,6 +11,7 @@ import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toDomain
 import com.kliq.app.data.remote.mapper.ExternalSearchResultMapper.toEntity
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
@@ -23,7 +24,8 @@ import javax.inject.Singleton
 @Singleton
 class ClubRepositoryImpl @Inject constructor(
     private val clubDao: ClubDao,
-    private val apiService: KliqApiService
+    private val apiService: KliqApiService,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ClubRepository {
 
     private val gson = Gson()
