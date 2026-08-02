@@ -36,6 +36,7 @@ fun MapQuickViewCard(
     isVisible: Boolean,
     onDismiss: () -> Unit,
     onNavigateDetails: (String) -> Unit,
+    onToggleFavorite: ((String, Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
@@ -80,12 +81,20 @@ fun MapQuickViewCard(
                             )
                         }
 
-                        IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
-                            Icon(
-                                imageVector = Icons.Default.Close,
-                                contentDescription = "Schließen",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            AnimatedFavoriteButton(
+                                isFavorite = currentVenue.isFavorite,
+                                onToggleFavorite = {
+                                    onToggleFavorite?.invoke(currentVenue.id, currentVenue.isFavorite)
+                                }
                             )
+                            IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "Schließen",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
 

@@ -355,6 +355,7 @@ fun MapScreen(
             isVisible = uiState.selectedVenue != null,
             onDismiss = { viewModel.onQuickViewDismissed() },
             onNavigateDetails = { /* Navigate to Venue Detail */ },
+            onToggleFavorite = { clubId, isFav -> viewModel.toggleFavorite(clubId, isFav) },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .padding(top = 135.dp)
