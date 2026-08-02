@@ -8,6 +8,8 @@ import com.kliq.app.data.repository.ClubAndEventRepository
 import com.kliq.app.data.repository.ClubAndEventRepositoryImpl
 import com.kliq.app.data.repository.ClubRepository
 import com.kliq.app.data.repository.ClubRepositoryImpl
+import com.kliq.app.data.repository.ClubEventOfferRepository
+import com.kliq.app.data.repository.ClubEventOfferRepositoryImpl
 import com.kliq.app.data.repository.EventRepository
 import com.kliq.app.data.repository.EventRepositoryImpl
 import com.kliq.app.data.repository.GroupPresenceRepository
@@ -43,6 +45,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindEventRepository(impl: EventRepositoryImpl): EventRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindClubEventOfferRepository(impl: ClubEventOfferRepositoryImpl): ClubEventOfferRepository
 
     @Binds
     @Singleton
