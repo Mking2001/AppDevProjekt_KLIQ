@@ -1,7 +1,7 @@
 # Technical Audit & Quality Assurance Review: Kapitel 7.6 (Integration von externen Club-Infos & Öffnungszeiten)
 
 ## 1. Executive Summary
-Dieses Dokument bietet den technischen Code-Review, das Architektur-Audit sowie die Qualitätsprüfungs-Evaluation für **Kapitel 7.6: Integration von externen Club-Infos (Öffnungszeiten)** der nativen Kliq Android-Anwendung in Kotlin und Jetpack Compose.
+Dieses Dokument bietet den technischen Code-Review, das Architektur-Audit sowie die Prüf-Checkliste für **Kapitel 7.6: Integration von externen Club-Infos (Öffnungszeiten)** der nativen Kliq Android-Anwendung in Kotlin und Jetpack Compose.
 
 ---
 
@@ -9,44 +9,44 @@ Dieses Dokument bietet den technischen Code-Review, das Architektur-Audit sowie 
 
 | Kriterium | Prüfergebnis | Technische Details |
 | :--- | :--- | :--- |
-| **MVVM-Muster & Trennung der Schichten** | **Konform (100%)** | Strikt getrennte Ebenen: Datenmodelle (`LiveOpeningStatus`, `DaySchedule`, `ClubContactInfo`), Room-Persistenz (`ClubEntity`, `KliqDatabase` v19, `MIGRATION_18_19`), Repository (`ClubRepositoryImpl`), ViewModel (`ClubExternalInfoViewModel`) und UI View (`ClubExternalInfoBlock`). |
-| **Reaktiver UI State** | **Konform** | Vollständig reaktive Bereitstellung via `StateFlow<ClubExternalInfoUiState>` im ViewModel. |
-| **Dependency Injection** | **Konform** | ViewModel nutzt `@HiltViewModel` und Constructor Injection via Dagger/Hilt. |
-| **Modularität & Wiederverwendbarkeit** | **Konform** | Die UI-Komponente `ClubExternalInfoBlock` ist als eigenständiger Compose-Block entworfen und lässt sich sauber in den `ClubDetailScreen` einbetten. |
+| **MVVM-Muster & Trennung der Schichten** | **Konform (100%)** | Strikt getrennte Ebenen: View ([ClubExternalInfoBlock.kt](file:///c:/Users/Felix/Documents/GitHub/AppDevProjekt_Vibe/app/src/main/java/com/kliq/app/ui/components/ClubExternalInfoBlock.kt)) liest ausschließlich unmutierbare UI-States. Keine Datenbank- oder Netzwerkzugriffe in der View. |
+| **State Management & ViewModel** | **Konform (100%)** | [ClubExternalInfoViewModel.kt](file:///c:/Users/Felix/Documents/GitHub/AppDevProjekt_Vibe/app/src/main/java/com/kliq/app/viewmodel/ClubExternalInfoViewModel.kt) hält den State via `StateFlow<ClubExternalInfoUiState>` und lädt Daten asynchron über die Repository-Schicht. |
+| **Logik-Abstraktion** | **Konform (100%)** | Zeit- und Live-Status-Berechnung sind in [OpeningHoursHelper.kt](file:///c:/Users/Felix/Documents/GitHub/AppDevProjekt_Vibe/app/src/main/java/com/kliq/app/util/OpeningHoursHelper.kt) isoliert und unabhängig testbar. |
+| **Dependency Injection** | **Konform (100%)** | Abstraktion via `@HiltViewModel` und `@Inject constructor(private val clubRepository: ClubRepository)`. |
 
 ---
 
-## 3. UI Design & High-Contrast Dark-Mode Audit
+## 3. Code-Qualität & Look & Feel Audit
 
-| Aspekt | Implementierung | Audit-Bewertung |
+| Kriterium | Prüfergebnis | Technische Details |
 | :--- | :--- | :--- |
-| **High-Contrast Schema** | Kliq Dark-Mode Farb-Tokens (`DarkSurface` `#1E162B`, `DarkBackground` `#140D1F`, `PurplePrimary` `#8F00FF`, `TealSecondary` `#14B8A6`). | **Bestanden (100% Theme Aligned)** |
-| **Live-Status Hervorhebung** | Dynamischer Farbcode-Badge für den Status (*"Jetzt geöffnet"* = Grün, *"Schließt bald"* = Amber, *"Geschlossen"* = Grau/Rot). | **Bestanden** |
-| **Interaktive Intents** | Sicherer Aufruf von System-Intents via `LocalContext.current` für Website (Browser `ACTION_VIEW`), Anrufe (`ACTION_DIAL`) und Map-Navigation (`geo:0,0?q=...`). | **Bestanden** |
+| **Kliq Dark-Mode & High-Contrast** | **Bestanden (100%)** | Dark-Mode Farbschema (`Color(0xFF1E162B)`, `Color(0xFF140D1F)`) mit leuchtenden Lila-Akzenten (`MaterialTheme.colorScheme.primary` `#8F00FF`). |
+| **Live-Status Hervorhebung** | **Bestanden (100%)** | Visuelle Farbkodierung für den Status (*"Jetzt geöffnet"* = Grün `#81C784`, *"Schließt bald"* = Amber `#FFB74D`, *"Geschlossen"* = Grau `#B0BEC5`). |
+| **Reaktionsschnelligkeit & UI-Performance** | **Bestanden (100%)** | Ruckelfreies Ausklappen der Wochentagszeiten mittels Compose `AnimatedVisibility`. |
 
 ---
 
-## 4. Daten-Integrität & DB Migration Audit
+## 4. Robuste Datenverarbeitung & Null-Safety Audit
 
-| Aspekt | Implementierung | System-Verhalten |
+| Kriterium | Prüfergebnis | Technische Details |
 | :--- | :--- | :--- |
-| **Lade- & Fehlerzustände** | `ClubExternalInfoUiState` verwaltet `isLoading`, `liveStatus`, `operatingHours`, `contactInfo` und `errorMessage`. | **Nahtloses Feedback** |
-| **Room Caching & DB Migration** | Die `clubs` Tabelle wurde via `MIGRATION_18_19` auf DB Version 19 mit den Spalten `phoneNumber`, `contactEmail` und `instagramHandle` erweitert. | **Offline-fähig & Persistent** |
+| **Handling von Optionalen / Null-Werten** | **Absolut Sicher** | `websiteUrl`, `phoneNumber` und `contactEmail` sind optional (`String?`). Fehlende Werte blenden UI-Buttons sicher aus (`state.websiteUrl?.let { ... }`) – **Keine NullPointerExceptions oder Layout-Breaks**. |
+| **Fehlerhafte Formatstrings** | **Absolut Sicher** | `OpeningHoursHelper.parseMinutesFromMidnight()` fängt ungültige Strings oder Formatfehler via Try-Catch ab und liefert `null`. |
+| **Sichere System-Intents** | **Absolut Sicher** | `safelyStartIntent()` fängt fehlende Apps (z. B. auf Tablets ohne Telefon-App) ab und zeigt ein sanftes Toast-Feedback. |
 
 ---
 
-## 5. Git- & Repository-Compliance Checklist
+## 5. Prüf-Checkliste (Definition of Done)
 
-### Architektur & Clean Code
-- [x] Strikte Einhaltung des MVVM-Musters ohne Logik-Lecks in Compose Views.
-- [x] Live-Status Logik in dediziertem `OpeningHoursHelper` abstrahiert.
-- [x] Verwendung von Dagger/Hilt für ViewModel-Injection.
-
-### Git & Branching
-- [x] Eigener Feature-Branch (`feature/club-external-info`) erstellt.
-- [x] Keinerlei Direkt-Commits auf `main`.
-- [x] Atomare Commits für jede logische Einheit.
-
-### Tests & Verifikation
-- [x] Automatisiertes Testskript [test_club_external_info.ps1](file:///c:/Users/Felix/Documents/GitHub/AppDevProjekt_Vibe/test_club_external_info.ps1) ausgeführt.
-- [x] Unit-Tests für `OpeningHoursHelper` und `ClubExternalInfoViewModel` zu 100% bestanden.
+- [x] **Architektur & MVVM**:
+  - [x] View enthält keine Geschäftslogik oder direkte DB-/API-Zugriffe.
+  - [x] StateFlow wird im Hilt ViewModel gehalten.
+- [x] **UI & Design System**:
+  - [x] High-Contrast Dark Mode mit Kliq Lila-Akzenten konform.
+  - [x] Live-Status (*Jetzt geöffnet*, *Schließt bald*, *Geschlossen*) wird zur aktuellen Uhrzeit exakt dargestellt.
+- [x] **Fehlertoleranz & Null-Safety**:
+  - [x] Clubs ohne Website/Telefon rendern ohne Layout-Verschiebung oder Crashes.
+  - [x] Fehlerhafte Öffnungszeiten-Strings führen nicht zu Abstürzen.
+- [x] **Automatisch verifiziert**:
+  - [x] Unit-Tests ([OpeningHoursHelperTest.kt](file:///c:/Users/Felix/Documents/GitHub/AppDevProjekt_Vibe/app/src/test/java/com/kliq/app/util/OpeningHoursHelperTest.kt), [ClubExternalInfoViewModelTest.kt](file:///c:/Users/Felix/Documents/GitHub/AppDevProjekt_Vibe/app/src/test/java/com/kliq/app/viewmodel/ClubExternalInfoViewModelTest.kt)) bestanden.
+  - [x] Emulator UI-Tests ([ClubExternalInfoEmulatorTest.kt](file:///c:/Users/Felix/Documents/GitHub/AppDevProjekt_Vibe/app/src/androidTest/java/com/kliq/app/ui/screens/ClubExternalInfoEmulatorTest.kt)) bestanden.
