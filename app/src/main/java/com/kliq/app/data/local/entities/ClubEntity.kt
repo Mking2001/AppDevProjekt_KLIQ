@@ -26,5 +26,8 @@ data class ClubEntity(
     val websiteUrl: String? = null,
     val isPromoted: Boolean = false,
     val city: String = "",
-    val postalCode: String = ""
+    val postalCode: String = "",
+    val phoneNumber: String? = null,
+    val contactEmail: String? = null,
+    val instagramHandle: String? = null
 )

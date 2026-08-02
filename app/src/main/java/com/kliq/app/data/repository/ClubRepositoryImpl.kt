@@ -202,7 +202,8 @@ class ClubRepositoryImpl @Inject constructor(
             val map: Map<String, Any> = gson.fromJson(openingHoursJson, type) ?: emptyMap()
             val isOpen = map["isOpenNow"] as? Boolean ?: false
             val hoursText = map["todayHours"] as? String ?: ""
-            OperatingHours(isOpenNow = isOpen, todayHours = hoursText)
+            val weeklyMap = (map["weeklySchedule"] as? Map<*, *>)?.map { (k, v) -> k.toString() to v.toString() }?.toMap() ?: emptyMap()
+            OperatingHours(isOpenNow = isOpen, todayHours = hoursText, weeklySchedule = weeklyMap)
         } catch (e: Exception) {
             OperatingHours(isOpenNow = false, todayHours = "")
         }
@@ -219,7 +220,9 @@ class ClubRepositoryImpl @Inject constructor(
             imageUrl = imageUrl,
             region = region,
             externalSearchTags = externalSearchTags,
-            websiteUrl = websiteUrl
+            websiteUrl = websiteUrl,
+            phoneNumber = phoneNumber,
+            contactEmail = contactEmail
         )
     }
 }
