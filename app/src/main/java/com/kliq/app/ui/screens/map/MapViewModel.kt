@@ -480,6 +480,19 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    fun toggleFavorite(clubId: String, currentFavoriteState: Boolean) {
+        val nextFavorite = !currentFavoriteState
+        _uiState.update { state ->
+            val updatedVenue = state.selectedVenue?.let {
+                if (it.id == clubId) it.copy(isFavorite = nextFavorite) else it
+            }
+            state.copy(selectedVenue = updatedVenue)
+        }
+        viewModelScope.launch {
+            clubRepository.toggleFavorite(clubId, currentFavoriteState)
+        }
+    }
+
     fun onClubMarkerClicked(clubMarker: ClubMarkerUiState) {
         onMarkerClicked(clubMarker.venue)
     }

@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.kliq.app.data.model.RegionSearchResult
+import com.kliq.app.ui.components.AnimatedFavoriteButton
 import com.kliq.app.ui.model.ClubHighContrastItemState
 import com.kliq.app.ui.theme.ErrorRed
 import com.kliq.app.ui.theme.PurplePrimary
@@ -280,13 +281,10 @@ private fun ClubResultCard(
             }
 
             // Favorite Toggle Icon
-            IconButton(onClick = onFavoriteToggle) {
-                Icon(
-                    imageVector = if (clubState.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                    contentDescription = "Favorit",
-                    tint = if (clubState.isFavorite) ErrorRed else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
+            AnimatedFavoriteButton(
+                isFavorite = clubState.isFavorite,
+                onToggleFavorite = onFavoriteToggle
+            )
         }
     }
 }

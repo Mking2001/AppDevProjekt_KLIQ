@@ -25,6 +25,7 @@ import com.kliq.app.data.model.Club
 import com.kliq.app.data.model.ClubAnalytics
 import com.kliq.app.ui.navigation.LocalSnackbarHostState
 
+import com.kliq.app.ui.components.AnimatedFavoriteButton
 import com.kliq.app.ui.components.ClubExternalInfoBlock
 import com.kliq.app.ui.components.ClubEventOfferInfoBlock
 import com.kliq.app.ui.components.ClubOfferDetailBottomSheet
@@ -82,13 +83,10 @@ fun ClubDetailScreen(
                 },
                 actions = {
                     uiState.club?.let { club ->
-                        IconButton(onClick = { viewModel.toggleFavorite() }) {
-                            Icon(
-                                imageVector = if (club.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                contentDescription = "Favorit",
-                                tint = if (club.isFavorite) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface
-                            )
-                        }
+                        AnimatedFavoriteButton(
+                            isFavorite = club.isFavorite,
+                            onToggleFavorite = { viewModel.toggleFavorite() }
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
