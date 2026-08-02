@@ -20,6 +20,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kliq.app.ui.model.ReviewHighContrastItemState
 
+import com.kliq.app.ui.model.ReviewFilterState
+import com.kliq.app.ui.model.ReviewSortOption
+import com.kliq.app.ui.model.StarFilterOption
+
 @Composable
 fun ReviewCommentSection(
     comments: List<ReviewHighContrastItemState>,
@@ -30,6 +34,11 @@ fun ReviewCommentSection(
     isVerificationLocked: Boolean,
     isSubmitting: Boolean = false,
     onSubmitClick: () -> Unit,
+    filterState: ReviewFilterState? = null,
+    onStarFilterSelected: ((StarFilterOption) -> Unit)? = null,
+    onSortOptionSelected: ((ReviewSortOption) -> Unit)? = null,
+    onVerifiedOnlyToggled: ((Boolean) -> Unit)? = null,
+    onResetFilters: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val accentPurple = Color(0xFF7C3AED)
@@ -44,6 +53,22 @@ fun ReviewCommentSection(
         )
 
         Spacer(modifier = Modifier.height(10.dp))
+
+        if (filterState != null &&
+            onStarFilterSelected != null &&
+            onSortOptionSelected != null &&
+            onVerifiedOnlyToggled != null &&
+            onResetFilters != null
+        ) {
+            ReviewFilterSection(
+                filterState = filterState,
+                onStarFilterSelected = onStarFilterSelected,
+                onSortOptionSelected = onSortOptionSelected,
+                onVerifiedOnlyToggled = onVerifiedOnlyToggled,
+                onResetFilters = onResetFilters
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+        }
 
         if (comments.isEmpty()) {
             Box(
