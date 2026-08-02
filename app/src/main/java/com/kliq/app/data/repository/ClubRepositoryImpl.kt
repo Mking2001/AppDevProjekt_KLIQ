@@ -5,6 +5,7 @@ import com.google.gson.reflect.TypeToken
 import com.kliq.app.data.local.dao.ClubDao
 import com.kliq.app.data.local.entities.ClubEntity
 import com.kliq.app.data.model.Club
+import com.kliq.app.data.model.RegionSearchResult
 import com.kliq.app.data.model.GpsLocation
 import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.remote.KliqApiService
@@ -49,6 +50,46 @@ class ClubRepositoryImpl @Inject constructor(
         return clubDao.searchClubs(query).map { entities ->
             entities.map { it.toDomain() }
         }.flowOn(Dispatchers.IO)
+    }
+
+    override fun searchClubsFiltered(
+        query: String,
+        regionFilter: String?,
+        genreFilter: String?
+    ): Flow<List<Club>> {
+        val q = query.trim()
+        val r = regionFilter?.trim() ?: ""
+        val g = genreFilter?.trim() ?: ""
+        return clubDao.searchClubsFiltered(q, r, g).map { entities ->
+            entities.map { it.toDomain() }
+        }.flowOn(ioDispatcher)
+    }
+
+    override fun searchRegionsAndCities(query: String): Flow<List<RegionSearchResult>> {
+        val q = query.trim()
+        return clubDao.getAllClubs().map { entities ->
+            val clubs = entities.map { it.toDomain() }
+            val regionCounts = mutableMapOf<String, Int>()
+            
+            for (club in clubs) {
+                val regionName = when {
+                    club.region.isNotBlank() -> club.region
+                    club.location.address.contains(",") -> club.location.address.substringAfterLast(",").trim()
+                    else -> ""
+                }
+                if (regionName.isNotBlank() && (q.isEmpty() || regionName.contains(q, ignoreCase = true))) {
+                    regionCounts[regionName] = (regionCounts[regionName] ?: 0) + 1
+                }
+            }
+            
+            regionCounts.map { (name, count) ->
+                RegionSearchResult(
+                    regionName = name,
+                    clubCount = count,
+                    isCity = true
+                )
+            }.sortedByDescending { it.clubCount }
+        }.flowOn(ioDispatcher)
     }
 
     override suspend fun toggleFavorite(clubId: String, currentFavoriteState: Boolean) = withContext(Dispatchers.IO) {

@@ -28,6 +28,22 @@ interface ClubDao {
     @Query("SELECT * FROM clubs WHERE name LIKE '%' || :query || '%' OR externalSearchTags LIKE '%' || :query || '%' OR category LIKE '%' || :query || '%'")
     fun searchClubs(query: String): Flow<List<ClubEntity>>
 
+    @Query("""
+        SELECT * FROM clubs 
+        WHERE (:query = '' OR LOWER(name) LIKE '%' || LOWER(:query) || '%' OR LOWER(externalSearchTags) LIKE '%' || LOWER(:query) || '%' OR LOWER(category) LIKE '%' || LOWER(:query) || '%' OR LOWER(region) LIKE '%' || LOWER(:query) || '%' OR LOWER(city) LIKE '%' || LOWER(:query) || '%')
+        AND (:region = '' OR LOWER(region) LIKE '%' || LOWER(:region) || '%' OR LOWER(city) LIKE '%' || LOWER(:region) || '%')
+        AND (:category = '' OR LOWER(category) LIKE '%' || LOWER(:category) || '%' OR LOWER(externalSearchTags) LIKE '%' || LOWER(:category) || '%')
+        ORDER BY name ASC
+    """)
+    fun searchClubsFiltered(query: String, region: String = "", category: String = ""): Flow<List<ClubEntity>>
+
+    @Query("""
+        SELECT DISTINCT city FROM clubs WHERE city IS NOT NULL AND city != '' AND LOWER(city) LIKE '%' || LOWER(:query) || '%'
+        UNION
+        SELECT DISTINCT region FROM clubs WHERE region IS NOT NULL AND region != '' AND LOWER(region) LIKE '%' || LOWER(:query) || '%'
+    """)
+    fun searchDistinctRegionsAndCities(query: String): Flow<List<String>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertClubs(clubs: List<ClubEntity>)
 
