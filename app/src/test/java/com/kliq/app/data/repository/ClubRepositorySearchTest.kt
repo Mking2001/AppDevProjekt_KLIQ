@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.`when`
@@ -22,7 +23,7 @@ class ClubRepositorySearchTest {
     private val apiService: KliqApiService = mock(KliqApiService::class.java)
     private lateinit var repository: ClubRepositoryImpl
 
-    private val sampleEntity = ClubEntity(
+    private val sampleEntityBerlin = ClubEntity(
         id = "club_1",
         name = "Watergate",
         latitude = 52.501,
@@ -31,6 +32,17 @@ class ClubRepositorySearchTest {
         region = "Berlin",
         category = "Electro",
         averageRating = 4.7
+    )
+
+    private val sampleEntityMunich = ClubEntity(
+        id = "club_2",
+        name = "P1 Club München",
+        latitude = 48.143,
+        longitude = 11.590,
+        address = "Prinzregentenstraße 1, München",
+        region = "München",
+        category = "House & Pop",
+        averageRating = 4.3
     )
 
     @Before
@@ -44,7 +56,7 @@ class ClubRepositorySearchTest {
 
     @Test
     fun searchClubsFiltered_returnsMappedDomainClubs() = runTest(testDispatcher) {
-        `when`(clubDao.searchClubsFiltered("Watergate", "", "")).thenReturn(flowOf(listOf(sampleEntity)))
+        `when`(clubDao.searchClubsFiltered("Watergate", "", "")).thenReturn(flowOf(listOf(sampleEntityBerlin)))
 
         val results = repository.searchClubsFiltered("Watergate", null, null).first()
 
@@ -55,12 +67,28 @@ class ClubRepositorySearchTest {
 
     @Test
     fun searchRegionsAndCities_groupsClubsByRegion() = runTest(testDispatcher) {
-        `when`(clubDao.getAllClubs()).thenReturn(flowOf(listOf(sampleEntity)))
+        `when`(clubDao.getAllClubs()).thenReturn(flowOf(listOf(sampleEntityBerlin)))
 
         val regions = repository.searchRegionsAndCities("Berlin").first()
 
         assertEquals(1, regions.size)
         assertEquals("Berlin", regions[0].regionName)
         assertEquals(1, regions[0].clubCount)
+    }
+
+    @Test
+    fun searchRegionsAndCities_caseInsensitiveAndSpecialCharacters() = runTest(testDispatcher) {
+        `when`(clubDao.getAllClubs()).thenReturn(flowOf(listOf(sampleEntityBerlin, sampleEntityMunich)))
+
+        val resultLowercase = repository.searchRegionsAndCities("münchen").first()
+        assertEquals(1, resultLowercase.size)
+        assertEquals("München", resultLowercase[0].regionName)
+
+        val resultUppercase = repository.searchRegionsAndCities("BERLIN").first()
+        assertEquals(1, resultUppercase.size)
+        assertEquals("Berlin", resultUppercase[0].regionName)
+
+        val resultEmpty = repository.searchRegionsAndCities("  ").first()
+        assertEquals(2, resultEmpty.size)
     }
 }
