@@ -1,6 +1,7 @@
 package com.kliq.app.ui.screens.map
 
 import com.kliq.app.data.model.Club
+import com.kliq.app.data.model.ClubAnalytics
 import com.kliq.app.data.model.Event
 import com.kliq.app.data.model.GpsLocation
 import com.kliq.app.data.model.OperatingHours
@@ -25,7 +26,8 @@ import org.mockito.Mockito.`when`
 /**
  * Unit tests for [MapViewModel] validating ClubRepository flow integration,
  * dynamic marker clustering, separate ClubMarkerUiState and UserMarkerUiState,
- * camera position management, venue filtering, edge cases, and quick view popup states.
+ * camera position management, venue filtering, long-press gesture quick-view trigger,
+ * live visitor stats and gender ratio mapping.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
@@ -42,6 +44,12 @@ class MapViewModelTest {
             averageRating = 4.9,
             operatingHours = OperatingHours(true, "00:00 - 24:00"),
             category = "Club",
+            analytics = ClubAnalytics(
+                currentCapacityPercent = 85,
+                malePercentage = 52,
+                femalePercentage = 48,
+                totalLiveVisitors = 380
+            ),
             activeEvent = Event(
                 id = "e1",
                 clubId = "c1",
@@ -58,7 +66,13 @@ class MapViewModelTest {
             location = GpsLocation(52.5011, 13.4452, "Falckensteinstraße 49"),
             averageRating = 4.7,
             operatingHours = OperatingHours(true, "23:00 - 06:00"),
-            category = "Club"
+            category = "Club",
+            analytics = ClubAnalytics(
+                currentCapacityPercent = 60,
+                malePercentage = 48,
+                femalePercentage = 52,
+                totalLiveVisitors = 210
+            )
         )
     )
 
@@ -221,6 +235,37 @@ class MapViewModelTest {
     }
 
     @Test
+    fun testMarkerLongPressed_triggersQuickViewAndUpdatesVenueState() {
+        val venue = viewModel.uiState.value.nearbyVenues.first { it.id == "c1" }
+        assertNull(viewModel.uiState.value.selectedVenue)
+
+        viewModel.onMarkerLongPressed(venue)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNotNull(state.selectedVenue)
+        assertEquals("c1", state.selectedVenue?.id)
+        assertEquals("Berghain", state.selectedVenue?.name)
+        assertEquals(380, state.selectedVenue?.totalLiveVisitors)
+        assertEquals(52, state.selectedVenue?.malePercentage)
+        assertEquals(48, state.selectedVenue?.femalePercentage)
+    }
+
+    @Test
+    fun testVenueItemUi_mapsAnalyticsGenderRatioAndVisitorCount() {
+        val berghain = viewModel.uiState.value.nearbyVenues.first { it.id == "c1" }
+        val watergate = viewModel.uiState.value.nearbyVenues.first { it.id == "c2" }
+
+        assertEquals(380, berghain.totalLiveVisitors)
+        assertEquals(52, berghain.malePercentage)
+        assertEquals(48, berghain.femalePercentage)
+
+        assertEquals(210, watergate.totalLiveVisitors)
+        assertEquals(48, watergate.malePercentage)
+        assertEquals(52, watergate.femalePercentage)
+    }
+
+    @Test
     fun testEdgeCase_emptyRepositoryFlow_usesFallbackVenuesSafely() {
         `when`(clubRepository.getAllClubs()).thenReturn(flowOf(emptyList()))
         val fallbackVm = MapViewModel(clubRepository)
@@ -230,5 +275,7 @@ class MapViewModelTest {
         assertTrue(state.nearbyVenues.isNotEmpty())
         assertEquals(4, state.nearbyVenues.size)
         assertEquals(4, state.clubMarkers.size)
+        assertEquals(380, state.nearbyVenues[0].totalLiveVisitors)
+        assertEquals(52, state.nearbyVenues[0].malePercentage)
     }
 }
