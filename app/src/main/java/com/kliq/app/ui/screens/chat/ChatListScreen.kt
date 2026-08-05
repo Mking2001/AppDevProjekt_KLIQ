@@ -258,6 +258,29 @@ fun ChatListScreen(
                 )
             }
 
+            if (uiState.pendingDeleteChat != null) {
+                com.kliq.app.ui.components.DeleteChatConfirmationDialog(
+                    chatTitle = uiState.pendingDeleteChat?.title ?: "diesen Chat",
+                    onDismiss = viewModel::onDismissDeleteDialog,
+                    onConfirmDelete = {
+                        val deletedChat = uiState.pendingDeleteChat
+                        viewModel.onConfirmDeleteChat()
+                        if (deletedChat != null) {
+                            coroutineScope.launch {
+                                val result = snackbarHostState.showSnackbar(
+                                    message = "Chat „${deletedChat.title}“ gelöscht",
+                                    actionLabel = "Rückgängig",
+                                    duration = SnackbarDuration.Short
+                                )
+                                if (result == SnackbarResult.ActionPerformed) {
+                                    viewModel.onUndoDelete(deletedChat)
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+
             if (chats.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -298,28 +321,18 @@ fun ChatListScreen(
                     items(chats, key = { it.id }) { chat ->
                         SwipeableActionRow(
                             onDelete = {
-                                viewModel.onChatDeleted(chat.id)
-                                coroutineScope.launch {
-                                    val result = snackbarHostState.showSnackbar(
-                                        message = "Chat gelöscht",
-                                        actionLabel = "Rückgängig",
-                                        duration = SnackbarDuration.Short
-                                    )
-                                    if (result == SnackbarResult.ActionPerformed) {
-                                        viewModel.onUndoDelete(chat)
-                                    }
-                                }
+                                viewModel.onRequestDeleteChat(chat)
                             },
                             onArchive = {
-                                viewModel.onChatArchived(chat.id)
+                                viewModel.onArchiveChat(chat)
                                 coroutineScope.launch {
                                     val result = snackbarHostState.showSnackbar(
-                                        message = "Chat archiviert",
+                                        message = "Chat „${chat.title}“ archiviert",
                                         actionLabel = "Rückgängig",
                                         duration = SnackbarDuration.Short
                                     )
                                     if (result == SnackbarResult.ActionPerformed) {
-                                        viewModel.onUndoDelete(chat)
+                                        viewModel.onUnarchiveChat(chat)
                                     }
                                 }
                             },
