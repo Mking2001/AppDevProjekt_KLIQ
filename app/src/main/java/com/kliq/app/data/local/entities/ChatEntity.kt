@@ -19,5 +19,6 @@ data class ChatEntity(
     val isOnline: Boolean = false,
     val isPinned: Boolean = false,
     val isMuted: Boolean = false,
+    val isArchived: Boolean = false,
     val lastReadMessageId: String? = null
 )

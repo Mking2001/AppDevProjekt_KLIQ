@@ -408,6 +408,14 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun archiveChat(chatId: String, isArchived: Boolean) = withContext(Dispatchers.IO) {
+        chatDao.updateArchiveStatus(chatId, isArchived)
+    }
+
+    override suspend fun deleteChat(chatId: String) = withContext(Dispatchers.IO) {
+        chatDao.deleteChatById(chatId)
+    }
+
     private fun ChatEntity.toDomain(): ChatConversation {
         return ChatConversation(
             id = id,
