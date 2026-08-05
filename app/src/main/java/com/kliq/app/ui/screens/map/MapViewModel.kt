@@ -123,7 +123,10 @@ data class VenueItemUi(
     val activeEventTitle: String? = null,
     val isFavorite: Boolean = false,
     val currentCapacityPercent: Int = 0,
-    val isOpenNow: Boolean = true
+    val isOpenNow: Boolean = true,
+    val totalLiveVisitors: Int = 0,
+    val malePercentage: Int = 0,
+    val femalePercentage: Int = 0
 )
 
 /**
@@ -259,7 +262,10 @@ class MapViewModel @Inject constructor(
                             activeEventTitle = club.activeEvent?.title,
                             isFavorite = club.isFavorite,
                             currentCapacityPercent = club.analytics.currentCapacityPercent,
-                            isOpenNow = club.operatingHours.isOpenNow
+                            isOpenNow = club.operatingHours.isOpenNow,
+                            totalLiveVisitors = club.analytics.totalLiveVisitors,
+                            malePercentage = club.analytics.malePercentage,
+                            femalePercentage = club.analytics.femalePercentage
                         )
                     }
                 } else {
@@ -331,7 +337,10 @@ class MapViewModel @Inject constructor(
                 longitude = 13.4430,
                 address = "Am Wriezener Bahnhof, 10243 Berlin",
                 activeEventTitle = "Klubnacht",
-                currentCapacityPercent = 85
+                currentCapacityPercent = 85,
+                totalLiveVisitors = 380,
+                malePercentage = 52,
+                femalePercentage = 48
             ),
             VenueItemUi(
                 id = "2",
@@ -343,7 +352,10 @@ class MapViewModel @Inject constructor(
                 longitude = 13.4452,
                 address = "Falckensteinstraße 49, 10997 Berlin",
                 activeEventTitle = "Watergate Night",
-                currentCapacityPercent = 60
+                currentCapacityPercent = 60,
+                totalLiveVisitors = 210,
+                malePercentage = 48,
+                femalePercentage = 52
             ),
             VenueItemUi(
                 id = "3",
@@ -355,7 +367,10 @@ class MapViewModel @Inject constructor(
                 longitude = 13.4172,
                 address = "Köpenicker Str. 76, 10179 Berlin",
                 activeEventTitle = "Symbiotikka",
-                currentCapacityPercent = 90
+                currentCapacityPercent = 90,
+                totalLiveVisitors = 295,
+                malePercentage = 50,
+                femalePercentage = 50
             ),
             VenueItemUi(
                 id = "4",
@@ -366,7 +381,10 @@ class MapViewModel @Inject constructor(
                 latitude = 52.5280,
                 longitude = 13.4100,
                 address = "Torstraße 140, 10119 Berlin",
-                currentCapacityPercent = 40
+                currentCapacityPercent = 40,
+                totalLiveVisitors = 85,
+                malePercentage = 45,
+                femalePercentage = 55
             )
         )
     }
