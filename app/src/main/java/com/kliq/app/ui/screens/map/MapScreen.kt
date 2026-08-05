@@ -4,7 +4,9 @@ import android.Manifest
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,7 +47,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -99,6 +103,7 @@ fun MapScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val permissionUiState by permissionViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val haptic = LocalHapticFeedback.current
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(
@@ -258,6 +263,10 @@ fun MapScreen(
                                 onClick = {
                                     viewModel.onMarkerClicked(venue)
                                     true
+                                },
+                                onInfoWindowLongClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    viewModel.onMarkerLongPressed(venue)
                                 }
                             )
                         }
@@ -346,6 +355,10 @@ fun MapScreen(
         VenueBottomSheet(
             venues = uiState.nearbyVenues,
             onVenueClick = { viewModel.onMarkerClicked(it) },
+            onVenueLongClick = { venue ->
+                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                viewModel.onMarkerLongPressed(venue)
+            },
             modifier = Modifier.align(Alignment.BottomCenter)
         )
 
@@ -403,6 +416,7 @@ fun MapScreen(
 private fun VenueBottomSheet(
     venues: List<VenueItemUi>,
     onVenueClick: (VenueItemUi) -> Unit,
+    onVenueLongClick: (VenueItemUi) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -441,7 +455,11 @@ private fun VenueBottomSheet(
                 modifier = Modifier.height(160.dp)
             ) {
                 items(venues, key = { it.id }) { venue ->
-                    VenueCard(venue = venue, onClick = { onVenueClick(venue) })
+                    VenueCard(
+                        venue = venue,
+                        onClick = { onVenueClick(venue) },
+                        onLongClick = { onVenueLongClick(venue) }
+                    )
                 }
             }
         }
@@ -449,17 +467,22 @@ private fun VenueBottomSheet(
 }
 
 /**
- * Individual Venue Card item.
+ * Individual Venue Card item supporting long-press quick-view gesture.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun VenueCard(
     venue: VenueItemUi,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onLongClick: () -> Unit
 ) {
     Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            ),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant

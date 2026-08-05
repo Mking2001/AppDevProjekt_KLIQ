@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -134,6 +135,80 @@ fun MapQuickViewCard(
                                     fontWeight = FontWeight.Bold,
                                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                 )
+                            }
+                        }
+                    }
+
+                    // Live Visitor & Gender Ratio Section
+                    if (currentVenue.totalLiveVisitors > 0 || currentVenue.malePercentage > 0 || currentVenue.femalePercentage > 0) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Surface(
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Group,
+                                            contentDescription = "Besucherstatistik",
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = if (currentVenue.totalLiveVisitors > 0) "${currentVenue.totalLiveVisitors} Besucher live" else "Besucherstatistik",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+
+                                    if (currentVenue.malePercentage > 0 || currentVenue.femalePercentage > 0) {
+                                        Text(
+                                            text = "♂ ${currentVenue.malePercentage}%  |  ♀ ${currentVenue.femalePercentage}%",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                }
+
+                                if (currentVenue.malePercentage > 0 || currentVenue.femalePercentage > 0) {
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(6.dp)
+                                            .clip(RoundedCornerShape(3.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    ) {
+                                        val maleWeight = (currentVenue.malePercentage.coerceIn(0, 100)).toFloat() / 100f
+                                        val femaleWeight = (1f - maleWeight).coerceAtLeast(0f)
+
+                                        if (maleWeight > 0f) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxHeight()
+                                                    .weight(maleWeight.coerceAtLeast(0.01f))
+                                                    .background(Color(0xFF3B82F6))
+                                            )
+                                        }
+                                        if (femaleWeight > 0f) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxHeight()
+                                                    .weight(femaleWeight.coerceAtLeast(0.01f))
+                                                    .background(Color(0xFFEC4899))
+                                            )
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
