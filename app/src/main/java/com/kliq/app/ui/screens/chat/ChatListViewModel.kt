@@ -28,6 +28,9 @@ import com.kliq.app.data.util.CityChatLocationMapper
 data class ChatListUiState(
     val publicChats: List<ChatListItem> = emptyList(),
     val privateChats: List<ChatListItem> = emptyList(),
+    val archivedChats: List<ChatListItem> = emptyList(),
+    val pendingDeleteChat: ChatListItem? = null,
+    val showArchivedSection: Boolean = false,
     val selectedTab: ChatType = ChatType.PUBLIC_CITY,
     val searchQuery: String = "",
     val isSearchActive: Boolean = false,
@@ -49,6 +52,7 @@ class ChatListViewModel @Inject constructor(
 
     private var rawPublicChats: List<ChatListItem> = emptyList()
     private var rawPrivateChats: List<ChatListItem> = emptyList()
+    private var rawArchivedChats: List<ChatListItem> = emptyList()
     private var currentBlockedUserIds: Set<String> = emptySet()
 
     init {
@@ -194,24 +198,105 @@ class ChatListViewModel @Inject constructor(
                     item.lastMessage.text.lowercase().contains(query)
         }
 
+        val filteredArchived = rawArchivedChats.filter { item ->
+            query.isEmpty() ||
+                    item.title.lowercase().contains(query) ||
+                    item.lastMessage.text.lowercase().contains(query)
+        }
+
         _uiState.update { state ->
             state.copy(
                 publicChats = filteredPublic,
-                privateChats = filteredPrivate
+                privateChats = filteredPrivate,
+                archivedChats = filteredArchived
             )
         }
     }
 
-    fun onChatDeleted(chatId: String) {
-        rawPublicChats = rawPublicChats.filter { it.id != chatId }
-        rawPrivateChats = rawPrivateChats.filter { it.id != chatId }
+    fun onRequestDeleteChat(chat: ChatListItem) {
+        _uiState.update { it.copy(pendingDeleteChat = chat) }
+    }
+
+    fun onConfirmDeleteChat() {
+        val target = _uiState.value.pendingDeleteChat ?: return
+        rawPublicChats = rawPublicChats.filter { it.id != target.id }
+        rawPrivateChats = rawPrivateChats.filter { it.id != target.id }
+        rawArchivedChats = rawArchivedChats.filter { it.id != target.id }
+
+        chatRepository?.let { repo ->
+            viewModelScope.launch {
+                repo.deleteChat(target.id)
+            }
+        }
+
+        _uiState.update { it.copy(pendingDeleteChat = null) }
         applyFilters()
     }
 
-    fun onChatArchived(chatId: String) {
-        rawPublicChats = rawPublicChats.filter { it.id != chatId }
-        rawPrivateChats = rawPrivateChats.filter { it.id != chatId }
+    fun onDismissDeleteDialog() {
+        _uiState.update { it.copy(pendingDeleteChat = null) }
+    }
+
+    fun onChatDeleted(chatId: String) {
+        val target = (rawPublicChats + rawPrivateChats + rawArchivedChats).find { it.id == chatId }
+        if (target != null) {
+            onRequestDeleteChat(target)
+        } else {
+            rawPublicChats = rawPublicChats.filter { it.id != chatId }
+            rawPrivateChats = rawPrivateChats.filter { it.id != chatId }
+            rawArchivedChats = rawArchivedChats.filter { it.id != chatId }
+            applyFilters()
+        }
+    }
+
+    fun onArchiveChat(item: ChatListItem) {
+        rawPublicChats = rawPublicChats.filter { it.id != item.id }
+        rawPrivateChats = rawPrivateChats.filter { it.id != item.id }
+        if (rawArchivedChats.none { it.id == item.id }) {
+            rawArchivedChats = rawArchivedChats + item
+        }
+
+        chatRepository?.let { repo ->
+            viewModelScope.launch {
+                repo.archiveChat(item.id, isArchived = true)
+            }
+        }
         applyFilters()
+    }
+
+    fun onUnarchiveChat(item: ChatListItem) {
+        rawArchivedChats = rawArchivedChats.filter { it.id != item.id }
+        if (item.chatType == ChatType.PUBLIC_CITY) {
+            if (rawPublicChats.none { it.id == item.id }) {
+                rawPublicChats = rawPublicChats + item
+            }
+        } else {
+            if (rawPrivateChats.none { it.id == item.id }) {
+                rawPrivateChats = rawPrivateChats + item
+            }
+        }
+
+        chatRepository?.let { repo ->
+            viewModelScope.launch {
+                repo.archiveChat(item.id, isArchived = false)
+            }
+        }
+        applyFilters()
+    }
+
+    fun onToggleArchivedSection(show: Boolean) {
+        _uiState.update { it.copy(showArchivedSection = show) }
+    }
+
+    fun onChatArchived(chatId: String) {
+        val target = (rawPublicChats + rawPrivateChats).find { it.id == chatId }
+        if (target != null) {
+            onArchiveChat(target)
+        } else {
+            rawPublicChats = rawPublicChats.filter { it.id != chatId }
+            rawPrivateChats = rawPrivateChats.filter { it.id != chatId }
+            applyFilters()
+        }
     }
 
     fun onUndoDelete(item: ChatListItem) {
@@ -220,6 +305,7 @@ class ChatListViewModel @Inject constructor(
         } else {
             rawPrivateChats = listOf(item) + rawPrivateChats.filter { it.id != item.id }
         }
+        rawArchivedChats = rawArchivedChats.filter { it.id != item.id }
         applyFilters()
     }
 

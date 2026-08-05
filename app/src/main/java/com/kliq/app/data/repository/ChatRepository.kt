@@ -87,4 +87,6 @@ interface ChatRepository {
     fun getCityChatForLocation(location: com.kliq.app.data.model.LocationData): Flow<com.kliq.app.data.model.ChatListItem>
     suspend fun syncPublicCityMessages(chatId: String): Result<Unit>
     suspend fun joinPublicCityChat(chatId: String): Result<Unit>
+    suspend fun archiveChat(chatId: String, isArchived: Boolean = true)
+    suspend fun deleteChat(chatId: String)
 }

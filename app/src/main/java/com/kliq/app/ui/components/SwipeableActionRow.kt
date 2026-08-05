@@ -23,12 +23,14 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import com.kliq.app.ui.theme.ErrorRed
+import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.util.HapticFeedbackUtils
 
 /**
- * Reusable wrapper that adds swipe-to-action behavior to any list item.
- * Swiping StartToEnd (Left to Right) triggers [onArchive].
- * Swiping EndToStart (Right to Left) triggers [onDelete].
+ * Reusable wrapper that adds swipe-to-action behavior to any list item in Kliq.
+ * Swiping EndToStart (Swipe Left) triggers [onArchive] with Purple (#8A2BE2) background.
+ * Swiping StartToEnd (Swipe Right) triggers [onDelete] with Red background and confirmation safety check.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,12 +46,12 @@ fun SwipeableActionRow(
             when (dismissValue) {
                 SwipeToDismissBoxValue.StartToEnd -> {
                     HapticFeedbackUtils.triggerMediumImpact(view)
-                    onArchive()
-                    true
+                    onDelete()
+                    false // Return false so item stays rendered until confirmed in dialog
                 }
                 SwipeToDismissBoxValue.EndToStart -> {
                     HapticFeedbackUtils.triggerMediumImpact(view)
-                    onDelete()
+                    onArchive()
                     true
                 }
                 SwipeToDismissBoxValue.Settled -> false
@@ -68,8 +70,8 @@ fun SwipeableActionRow(
             val color by animateColorAsState(
                 targetValue = when (dismissState.targetValue) {
                     SwipeToDismissBoxValue.Settled -> Color.Transparent
-                    SwipeToDismissBoxValue.StartToEnd -> Color(0xFFE2B93B) // Gelb für Archiv
-                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error // Rot für Delete
+                    SwipeToDismissBoxValue.StartToEnd -> ErrorRed // Rot für Löschen
+                    SwipeToDismissBoxValue.EndToStart -> PurplePrimary // Kliq Lila für Archivieren
                 }, 
                 label = "swipe_color"
             )
@@ -81,13 +83,13 @@ fun SwipeableActionRow(
             }
             
             val icon = when (direction) {
-                SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Archive
-                SwipeToDismissBoxValue.EndToStart -> Icons.Default.Delete
-                SwipeToDismissBoxValue.Settled -> Icons.Default.Delete
+                SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Delete
+                SwipeToDismissBoxValue.EndToStart -> Icons.Default.Archive
+                SwipeToDismissBoxValue.Settled -> Icons.Default.Archive
             }
 
             val scale by animateFloatAsState(
-                targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.Settled) 0.75f else 1f,
+                targetValue = if (dismissState.targetValue == SwipeToDismissBoxValue.Settled) 0.75f else 1.1f,
                 label = "swipe_icon_scale"
             )
 
@@ -113,3 +115,4 @@ fun SwipeableActionRow(
         }
     )
 }
+

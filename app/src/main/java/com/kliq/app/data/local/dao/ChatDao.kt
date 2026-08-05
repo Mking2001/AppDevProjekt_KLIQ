@@ -69,6 +69,9 @@ interface ChatDao {
     @Query("UPDATE chats SET isMuted = :isMuted WHERE id = :chatId")
     suspend fun updateMuteStatus(chatId: String, isMuted: Boolean)
 
+    @Query("UPDATE chats SET isArchived = :isArchived WHERE id = :chatId")
+    suspend fun updateArchiveStatus(chatId: String, isArchived: Boolean)
+
     @Query("UPDATE chats SET unreadCount = 0 WHERE id = :chatId")
     suspend fun markChatAsRead(chatId: String)
 
