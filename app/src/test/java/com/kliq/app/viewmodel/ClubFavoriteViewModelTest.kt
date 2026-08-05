@@ -46,6 +46,8 @@ class ClubFavoriteViewModelTest {
             id = "c_kitkat",
             name = "KitKatClub",
             location = GpsLocation(52.5114, 13.4172, "Köpenicker Str. 76"),
+            averageRating = 4.6,
+            operatingHours = OperatingHours(isOpenNow = true),
             isFavorite = true
         )
         `when`(clubRepository.getClubById("c_kitkat")).thenReturn(flowOf(testClub))
@@ -66,6 +68,8 @@ class ClubFavoriteViewModelTest {
             id = "c_kitkat",
             name = "KitKatClub",
             location = GpsLocation(52.5114, 13.4172, "Köpenicker Str. 76"),
+            averageRating = 4.6,
+            operatingHours = OperatingHours(isOpenNow = true),
             isFavorite = false
         )
         `when`(clubRepository.getClubById("c_kitkat")).thenReturn(flowOf(testClub))
@@ -87,6 +91,8 @@ class ClubFavoriteViewModelTest {
             id = "c_watergate",
             name = "Watergate",
             location = GpsLocation(52.5011, 13.4452, "Falckensteinstraße 49"),
+            averageRating = 4.7,
+            operatingHours = OperatingHours(isOpenNow = true),
             isFavorite = false
         )
         `when`(clubRepository.getAllClubs()).thenReturn(flowOf(listOf(testClub)))

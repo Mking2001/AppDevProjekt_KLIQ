@@ -80,7 +80,10 @@ class MapViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         `when`(clubRepository.getAllClubs()).thenReturn(flowOf(testClubs))
-        viewModel = MapViewModel(clubRepository)
+        viewModel = MapViewModel(
+            clubRepository = clubRepository,
+            defaultDispatcher = testDispatcher
+        )
         testDispatcher.scheduler.advanceUntilIdle()
     }
 
