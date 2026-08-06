@@ -79,7 +79,6 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showZoomOverlay by remember { mutableStateOf(false) }
     var showImagePickerSheet by remember { mutableStateOf(false) }
     var tempCameraImageUri by remember { mutableStateOf<Uri?>(null) }
 
@@ -150,7 +149,8 @@ fun ProfileScreen(
                     uiState = uiState,
                     onEditProfile = { viewModel.onEditProfile() },
                     onShowQrCode = { viewModel.showQrCodeModal() },
-                    onAvatarClick = { showImagePickerSheet = true }
+                    onAvatarClick = { viewModel.openProfileImageViewer() },
+                    onCameraBadgeClick = { showImagePickerSheet = true }
                 )
             }
 
@@ -188,24 +188,17 @@ fun ProfileScreen(
     )
 
     ZoomableImageOverlay(
-        isVisible = showZoomOverlay,
-        onDismiss = { showZoomOverlay = false }
-    ) {
-        Box(
-            modifier = Modifier
-                .size(300.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = uiState.displayName.take(2).uppercase(),
-                style = MaterialTheme.typography.displayLarge.copy(fontSize = 120.sp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold
-            )
+        isVisible = uiState.imageViewerState.isFullscreenVisible,
+        onDismiss = { viewModel.dismissProfileImageViewer() },
+        imageUrl = uiState.imageViewerState.targetImageUrl,
+        initials = uiState.displayName.ifBlank { "MM" },
+        scaleState = uiState.imageViewerState.currentScale,
+        offsetXState = uiState.imageViewerState.translationOffsetX,
+        offsetYState = uiState.imageViewerState.translationOffsetY,
+        onZoomStateChanged = { scale, offsetX, offsetY ->
+            viewModel.updateZoomState(scale, offsetX, offsetY)
         }
-    }
+    )
 }
 
 @Composable
@@ -213,7 +206,8 @@ private fun ProfileHeader(
     uiState: ProfileUiState,
     onEditProfile: () -> Unit,
     onShowQrCode: () -> Unit,
-    onAvatarClick: () -> Unit
+    onAvatarClick: () -> Unit,
+    onCameraBadgeClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -226,6 +220,7 @@ private fun ProfileHeader(
             isProcessing = uiState.isProcessingImage,
             initials = uiState.displayName.ifBlank { "MM" },
             onAvatarClick = onAvatarClick,
+            onCameraBadgeClick = onCameraBadgeClick,
             size = 100.dp
         )
 

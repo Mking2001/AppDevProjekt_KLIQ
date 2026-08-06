@@ -29,5 +29,6 @@ data class OtherUserProfileUiState(
     val isBlockConfirmationDialogVisible: Boolean = false,
     val isSubmittingRating: Boolean = false,
     val errorMessage: String? = null,
-    val actionSuccessMessage: String? = null
+    val actionSuccessMessage: String? = null,
+    val imageViewerState: ProfileImageViewerState = ProfileImageViewerState()
 )

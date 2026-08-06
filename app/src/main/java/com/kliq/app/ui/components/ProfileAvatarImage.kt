@@ -50,14 +50,15 @@ fun ProfileAvatarImage(
     size: Dp = 110.dp,
     isProcessing: Boolean = false,
     initials: String? = null,
-    showCameraBadge: Boolean = true
+    showCameraBadge: Boolean = true,
+    onCameraBadgeClick: (() -> Unit)? = null
 ) {
     val avatarContentDesc = if (!imageUri.isNullGlanceable()) {
-        "Profilbild. Zum Ändern tippen."
+        "Profilbild. Zum Vergrößern tippen."
     } else if (!initials.isNullOrBlank()) {
-        "Profilbild mit Initialen $initials. Zum Ändern tippen."
+        "Profilbild mit Initialen $initials. Zum Vergrößern tippen."
     } else {
-        "Profilbild Platzhalter. Zum Foto Hinzufügen tippen."
+        "Profilbild Platzhalter. Zum Vergrößern tippen."
     }
 
     Box(
@@ -142,7 +143,7 @@ fun ProfileAvatarImage(
                     .clip(CircleShape)
                     .background(PurplePrimary)
                     .border(2.dp, DarkSurface, CircleShape)
-                    .clickable { onAvatarClick() }
+                    .clickable { (onCameraBadgeClick ?: onAvatarClick).invoke() }
                     .clearAndSetSemantics {
                         contentDescription = "Profilfoto aufnehmen oder auswählen"
                         role = Role.Button
