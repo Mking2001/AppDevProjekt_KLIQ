@@ -43,6 +43,7 @@ class HapticFeedbackManagerImpl @Inject constructor(
 
     override fun isHapticFeedbackEnabled(): Boolean {
         return try {
+            @Suppress("DEPRECATION")
             val systemHaptic = Settings.System.getInt(
                 context.contentResolver,
                 Settings.System.HAPTIC_FEEDBACK_ENABLED,
