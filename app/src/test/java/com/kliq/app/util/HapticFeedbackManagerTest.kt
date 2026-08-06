@@ -7,6 +7,10 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 
+/**
+ * Unit tests for [HapticFeedbackManager] validating pattern mappings,
+ * event-specific reason logging triggers, and delegation.
+ */
 class HapticFeedbackManagerTest {
 
     private val hapticFeedbackManager: HapticFeedbackManager = mock(HapticFeedbackManager::class.java)
@@ -26,26 +30,36 @@ class HapticFeedbackManagerTest {
     }
 
     @Test
-    fun testPerformConfirmTriggersPattern() {
-        hapticFeedbackManager.performConfirm()
-        verify(hapticFeedbackManager).performConfirm()
+    fun testPerformConfirmTriggersPatternWithReason() {
+        val reason = "QR Scan / Friend verification"
+        hapticFeedbackManager.performConfirm(reason)
+        verify(hapticFeedbackManager).performConfirm(reason)
     }
 
     @Test
-    fun testPerformRejectTriggersPattern() {
-        hapticFeedbackManager.performReject()
-        verify(hapticFeedbackManager).performReject()
+    fun testPerformRejectTriggersPatternWithReason() {
+        val reason = "Invalid QR Code"
+        hapticFeedbackManager.performReject(reason)
+        verify(hapticFeedbackManager).performReject(reason)
     }
 
     @Test
-    fun testPerformLightClickTriggersPattern() {
-        hapticFeedbackManager.performLightClick()
-        verify(hapticFeedbackManager).performLightClick()
+    fun testPerformLightClickTriggersPatternWithReason() {
+        val reason = "Rating star selection"
+        hapticFeedbackManager.performLightClick(reason)
+        verify(hapticFeedbackManager).performLightClick(reason)
     }
 
     @Test
-    fun testPerformHeavyClickTriggersPattern() {
-        hapticFeedbackManager.performHeavyClick()
-        verify(hapticFeedbackManager).performHeavyClick()
+    fun testPerformHeavyClickTriggersPatternWithReason() {
+        val reason = "Map marker long-press quick-view"
+        hapticFeedbackManager.performHeavyClick(reason)
+        verify(hapticFeedbackManager).performHeavyClick(reason)
+    }
+
+    @Test
+    fun testPerformHapticFeedbackPatternDirectly() {
+        hapticFeedbackManager.performHapticFeedback(HapticFeedbackPattern.CONFIRM, "Geofence entry / Location match")
+        verify(hapticFeedbackManager).performHapticFeedback(HapticFeedbackPattern.CONFIRM, "Geofence entry / Location match")
     }
 }

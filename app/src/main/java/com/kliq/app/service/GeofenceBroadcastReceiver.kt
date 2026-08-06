@@ -69,7 +69,7 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                         Geofence.GEOFENCE_TRANSITION_ENTER -> {
                             Log.d(TAG, "Geofence ENTER triggered for clubId: $clubId")
                             if (::hapticFeedbackManager.isInitialized) {
-                                hapticFeedbackManager.performConfirm()
+                                hapticFeedbackManager.performConfirm("Geofence entry / Location match")
                             }
                             geofenceRepository.handleGeofenceTransition(clubId, GeofenceTransitionType.ENTER)
                             sendLocationVerificationNotification(context, clubId, isEntering = true)

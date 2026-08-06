@@ -24,7 +24,7 @@ class VerificationServiceImpl @Inject constructor(
         if (!qrScanToken.isNullOfBlankToken()) {
             val qrResult = verifyQrScanToken(reviewerUserId, targetUserId, qrScanToken!!)
             if (qrResult.isVerified) {
-                hapticFeedbackManager?.performConfirm()
+                hapticFeedbackManager?.performConfirm("Friend QR Code Verification")
                 return qrResult
             }
         }

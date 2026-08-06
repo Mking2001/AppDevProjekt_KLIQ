@@ -197,7 +197,7 @@ class ReviewViewModel @Inject constructor(
 
     fun onRatingSelected(rating: Int) {
         if (rating in 1..5) {
-            hapticFeedbackManager?.performLightClick()
+            hapticFeedbackManager?.performLightClick("Review star filter selection")
             _uiState.update { it.copy(selectedRating = rating) }
         }
     }
@@ -216,7 +216,7 @@ class ReviewViewModel @Inject constructor(
         val currentState = _uiState.value
 
         if (currentState.isVerificationLocked) {
-            hapticFeedbackManager?.performReject()
+            hapticFeedbackManager?.performReject("Locked comment submission attempt")
             _uiState.update {
                 it.copy(errorMessage = "Sicherheits-Sperre aktiv: Kommentare erfordern physische Nähe (GPS) oder QR-Scan!")
             }
@@ -224,7 +224,7 @@ class ReviewViewModel @Inject constructor(
         }
 
         if (!currentState.isCommentLengthValid) {
-            hapticFeedbackManager?.performReject()
+            hapticFeedbackManager?.performReject("Invalid comment length")
             _uiState.update {
                 it.copy(errorMessage = "Kommentar muss zwischen 1 und 280 Zeichen lang sein.")
             }
@@ -243,7 +243,7 @@ class ReviewViewModel @Inject constructor(
             )
 
             result.onSuccess {
-                hapticFeedbackManager?.performConfirm()
+                hapticFeedbackManager?.performConfirm("Verified comment publication success")
                 _uiState.update { state ->
                     state.copy(
                         isSubmitting = false,
@@ -252,7 +252,7 @@ class ReviewViewModel @Inject constructor(
                     )
                 }
             }.onFailure { error ->
-                hapticFeedbackManager?.performReject()
+                hapticFeedbackManager?.performReject("Comment publication failed")
                 _uiState.update { state ->
                     state.copy(
                         isSubmitting = false,
@@ -282,11 +282,11 @@ class ReviewViewModel @Inject constructor(
                 userLon = userLon
             )
             result.onSuccess { review ->
-                hapticFeedbackManager?.performConfirm()
+                hapticFeedbackManager?.performConfirm("GPS-verified review submission success")
                 val msg = if (review.isVerified) "Bewertung verifiziert und veröffentlicht!" else "Bewertung unverifiziert eingereicht."
                 _uiState.update { it.copy(isSubmitting = false, submitSuccessMessage = msg) }
             }.onFailure { error ->
-                hapticFeedbackManager?.performReject()
+                hapticFeedbackManager?.performReject("GPS review submission failed")
                 _uiState.update { it.copy(isSubmitting = false, errorMessage = error.localizedMessage) }
             }
         }
@@ -309,11 +309,11 @@ class ReviewViewModel @Inject constructor(
                 qrToken = qrToken
             )
             result.onSuccess { review ->
-                hapticFeedbackManager?.performConfirm()
+                hapticFeedbackManager?.performConfirm("QR-verified review submission success")
                 val msg = if (review.isVerified) "Bewertung per QR-Scan verifiziert!" else "Bewertung eingereicht."
                 _uiState.update { it.copy(isSubmitting = false, submitSuccessMessage = msg) }
             }.onFailure { error ->
-                hapticFeedbackManager?.performReject()
+                hapticFeedbackManager?.performReject("QR review submission failed")
                 _uiState.update { it.copy(isSubmitting = false, errorMessage = error.localizedMessage) }
             }
         }

@@ -84,7 +84,7 @@ class GeofenceViewModel @Inject constructor(
 
     fun simulateGeofenceEnter(clubId: String) {
         viewModelScope.launch {
-            hapticFeedbackManager?.performConfirm()
+            hapticFeedbackManager?.performConfirm("Simulated Geofence entry / Location match")
             geofenceRepository.handleGeofenceTransition(clubId, GeofenceTransitionType.ENTER)
         }
     }

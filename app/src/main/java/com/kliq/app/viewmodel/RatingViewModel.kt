@@ -115,7 +115,7 @@ class RatingViewModel @Inject constructor(
     fun onRatingChanged(newRating: Int) {
         if (_uiState.value.isRatingLocked) return
         val clamped = newRating.coerceIn(1, 5)
-        hapticFeedbackManager?.performLightClick()
+        hapticFeedbackManager?.performLightClick("Rating star selection")
         _uiState.update { it.copy(rating = clamped) }
     }
 
@@ -139,7 +139,7 @@ class RatingViewModel @Inject constructor(
             )
 
             if (result.isVerified) {
-                hapticFeedbackManager?.performConfirm()
+                hapticFeedbackManager?.performConfirm("Rating QR verification")
                 _uiState.update {
                     it.copy(
                         isRatingLocked = false,
@@ -149,7 +149,7 @@ class RatingViewModel @Inject constructor(
                     )
                 }
             } else {
-                hapticFeedbackManager?.performReject()
+                hapticFeedbackManager?.performReject("Invalid rating QR code")
                 val errorMsg = "Ungültiger QR-Code für diesen Nutzer."
                 _uiState.update {
                     it.copy(
@@ -164,7 +164,7 @@ class RatingViewModel @Inject constructor(
     fun submitRating() {
         val currentState = _uiState.value
         if (currentState.isRatingLocked) {
-            hapticFeedbackManager?.performReject()
+            hapticFeedbackManager?.performReject("Locked rating submission attempt")
             val errorMsg = "Bewertung gesperrt: Weder physische Nähe noch QR-Scan vorhanden."
             _uiState.update {
                 it.copy(
@@ -176,7 +176,7 @@ class RatingViewModel @Inject constructor(
         }
 
         if (currentState.rating !in 1..5) {
-            hapticFeedbackManager?.performReject()
+            hapticFeedbackManager?.performReject("Invalid star rating count")
             val errorMsg = "Bitte wähle eine Sternebewertung zwischen 1 und 5 Sternen."
             _uiState.update {
                 it.copy(
@@ -204,7 +204,7 @@ class RatingViewModel @Inject constructor(
             )
 
             result.onSuccess { review ->
-                hapticFeedbackManager?.performConfirm()
+                hapticFeedbackManager?.performConfirm("Successful rating submission")
                 _uiState.update {
                     it.copy(
                         isSubmitting = false,
@@ -214,7 +214,7 @@ class RatingViewModel @Inject constructor(
                     )
                 }
             }.onFailure { error ->
-                hapticFeedbackManager?.performReject()
+                hapticFeedbackManager?.performReject("Rating submission failed")
                 val msg = error.localizedMessage ?: "Fehler beim Einreichen der Bewertung."
                 _uiState.update {
                     it.copy(

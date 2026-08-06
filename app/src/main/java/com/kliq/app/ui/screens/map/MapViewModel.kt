@@ -638,7 +638,7 @@ class MapViewModel @Inject constructor(
     }
 
     fun onMarkerLongPressed(venue: VenueItemUi) {
-        hapticFeedbackManager?.performHeavyClick()
+        hapticFeedbackManager?.performHeavyClick("Map marker long-press quick-view")
         onMarkerClicked(venue)
     }
 

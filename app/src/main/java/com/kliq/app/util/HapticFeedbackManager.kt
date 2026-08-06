@@ -6,6 +6,7 @@ import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
 import android.provider.Settings
+import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -18,11 +19,11 @@ enum class HapticFeedbackPattern {
 }
 
 interface HapticFeedbackManager {
-    fun performHapticFeedback(pattern: HapticFeedbackPattern)
-    fun performConfirm()
-    fun performReject()
-    fun performLightClick()
-    fun performHeavyClick()
+    fun performHapticFeedback(pattern: HapticFeedbackPattern, reason: String? = null)
+    fun performConfirm(reason: String? = null)
+    fun performReject(reason: String? = null)
+    fun performLightClick(reason: String? = null)
+    fun performHeavyClick(reason: String? = null)
     fun isHapticFeedbackEnabled(): Boolean
 }
 
@@ -56,7 +57,10 @@ class HapticFeedbackManagerImpl @Inject constructor(
         }
     }
 
-    override fun performHapticFeedback(pattern: HapticFeedbackPattern) {
+    override fun performHapticFeedback(pattern: HapticFeedbackPattern, reason: String?) {
+        val logDetails = if (!reason.isNullOrBlank()) " for $reason" else ""
+        Log.d(TAG, "[HAPTIC] Triggered $pattern pattern$logDetails")
+
         if (!isHapticFeedbackEnabled()) return
 
         val vib = vibrator ?: return
@@ -109,8 +113,12 @@ class HapticFeedbackManagerImpl @Inject constructor(
         }
     }
 
-    override fun performConfirm() = performHapticFeedback(HapticFeedbackPattern.CONFIRM)
-    override fun performReject() = performHapticFeedback(HapticFeedbackPattern.REJECT)
-    override fun performLightClick() = performHapticFeedback(HapticFeedbackPattern.LIGHT_CLICK)
-    override fun performHeavyClick() = performHapticFeedback(HapticFeedbackPattern.HEAVY_CLICK)
+    override fun performConfirm(reason: String?) = performHapticFeedback(HapticFeedbackPattern.CONFIRM, reason)
+    override fun performReject(reason: String?) = performHapticFeedback(HapticFeedbackPattern.REJECT, reason)
+    override fun performLightClick(reason: String?) = performHapticFeedback(HapticFeedbackPattern.LIGHT_CLICK, reason)
+    override fun performHeavyClick(reason: String?) = performHapticFeedback(HapticFeedbackPattern.HEAVY_CLICK, reason)
+
+    companion object {
+        const val TAG = "HapticFeedbackManager"
+    }
 }
