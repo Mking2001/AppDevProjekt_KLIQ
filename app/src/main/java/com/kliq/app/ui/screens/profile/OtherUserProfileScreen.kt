@@ -91,6 +91,7 @@ import com.kliq.app.data.model.Review
 import com.kliq.app.data.model.SearchIntent
 import com.kliq.app.data.model.SmokingHabit
 import com.kliq.app.ui.components.ProfileAvatarImage
+import com.kliq.app.ui.components.ZoomableImageOverlay
 import com.kliq.app.ui.theme.DarkBackground
 import com.kliq.app.ui.theme.DarkOnBackground
 import com.kliq.app.ui.theme.DarkOnSurface
@@ -251,7 +252,8 @@ fun OtherUserProfileScreen(
                             onRateUserClick = { viewModel.openRatingSheet() },
                             onSendMessageClick = { onNavigateToChat(uiState.userId) },
                             onReportUserClick = { viewModel.openReportDialog() },
-                            onBlockToggleClick = { viewModel.toggleBlockUser() }
+                            onBlockToggleClick = { viewModel.toggleBlockUser() },
+                            onAvatarClick = { viewModel.openProfileImageViewer() }
                         )
                     }
 
@@ -320,6 +322,19 @@ fun OtherUserProfileScreen(
                     onConfirmBlock = { viewModel.confirmBlockUser() }
                 )
             }
+
+            ZoomableImageOverlay(
+                isVisible = uiState.imageViewerState.isFullscreenVisible,
+                onDismiss = { viewModel.dismissProfileImageViewer() },
+                imageUrl = uiState.imageViewerState.targetImageUrl ?: uiState.profilePictureUrl,
+                initials = uiState.username,
+                scaleState = uiState.imageViewerState.currentScale,
+                offsetXState = uiState.imageViewerState.translationOffsetX,
+                offsetYState = uiState.imageViewerState.translationOffsetY,
+                onZoomStateChanged = { scale, offsetX, offsetY ->
+                    viewModel.updateZoomState(scale, offsetX, offsetY)
+                }
+            )
         }
     }
 }
@@ -367,7 +382,8 @@ private fun OtherUserProfileHeaderSection(
     onRateUserClick: () -> Unit,
     onSendMessageClick: () -> Unit,
     onReportUserClick: () -> Unit,
-    onBlockToggleClick: () -> Unit
+    onBlockToggleClick: () -> Unit,
+    onAvatarClick: () -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -395,7 +411,7 @@ private fun OtherUserProfileHeaderSection(
             ) {
                 ProfileAvatarImage(
                     imageUri = uiState.profilePictureUrl,
-                    onAvatarClick = { },
+                    onAvatarClick = onAvatarClick,
                     initials = uiState.username,
                     showCameraBadge = false,
                     modifier = Modifier
