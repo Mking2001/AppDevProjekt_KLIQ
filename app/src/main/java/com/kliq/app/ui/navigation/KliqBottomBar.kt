@@ -39,6 +39,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kliq.app.ui.components.KliqIcon
+import com.kliq.app.ui.components.KliqIconCategory
+import com.kliq.app.ui.components.KliqIconSize
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
@@ -206,13 +209,14 @@ private fun KliqBottomBarItem(
                 }
             }
         ) {
-            Icon(
+            KliqIcon(
                 imageVector = if (isSelected) navItem.selectedIcon else navItem.unselectedIcon,
                 contentDescription = navItem.label,
+                size = KliqIconSize.MEDIUM,
+                category = KliqIconCategory.NAVIGATION,
+                isSelected = isSelected,
                 tint = iconColor,
-                modifier = Modifier
-                    .size(24.dp)
-                    .scale(scale)
+                modifier = Modifier.scale(scale)
             )
         }
 

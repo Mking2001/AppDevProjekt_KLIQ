@@ -123,3 +123,14 @@ val KliqTypography = Typography(
         letterSpacing = 0.5.sp
     )
 )
+
+/**
+ * Custom Kliq typography helper extensions for explicit design-token usage.
+ */
+val Typography.heading1: TextStyle get() = headlineLarge
+val Typography.heading2: TextStyle get() = headlineMedium
+val Typography.heading3: TextStyle get() = headlineSmall
+val Typography.bodyRegular: TextStyle get() = bodyMedium
+val Typography.button: TextStyle get() = labelLarge
+val Typography.caption: TextStyle get() = bodySmall
+

@@ -27,6 +27,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.outlined.Edit
+import com.kliq.app.ui.components.KliqIcon
+import com.kliq.app.ui.components.KliqIconCategory
+import com.kliq.app.ui.components.KliqIconSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -251,10 +254,11 @@ private fun ProfileHeader(
         Spacer(modifier = Modifier.height(4.dp))
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
+            KliqIcon(
                 imageVector = Icons.Filled.LocationOn,
                 contentDescription = null,
-                modifier = Modifier.size(14.dp),
+                size = KliqIconSize.SMALL,
+                category = KliqIconCategory.ACTION,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.width(4.dp))
@@ -301,10 +305,11 @@ private fun ProfileHeader(
                 ),
                 border = ButtonDefaults.outlinedButtonBorder
             ) {
-                Icon(
+                KliqIcon(
                     imageVector = Icons.Outlined.Edit,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp)
+                    size = KliqIconSize.SMALL,
+                    category = KliqIconCategory.ACTION
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
@@ -321,10 +326,11 @@ private fun ProfileHeader(
                     containerColor = MaterialTheme.colorScheme.primary
                 )
             ) {
-                Icon(
+                KliqIcon(
                     imageVector = Icons.Default.QrCode2,
                     contentDescription = null,
-                    modifier = Modifier.size(18.dp),
+                    size = KliqIconSize.SMALL,
+                    category = KliqIconCategory.ACTION,
                     tint = Color.White
                 )
                 Spacer(modifier = Modifier.width(6.dp))
