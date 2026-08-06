@@ -35,4 +35,14 @@ class ThemeViewModel @Inject constructor() : ViewModel() {
     fun setThemeMode(mode: ThemeMode) {
         _themeState.update { it.copy(themeMode = mode) }
     }
+
+    fun toggleNightOptimized() {
+        _themeState.update { currentState ->
+            currentState.copy(isNightOptimized = !currentState.isNightOptimized)
+        }
+    }
+
+    fun setNightOptimized(enabled: Boolean) {
+        _themeState.update { it.copy(isNightOptimized = enabled) }
+    }
 }
