@@ -36,6 +36,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.kliq.app.ui.components.KliqIcon
+import com.kliq.app.ui.components.KliqIconCategory
+import com.kliq.app.ui.components.KliqIconSize
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
@@ -147,9 +150,11 @@ private fun OverflowMenuButton(
 
     Box {
         IconButton(onClick = onToggle) {
-            Icon(
+            KliqIcon(
                 imageVector = Icons.Filled.MoreVert,
                 contentDescription = "Menü öffnen",
+                size = KliqIconSize.MEDIUM,
+                category = KliqIconCategory.ACTION,
                 tint = iconTint,
                 modifier = Modifier.rotate(rotation)
             )
@@ -187,17 +192,19 @@ private fun OverflowMenuButton(
                             onAction(action)
                         },
                         leadingIcon = {
-                            Icon(
+                            KliqIcon(
                                 imageVector = action.icon,
                                 contentDescription = action.label,
+                                size = KliqIconSize.SMALL,
+                                category = KliqIconCategory.ACTION,
                                 tint = if (isLogout) {
                                     MaterialTheme.colorScheme.error
                                 } else {
                                     MaterialTheme.colorScheme.onSurfaceVariant
-                                },
-                                modifier = Modifier.size(20.dp)
+                                }
                             )
                         },
+
                         colors = MenuDefaults.itemColors(
                             textColor = MaterialTheme.colorScheme.onSurface,
                             leadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant

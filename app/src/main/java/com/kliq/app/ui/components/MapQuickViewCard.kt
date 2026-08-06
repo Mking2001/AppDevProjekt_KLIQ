@@ -90,9 +90,11 @@ fun MapQuickViewCard(
                                 }
                             )
                             IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
-                                Icon(
+                                KliqIcon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Schließen",
+                                    size = KliqIconSize.SMALL,
+                                    category = KliqIconCategory.ACTION,
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
@@ -107,11 +109,12 @@ fun MapQuickViewCard(
                     ) {
                         // Rating Badge
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
+                            KliqIcon(
                                 imageVector = Icons.Filled.Star,
                                 contentDescription = "Bewertung",
-                                tint = Color(0xFFFFB800),
-                                modifier = Modifier.size(18.dp)
+                                size = KliqIconSize.SMALL,
+                                category = KliqIconCategory.ACTION,
+                                tint = Color(0xFFFFB800)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
@@ -154,11 +157,12 @@ fun MapQuickViewCard(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
+                                        KliqIcon(
                                             imageVector = Icons.Default.Group,
                                             contentDescription = "Besucherstatistik",
-                                            tint = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.size(16.dp)
+                                            size = KliqIconSize.SMALL,
+                                            category = KliqIconCategory.ACTION,
+                                            tint = MaterialTheme.colorScheme.primary
                                         )
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Text(
@@ -225,11 +229,12 @@ fun MapQuickViewCard(
                                 modifier = Modifier.padding(10.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
+                                KliqIcon(
                                     imageVector = Icons.Default.Event,
                                     contentDescription = "Event",
-                                    tint = MaterialTheme.colorScheme.secondary,
-                                    modifier = Modifier.size(20.dp)
+                                    size = KliqIconSize.MEDIUM,
+                                    category = KliqIconCategory.EVENT_MARKER,
+                                    tint = MaterialTheme.colorScheme.secondary
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Column {
@@ -270,7 +275,12 @@ fun MapQuickViewCard(
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Icon(Icons.Default.Directions, contentDescription = null, modifier = Modifier.size(18.dp))
+                            KliqIcon(
+                                imageVector = Icons.Default.Directions,
+                                contentDescription = "Route",
+                                size = KliqIconSize.SMALL,
+                                category = KliqIconCategory.ACTION
+                            )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text("Route")
                         }

@@ -48,6 +48,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import com.kliq.app.ui.components.KliqIcon
+import com.kliq.app.ui.components.KliqIconCategory
+import com.kliq.app.ui.components.KliqIconSize
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -246,11 +249,12 @@ fun VoiceMessageBubble(
                 .clip(CircleShape)
                 .background(if (message.isMine) Color.White.copy(alpha = 0.25f) else PurplePrimary.copy(alpha = 0.2f))
         ) {
-            Icon(
+            KliqIcon(
                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                 contentDescription = if (isPlaying) "Sprachnachricht pausieren" else "Sprachnachricht abspielen",
-                tint = if (message.isMine) Color.White else PurplePrimaryLight,
-                modifier = Modifier.size(24.dp)
+                size = KliqIconSize.MEDIUM,
+                category = KliqIconCategory.ACTION,
+                tint = if (message.isMine) Color.White else PurplePrimaryLight
             )
         }
 
