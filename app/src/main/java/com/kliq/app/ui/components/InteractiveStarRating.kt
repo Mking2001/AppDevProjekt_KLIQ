@@ -27,9 +27,15 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
 import com.kliq.app.ui.theme.DarkOutline
-import com.kliq.app.ui.theme.FuchsiaTertiary
-import com.kliq.app.ui.theme.PurplePrimary
+
 
 @Composable
 fun InteractiveStarRating(
@@ -109,16 +115,16 @@ fun InteractiveStarRating(
             .clearAndSetSemantics {
                 contentDescription = accessibilityDescription
                 stateDescription = "$rating von $maxStars Sternen"
-                role = androidx.compose.ui.semantics.Role.RadioButton
+                role = Role.RadioButton
                 if (!isReadOnly) {
                     customActions = listOf(
-                        androidx.compose.ui.semantics.CustomAccessibilityAction("Wert erhöhen") {
+                        CustomAccessibilityAction("Wert erhöhen") {
                             if (rating < maxStars) {
                                 onRatingChanged(rating + 1)
                                 true
                             } else false
                         },
-                        androidx.compose.ui.semantics.CustomAccessibilityAction("Wert verringern") {
+                        CustomAccessibilityAction("Wert verringern") {
                             if (rating > 1) {
                                 onRatingChanged(rating - 1)
                                 true
@@ -130,6 +136,7 @@ fun InteractiveStarRating(
         horizontalArrangement = Arrangement.spacedBy(starSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
+
         for (starIndex in 1..maxStars) {
             val isFilled = starIndex <= rating
             val starScale by animateFloatAsState(
