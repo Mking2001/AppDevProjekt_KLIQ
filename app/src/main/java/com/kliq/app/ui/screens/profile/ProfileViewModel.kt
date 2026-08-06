@@ -42,7 +42,10 @@ data class ProfileUiState(
     val isQrModalVisible: Boolean = false,
     val qrCodeBitmap: Bitmap? = null,
     val isGeneratingQrCode: Boolean = false,
-    val qrPayloadText: String? = null
+    val qrPayloadText: String? = null,
+
+    // Pinch-to-Zoom Image Viewer Zustand (Kapitel 8.3)
+    val imageViewerState: ProfileImageViewerState = ProfileImageViewerState()
 )
 
 @HiltViewModel
@@ -190,5 +193,57 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun onFollowToggle() {
+    }
+
+    fun openProfileImageViewer(targetUrl: String? = null) {
+        val urlToDisplay = targetUrl ?: _uiState.value.profilePictureUrl
+        _uiState.update { state ->
+            state.copy(
+                imageViewerState = ProfileImageViewerState(
+                    isFullscreenVisible = true,
+                    currentScale = 1.0f,
+                    translationOffsetX = 0.0f,
+                    translationOffsetY = 0.0f,
+                    targetImageUrl = urlToDisplay
+                )
+            )
+        }
+    }
+
+    fun dismissProfileImageViewer() {
+        _uiState.update { state ->
+            state.copy(
+                imageViewerState = state.imageViewerState.copy(
+                    isFullscreenVisible = false,
+                    currentScale = 1.0f,
+                    translationOffsetX = 0.0f,
+                    translationOffsetY = 0.0f
+                )
+            )
+        }
+    }
+
+    fun updateZoomState(scale: Float, offsetX: Float, offsetY: Float) {
+        _uiState.update { state ->
+            state.copy(
+                imageViewerState = state.imageViewerState.copy(
+                    currentScale = scale,
+                    translationOffsetX = offsetX,
+                    translationOffsetY = offsetY
+                )
+            )
+        }
+    }
+
+    fun resetZoomState() {
+        _uiState.update { state ->
+            state.copy(
+                imageViewerState = state.imageViewerState.copy(
+                    currentScale = 1.0f,
+                    translationOffsetX = 0.0f,
+                    translationOffsetY = 0.0f
+                )
+            )
+        }
     }
 }

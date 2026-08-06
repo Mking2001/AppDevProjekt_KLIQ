@@ -268,4 +268,56 @@ class OtherUserProfileViewModel @Inject constructor(
             loadFallbackData("user_demo")
         }
     }
+
+    fun openProfileImageViewer(targetUrl: String? = null) {
+        val urlToDisplay = targetUrl ?: _uiState.value.profilePictureUrl
+        _uiState.update { state ->
+            state.copy(
+                imageViewerState = ProfileImageViewerState(
+                    isFullscreenVisible = true,
+                    currentScale = 1.0f,
+                    translationOffsetX = 0.0f,
+                    translationOffsetY = 0.0f,
+                    targetImageUrl = urlToDisplay
+                )
+            )
+        }
+    }
+
+    fun dismissProfileImageViewer() {
+        _uiState.update { state ->
+            state.copy(
+                imageViewerState = state.imageViewerState.copy(
+                    isFullscreenVisible = false,
+                    currentScale = 1.0f,
+                    translationOffsetX = 0.0f,
+                    translationOffsetY = 0.0f
+                )
+            )
+        }
+    }
+
+    fun updateZoomState(scale: Float, offsetX: Float, offsetY: Float) {
+        _uiState.update { state ->
+            state.copy(
+                imageViewerState = state.imageViewerState.copy(
+                    currentScale = scale,
+                    translationOffsetX = offsetX,
+                    translationOffsetY = offsetY
+                )
+            )
+        }
+    }
+
+    fun resetZoomState() {
+        _uiState.update { state ->
+            state.copy(
+                imageViewerState = state.imageViewerState.copy(
+                    currentScale = 1.0f,
+                    translationOffsetX = 0.0f,
+                    translationOffsetY = 0.0f
+                )
+            )
+        }
+    }
 }
