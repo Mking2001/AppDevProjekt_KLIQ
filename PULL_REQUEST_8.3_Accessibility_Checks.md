@@ -32,3 +32,29 @@
   - `feat: add screen reader optimizations and semantics to chat bubbles`
   - `feat: optimize map controls for talkback and touch target standards`
   - `test: add unit tests for accessibility utilities repository and viewmodel`
+  - `test: add accessibility instrumented emulator ui test and test script`
+
+---
+
+## 📋 GitHub PR Quality & Accessibility Checklist
+
+### Code-Qualität & MVVM-Architektur
+- [x] Strikte Trennung nach MVVM-Muster (`AccessibilitySettings`, `AccessibilityRepository`, `AccessibilityViewModel`).
+- [x] Unveränderliche Zustandsübermittlung mittels `StateFlow<AccessibilityUiState>`.
+- [x] Sauber konfigurierte Dependency Injection via Hilt in `RepositoryModule.kt`.
+
+### Accessibility & Screen-Reader (TalkBack)
+- [x] Vollständige `contentDescription` und `stateDescription` an allen zentralen UI-Komponenten.
+- [x] Strukturelle Orientierungspunkte mit `accessibilityHeading()` gekennzeichnet.
+- [x] Zusammengefasste Sprechblasen-Labels für ungestörte Sprachausgabe (`mergeDescendants = true`).
+- [x] Benutzerdefinierte Accessibility Actions (`CustomAccessibilityAction`) für Schritt-Interaktionen.
+
+### Dynamische Schriftgrößen & Layout-Flexibilität
+- [x] Dynamic Text Scaling verifiziert für Font Scale 1.5x und 2.0x ohne Layout-Brechung.
+- [x] Mindest-Touch-Target-Größen von 48dp × 48dp für alle Buttons und interaktiven Elemente eingehalten.
+- [x] High-Contrast Farbschema (`HighContrastDarkColorScheme`) erfüllt WCAG AAA (> 7:1 Kontrastverhältnis).
+
+### Testabdeckung & Verifikation
+- [x] Unit-Tests (`AccessibilityUtilsTest`, `AccessibilityRepositoryTest`, `AccessibilityViewModelTest`) bestanden.
+- [x] Emulator UI-Test (`AccessibilityChecksEmulatorTest`) und Test-Skript (`test_accessibility_checks.ps1`) erfolgreich verifiziert.
+
