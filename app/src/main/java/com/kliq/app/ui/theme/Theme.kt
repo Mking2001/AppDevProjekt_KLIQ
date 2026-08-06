@@ -74,9 +74,34 @@ private val LightColorScheme = lightColorScheme(
     scrim = LightScrim
 )
 
+private val HighContrastDarkColorScheme = darkColorScheme(
+    primary = HighContrastPurplePrimary,
+    onPrimary = androidx.compose.ui.graphics.Color.Black,
+    primaryContainer = androidx.compose.ui.graphics.Color(0xFF3B0764),
+    onPrimaryContainer = androidx.compose.ui.graphics.Color.White,
+    secondary = androidx.compose.ui.graphics.Color(0xFF2DD4BF),
+    onSecondary = androidx.compose.ui.graphics.Color.Black,
+    secondaryContainer = androidx.compose.ui.graphics.Color(0xFF134E4A),
+    onSecondaryContainer = androidx.compose.ui.graphics.Color.White,
+    tertiary = androidx.compose.ui.graphics.Color(0xFFF472B6),
+    onTertiary = androidx.compose.ui.graphics.Color.Black,
+    error = androidx.compose.ui.graphics.Color(0xFFF87171),
+    onError = androidx.compose.ui.graphics.Color.Black,
+    background = HighContrastBackground,
+    onBackground = HighContrastOnBackground,
+    surface = HighContrastSurface,
+    onSurface = HighContrastOnSurface,
+    surfaceVariant = HighContrastSurfaceVariant,
+    onSurfaceVariant = androidx.compose.ui.graphics.Color.White,
+    outline = HighContrastOutline,
+    outlineVariant = androidx.compose.ui.graphics.Color(0xFF9333EA),
+    scrim = androidx.compose.ui.graphics.Color.Black
+)
+
 @Composable
 fun KliqTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
+    isHighContrast: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {
@@ -84,14 +109,18 @@ fun KliqTheme(
         ThemeMode.LIGHT -> false
         ThemeMode.SYSTEM -> isSystemInDarkTheme()
     }
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val colorScheme = when {
+        isHighContrast -> HighContrastDarkColorScheme
+        darkTheme -> DarkColorScheme
+        else -> LightColorScheme
+    }
     val view = LocalView.current
 
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme && !isHighContrast
         }
     }
 
@@ -102,3 +131,4 @@ fun KliqTheme(
         content = content
     )
 }
+

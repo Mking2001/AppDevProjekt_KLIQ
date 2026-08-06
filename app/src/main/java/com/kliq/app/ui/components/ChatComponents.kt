@@ -68,10 +68,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
+
 import com.kliq.app.data.model.ChatConversation
 import com.kliq.app.data.model.ChatMessage
 import com.kliq.app.data.model.ChatType
@@ -222,22 +226,29 @@ fun VoiceMessageBubble(
     val currentPositionMs = if (isPlaying) playbackPositionMs else 0L
     val progress = (currentPositionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
 
+    val senderPrefix = if (message.isMine) "Deine Sprachnachricht" else "Sprachnachricht von ${message.senderName}"
+    val talkBackVoiceDesc = "$senderPrefix, Dauer ${formatDurationMs(durationMs)}${if (isPlaying) ", wird abgespielt" else ", pausiert"}"
+
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = talkBackVoiceDesc
+                stateDescription = if (isPlaying) "Wird abgespielt" else "Pausiert"
+            },
         verticalAlignment = Alignment.CenterVertically
     ) {
         IconButton(
             onClick = onPlayPauseClick,
             modifier = Modifier
-                .size(40.dp)
+                .size(48.dp)
                 .clip(CircleShape)
                 .background(if (message.isMine) Color.White.copy(alpha = 0.25f) else PurplePrimary.copy(alpha = 0.2f))
         ) {
             Icon(
                 imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = if (isPlaying) "Pause" else "Abspielen",
+                contentDescription = if (isPlaying) "Sprachnachricht pausieren" else "Sprachnachricht abspielen",
                 tint = if (message.isMine) Color.White else PurplePrimaryLight,
                 modifier = Modifier.size(24.dp)
             )
@@ -305,10 +316,24 @@ fun ChatBubble(
 ) {
     var isFullscreenVisible by remember { mutableStateOf(false) }
 
+    val isVoiceMessage = message.messageType == MessageType.VOICE
+    val isImageMessage = message.messageType == MessageType.IMAGE || (!isVoiceMessage && !message.mediaUrl.isNullOrBlank())
+
+    val talkBackBubbleText = when {
+        isVoiceMessage -> "Sprachnachricht von ${if (message.isMine) "dir" else message.senderName}"
+        isImageMessage -> "Fotonachricht von ${if (message.isMine) "dir" else message.senderName}${if (message.text.isNotBlank() && message.text != "📷 Foto") ": ${message.text}" else ""}"
+        else -> "Nachricht von ${if (message.isMine) "dir" else message.senderName}: ${message.text}"
+    }
+
     Column(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics(mergeDescendants = true) {
+                contentDescription = talkBackBubbleText
+            },
         horizontalAlignment = if (message.isMine) Alignment.End else Alignment.Start
     ) {
+
         if (!message.isMine) {
             Text(
                 text = message.senderName,
@@ -322,11 +347,9 @@ fun ChatBubble(
             )
         }
 
-        val isVoiceMessage = message.messageType == MessageType.VOICE
-        val isImageMessage = message.messageType == MessageType.IMAGE || (!isVoiceMessage && !message.mediaUrl.isNullOrBlank())
-
         Surface(
             modifier = Modifier.widthIn(max = 280.dp),
+
             shape = RoundedCornerShape(
                 topStart = 16.dp,
                 topEnd = 16.dp,

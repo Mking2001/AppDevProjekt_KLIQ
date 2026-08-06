@@ -97,4 +97,9 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindGroupPresenceRepository(impl: GroupPresenceRepositoryImpl): GroupPresenceRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAccessibilityRepository(impl: com.kliq.app.data.repository.AccessibilityRepositoryImpl): com.kliq.app.data.repository.AccessibilityRepository
 }
+

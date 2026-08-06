@@ -38,6 +38,11 @@ import androidx.compose.ui.unit.dp
 import com.kliq.app.ui.screens.map.UserMarkerUiState
 import com.kliq.app.ui.theme.KliqAnimations
 
+import com.kliq.app.util.accessibilityHeading
+import com.kliq.app.util.ensureMinTouchTarget
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+
 /**
  * High-contrast popup card displaying selected user profile marker details,
  * online status, status text, search intent badge, and quick chat trigger.
@@ -102,10 +107,16 @@ fun UserQuickViewCard(
                                     color = MaterialTheme.colorScheme.onSurface,
                                     fontWeight = FontWeight.Bold,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.accessibilityHeading()
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.semantics(mergeDescendants = true) {
+                                        contentDescription = "Status: ${if (currentUser.isOnline) "Jetzt online" else "Zuletzt aktiv"}${if (currentUser.formattedDistance.isNotBlank()) ", Entfernung ${currentUser.formattedDistance}" else ""}"
+                                    }
+                                ) {
                                     Box(
                                         modifier = Modifier
                                             .size(8.dp)
@@ -130,10 +141,15 @@ fun UserQuickViewCard(
                             }
                         }
 
-                        IconButton(onClick = onDismiss, modifier = Modifier.size(32.dp)) {
+                        IconButton(
+                            onClick = onDismiss,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .ensureMinTouchTarget()
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Close,
-                                contentDescription = "Schließen",
+                                contentDescription = "Profilkarte schließen",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
@@ -145,7 +161,10 @@ fun UserQuickViewCard(
                             text = "\"$status\"",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Medium
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.semantics {
+                                contentDescription = "Status-Nachricht: $status"
+                            }
                         )
                     }
 
@@ -173,7 +192,9 @@ fun UserQuickViewCard(
                     ) {
                         Button(
                             onClick = { onSendMessage(currentUser.userId) },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .ensureMinTouchTarget(),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Icon(
@@ -186,7 +207,9 @@ fun UserQuickViewCard(
                         }
                         FilledTonalButton(
                             onClick = { /* Open user profile */ },
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .ensureMinTouchTarget(),
                             shape = RoundedCornerShape(12.dp)
                         ) {
                             Icon(
@@ -203,3 +226,4 @@ fun UserQuickViewCard(
         }
     }
 }
+

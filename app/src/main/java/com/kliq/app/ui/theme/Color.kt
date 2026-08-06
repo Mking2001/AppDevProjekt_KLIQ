@@ -71,3 +71,13 @@ val LightInverseSurface = Color(0xFF2D2640)
 val LightInverseOnSurface = Color(0xFFF3EEFF)
 val LightInversePrimary = Color(0xFFBB86FC)
 val LightScrim = Color(0xFF000000)
+
+// High-Contrast Mode (WCAG AAA >= 7:1 Contrast Ratio)
+val HighContrastPurplePrimary = Color(0xFFC084FC)
+val HighContrastBackground = Color(0xFF000000)
+val HighContrastSurface = Color(0xFF121212)
+val HighContrastSurfaceVariant = Color(0xFF1F1B2E)
+val HighContrastOnBackground = Color(0xFFFFFFFF)
+val HighContrastOnSurface = Color(0xFFFFFFFF)
+val HighContrastOutline = Color(0xFFA855F7)
+

@@ -27,9 +27,15 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.stateDescription
 import com.kliq.app.ui.theme.DarkOutline
-import com.kliq.app.ui.theme.FuchsiaTertiary
-import com.kliq.app.ui.theme.PurplePrimary
+
 
 @Composable
 fun InteractiveStarRating(
@@ -93,16 +99,44 @@ fun InteractiveStarRating(
         Modifier
     }
 
+    val accessibilityDescription = if (isReadOnly) {
+        "Bewertung: $rating von $maxStars Sternen"
+    } else {
+        "Interaktive Bewertung: $rating von $maxStars Sternen. Wischen oder tippen zum Ändern."
+    }
+
     Row(
         modifier = modifier
             .onGloballyPositioned { coordinates ->
                 rowWidthPx = coordinates.size.width
             }
             .then(gestureModifier)
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clearAndSetSemantics {
+                contentDescription = accessibilityDescription
+                stateDescription = "$rating von $maxStars Sternen"
+                role = Role.RadioButton
+                if (!isReadOnly) {
+                    customActions = listOf(
+                        CustomAccessibilityAction("Wert erhöhen") {
+                            if (rating < maxStars) {
+                                onRatingChanged(rating + 1)
+                                true
+                            } else false
+                        },
+                        CustomAccessibilityAction("Wert verringern") {
+                            if (rating > 1) {
+                                onRatingChanged(rating - 1)
+                                true
+                            } else false
+                        }
+                    )
+                }
+            },
         horizontalArrangement = Arrangement.spacedBy(starSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
+
         for (starIndex in 1..maxStars) {
             val isFilled = starIndex <= rating
             val starScale by animateFloatAsState(
@@ -116,7 +150,7 @@ fun InteractiveStarRating(
 
             Icon(
                 imageVector = if (isFilled) Icons.Filled.Star else Icons.Outlined.Star,
-                contentDescription = "Stern $starIndex von $maxStars",
+                contentDescription = null,
                 tint = if (isFilled) activeColor else inactiveColor,
                 modifier = Modifier
                     .size(starSize)
@@ -125,3 +159,4 @@ fun InteractiveStarRating(
         }
     }
 }
+

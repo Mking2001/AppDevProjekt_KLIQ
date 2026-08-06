@@ -52,6 +52,27 @@ import com.kliq.app.ui.theme.PurplePrimaryLight
  * @param onModeSelected Callback triggered when a filter mode is tapped.
  * @param modifier Optional [Modifier].
  */
+import com.kliq.app.util.accessibilityHeading
+import com.kliq.app.util.ensureMinTouchTarget
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
+
+/**
+ * Floating Segmented Filter Control for switching between Map Location Modes:
+ * - Alle (All markers)
+ * - Öffentlich (Public Event Venues & Clubs)
+ * - Private Standorte (User locations with active location sharing)
+ *
+ * Designed with Kliq Dark-Mode High-Contrast purple aesthetics.
+ *
+ * @param selectedMode Currently active [MapLocationFilterMode].
+ * @param onModeSelected Callback triggered when a filter mode is tapped.
+ * @param modifier Optional [Modifier].
+ */
 @Composable
 fun MapFilterSegmentedControl(
     selectedMode: MapLocationFilterMode,
@@ -61,7 +82,8 @@ fun MapFilterSegmentedControl(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .accessibilityHeading(),
         shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
         tonalElevation = 8.dp,
@@ -83,6 +105,7 @@ fun MapFilterSegmentedControl(
             ) {
                 FilterSegmentButton(
                     text = "Alle",
+                    accessibilityLabel = "Kartenfilter: Alle Standorte anzeigen",
                     icon = Icons.Default.Layers,
                     isSelected = selectedMode == MapLocationFilterMode.ALL,
                     onClick = { onModeSelected(MapLocationFilterMode.ALL) },
@@ -91,6 +114,7 @@ fun MapFilterSegmentedControl(
 
                 FilterSegmentButton(
                     text = "Öffentlich",
+                    accessibilityLabel = "Kartenfilter: Nur öffentliche Clubs und Venues anzeigen",
                     icon = Icons.Default.Event,
                     isSelected = selectedMode == MapLocationFilterMode.PUBLIC_ONLY,
                     onClick = { onModeSelected(MapLocationFilterMode.PUBLIC_ONLY) },
@@ -99,6 +123,7 @@ fun MapFilterSegmentedControl(
 
                 FilterSegmentButton(
                     text = "Private",
+                    accessibilityLabel = "Kartenfilter: Nur private Nutzerstandorte anzeigen",
                     icon = Icons.Default.People,
                     isSelected = selectedMode == MapLocationFilterMode.PRIVATE_ONLY,
                     onClick = { onModeSelected(MapLocationFilterMode.PRIVATE_ONLY) },
@@ -115,6 +140,7 @@ fun MapFilterSegmentedControl(
 @Composable
 private fun FilterSegmentButton(
     text: String,
+    accessibilityLabel: String,
     icon: ImageVector,
     isSelected: Boolean,
     onClick: () -> Unit,
@@ -144,11 +170,18 @@ private fun FilterSegmentButton(
 
     Box(
         modifier = modifier
-            .height(40.dp)
+            .height(48.dp)
+            .ensureMinTouchTarget()
             .clip(RoundedCornerShape(20.dp))
             .background(backgroundColor)
             .then(borderModifier)
-            .clickable { onClick() },
+            .clickable { onClick() }
+            .clearAndSetSemantics {
+                contentDescription = accessibilityLabel
+                stateDescription = if (isSelected) "Ausgewählt" else "Nicht ausgewählt"
+                selected = isSelected
+                role = Role.Tab
+            },
         contentAlignment = Alignment.Center
     ) {
         Row(
@@ -158,7 +191,7 @@ private fun FilterSegmentButton(
         ) {
             Icon(
                 imageVector = icon,
-                contentDescription = text,
+                contentDescription = null,
                 tint = contentColor,
                 modifier = Modifier.size(16.dp)
             )
@@ -173,3 +206,4 @@ private fun FilterSegmentButton(
         }
     }
 }
+

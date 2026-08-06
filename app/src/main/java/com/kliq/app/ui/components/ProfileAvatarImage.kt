@@ -36,6 +36,12 @@ import com.kliq.app.ui.theme.FuchsiaTertiary
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
+import com.kliq.app.util.ensureMinTouchTarget
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+
 @Composable
 fun ProfileAvatarImage(
     imageUri: String?,
@@ -46,10 +52,23 @@ fun ProfileAvatarImage(
     initials: String? = null,
     showCameraBadge: Boolean = true
 ) {
+    val avatarContentDesc = if (!imageUri.isNullGlanceable()) {
+        "Profilbild. Zum Ändern tippen."
+    } else if (!initials.isNullOrBlank()) {
+        "Profilbild mit Initialen $initials. Zum Ändern tippen."
+    } else {
+        "Profilbild Platzhalter. Zum Foto Hinzufügen tippen."
+    }
+
     Box(
         modifier = modifier
             .size(size)
-            .clickable { onAvatarClick() },
+            .ensureMinTouchTarget()
+            .clickable { onAvatarClick() }
+            .clearAndSetSemantics {
+                contentDescription = avatarContentDesc
+                role = Role.Button
+            },
         contentAlignment = Alignment.Center
     ) {
         Box(
@@ -74,7 +93,7 @@ fun ProfileAvatarImage(
             if (!imageUri.isNullGlanceable()) {
                 AsyncImage(
                     model = imageUri,
-                    contentDescription = "Profilbild",
+                    contentDescription = null,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop,
                     error = rememberVectorPainter(Icons.Default.Person)
@@ -91,7 +110,7 @@ fun ProfileAvatarImage(
             } else {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = "Profilbild Platzhalter",
+                    contentDescription = null,
                     tint = PurplePrimaryLight.copy(alpha = 0.7f),
                     modifier = Modifier.size(size * 0.45f)
                 )
@@ -118,16 +137,21 @@ fun ProfileAvatarImage(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .offset(x = (-2).dp, y = (-2).dp)
-                    .size(size * 0.32f)
+                    .size(maxOf(size * 0.32f, 48.dp))
+                    .ensureMinTouchTarget()
                     .clip(CircleShape)
                     .background(PurplePrimary)
                     .border(2.dp, DarkSurface, CircleShape)
-                    .clickable { onAvatarClick() },
+                    .clickable { onAvatarClick() }
+                    .clearAndSetSemantics {
+                        contentDescription = "Profilfoto aufnehmen oder auswählen"
+                        role = Role.Button
+                    },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = if (imageUri.isNullGlanceable()) Icons.Default.AddAPhoto else Icons.Default.CameraAlt,
-                    contentDescription = "Foto ändern",
+                    contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(size * 0.16f)
                 )
@@ -135,6 +159,7 @@ fun ProfileAvatarImage(
         }
     }
 }
+
 
 private fun String?.isNullGlanceable(): Boolean {
     return this.isNullOrBlank() || this == "null"
