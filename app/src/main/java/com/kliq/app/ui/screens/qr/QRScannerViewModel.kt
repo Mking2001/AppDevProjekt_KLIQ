@@ -26,7 +26,8 @@ data class QRScannerUiState(
 @HiltViewModel
 class QRScannerViewModel @Inject constructor(
     private val verifyQRCodeUseCase: VerifyQRCodeUseCase,
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    private val hapticFeedbackManager: com.kliq.app.util.HapticFeedbackManager? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(QRScannerUiState())
@@ -74,6 +75,7 @@ class QRScannerViewModel @Inject constructor(
 
             when (result) {
                 is QRScanResult.Success -> {
+                    hapticFeedbackManager?.performConfirm()
                     _uiState.update {
                         it.copy(
                             isProcessingScan = false,
@@ -84,6 +86,7 @@ class QRScannerViewModel @Inject constructor(
                     }
                 }
                 is QRScanResult.AlreadyFriends -> {
+                    hapticFeedbackManager?.performConfirm()
                     _uiState.update {
                         it.copy(
                             isProcessingScan = false,
@@ -94,6 +97,7 @@ class QRScannerViewModel @Inject constructor(
                     }
                 }
                 is QRScanResult.SelfScan -> {
+                    hapticFeedbackManager?.performReject()
                     _uiState.update {
                         it.copy(
                             isProcessingScan = false,
@@ -103,6 +107,7 @@ class QRScannerViewModel @Inject constructor(
                     }
                 }
                 is QRScanResult.InvalidCode -> {
+                    hapticFeedbackManager?.performReject()
                     _uiState.update {
                         it.copy(
                             isProcessingScan = false,
@@ -112,6 +117,7 @@ class QRScannerViewModel @Inject constructor(
                     }
                 }
                 is QRScanResult.Error -> {
+                    hapticFeedbackManager?.performReject()
                     _uiState.update {
                         it.copy(
                             isProcessingScan = false,

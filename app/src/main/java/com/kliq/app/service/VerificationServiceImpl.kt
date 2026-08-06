@@ -12,7 +12,8 @@ import javax.inject.Singleton
 @Singleton
 class VerificationServiceImpl @Inject constructor(
     private val geofenceRepository: GeofenceRepository,
-    private val antiSpamValidator: AntiSpamReviewValidator
+    private val antiSpamValidator: AntiSpamReviewValidator,
+    private val hapticFeedbackManager: com.kliq.app.util.HapticFeedbackManager? = null
 ) : VerificationService {
 
     override suspend fun verifyUserProximityOrQr(
@@ -23,6 +24,7 @@ class VerificationServiceImpl @Inject constructor(
         if (!qrScanToken.isNullOfBlankToken()) {
             val qrResult = verifyQrScanToken(reviewerUserId, targetUserId, qrScanToken!!)
             if (qrResult.isVerified) {
+                hapticFeedbackManager?.performConfirm()
                 return qrResult
             }
         }
