@@ -28,6 +28,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import com.kliq.app.util.accessibilityHeading
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.stateDescription
+
 @Composable
 fun UserRatingStarBar(
     averageRating: Double,
@@ -41,6 +46,12 @@ fun UserRatingStarBar(
     val accentPurple = Color(0xFF7C3AED)
     val starGold = Color(0xFFFFC107)
 
+    val ratingSummaryText = if (hasRatings) {
+        "Durchschnittsbewertung $formattedAverageRating von 5 Sternen basierend auf $totalReviewsCount Bewertungen ($verifiedReviewsCount verifiziert)"
+    } else {
+        "Noch keine Bewertungen vorhanden"
+    }
+
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -48,6 +59,10 @@ fun UserRatingStarBar(
             .background(containerBg)
             .border(1.dp, accentPurple.copy(alpha = 0.4f), RoundedCornerShape(14.dp))
             .padding(horizontal = 16.dp, vertical = 12.dp)
+            .clearAndSetSemantics {
+                contentDescription = ratingSummaryText
+                stateDescription = if (hasRatings) "$formattedAverageRating / 5 Sternen" else "Keine Ratings"
+            }
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -61,7 +76,8 @@ fun UserRatingStarBar(
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
-                        fontSize = if (hasRatings) 22.sp else 16.sp
+                        fontSize = if (hasRatings) 22.sp else 16.sp,
+                        modifier = Modifier.accessibilityHeading()
                     )
 
                     if (hasRatings) {
@@ -107,7 +123,7 @@ fun UserRatingStarBar(
 
                     Icon(
                         imageVector = icon,
-                        contentDescription = "Stern $starIndex",
+                        contentDescription = null,
                         tint = tint,
                         modifier = Modifier.size(22.dp)
                     )
@@ -116,3 +132,4 @@ fun UserRatingStarBar(
         }
     }
 }
+
