@@ -141,7 +141,8 @@ class MapViewModel @Inject constructor(
     private val userDistanceFormatter: UserDistanceFormatter = UserDistanceFormatter.default,
     private val locationRepository: LocationRepository? = null,
     private val userRepository: com.kliq.app.data.repository.UserRepository? = null,
-    private val defaultDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default
+    private val defaultDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default,
+    private val hapticFeedbackManager: com.kliq.app.util.HapticFeedbackManager? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(MapUiState())
@@ -637,6 +638,7 @@ class MapViewModel @Inject constructor(
     }
 
     fun onMarkerLongPressed(venue: VenueItemUi) {
+        hapticFeedbackManager?.performHeavyClick()
         onMarkerClicked(venue)
     }
 
