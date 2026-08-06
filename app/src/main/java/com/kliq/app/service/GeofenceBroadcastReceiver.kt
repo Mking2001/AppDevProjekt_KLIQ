@@ -30,6 +30,9 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
     @Inject
     lateinit var ioDispatcher: CoroutineDispatcher
 
+    @Inject
+    lateinit var hapticFeedbackManager: com.kliq.app.util.HapticFeedbackManager
+
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != ACTION_GEOFENCE_EVENT && intent.action != GEOFENCE_TRANSITION_ACTION) {
             return
@@ -65,6 +68,9 @@ class GeofenceBroadcastReceiver : BroadcastReceiver() {
                     when (geofenceTransition) {
                         Geofence.GEOFENCE_TRANSITION_ENTER -> {
                             Log.d(TAG, "Geofence ENTER triggered for clubId: $clubId")
+                            if (::hapticFeedbackManager.isInitialized) {
+                                hapticFeedbackManager.performConfirm()
+                            }
                             geofenceRepository.handleGeofenceTransition(clubId, GeofenceTransitionType.ENTER)
                             sendLocationVerificationNotification(context, clubId, isEntering = true)
                         }

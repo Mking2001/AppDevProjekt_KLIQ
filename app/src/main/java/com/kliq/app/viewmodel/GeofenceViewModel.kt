@@ -36,7 +36,8 @@ data class GeofenceUiState(
 class GeofenceViewModel @Inject constructor(
     private val geofenceRepository: GeofenceRepository,
     private val geofenceManager: GeofenceManager,
-    private val clubRepository: ClubRepository
+    private val clubRepository: ClubRepository,
+    private val hapticFeedbackManager: com.kliq.app.util.HapticFeedbackManager? = null
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(GeofenceUiState())
@@ -83,6 +84,7 @@ class GeofenceViewModel @Inject constructor(
 
     fun simulateGeofenceEnter(clubId: String) {
         viewModelScope.launch {
+            hapticFeedbackManager?.performConfirm()
             geofenceRepository.handleGeofenceTransition(clubId, GeofenceTransitionType.ENTER)
         }
     }
