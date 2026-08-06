@@ -108,11 +108,11 @@ class NavigationViewModel @Inject constructor() : ViewModel() {
                     toRoute.startsWith("club_detail") -> {
                 ScreenTransitionType.SharedElementExpand
             }
+            fromRoute.startsWith("chat_detail") || fromRoute.startsWith("profile/other") || fromRoute.startsWith("club_detail") -> {
+                ScreenTransitionType.DetailPop
+            }
             toRoute.startsWith("chat_detail") || toRoute.startsWith("profile/other") || toRoute == ChatRoutes.CHAT_LIST -> {
                 ScreenTransitionType.DetailPush
-            }
-            fromRoute.startsWith("chat_detail") || fromRoute.startsWith("profile/other") || fromRoute == ClubRoutes.CLUB_DETAIL -> {
-                ScreenTransitionType.DetailPop
             }
             NavigationRoute.bottomBarItems.any { it.route == toRoute } -> {
                 ScreenTransitionType.TabSwitch
@@ -120,5 +120,6 @@ class NavigationViewModel @Inject constructor() : ViewModel() {
             else -> ScreenTransitionType.TabSwitch
         }
     }
+
 }
 
