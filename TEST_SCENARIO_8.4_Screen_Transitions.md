@@ -1,47 +1,66 @@
-# Test-Szenario: Kapitel 8.4 - Komplexe UI-Animationen für Screen-Übergänge
+# Test-Szenario & Script: Kapitel 8.4 - Screen-Übergangsanimationen im Emulator / Testgerät
 
 ## 🎯 Zielsetzung
-Validierung der flüssigen, ruckelfreien und optisch ansprechenden Screen-Übergangsanimationen in der Kliq-App gemäß MVVM-Architektur und Kliq Dark/Lila-Design-System.
+Dieses Test-Szenario beschreibt die systematische manuelle und automatisierte Überprüfung der in Kapitel 8.4 implementierten Screen-Übergangsanimationen für die Kliq-App. Die Tests stellen sicher, dass alle Animationen (Horizontal Tab Slide, Shared-Element Zoom, Detail Push/Pop, Modal Slide-Up) flüssig, performant (60 FPS / 120 FPS) und ohne UI-Artefakte oder Abstürze ausgeführt werden.
 
 ---
 
-## 🧪 Testfälle
-
-### Testfall 1: Horizontaler Tab-Wechsel (Map, Chat, Profil, Explore)
-- **Schritte**:
-  1. App starten und vom Home-Screen auf "Karte" (Map) tippen.
-  2. Von "Karte" auf "Entdecken" (Explore) und danach auf "Profil" tippen.
-- **Erwartetes Verhalten**:
-  - Flüssige Richtungs-sensitive Slide- & Fade-Animation ($300\text{ms}$, `CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)`).
-  - Keinerlei Ruckler (60 FPS / 120 FPS auf High-Refresh-Rate-Displays).
-
-### Testfall 2: Shared Element Card Zoom (Map / Explore -> Club Analytics / Details)
-- **Schritte**:
-  1. Auf der Karte oder im Explore-Screen eine Club-Karte / Marker auswählen.
-  2. Auf den Club tippen, um in den Club-Analytics / Detail-Screen zu navigieren.
-  3. Den Zurück-Button antippen.
-- **Erwartetes Verhalten**:
-  - Smooth Elevation Zoom-In Animation mit `scaleIn(0.90f)` + `slideInVertically` ($380\text{ms}$).
-  - Beim Schließen sanftes Zoom-Out und vertikales Heruntergleiten zur ursprünglichen Kartenansicht.
-
-### Testfall 3: Detail-Push & Pop (Chat Overview -> Chat Detail / Profil)
-- **Schritte**:
-  1. Chat-Übersicht öffnen und eine Konversation antippen.
-  2. Aus dem Chat-Detail heraus zurück navigieren.
-- **Erwartetes Verhalten**:
-  - Rechter Parallax Push-Slide mit subtiler $0.96x$ Skalierung ($320\text{ms}$).
-  - Beim Verlassen flüssige Pop-Exit-Animation nach rechts.
-
-### Testfall 4: Modal Slide-Up (Profil -> QR-Scanner)
-- **Schritte**:
-  1. Im Profil den QR-Scanner öffnen.
-  2. Den Scanner per Zurück-Geste oder X-Button schließen.
-- **Erwartetes Verhalten**:
-  - Vertikaler Slide-Up von unten ($350\text{ms}$) mit transparentem Dark-Dim Overlay.
-  - Schließen lässt das Modal flüssig nach unten gleiten.
+## 🛠️ Ausführung & Testumgebung
+- **Test-System**: Android Emulator (API 34 / 35, 60/120 Hz Display) oder physisches Testgerät.
+- **Automatisierte Ausführung (PowerShell)**:
+  - Unit Tests: `.\test_screen_transitions.ps1`
+  - Emulator UI Test: `.\test_screen_transitions.ps1 -Emulator`
 
 ---
 
-## 📊 Performance-Prüfung
-- **GPU Rendering**: Keinerlei Re-Composition-Overhead während der Animations-Frames dank `.graphicsLayer` und vorkonfigurierter Transitions.
-- **Farbtreue**: Keine weißen Blitze oder Hintergrund-Artefakte; durchgängig Kliq Dark Surface (`#0F0B15`).
+## 🧪 Schritt-für-Schritt Test-Ablauf
+
+### Testfall 1: Haupt-Screen Navigationswechsel (Map, Chat, Profil, Explore)
+- **Voraussetzung**: Kliq-App gestartet, Home-Screen geladen.
+- **Schritte**:
+  1. Tippe in der Bottom Navigation auf **„Karte“ (Map)**.
+  2. Tippe auf **„Aktivität“ (Notifications/Chat)**.
+  3. Tippe auf **„Entdecken“ (Explore)**.
+  4. Tippe auf **„Profil“**.
+- **Erwartetes Ergebnis**:
+  - Übergang erfolgt über eine flüssige, richtungssensitive Horizontal-Slide & Fade-Animation ($300\text{ms}$, `CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)`).
+  - Bei Wechsel von links nach rechts slidet der Inhalt von rechts hinein; bei Wechsel von rechts nach links slidet der Inhalt von links hinein.
+
+### Testfall 2: Detail-Views & Shared-Element Expansion (Map -> Club Analytics & Fremdprofil)
+- **Schritte**:
+  1. Navigiere zur **Karte** oder zum **Explore-Screen**.
+  2. Tippe auf eine **Club-Karte / Marker** (z. B. Club-Analytics).
+  3. Verifiziere den Übergang: Die Ansicht erweitert sich mit einer **Shared-Element Card Expansion** (`scaleIn(0.90f)` + `slideInVertically`, $380\text{ms}$).
+  4. Tippe auf das Profil eines anderen Nutzers (Fremdprofil aus Karte/Chat).
+  5. Verifiziere den Übergang: **Detail Push-Slide** von rechts nach links mit Parallax ($320\text{ms}$).
+  6. Betätige die Zurück-Geste oder den Back-Button.
+- **Erwartetes Ergebnis**:
+  - Flüssiger **Detail Pop-Exit** beziehungsweise **Shared-Element Shrink-Back** zur Ausgangsansicht. Keinerlei Flickern oder weiße Blitze.
+
+### Testfall 3: Frame-Rate & UI-Reaktionsfähigkeit bei schnellen Navigationswechseln
+- **Schritte**:
+  1. Tippe in sehr schneller Reihenfolge nacheinander auf **Karte**, **Entdecken**, **Profil**, **Home**.
+  2. Führe schnelle Wisch-Gesten für die Zurück-Navigation aus.
+- **Erwartetes Ergebnis**:
+  - UI bleibt 100% reaktionsfähig.
+  - Vorkonfigurierte `AnimatedContentTransitionScope`-Specs verhindern teure Layout-Re-Compositions und sichern durchgehend 60 FPS / 120 FPS.
+
+### Testfall 4: Unterbrechungs- & Back-Button Resilience (Absturz- & Bug-Sicherheit)
+- **Schritte**:
+  1. Öffne ein Detail-Fenster (z. B. QR-Scanner Modal).
+  2. Drücke während der laufenden Öffnen-Animation sofort den systemseitigen Back-Button.
+  3. Tippe mitten in einer Tab-Wechsel-Animation auf einen anderen Tab.
+- **Erwartetes Ergebnis**:
+  - Keine Visual Bugs, überlappende UI-Knoten, eingefrorene Animationen oder Anwendungsabstürze.
+  - Der Navigation-State im `NavigationViewModel` bleibt jederzeit konsistent.
+
+---
+
+## 📊 Zusammenfassende QS-Checkliste
+
+- [x] **Tab-Transitions**: Richtungsbewusste $300\text{ms}$ Horizontal-Slide & Fade-Animationen bestanden.
+- [x] **Shared-Element Zoom**: $380\text{ms}$ Card Expansion für Club-Analytics bestanden.
+- [x] **Detail Push/Pop**: $320\text{ms}$ Parallax Push/Pop für Profil & Chat bestanden.
+- [x] **Modal Slide-Up**: $350\text{ms}$ Vertikaler Slide-Up/Down für QR-Scanner bestanden.
+- [x] **UI-Performance**: 60/120 FPS ohne Re-Composition Jank oder Frame Drops.
+- [x] **Interruption Handling**: Keine Abstürze oder UI-Überlappungen bei schnellen Abbrüchen.
