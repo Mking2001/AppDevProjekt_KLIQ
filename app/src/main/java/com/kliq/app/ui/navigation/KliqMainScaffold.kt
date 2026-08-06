@@ -48,8 +48,22 @@ import com.kliq.app.ui.screens.qr.QRScannerScreen
 import com.kliq.app.ui.screens.splash.SplashScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationScreen
 import com.kliq.app.ui.screens.verification.SmsVerificationViewModel
+import com.kliq.app.ui.navigation.KliqScreenTransitions.defaultFadeEnterTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.defaultFadeExitTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.detailPopEnterTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.detailPopExitTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.detailPushEnterTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.detailPushExitTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.modalSlideUpEnterTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.modalSlideUpExitTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.sharedElementExpandEnterTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.sharedElementExpandExitTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.sharedElementPopExitTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.tabEnterTransition
+import com.kliq.app.ui.navigation.KliqScreenTransitions.tabExitTransition
 import com.kliq.app.viewmodel.AuthViewModel
 import com.kliq.app.viewmodel.ThemeViewModel
+
 
 val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
     error("No SnackbarHostState provided")
@@ -193,12 +207,16 @@ private fun KliqNavHost(
         navController = navController,
         startDestination = CoreRoutes.SPLASH,
         modifier = modifier,
-        enterTransition = { slideEnterTransition(slideRight) },
-        exitTransition = { slideExitTransition(slideRight) },
-        popEnterTransition = { slideEnterTransition(!slideRight) },
-        popExitTransition = { slideExitTransition(!slideRight) }
+        enterTransition = { tabEnterTransition(slideRight) },
+        exitTransition = { tabExitTransition(slideRight) },
+        popEnterTransition = { tabEnterTransition(!slideRight) },
+        popExitTransition = { tabExitTransition(!slideRight) }
     ) {
-        composable(CoreRoutes.SPLASH) {
+        composable(
+            route = CoreRoutes.SPLASH,
+            enterTransition = { defaultFadeEnterTransition() },
+            exitTransition = { defaultFadeExitTransition() }
+        ) {
             SplashScreen(
                 authViewModel = authViewModel,
                 onNavigateToHome = {
@@ -213,7 +231,11 @@ private fun KliqNavHost(
                 }
             )
         }
-        composable(CoreRoutes.PHONE_LOGIN) {
+        composable(
+            route = CoreRoutes.PHONE_LOGIN,
+            enterTransition = { defaultFadeEnterTransition() },
+            exitTransition = { defaultFadeExitTransition() }
+        ) {
             PhoneLoginScreen(
                 onLoginSuccess = {
                     navController.navigate(NavigationRoute.Home.route) {
@@ -315,7 +337,13 @@ private fun KliqNavHost(
             )
         }
 
-        composable(ChatRoutes.CHAT_LIST) {
+        composable(
+            route = ChatRoutes.CHAT_LIST,
+            enterTransition = { detailPushEnterTransition() },
+            exitTransition = { detailPushExitTransition() },
+            popEnterTransition = { detailPopEnterTransition() },
+            popExitTransition = { detailPopExitTransition() }
+        ) {
             ChatListScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onChatSelected = { chatId ->
@@ -334,7 +362,11 @@ private fun KliqNavHost(
                 navDeepLink {
                     uriPattern = ChatRoutes.DEEP_LINK_URI_PATTERN
                 }
-            )
+            ),
+            enterTransition = { detailPushEnterTransition() },
+            exitTransition = { detailPushExitTransition() },
+            popEnterTransition = { detailPopEnterTransition() },
+            popExitTransition = { detailPopExitTransition() }
         ) { backStackEntry ->
             val chatId = backStackEntry.arguments?.getString(ChatRoutes.ARG_CHAT_ID) ?: ""
             ChatDetailScreen(
@@ -349,7 +381,11 @@ private fun KliqNavHost(
                 navArgument(ClubRoutes.ARG_CLUB_ID) {
                     type = NavType.StringType
                 }
-            )
+            ),
+            enterTransition = { sharedElementExpandEnterTransition() },
+            exitTransition = { sharedElementExpandExitTransition() },
+            popEnterTransition = { sharedElementExpandEnterTransition() },
+            popExitTransition = { sharedElementPopExitTransition() }
         ) { backStackEntry ->
             val clubId = backStackEntry.arguments?.getString(ClubRoutes.ARG_CLUB_ID) ?: ""
             ClubDetailScreen(
@@ -364,7 +400,11 @@ private fun KliqNavHost(
                 navArgument(ProfileRoutes.ARG_USER_ID) {
                     type = NavType.StringType
                 }
-            )
+            ),
+            enterTransition = { detailPushEnterTransition() },
+            exitTransition = { detailPushExitTransition() },
+            popEnterTransition = { detailPopEnterTransition() },
+            popExitTransition = { detailPopExitTransition() }
         ) { backStackEntry ->
             val userId = backStackEntry.arguments?.getString(ProfileRoutes.ARG_USER_ID) ?: ""
             OtherUserProfileScreen(
@@ -376,7 +416,13 @@ private fun KliqNavHost(
             )
         }
 
-        composable(ProfileRoutes.QR_SCANNER) {
+        composable(
+            route = ProfileRoutes.QR_SCANNER,
+            enterTransition = { modalSlideUpEnterTransition() },
+            exitTransition = { modalSlideUpExitTransition() },
+            popEnterTransition = { modalSlideUpEnterTransition() },
+            popExitTransition = { modalSlideUpExitTransition() }
+        ) {
             QRScannerScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToUserProfile = { userId ->
@@ -390,27 +436,12 @@ private fun KliqNavHost(
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideEnterTransition(
     slideRight: Boolean
 ): EnterTransition {
-    return slideIntoContainer(
-        towards = if (slideRight) {
-            AnimatedContentTransitionScope.SlideDirection.Start
-        } else {
-            AnimatedContentTransitionScope.SlideDirection.End
-        },
-        animationSpec = tween(durationMillis = 350),
-        initialOffset = { it / 4 }
-    ) + fadeIn(animationSpec = tween(durationMillis = 350))
+    return tabEnterTransition(slideRight)
 }
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideExitTransition(
     slideRight: Boolean
 ): ExitTransition {
-    return slideOutOfContainer(
-        towards = if (slideRight) {
-            AnimatedContentTransitionScope.SlideDirection.Start
-        } else {
-            AnimatedContentTransitionScope.SlideDirection.End
-        },
-        animationSpec = tween(durationMillis = 350),
-        targetOffset = { it / 4 }
-    ) + fadeOut(animationSpec = tween(durationMillis = 350))
+    return tabExitTransition(slideRight)
 }
+
