@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
 /**
- * ViewModel responsible for managing the main bottom navigation state.
+ * ViewModel responsible for managing the main bottom navigation state and screen transitions.
  * Follows MVVM by exposing an immutable [NavigationState] via [StateFlow]
  * and providing intent-based actions for the UI layer.
  *
@@ -24,24 +24,63 @@ class NavigationViewModel @Inject constructor() : ViewModel() {
 
     /**
      * Called by the UI when a bottom bar tab is tapped.
-     * Updates the current route and tracks the previous route
-     * for animation direction determination.
+     * Updates current/previous routes and configures tab switch transition.
      *
      * @param route The route string of the selected tab.
      */
     fun onTabSelected(route: String) {
         _navigationState.update { currentState ->
             if (currentState.currentRoute == route) {
-                // Already on this tab — no state change needed.
-                // In a full implementation, this could trigger scroll-to-top.
                 currentState
             } else {
                 currentState.copy(
                     previousRoute = currentState.currentRoute,
-                    currentRoute = route
+                    currentRoute = route,
+                    transitionType = ScreenTransitionType.TabSwitch,
+                    isTransitioning = true
                 )
             }
         }
+    }
+
+    /**
+     * Called when navigating to a new destination.
+     * Automatically classifies the transition type based on origin and target routes.
+     *
+     * @param targetRoute The target navigation route.
+     * @param explicitType Optional explicit override for transition type.
+     */
+    fun onNavigateToRoute(targetRoute: String, explicitType: ScreenTransitionType? = null) {
+        _navigationState.update { currentState ->
+            val computedType = explicitType ?: determineTransitionType(currentState.currentRoute, targetRoute)
+            currentState.copy(
+                previousRoute = currentState.currentRoute,
+                currentRoute = targetRoute,
+                transitionType = computedType,
+                isTransitioning = true
+            )
+        }
+    }
+
+    /**
+     * Explicitly sets the active screen transition type.
+     */
+    fun setTransitionType(type: ScreenTransitionType) {
+        _navigationState.update { it.copy(transitionType = type) }
+    }
+
+    /**
+     * Signals that a screen transition animation has started.
+     */
+    fun onTransitionStart() {
+        _navigationState.update { it.copy(isTransitioning = true) }
+    }
+
+    /**
+     * Signals that a screen transition animation has completed.
+     */
+    fun onTransitionEnd() {
+        _navigationState.update { it.copy(isTransitioning = false) }
     }
 
     /**
@@ -53,4 +92,33 @@ class NavigationViewModel @Inject constructor() : ViewModel() {
     fun updateNotificationBadge(count: Int) {
         _navigationState.update { it.copy(notificationBadgeCount = count.coerceAtLeast(0)) }
     }
+
+    /**
+     * Determines the optimal transition type based on origin and target route patterns.
+     */
+    fun determineTransitionType(fromRoute: String, toRoute: String): ScreenTransitionType {
+        return when {
+            toRoute == CoreRoutes.SPLASH || toRoute == CoreRoutes.PHONE_LOGIN || fromRoute == CoreRoutes.SPLASH -> {
+                ScreenTransitionType.DefaultFade
+            }
+            toRoute == ProfileRoutes.QR_SCANNER -> {
+                ScreenTransitionType.ModalSlideUp
+            }
+            (fromRoute == NavigationRoute.Map.route || fromRoute == NavigationRoute.Explore.route) &&
+                    toRoute.startsWith("club_detail") -> {
+                ScreenTransitionType.SharedElementExpand
+            }
+            toRoute.startsWith("chat_detail") || toRoute.startsWith("profile/other") || toRoute == ChatRoutes.CHAT_LIST -> {
+                ScreenTransitionType.DetailPush
+            }
+            fromRoute.startsWith("chat_detail") || fromRoute.startsWith("profile/other") || fromRoute == ClubRoutes.CLUB_DETAIL -> {
+                ScreenTransitionType.DetailPop
+            }
+            NavigationRoute.bottomBarItems.any { it.route == toRoute } -> {
+                ScreenTransitionType.TabSwitch
+            }
+            else -> ScreenTransitionType.TabSwitch
+        }
+    }
 }
+
