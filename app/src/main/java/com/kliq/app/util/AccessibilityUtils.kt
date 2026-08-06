@@ -5,6 +5,12 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+enum class WcagComplianceLevel {
+    AAA,
+    AA,
+    FAIL
+}
+
 object AccessibilityUtils {
 
     /**
@@ -19,6 +25,25 @@ object AccessibilityUtils {
         val darkest = minOf(l1, l2)
         
         return (lightest + 0.05) / (darkest + 0.05)
+    }
+
+    /**
+     * Evaluates the WCAG 2.1 compliance level for given colors and text size.
+     */
+    fun verifyWcagCompliance(
+        foreground: Color,
+        background: Color,
+        isLargeText: Boolean = false
+    ): WcagComplianceLevel {
+        val ratio = calculateContrastRatio(foreground, background)
+        val aaaThreshold = if (isLargeText) 4.5 else 7.0
+        val aaThreshold = if (isLargeText) 3.0 else 4.5
+
+        return when {
+            ratio >= aaaThreshold -> WcagComplianceLevel.AAA
+            ratio >= aaThreshold -> WcagComplianceLevel.AA
+            else -> WcagComplianceLevel.FAIL
+        }
     }
 
     /**
@@ -37,8 +62,15 @@ object AccessibilityUtils {
         val currentRatio = calculateContrastRatio(foreground, background)
         if (currentRatio >= targetRatio) return foreground
 
-        // If contrast fails, pick either white or black depending on background luminance
         val bgLuminance = background.luminance()
         return if (bgLuminance > 0.5f) Color.Black else Color.White
     }
+
+    /**
+     * Calculates scaled text size based on accessibility font scale preference.
+     */
+    fun calculateScaledSp(baseSpValue: Float, fontScale: Float): Float {
+        return (baseSpValue * fontScale.coerceIn(0.8f, 2.0f))
+    }
 }
+
