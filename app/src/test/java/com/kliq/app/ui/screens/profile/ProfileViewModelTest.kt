@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -72,6 +73,50 @@ class ProfileViewModelTest {
         viewModel.onPermissionDenied("android.permission.CAMERA")
         assertNotNull(viewModel.uiState.value.errorMessage)
         assertTrue(viewModel.uiState.value.errorMessage!!.contains("verweigert"))
+    }
+
+    @Test
+    fun `openProfileImageViewer sets full screen visibility and target image url`() {
+        viewModel.openProfileImageViewer("https://kliq.app/images/profile.jpg")
+        val state = viewModel.uiState.value.imageViewerState
+
+        assertTrue(state.isFullscreenVisible)
+        assertEquals("https://kliq.app/images/profile.jpg", state.targetImageUrl)
+        assertEquals(1.0f, state.currentScale, 0.001f)
+    }
+
+    @Test
+    fun `updateZoomState updates scale and translation offsets`() {
+        viewModel.openProfileImageViewer("https://kliq.app/images/profile.jpg")
+        viewModel.updateZoomState(2.5f, 100f, -50f)
+
+        val state = viewModel.uiState.value.imageViewerState
+        assertEquals(2.5f, state.currentScale, 0.001f)
+        assertEquals(100f, state.translationOffsetX, 0.001f)
+        assertEquals(-50f, state.translationOffsetY, 0.001f)
+    }
+
+    @Test
+    fun `resetZoomState restores scale to one and offsets to zero`() {
+        viewModel.openProfileImageViewer("https://kliq.app/images/profile.jpg")
+        viewModel.updateZoomState(3.0f, 200f, 150f)
+        viewModel.resetZoomState()
+
+        val state = viewModel.uiState.value.imageViewerState
+        assertEquals(1.0f, state.currentScale, 0.001f)
+        assertEquals(0.0f, state.translationOffsetX, 0.001f)
+        assertEquals(0.0f, state.translationOffsetY, 0.001f)
+    }
+
+    @Test
+    fun `dismissProfileImageViewer hides modal and resets zoom parameters`() {
+        viewModel.openProfileImageViewer("https://kliq.app/images/profile.jpg")
+        viewModel.updateZoomState(2.0f, 50f, 50f)
+        viewModel.dismissProfileImageViewer()
+
+        val state = viewModel.uiState.value.imageViewerState
+        assertFalse(state.isFullscreenVisible)
+        assertEquals(1.0f, state.currentScale, 0.001f)
     }
 
     private class FakeUserRepository : UserRepository {

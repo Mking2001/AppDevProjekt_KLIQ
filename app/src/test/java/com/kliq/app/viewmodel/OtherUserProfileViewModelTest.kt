@@ -170,4 +170,30 @@ class OtherUserProfileViewModelTest {
         assertTrue(viewModel.uiState.value.isReported)
         assertNotNull(viewModel.uiState.value.actionSuccessMessage)
     }
+
+    @Test
+    fun `openProfileImageViewer updates image viewer state in OtherUserProfileViewModel`() = runTest {
+        val savedStateHandle = SavedStateHandle(mapOf("userId" to "user_123"))
+        `when`(userRepository.getUserById("user_123")).thenReturn(flowOf(null))
+        `when`(userRepository.getUserPreferences("user_123")).thenReturn(flowOf(null))
+        `when`(reviewRepository.getReviewsForTargetUser("user_123")).thenReturn(flowOf(emptyList()))
+        `when`(reviewRepository.getAverageRatingForTargetUser("user_123")).thenReturn(flowOf(null))
+        `when`(userRepository.isUserBlocked("current_user", "user_123")).thenReturn(flowOf(false))
+
+        val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, savedStateHandle)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.openProfileImageViewer("https://kliq.app/other_user.jpg")
+        val state = viewModel.uiState.value.imageViewerState
+
+        assertTrue(state.isFullscreenVisible)
+        assertEquals("https://kliq.app/other_user.jpg", state.targetImageUrl)
+
+        viewModel.updateZoomState(2.2f, 80f, -40f)
+        val updatedState = viewModel.uiState.value.imageViewerState
+        assertEquals(2.2f, updatedState.currentScale, 0.001f)
+
+        viewModel.dismissProfileImageViewer()
+        assertFalse(viewModel.uiState.value.imageViewerState.isFullscreenVisible)
+    }
 }
