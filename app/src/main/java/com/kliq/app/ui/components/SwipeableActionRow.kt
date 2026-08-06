@@ -45,12 +45,12 @@ fun SwipeableActionRow(
         confirmValueChange = { dismissValue ->
             when (dismissValue) {
                 SwipeToDismissBoxValue.StartToEnd -> {
-                    HapticFeedbackUtils.triggerMediumImpact(view)
+                    com.kliq.app.util.HapticFeedbackUtils.triggerPattern(view, com.kliq.app.util.HapticFeedbackPattern.HEAVY_CLICK)
                     onDelete()
                     false // Return false so item stays rendered until confirmed in dialog
                 }
                 SwipeToDismissBoxValue.EndToStart -> {
-                    HapticFeedbackUtils.triggerMediumImpact(view)
+                    com.kliq.app.util.HapticFeedbackUtils.triggerPattern(view, com.kliq.app.util.HapticFeedbackPattern.LIGHT_CLICK)
                     onArchive()
                     true
                 }

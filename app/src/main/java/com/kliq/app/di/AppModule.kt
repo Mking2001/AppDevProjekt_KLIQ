@@ -126,4 +126,11 @@ object AppModule {
     fun provideImageCompressor(): com.kliq.app.util.ImageCompressor {
         return com.kliq.app.util.ImageCompressor()
     }
+
+    @Provides
+    @Singleton
+    fun provideHapticFeedbackManager(impl: com.kliq.app.util.HapticFeedbackManagerImpl): com.kliq.app.util.HapticFeedbackManager {
+        return impl
+    }
 }
+
