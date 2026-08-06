@@ -104,7 +104,7 @@ fun PrivateChatScreen(
     }
 
     Scaffold(
-        containerColor = HighContrastBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             PrivateChatTopBar(
                 receiverName = uiState.receiverName.ifBlank { receiverName },
@@ -127,12 +127,12 @@ fun PrivateChatScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(HighContrastBackground)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             if (uiState.isLoading && uiState.messages.isEmpty()) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center),
-                    color = PurpleAccentPrimary
+                    color = MaterialTheme.colorScheme.primary
                 )
             } else {
                 LazyColumn(
