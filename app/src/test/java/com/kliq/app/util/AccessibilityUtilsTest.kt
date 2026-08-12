@@ -56,4 +56,21 @@ class AccessibilityUtilsTest {
         val scaledClampedMax = AccessibilityUtils.calculateScaledSp(16f, 3.0f)
         assertEquals(32f, scaledClampedMax, 0.01f)
     }
+
+    @Test
+    fun `isAccessibilityFontScaleActive returns true when scale is 1_3x or higher`() {
+        assertTrue(AccessibilityUtils.isAccessibilityFontScaleActive(1.3f))
+        assertTrue(AccessibilityUtils.isAccessibilityFontScaleActive(2.0f))
+        assertFalse(AccessibilityUtils.isAccessibilityFontScaleActive(1.0f))
+    }
+
+    @Test
+    fun `getAdaptiveMinContainerHeight calculates scaled container height for accessibility`() {
+        val normalHeight = AccessibilityUtils.getAdaptiveMinContainerHeight(androidx.compose.ui.unit.Dp(48f), 1.0f)
+        assertEquals(48f, normalHeight.value, 0.01f)
+
+        val scaledHeight = AccessibilityUtils.getAdaptiveMinContainerHeight(androidx.compose.ui.unit.Dp(48f), 2.0f)
+        assertEquals(76.8f, scaledHeight.value, 0.1f)
+    }
 }
+

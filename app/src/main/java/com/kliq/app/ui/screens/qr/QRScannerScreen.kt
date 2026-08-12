@@ -94,9 +94,14 @@ import com.google.mlkit.vision.common.InputImage
 import com.kliq.app.domain.usecase.QRScanResult
 import java.util.concurrent.Executors
 
-private val KliqPurple = Color(0xFF8A2BE2)
+import com.kliq.app.util.accessibilityHeading
+import com.kliq.app.util.ensureMinTouchTarget
+import com.kliq.app.util.talkBackDescription
+
+private val KliqPurple = Color(0xFF8B5CF6)
 private val KliqDarkBackground = Color(0xFF0F0F1A)
 private val KliqCardBackground = Color(0xFF1E1E2E)
+
 
 @Composable
 fun QRScannerScreen(
@@ -161,12 +166,12 @@ fun QRScannerScreen(
                     IconButton(
                         onClick = onNavigateBack,
                         modifier = Modifier
-                            .size(44.dp)
+                            .ensureMinTouchTarget(48.dp)
                             .background(Color.Black.copy(alpha = 0.5f), CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Zurück",
+                            contentDescription = "Zurück zur vorherigen Ansicht",
                             tint = Color.White
                         )
                     }
@@ -175,18 +180,23 @@ fun QRScannerScreen(
                         text = "QR-Code scannen",
                         color = Color.White,
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.accessibilityHeading()
                     )
 
                     IconButton(
                         onClick = { viewModel.toggleFlash() },
                         modifier = Modifier
-                            .size(44.dp)
+                            .ensureMinTouchTarget(48.dp)
                             .background(Color.Black.copy(alpha = 0.5f), CircleShape)
+                            .talkBackDescription(
+                                description = if (uiState.isFlashEnabled) "Kamera-Blitz ausschalten" else "Kamera-Blitz einschalten",
+                                stateDescription = if (uiState.isFlashEnabled) "Blitz aktiv" else "Blitz inaktiv"
+                            )
                     ) {
                         Icon(
                             imageVector = if (uiState.isFlashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
-                            contentDescription = "Blitz umschalten",
+                            contentDescription = null,
                             tint = if (uiState.isFlashEnabled) KliqPurple else Color.White
                         )
                     }
@@ -199,10 +209,11 @@ fun QRScannerScreen(
                         .padding(top = 110.dp)
                         .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
                         .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .talkBackDescription("Anleitung: Halte die Kamera auf einen Kliq-Profil-Code")
                 ) {
                     Text(
                         text = "Halte die Kamera auf einen Kliq-Profil-Code",
-                        color = Color.White.copy(alpha = 0.9f),
+                        color = Color.White,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium
                     )

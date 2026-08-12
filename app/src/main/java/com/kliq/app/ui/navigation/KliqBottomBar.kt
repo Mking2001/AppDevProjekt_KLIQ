@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.kliq.app.ui.components.KliqIcon
@@ -44,6 +45,7 @@ import com.kliq.app.ui.components.KliqIconCategory
 import com.kliq.app.ui.components.KliqIconSize
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
+import com.kliq.app.util.ensureMinTouchTarget
 
 /**
  * Custom-styled Bottom Navigation Bar for the Kliq app.
@@ -161,9 +163,13 @@ private fun KliqBottomBarItem(
         label = "labelColor"
     )
 
+    val accessibilityDesc = if (badgeCount > 0) "${navItem.label}, $badgeCount ungelesene Benachrichtigungen" else navItem.label
+    val tabStateText = if (isSelected) "Ausgewählt" else "Nicht ausgewählt"
+
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
+            .ensureMinTouchTarget(48.dp)
             .selectable(
                 selected = isSelected,
                 onClick = onClick,
@@ -171,7 +177,8 @@ private fun KliqBottomBarItem(
             )
             .padding(vertical = 6.dp)
             .semantics {
-                contentDescription = navItem.label
+                contentDescription = accessibilityDesc
+                stateDescription = tabStateText
             },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center

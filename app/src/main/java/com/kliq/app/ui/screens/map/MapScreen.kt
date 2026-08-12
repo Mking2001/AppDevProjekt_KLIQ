@@ -77,6 +77,9 @@ import com.kliq.app.ui.components.MapQuickViewCard
 import com.kliq.app.ui.components.UserQuickViewCard
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
+import com.kliq.app.util.accessibilityHeading
+import com.kliq.app.util.ensureMinTouchTarget
+import com.kliq.app.util.talkBackDescription
 import com.kliq.app.viewmodel.PermissionViewModel
 
 /**
@@ -332,7 +335,9 @@ fun MapScreen(
             },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 16.dp, bottom = 240.dp),
+                .padding(end = 16.dp, bottom = 240.dp)
+                .ensureMinTouchTarget(48.dp)
+                .talkBackDescription("Aktueller Standort: Karte auf eigene Position zentrieren"),
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.primary,
             elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 6.dp)
@@ -346,7 +351,7 @@ fun MapScreen(
             } else {
                 Icon(
                     imageVector = Icons.Filled.MyLocation,
-                    contentDescription = "Mein Standort"
+                    contentDescription = null
                 )
             }
         }
@@ -444,7 +449,9 @@ private fun VenueBottomSheet(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .accessibilityHeading()
             )
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -476,9 +483,14 @@ private fun VenueCard(
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
+    val venueAccessibilityDesc = "${venue.name}, ${venue.category}, Entfernung ${venue.distance}, Bewertung ${venue.rating} von 5 Sternen" +
+            (venue.activeEventTitle?.let { ", Event: $it" } ?: "")
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .ensureMinTouchTarget(48.dp)
+            .talkBackDescription(venueAccessibilityDesc)
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
