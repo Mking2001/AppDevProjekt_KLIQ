@@ -72,5 +72,21 @@ object AccessibilityUtils {
     fun calculateScaledSp(baseSpValue: Float, fontScale: Float): Float {
         return (baseSpValue * fontScale.coerceIn(0.8f, 2.0f))
     }
+
+    /**
+     * Checks if current font scale is considered large text / accessibility scale (>= 1.3x).
+     */
+    fun isAccessibilityFontScaleActive(fontScale: Float): Boolean {
+        return fontScale >= 1.3f
+    }
+
+    /**
+     * Calculates adaptive minimum height for text containers to prevent clipping under large font scales.
+     */
+    fun getAdaptiveMinContainerHeight(baseHeightDp: Dp, fontScale: Float): Dp {
+        val safeScale = fontScale.coerceIn(1.0f, 2.0f)
+        return (baseHeightDp.value * (1f + (safeScale - 1f) * 0.6f)).dp
+    }
 }
+
 
