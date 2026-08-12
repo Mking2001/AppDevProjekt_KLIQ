@@ -144,7 +144,7 @@ fun KliqMainScaffold(
         ) { innerPadding ->
             KliqNavHost(
                 navController = navController,
-                modifier = Modifier.padding(innerPadding),
+                modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()),
                 currentRoute = currentRoute,
                 previousRoute = navigationState.previousRoute,
                 topBarState = topBarState,
