@@ -46,6 +46,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import com.kliq.app.util.accessibilityHeading
+import com.kliq.app.util.ensureMinTouchTarget
+import com.kliq.app.util.talkBackDescription
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileQrCodeBottomSheet(
@@ -80,7 +84,7 @@ fun ProfileQrCodeBottomSheet(
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val cardBg = Color(0xFF1E1B2E)
-    val accentPurple = Color(0xFF7C3AED)
+    val accentPurple = Color(0xFF8B5CF6)
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
@@ -102,7 +106,7 @@ fun ProfileQrCodeBottomSheet(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.QrCode2,
-                        contentDescription = "QR Pass",
+                        contentDescription = "QR Pass Icon",
                         tint = accentPurple,
                         modifier = Modifier.size(24.dp)
                     )
@@ -111,15 +115,19 @@ fun ProfileQrCodeBottomSheet(
                         text = "Mein Kliq QR-Pass",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = Color.White,
+                        modifier = Modifier.accessibilityHeading()
                     )
                 }
 
-                IconButton(onClick = onDismissRequest) {
+                IconButton(
+                    onClick = onDismissRequest,
+                    modifier = Modifier.ensureMinTouchTarget(48.dp)
+                ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Schließen",
-                        tint = Color.Gray
+                        contentDescription = "QR-Pass schließen",
+                        tint = Color(0xFFE5E7EB)
                     )
                 }
             }
@@ -131,13 +139,14 @@ fun ProfileQrCodeBottomSheet(
                     .clip(RoundedCornerShape(10.dp))
                     .background(accentPurple.copy(alpha = 0.15f))
                     .border(1.dp, accentPurple.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .talkBackDescription("Status: Display-Helligkeit für Club-Scan auf Maximum angehoben"),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.WbSunny,
-                    contentDescription = "Helligkeits-Boost",
+                    contentDescription = null,
                     tint = Color(0xFFFFC107),
                     modifier = Modifier.size(16.dp)
                 )
@@ -145,7 +154,7 @@ fun ProfileQrCodeBottomSheet(
                 Text(
                     text = "Display-Helligkeit für Club-Scan maximiert",
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.LightGray,
+                    color = Color(0xFFE5E7EB),
                     fontSize = 11.sp
                 )
             }
@@ -163,7 +172,10 @@ fun ProfileQrCodeBottomSheet(
                 contentAlignment = Alignment.Center
             ) {
                 if (isGenerating || qrBitmap == null) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.talkBackDescription("Generiere verifizierten Kliq QR-Code")
+                    ) {
                         CircularProgressIndicator(color = accentPurple)
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
@@ -175,7 +187,7 @@ fun ProfileQrCodeBottomSheet(
                 } else {
                     Image(
                         bitmap = qrBitmap.asImageBitmap(),
-                        contentDescription = "Kliq Profil QR Code",
+                        contentDescription = "Verifizierter Kliq Profil-QR-Code von $displayName ($username)",
                         modifier = Modifier.size(228.dp)
                     )
                 }
@@ -187,13 +199,14 @@ fun ProfileQrCodeBottomSheet(
                 text = displayName,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = Color.White,
+                modifier = Modifier.accessibilityHeading()
             )
 
             Text(
                 text = username,
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+                color = Color(0xFFCBD5E1)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -201,7 +214,7 @@ fun ProfileQrCodeBottomSheet(
             Text(
                 text = "Zeige diesen verifizierten QR-Code deiner Kliq-Begleitung zum Einscannen für Sofort-Bewertungen.",
                 style = MaterialTheme.typography.bodySmall,
-                color = Color.LightGray.copy(alpha = 0.8f),
+                color = Color(0xFFE2E8F0),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 16.dp)
             )
@@ -220,7 +233,9 @@ fun ProfileQrCodeBottomSheet(
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = accentPurple),
                         shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .weight(1f)
+                            .ensureMinTouchTarget(48.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.QrCode2,
@@ -242,7 +257,9 @@ fun ProfileQrCodeBottomSheet(
                         containerColor = if (onScanQrCode != null) Color.White.copy(alpha = 0.15f) else accentPurple
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .ensureMinTouchTarget(48.dp)
                 ) {
                     Text(
                         text = "Schließen",

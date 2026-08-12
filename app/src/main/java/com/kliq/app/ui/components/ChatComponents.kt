@@ -51,6 +51,7 @@ import androidx.compose.material3.MaterialTheme
 import com.kliq.app.ui.components.KliqIcon
 import com.kliq.app.ui.components.KliqIconCategory
 import com.kliq.app.ui.components.KliqIconSize
+import com.kliq.app.util.ensureMinTouchTarget
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -645,12 +646,12 @@ fun ChatInputBar(
                         IconButton(
                             onClick = onAttachClick,
                             modifier = Modifier
-                                .size(44.dp)
+                                .ensureMinTouchTarget(48.dp)
                                 .clip(CircleShape)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AttachFile,
-                                contentDescription = "Foto anhängen",
+                                contentDescription = "Foto oder Medien anhaengen",
                                 tint = PurplePrimaryLight,
                                 modifier = Modifier.size(22.dp)
                             )
@@ -691,7 +692,7 @@ fun ChatInputBar(
                             onClick = onSend,
                             enabled = hasText,
                             modifier = Modifier
-                                .size(44.dp)
+                                .ensureMinTouchTarget(48.dp)
                                 .clip(CircleShape),
                             colors = IconButtonDefaults.iconButtonColors(
                                 containerColor = sendButtonColor,
@@ -702,7 +703,7 @@ fun ChatInputBar(
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Send,
-                                contentDescription = "Senden",
+                                contentDescription = "Nachricht senden",
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -710,7 +711,7 @@ fun ChatInputBar(
                         IconButton(
                             onClick = { onStartRecordVoice() },
                             modifier = Modifier
-                                .size(44.dp)
+                                .ensureMinTouchTarget(48.dp)
                                 .clip(CircleShape),
                             colors = IconButtonDefaults.iconButtonColors(
                                 containerColor = PurplePrimary,

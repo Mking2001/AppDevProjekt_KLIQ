@@ -58,6 +58,10 @@ import com.kliq.app.ui.theme.PurplePrimaryLight
  * @param actions Optionale Screen-spezifische Action-Icons (linke Seite).
  * @param modifier Optionaler [Modifier] für die Komponente.
  */
+import com.kliq.app.util.accessibilityHeading
+import com.kliq.app.util.ensureMinTouchTarget
+import com.kliq.app.util.talkBackDescription
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun KliqTopBar(
@@ -76,7 +80,8 @@ fun KliqTopBar(
                     text = title,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.accessibilityHeading()
                 )
             },
             actions = {
@@ -149,10 +154,18 @@ private fun OverflowMenuButton(
     )
 
     Box {
-        IconButton(onClick = onToggle) {
+        IconButton(
+            onClick = onToggle,
+            modifier = Modifier
+                .ensureMinTouchTarget(48.dp)
+                .talkBackDescription(
+                    description = "Menü Optionen",
+                    stateDescription = if (isExpanded) "Menü geöffnet" else "Menü geschlossen"
+                )
+        ) {
             KliqIcon(
                 imageVector = Icons.Filled.MoreVert,
-                contentDescription = "Menü öffnen",
+                contentDescription = null,
                 size = KliqIconSize.MEDIUM,
                 category = KliqIconCategory.ACTION,
                 tint = iconTint,

@@ -153,6 +153,12 @@ fun PrivateChatScreen(
     }
 }
 
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.kliq.app.util.accessibilityHeading
+import com.kliq.app.util.ensureMinTouchTarget
+import com.kliq.app.util.talkBackDescription
+
 /**
  * Custom High-Contrast Top-Bar mit E2E-Verschluesselungs-Badge und Online-Status.
  */
@@ -198,9 +204,13 @@ private fun PrivateChatTopBar(
                         fontWeight = FontWeight.Bold,
                         color = HighContrastText,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.accessibilityHeading()
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.talkBackDescription("Status: ${if (isOnline) "Online" else "Offline"}")
+                    ) {
                         Box(
                             modifier = Modifier
                                 .size(8.dp)
@@ -218,10 +228,13 @@ private fun PrivateChatTopBar(
             }
         },
         navigationIcon = {
-            IconButton(onClick = onNavigateBack) {
+            IconButton(
+                onClick = onNavigateBack,
+                modifier = Modifier.ensureMinTouchTarget(48.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Filled.ArrowBack,
-                    contentDescription = "Zurueck",
+                    contentDescription = "Zurück",
                     tint = HighContrastText
                 )
             }
@@ -231,7 +244,12 @@ private fun PrivateChatTopBar(
                 modifier = Modifier
                     .padding(end = 8.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .clickable { onToggleEncryption(!isEncrypted) },
+                    .ensureMinTouchTarget(48.dp)
+                    .clickable { onToggleEncryption(!isEncrypted) }
+                    .talkBackDescription(
+                        description = "Ende-zu-Ende Verschlüsselung umschalten",
+                        stateDescription = if (isEncrypted) "E2E Aktiviert" else "E2E Inaktiv"
+                    ),
                 color = if (isEncrypted) SurfaceVariantDark else Color.Transparent,
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -247,7 +265,7 @@ private fun PrivateChatTopBar(
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Lock,
-                        contentDescription = "Verschluesselung",
+                        contentDescription = null,
                         tint = if (isEncrypted) PurpleAccentLight else SubduedText,
                         modifier = Modifier.size(14.dp)
                     )
@@ -294,6 +312,9 @@ private fun DirectMessageBubble(
     }
 
     val formattedTime = formatTimestamp(message.timestamp)
+    val senderPrefix = if (isMine) "Nachricht von dir" else "Nachricht von Gesprächspartner"
+    val encryptionPrefix = if (message.isEncrypted) ", ${message.encryptionAlgorithm} verschlüsselt" else ""
+    val fullAccessibilityDescription = "$senderPrefix: ${message.text}$encryptionPrefix, gesendet um $formattedTime"
 
     Box(
         modifier = Modifier.fillMaxWidth(),
@@ -305,6 +326,9 @@ private fun DirectMessageBubble(
                 .clip(bubbleShape)
                 .background(bubbleBackground)
                 .padding(horizontal = 14.dp, vertical = 10.dp)
+                .semantics(mergeDescendants = true) {
+                    contentDescription = fullAccessibilityDescription
+                }
         ) {
             if (message.isEncrypted) {
                 Row(
