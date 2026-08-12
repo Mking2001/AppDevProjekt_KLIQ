@@ -77,6 +77,9 @@ import com.kliq.app.ui.components.MapQuickViewCard
 import com.kliq.app.ui.components.UserQuickViewCard
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
+import com.kliq.app.util.accessibilityHeading
+import com.kliq.app.util.ensureMinTouchTarget
+import com.kliq.app.util.talkBackDescription
 import com.kliq.app.viewmodel.PermissionViewModel
 
 /**
@@ -320,10 +323,6 @@ fun MapScreen(
                 }
             }
         }
-
-import com.kliq.app.util.accessibilityHeading
-import com.kliq.app.util.ensureMinTouchTarget
-import com.kliq.app.util.talkBackDescription
 
         // Location FAB
         FloatingActionButton(

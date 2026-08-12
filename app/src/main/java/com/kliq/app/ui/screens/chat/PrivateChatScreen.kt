@@ -59,6 +59,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.data.model.DirectMessage
 import com.kliq.app.data.model.MessageStatus
+import com.kliq.app.util.accessibilityHeading
+import com.kliq.app.util.ensureMinTouchTarget
+import com.kliq.app.util.talkBackDescription
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import com.kliq.app.viewmodel.PrivateChatViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -152,12 +157,6 @@ fun PrivateChatScreen(
         }
     }
 }
-
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import com.kliq.app.util.accessibilityHeading
-import com.kliq.app.util.ensureMinTouchTarget
-import com.kliq.app.util.talkBackDescription
 
 /**
  * Custom High-Contrast Top-Bar mit E2E-Verschluesselungs-Badge und Online-Status.
