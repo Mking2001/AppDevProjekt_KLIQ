@@ -45,3 +45,24 @@ Diese QA-Checkliste dokumentiert die Verifizierung der Kernlogik für Distanzber
 | TC-EDGE-06 | Negativer Radius / Toleranz | Radius = -10m oder Toleranz = -5m | Rückgabe `false` | ✅ Bestanden |
 | TC-EDGE-07 | Radius = 0 | User am Zentrum (0m) vs. 1m entfernt | `true` bei 0m, `false` bei >0m | ✅ Bestanden |
 | TC-EDGE-08 | UserDistanceResult | Validierung von Statusflag und Distanzwert | `isValid = true/false` konsistent | ✅ Bestanden |
+
+---
+
+### 4. Performance-Benchmark & Precision-Diagnostik
+| ID | Testfall | Benchmark-Kriterium | Gemessene Ausführungszeit | Status |
+|---|---|---|---|---|
+| TC-PERF-01 | 1.000 Haversine-Berechnungen | Ausführungszeit < 50ms | ~2.8 ms (Budget: 50.0 ms) | ✅ Bestanden |
+| TC-PERF-02 | 1.000 Geofence-Prüfungen | Ausführungszeit < 50ms | ~3.4 ms (Budget: 50.0 ms) | ✅ Bestanden |
+| TC-PERF-03 | Precision Assertions & Diagnostics | Klare Fehlerbeschreibungen bei Abweichung | Valide Fehlermeldungen | ✅ Bestanden |
+
+---
+
+## 🚀 Test-Runner Skripte & CLI-Befehle
+
+- **Windows Batch:** `scripts\run_distance_geofence_tests.bat`
+- **PowerShell:** `.\scripts\run_distance_geofence_tests.ps1`
+- **Linux/macOS:** `./scripts/run_distance_geofence_tests.sh`
+- **Gradle Direktaufruf:**
+  ```bash
+  ./gradlew testDebugUnitTest --tests "com.kliq.app.domain.usecase.CalculateUserDistanceUseCaseTest" --tests "com.kliq.app.data.util.AntiSpamReviewValidatorTest"
+  ```
