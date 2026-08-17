@@ -137,6 +137,7 @@ data class VenueItemUi(
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val clubRepository: ClubRepository,
+    private val getClubsWithDistanceUseCase: com.kliq.app.domain.usecase.GetClubsWithDistanceUseCase = com.kliq.app.domain.usecase.GetClubsWithDistanceUseCase(clubRepository),
     private val calculateUserDistanceUseCase: CalculateUserDistanceUseCase = CalculateUserDistanceUseCase(),
     private val userDistanceFormatter: UserDistanceFormatter = UserDistanceFormatter.default,
     private val locationRepository: LocationRepository? = null,
@@ -144,6 +145,7 @@ class MapViewModel @Inject constructor(
     private val defaultDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default,
     private val hapticFeedbackManager: com.kliq.app.util.HapticFeedbackManager? = null
 ) : ViewModel() {
+
 
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
@@ -240,44 +242,15 @@ class MapViewModel @Inject constructor(
 
     private fun observeClubRepository() {
         viewModelScope.launch {
-            clubRepository.getAllClubs().collect { clubList ->
-                val venues = if (clubList.isNotEmpty()) {
-                    clubList.map { club ->
-                        val distKm = MapClusterManager.calculateDistanceMeters(
-                            _uiState.value.cameraPosition.latitude,
-                            _uiState.value.cameraPosition.longitude,
-                            club.location.latitude,
-                            club.location.longitude
-                        ) / 1000.0
-                        val formattedDist = String.format(Locale.US, "%.1f km", distKm)
-
-                        VenueItemUi(
-                            id = club.id,
-                            name = club.name,
-                            category = club.category.ifBlank { "Club" },
-                            distance = formattedDist,
-                            rating = club.averageRating.toFloat(),
-                            latitude = club.location.latitude,
-                            longitude = club.location.longitude,
-                            address = club.location.address,
-                            activeEventTitle = club.activeEvent?.title,
-                            isFavorite = club.isFavorite,
-                            currentCapacityPercent = club.analytics.currentCapacityPercent,
-                            isOpenNow = club.operatingHours.isOpenNow,
-                            totalLiveVisitors = club.analytics.totalLiveVisitors,
-                            malePercentage = club.analytics.malePercentage,
-                            femalePercentage = club.analytics.femalePercentage
-                        )
-                    }
-                } else {
-                    getFallbackVenues()
-                }
-
-                allVenues = venues
+            val currentLat = _uiState.value.cameraPosition.latitude
+            val currentLng = _uiState.value.cameraPosition.longitude
+            getClubsWithDistanceUseCase(currentLat, currentLng).collect { venues ->
+                allVenues = if (venues.isNotEmpty()) venues else getFallbackVenues()
                 updateFilteredAndClusteredVenues()
             }
         }
     }
+
 
     private fun updateFilteredAndClusteredVenues() {
         val showPublic = _uiState.value.showPublicEvents
