@@ -101,6 +101,12 @@ fun KliqMainScaffold(
     }
 
     LaunchedEffect(currentRoute) {
+        com.kliq.app.service.crash.CrashReportingLogger.setCustomKey("current_route", currentRoute)
+        com.kliq.app.service.crash.CrashReportingLogger.logBreadcrumb("Navigated to $currentRoute")
+    }
+
+
+    LaunchedEffect(currentRoute) {
         topBarViewModel.updateTitleForRoute(currentRoute)
     }
 
