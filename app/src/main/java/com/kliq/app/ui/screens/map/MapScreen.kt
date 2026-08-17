@@ -226,70 +226,74 @@ fun MapScreen(
             // Render Custom Kliq User Profile Markers (Only if showPrivateLocations is enabled)
             if (uiState.showPrivateLocations) {
                 uiState.userMarkers.forEach { userMarker ->
-                    val userIcon = remember(userMarker.username, userMarker.isOnline) {
-                        MarkerBitmapHelper.getUserMarkerBitmap(
-                            username = userMarker.username,
-                            isOnline = userMarker.isOnline
+                    androidx.compose.runtime.key(userMarker.userId) {
+                        val userIcon = remember(userMarker.username, userMarker.isOnline) {
+                            MarkerBitmapHelper.getUserMarkerBitmap(
+                                username = userMarker.username,
+                                isOnline = userMarker.isOnline
+                            )
+                        }
+                        Marker(
+                            state = MarkerState(position = LatLng(userMarker.latitude, userMarker.longitude)),
+                            title = userMarker.username,
+                            snippet = userMarker.statusMessage ?: if (userMarker.isOnline) "Online" else "Zuletzt aktiv",
+                            icon = userIcon,
+                            onClick = {
+                                viewModel.onUserMarkerClicked(userMarker)
+                                true
+                            }
                         )
                     }
-                    Marker(
-                        state = MarkerState(position = LatLng(userMarker.latitude, userMarker.longitude)),
-                        title = userMarker.username,
-                        snippet = userMarker.statusMessage ?: if (userMarker.isOnline) "Online" else "Zuletzt aktiv",
-                        icon = userIcon,
-                        onClick = {
-                            viewModel.onUserMarkerClicked(userMarker)
-                            true
-                        }
-                    )
                 }
             }
 
             // Render Clustered & Single Kliq Club Markers (Only if showPublicEvents is enabled)
             if (uiState.showPublicEvents) {
                 uiState.clusteredMarkers.forEach { markerItem ->
-                    when (markerItem) {
-                        is ClusterMarkerUiState.SingleNode -> {
-                            val venue = markerItem.venue
-                            val clubIcon = remember(venue.category, venue.activeEventTitle) {
-                                MarkerBitmapHelper.getClubMarkerBitmap(
-                                    category = venue.category,
-                                    hasActiveEvent = venue.activeEventTitle != null
+                    androidx.compose.runtime.key(markerItem.id) {
+                        when (markerItem) {
+                            is ClusterMarkerUiState.SingleNode -> {
+                                val venue = markerItem.venue
+                                val clubIcon = remember(venue.category, venue.activeEventTitle) {
+                                    MarkerBitmapHelper.getClubMarkerBitmap(
+                                        category = venue.category,
+                                        hasActiveEvent = venue.activeEventTitle != null
+                                    )
+                                }
+                                Marker(
+                                    state = MarkerState(position = markerItem.position),
+                                    title = venue.name,
+                                    snippet = "${venue.category} · ${venue.distance} · ★ ${venue.rating}" +
+                                            (venue.activeEventTitle?.let { " · 🎉 $it" } ?: ""),
+                                    icon = clubIcon,
+                                    onClick = {
+                                        viewModel.onMarkerClicked(venue)
+                                        true
+                                    },
+                                    onInfoWindowLongClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        viewModel.onMarkerLongPressed(venue)
+                                    }
                                 )
                             }
-                            Marker(
-                                state = MarkerState(position = markerItem.position),
-                                title = venue.name,
-                                snippet = "${venue.category} · ${venue.distance} · ★ ${venue.rating}" +
-                                        (venue.activeEventTitle?.let { " · 🎉 $it" } ?: ""),
-                                icon = clubIcon,
-                                onClick = {
-                                    viewModel.onMarkerClicked(venue)
-                                    true
-                                },
-                                onInfoWindowLongClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    viewModel.onMarkerLongPressed(venue)
+                            is ClusterMarkerUiState.ClusterNode -> {
+                                val clusterIcon = remember(markerItem.count, markerItem.primaryCategory) {
+                                    MarkerBitmapHelper.getClusterMarkerBitmap(
+                                        count = markerItem.count,
+                                        primaryCategory = markerItem.primaryCategory
+                                    )
                                 }
-                            )
-                        }
-                        is ClusterMarkerUiState.ClusterNode -> {
-                            val clusterIcon = remember(markerItem.count, markerItem.primaryCategory) {
-                                MarkerBitmapHelper.getClusterMarkerBitmap(
-                                    count = markerItem.count,
-                                    primaryCategory = markerItem.primaryCategory
+                                Marker(
+                                    state = MarkerState(position = markerItem.position),
+                                    title = "${markerItem.count} Standorte in der Nähe",
+                                    snippet = "${markerItem.primaryCategory}-Gruppe · Tippen zum Heranzoomen",
+                                    icon = clusterIcon,
+                                    onClick = {
+                                        viewModel.onClusterClicked(markerItem)
+                                        true
+                                    }
                                 )
                             }
-                            Marker(
-                                state = MarkerState(position = markerItem.position),
-                                title = "${markerItem.count} Standorte in der Nähe",
-                                snippet = "${markerItem.primaryCategory}-Gruppe · Tippen zum Heranzoomen",
-                                icon = clusterIcon,
-                                onClick = {
-                                    viewModel.onClusterClicked(markerItem)
-                                    true
-                                }
-                            )
                         }
                     }
                 }
