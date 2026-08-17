@@ -53,4 +53,17 @@ class CrashlyticsTreeTest {
 
         assertEquals(1, Timber.treeCount)
     }
+
+    @Test
+    fun testTriggerTestNonFatalException_logsSanitizedException() {
+        val exception = CrashReportingLogger.triggerTestNonFatalException()
+        assertNotNull(exception)
+        assertTrue(exception.message?.contains("+491512345678") == true)
+    }
+
+    @Test(expected = RuntimeException::class)
+    fun testTriggerTestFatalCrash_throwsRuntimeException() {
+        CrashReportingLogger.triggerTestFatalCrash()
+    }
 }
+

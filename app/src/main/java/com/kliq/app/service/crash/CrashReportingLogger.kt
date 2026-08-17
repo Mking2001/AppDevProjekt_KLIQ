@@ -75,4 +75,23 @@ object CrashReportingLogger {
      * Gibt den aktuellen In-Memory Status der gesetzten Custom Keys für Unit-Tests zurück.
      */
     fun getCustomKeys(): Map<String, String> = customKeysMap.toMap()
+
+    /**
+     * Debug-Trigger: Proviziert eine gefangene (nicht-fatale) Exception (z.B. simulierter Netzwerk-Timeout).
+     */
+    fun triggerTestNonFatalException(): Throwable {
+        val timeoutException = java.net.SocketTimeoutException("Simulated network timeout during event query for user +491512345678")
+        logNonFatalException(timeoutException, "Simulated Event API Timeout")
+        return timeoutException
+    }
+
+    /**
+     * Debug-Trigger: Proviziert einen gewollten Absturz (Fatal Crash) zur Verifizierung von Crashlytics Reports.
+     */
+    fun triggerTestFatalCrash() {
+        setCustomKey("crash_trigger_source", "debug_settings_button")
+        logBreadcrumb("Fatal crash triggered manually via debug controls")
+        throw RuntimeException("Kliq Debug Test Fatal Crash - Provoked for Crashlytics Verification")
+    }
 }
+
