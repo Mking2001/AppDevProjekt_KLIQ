@@ -271,7 +271,7 @@ class MapViewModelTest {
     @Test
     fun testEdgeCase_emptyRepositoryFlow_usesFallbackVenuesSafely() {
         `when`(clubRepository.getAllClubs()).thenReturn(flowOf(emptyList()))
-        val fallbackVm = MapViewModel(clubRepository)
+        val fallbackVm = MapViewModel(clubRepository = clubRepository, defaultDispatcher = testDispatcher)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = fallbackVm.uiState.value
