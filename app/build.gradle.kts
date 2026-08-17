@@ -127,11 +127,16 @@ dependencies {
     implementation("androidx.camera:camera-view:$cameraxVersion")
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
 
-    // Firebase Cloud Messaging (FCM)
+    // Firebase Cloud Messaging (FCM) & Crashlytics Error Reporting
     implementation("com.google.firebase:firebase-messaging-ktx:23.4.1")
+    implementation("com.google.firebase:firebase-crashlytics-ktx:18.6.2")
+
+    // Timber Logging Abstraction
+    implementation("com.jakewharton.timber:timber:5.0.1")
 
     // Coroutines Play Services (for .await() on Tasks)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
 
     // Testing
     testImplementation("junit:junit:4.13.2")
