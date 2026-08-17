@@ -95,4 +95,10 @@ class LocationTrackingViewModel @Inject constructor(
             locationRepository.clearLocationHistory()
         }
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        _uiState.value = LocationTrackingUiState()
+    }
 }
+

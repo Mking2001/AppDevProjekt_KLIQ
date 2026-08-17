@@ -659,4 +659,13 @@ class MapViewModel @Inject constructor(
         updateFilteredAndClusteredVenues()
         updateUserDistances(latitude, longitude)
     }
+
+    override fun onCleared() {
+        super.onCleared()
+        MarkerBitmapHelper.clearCache()
+        allVenues = emptyList()
+        allUsers = emptyList()
+        blockedUserIds = emptySet()
+    }
 }
+

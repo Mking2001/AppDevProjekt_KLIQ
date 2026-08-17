@@ -243,4 +243,12 @@ object MarkerBitmapHelper {
     fun clearCache() {
         bitmapDescriptorCache.evictAll()
     }
+
+    /**
+     * Returns the current number of cached bitmap descriptors.
+     */
+    fun getCacheSize(): Int {
+        return bitmapDescriptorCache.size()
+    }
 }
+
