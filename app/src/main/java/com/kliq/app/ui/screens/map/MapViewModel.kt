@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.model.CameraEasing
 import com.kliq.app.data.model.CameraPositionStateData
-import com.kliq.app.data.model.Club
 import com.kliq.app.data.model.LatLngBoundsData
 import com.kliq.app.data.model.MapCameraAnimationEvent
 import com.kliq.app.data.model.MapStyleConfig
@@ -27,11 +26,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.Locale
 import javax.inject.Inject
 
 /**
@@ -130,6 +126,7 @@ data class VenueItemUi(
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val clubRepository: ClubRepository,
+    private val getClubsWithDistanceUseCase: com.kliq.app.domain.usecase.GetClubsWithDistanceUseCase = com.kliq.app.domain.usecase.GetClubsWithDistanceUseCase(clubRepository),
     private val calculateUserDistanceUseCase: CalculateUserDistanceUseCase = CalculateUserDistanceUseCase(),
     private val userDistanceFormatter: UserDistanceFormatter = UserDistanceFormatter.default,
     private val locationRepository: LocationRepository? = null,
@@ -158,7 +155,6 @@ class MapViewModel @Inject constructor(
     )
 
     // Raw Domain / Entity models (Separation of Concerns)
-    private var rawClubEntities: List<Club> = emptyList()
     private var allVenues: List<VenueItemUi> = emptyList()
     private var allUsers: List<UserMarkerUiState> = emptyList()
     private var blockedUserIds: Set<String> = emptySet()
@@ -218,74 +214,27 @@ class MapViewModel @Inject constructor(
 
     private fun observeLocationUpdates() {
         locationRepository?.let { repo ->
-            viewModelScope.launch(defaultDispatcher) {
-                repo.locationUpdates
-                    .collect { locationData ->
-                        locationData?.let { loc ->
-                            updateUserDistances(loc.latitude, loc.longitude)
-                        }
+            viewModelScope.launch {
+                repo.locationUpdates.collect { locationData ->
+                    locationData?.let { loc ->
+                        updateUserDistances(loc.latitude, loc.longitude)
                     }
+                }
             }
         }
     }
 
     private fun observeClubRepository() {
-        viewModelScope.launch(defaultDispatcher) {
-            clubRepository.getAllClubs()
-                .collect { clubList ->
-                    rawClubEntities = clubList
-                    processRawClubsToVenues(
-                        clubList,
-                        _uiState.value.cameraPosition.latitude,
-                        _uiState.value.cameraPosition.longitude
-                    )
-                }
-        }
-    }
-
-    /**
-     * Transforms raw Club domain models into UI Venue representation on background dispatcher.
-     */
-    private suspend fun processRawClubsToVenues(
-        clubList: List<Club>,
-        cameraLat: Double,
-        cameraLng: Double
-    ) = withContext(defaultDispatcher) {
-        val venues = if (clubList.isNotEmpty()) {
-            clubList.map { club ->
-                val distKm = MapClusterManager.calculateDistanceMeters(
-                    cameraLat,
-                    cameraLng,
-                    club.location.latitude,
-                    club.location.longitude
-                ) / 1000.0
-                val formattedDist = String.format(Locale.US, "%.1f km", distKm)
-
-                VenueItemUi(
-                    id = club.id,
-                    name = club.name,
-                    category = club.category.ifBlank { "Club" },
-                    distance = formattedDist,
-                    rating = club.averageRating.toFloat(),
-                    latitude = club.location.latitude,
-                    longitude = club.location.longitude,
-                    address = club.location.address,
-                    activeEventTitle = club.activeEvent?.title,
-                    isFavorite = club.isFavorite,
-                    currentCapacityPercent = club.analytics.currentCapacityPercent,
-                    isOpenNow = club.operatingHours.isOpenNow,
-                    totalLiveVisitors = club.analytics.totalLiveVisitors,
-                    malePercentage = club.analytics.malePercentage,
-                    femalePercentage = club.analytics.femalePercentage
-                )
+        viewModelScope.launch {
+            val currentLat = _uiState.value.cameraPosition.latitude
+            val currentLng = _uiState.value.cameraPosition.longitude
+            getClubsWithDistanceUseCase(currentLat, currentLng).collect { venues ->
+                allVenues = if (venues.isNotEmpty()) venues else getFallbackVenues()
+                updateFilteredAndClusteredVenues()
             }
-        } else {
-            getFallbackVenues()
         }
-
-        allVenues = venues
-        updateFilteredAndClusteredVenuesInternal()
     }
+
 
     fun updateUserDistances(currentLat: Double, currentLng: Double) {
         viewModelScope.launch(defaultDispatcher) {
@@ -320,6 +269,7 @@ class MapViewModel @Inject constructor(
             }
         }
     }
+
 
     private fun updateFilteredAndClusteredVenues() {
         viewModelScope.launch(defaultDispatcher) {
