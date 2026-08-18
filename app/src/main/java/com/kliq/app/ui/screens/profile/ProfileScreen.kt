@@ -341,39 +341,6 @@ private fun ProfileHeader(
                 )
             }
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        val context = LocalContext.current
-        Button(
-            onClick = {
-                try {
-                    com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            val token = task.result
-                            val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                            val clip = android.content.ClipData.newPlainText("FCM Token", token)
-                            clipboard.setPrimaryClip(clip)
-                            android.widget.Toast.makeText(context, "FCM-Token kopiert! Test-Push gesendet.", android.widget.Toast.LENGTH_LONG).show()
-                        }
-                    }
-                    val notificationHelper = com.kliq.app.service.notification.NotificationHelper(context)
-                    notificationHelper.showGeneralNotification("Kliq Live-Test", "Push-Benachrichtigungen sind aktiv! 🎉")
-                } catch (e: Exception) {
-                    android.widget.Toast.makeText(context, "Test-Push ausgelöst!", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        ) {
-            Text(
-                text = "🔔 FCM Push testen & Token kopieren",
-                fontWeight = FontWeight.SemiBold
-            )
-        }
     }
 }
 
