@@ -4,15 +4,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.model.CameraEasing
 import com.kliq.app.data.model.CameraPositionStateData
+import com.kliq.app.data.model.Club
 import com.kliq.app.data.model.LatLngBoundsData
 import com.kliq.app.data.model.MapCameraAnimationEvent
 import com.kliq.app.data.model.MapStyleConfig
 import com.kliq.app.data.repository.ClubRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
 import com.kliq.app.data.repository.LocationRepository
+import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.domain.usecase.CalculateUserDistanceUseCase
+import com.kliq.app.util.HapticFeedbackManager
 import com.kliq.app.util.UserDistanceFormatter
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -20,8 +25,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import javax.inject.Inject
 
@@ -71,23 +80,6 @@ data class UserMarkerUiState(
 
 /**
  * Immutable UI State for the MapScreen.
- *
- * @param cameraPosition Current map camera center, zoom, tilt and bearing.
- * @param styleConfig Configuration for custom dark-purple map styling.
- * @param selectedFilter Index of selected filter category chip.
- * @param filters List of available venue filter labels.
- * @param locationFilterMode Selected location filter mode (ALL, PUBLIC_ONLY, PRIVATE_ONLY).
- * @param showPublicEvents Whether public club & event markers are displayed.
- * @param showPrivateLocations Whether private user location markers are displayed.
- * @param nearbyVenues List of nearby club/bar venues with map pin coordinates.
- * @param clubMarkers Structured club map marker UI states.
- * @param userMarkers Structured user map marker UI states.
- * @param clusteredMarkers Computed cluster and single markers for performance map rendering.
- * @param isLocationEnabled State of GPS location permission.
- * @param isLoadingLocation State of location centering operation.
- * @param selectedVenue Currently selected venue for overlay quick view card.
- * @param selectedUser Currently selected user profile marker for overlay quick view.
- * @param isMapLoaded State of map render completion.
  */
 data class MapUiState(
     val cameraPosition: CameraPositionStateData = CameraPositionStateData(),
@@ -130,20 +122,25 @@ data class VenueItemUi(
 )
 
 /**
- * ViewModel managing Map state, camera viewport, filters, custom styling,
- * ClubRepository flow observation, separate club/user marker UI states,
- * privacy-aware user location filtering, and performance marker clustering.
+ * High-performance ViewModel managing Map state, camera viewport, filters, custom styling,
+ * asynchronous club/user data transformation, Coroutine/Flow debouncing (250ms),
+ * and background marker clustering (Dispatchers.Default).
  */
+@OptIn(FlowPreview::class)
 @HiltViewModel
 class MapViewModel @Inject constructor(
     private val clubRepository: ClubRepository,
     private val calculateUserDistanceUseCase: CalculateUserDistanceUseCase = CalculateUserDistanceUseCase(),
     private val userDistanceFormatter: UserDistanceFormatter = UserDistanceFormatter.default,
     private val locationRepository: LocationRepository? = null,
-    private val userRepository: com.kliq.app.data.repository.UserRepository? = null,
-    private val defaultDispatcher: kotlinx.coroutines.CoroutineDispatcher = Dispatchers.Default,
-    private val hapticFeedbackManager: com.kliq.app.util.HapticFeedbackManager? = null
+    private val userRepository: UserRepository? = null,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val hapticFeedbackManager: HapticFeedbackManager? = null
 ) : ViewModel() {
+
+    companion object {
+        private const val CAMERA_DEBOUNCE_MS = 250L
+    }
 
     private val _uiState = MutableStateFlow(MapUiState())
     val uiState: StateFlow<MapUiState> = _uiState.asStateFlow()
@@ -154,29 +151,26 @@ class MapViewModel @Inject constructor(
     )
     val cameraEventFlow: SharedFlow<MapCameraAnimationEvent> = _cameraEventFlow.asSharedFlow()
 
+    // Camera move stream for debounced spatial calculations during active pan & zoom
+    private val cameraMoveStream = MutableSharedFlow<CameraPositionStateData>(
+        extraBufferCapacity = 16,
+        replay = 1
+    )
+
+    // Raw Domain / Entity models (Separation of Concerns)
+    private var rawClubEntities: List<Club> = emptyList()
     private var allVenues: List<VenueItemUi> = emptyList()
     private var allUsers: List<UserMarkerUiState> = emptyList()
     private var blockedUserIds: Set<String> = emptySet()
 
     init {
+        MarkerBitmapHelper.prewarmCache()
         setupFilters()
         loadUserMarkers()
         observeClubRepository()
         observeLocationUpdates()
         observeBlockedUsers()
-    }
-
-    private fun observeBlockedUsers() {
-        userRepository?.let { repo ->
-            viewModelScope.launch {
-                repo.getBlockedUserIds("current_user")
-                    .catch { }
-                    .collect { blockedList ->
-                        blockedUserIds = blockedList.toSet()
-                        updateUserDistances(_uiState.value.cameraPosition.latitude, _uiState.value.cameraPosition.longitude)
-                    }
-            }
-        }
+        setupDebouncedCameraPipeline()
     }
 
     private fun setupFilters() {
@@ -187,9 +181,110 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    private fun setupDebouncedCameraPipeline() {
+        viewModelScope.launch(defaultDispatcher) {
+            cameraMoveStream
+                .debounce(CAMERA_DEBOUNCE_MS)
+                .distinctUntilChanged()
+                .collect { cameraPos ->
+                    performMarkerRecalculation(cameraPos.latitude, cameraPos.longitude, cameraPos.zoom)
+                }
+        }
+    }
+
+    private fun observeBlockedUsers() {
+        userRepository?.let { repo ->
+            viewModelScope.launch(defaultDispatcher) {
+                repo.getBlockedUserIds("current_user")
+                    .catch { }
+                    .collect { blockedList ->
+                        blockedUserIds = blockedList.toSet()
+                        updateUserDistances(
+                            _uiState.value.cameraPosition.latitude,
+                            _uiState.value.cameraPosition.longitude
+                        )
+                    }
+            }
+        }
+    }
+
     private fun loadUserMarkers() {
         allUsers = getFallbackUsers()
-        updateUserDistances(_uiState.value.cameraPosition.latitude, _uiState.value.cameraPosition.longitude)
+        updateUserDistances(
+            _uiState.value.cameraPosition.latitude,
+            _uiState.value.cameraPosition.longitude
+        )
+    }
+
+    private fun observeLocationUpdates() {
+        locationRepository?.let { repo ->
+            viewModelScope.launch(defaultDispatcher) {
+                repo.locationUpdates
+                    .collect { locationData ->
+                        locationData?.let { loc ->
+                            updateUserDistances(loc.latitude, loc.longitude)
+                        }
+                    }
+            }
+        }
+    }
+
+    private fun observeClubRepository() {
+        viewModelScope.launch(defaultDispatcher) {
+            clubRepository.getAllClubs()
+                .collect { clubList ->
+                    rawClubEntities = clubList
+                    processRawClubsToVenues(
+                        clubList,
+                        _uiState.value.cameraPosition.latitude,
+                        _uiState.value.cameraPosition.longitude
+                    )
+                }
+        }
+    }
+
+    /**
+     * Transforms raw Club domain models into UI Venue representation on background dispatcher.
+     */
+    private suspend fun processRawClubsToVenues(
+        clubList: List<Club>,
+        cameraLat: Double,
+        cameraLng: Double
+    ) = withContext(defaultDispatcher) {
+        val venues = if (clubList.isNotEmpty()) {
+            clubList.map { club ->
+                val distKm = MapClusterManager.calculateDistanceMeters(
+                    cameraLat,
+                    cameraLng,
+                    club.location.latitude,
+                    club.location.longitude
+                ) / 1000.0
+                val formattedDist = String.format(Locale.US, "%.1f km", distKm)
+
+                VenueItemUi(
+                    id = club.id,
+                    name = club.name,
+                    category = club.category.ifBlank { "Club" },
+                    distance = formattedDist,
+                    rating = club.averageRating.toFloat(),
+                    latitude = club.location.latitude,
+                    longitude = club.location.longitude,
+                    address = club.location.address,
+                    activeEventTitle = club.activeEvent?.title,
+                    isFavorite = club.isFavorite,
+                    currentCapacityPercent = club.analytics.currentCapacityPercent,
+                    isOpenNow = club.operatingHours.isOpenNow,
+                    totalLiveVisitors = club.analytics.totalLiveVisitors,
+                    malePercentage = club.analytics.malePercentage,
+                    femalePercentage = club.analytics.femalePercentage
+                )
+            }
+        } else {
+            getFallbackVenues()
+        }
+
+        allVenues = venues
+        updateFilteredAndClusteredVenuesInternal()
     }
 
     fun updateUserDistances(currentLat: Double, currentLng: Double) {
@@ -226,64 +321,18 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    private fun observeLocationUpdates() {
-        locationRepository?.let { repo ->
-            viewModelScope.launch {
-                repo.locationUpdates.collect { locationData ->
-                    locationData?.let { loc ->
-                        updateUserDistances(loc.latitude, loc.longitude)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun observeClubRepository() {
-        viewModelScope.launch {
-            clubRepository.getAllClubs().collect { clubList ->
-                val venues = if (clubList.isNotEmpty()) {
-                    clubList.map { club ->
-                        val distKm = MapClusterManager.calculateDistanceMeters(
-                            _uiState.value.cameraPosition.latitude,
-                            _uiState.value.cameraPosition.longitude,
-                            club.location.latitude,
-                            club.location.longitude
-                        ) / 1000.0
-                        val formattedDist = String.format(Locale.US, "%.1f km", distKm)
-
-                        VenueItemUi(
-                            id = club.id,
-                            name = club.name,
-                            category = club.category.ifBlank { "Club" },
-                            distance = formattedDist,
-                            rating = club.averageRating.toFloat(),
-                            latitude = club.location.latitude,
-                            longitude = club.location.longitude,
-                            address = club.location.address,
-                            activeEventTitle = club.activeEvent?.title,
-                            isFavorite = club.isFavorite,
-                            currentCapacityPercent = club.analytics.currentCapacityPercent,
-                            isOpenNow = club.operatingHours.isOpenNow,
-                            totalLiveVisitors = club.analytics.totalLiveVisitors,
-                            malePercentage = club.analytics.malePercentage,
-                            femalePercentage = club.analytics.femalePercentage
-                        )
-                    }
-                } else {
-                    getFallbackVenues()
-                }
-
-                allVenues = venues
-                updateFilteredAndClusteredVenues()
-            }
-        }
-    }
-
     private fun updateFilteredAndClusteredVenues() {
-        val showPublic = _uiState.value.showPublicEvents
+        viewModelScope.launch(defaultDispatcher) {
+            updateFilteredAndClusteredVenuesInternal()
+        }
+    }
+
+    private suspend fun updateFilteredAndClusteredVenuesInternal() = withContext(defaultDispatcher) {
+        val currentState = _uiState.value
+        val showPublic = currentState.showPublicEvents
         val filtered = if (showPublic) {
-            val filterIndex = _uiState.value.selectedFilter
-            val filterName = filterIndex?.let { _uiState.value.filters.getOrNull(it) }
+            val filterIndex = currentState.selectedFilter
+            val filterName = filterIndex?.let { currentState.filters.getOrNull(it) }
 
             when {
                 filterName == null || filterName == "Alle" -> allVenues
@@ -314,7 +363,7 @@ class MapViewModel @Inject constructor(
             )
         }
 
-        val zoom = _uiState.value.cameraPosition.zoom
+        val zoom = currentState.cameraPosition.zoom
         val clusters = if (showPublic) MapClusterManager.clusterVenues(filtered, zoom) else emptyList()
 
         _uiState.update { state ->
@@ -323,6 +372,14 @@ class MapViewModel @Inject constructor(
                 clubMarkers = clubMarkerStates,
                 clusteredMarkers = clusters
             )
+        }
+    }
+
+    private suspend fun performMarkerRecalculation(lat: Double, lng: Double, zoom: Float) = withContext(defaultDispatcher) {
+        val showPublic = _uiState.value.showPublicEvents
+        if (showPublic && allVenues.isNotEmpty()) {
+            val clusters = MapClusterManager.clusterVenues(_uiState.value.nearbyVenues, zoom)
+            _uiState.update { it.copy(clusteredMarkers = clusters) }
         }
     }
 
@@ -651,11 +708,11 @@ class MapViewModel @Inject constructor(
     }
 
     fun onCameraMoved(latitude: Double, longitude: Double, zoom: Float) {
+        val newPos = CameraPositionStateData(latitude, longitude, zoom)
         _uiState.update { state ->
-            state.copy(
-                cameraPosition = CameraPositionStateData(latitude, longitude, zoom)
-            )
+            state.copy(cameraPosition = newPos)
         }
+        cameraMoveStream.tryEmit(newPos)
         updateFilteredAndClusteredVenues()
         updateUserDistances(latitude, longitude)
     }
@@ -668,4 +725,5 @@ class MapViewModel @Inject constructor(
         blockedUserIds = emptySet()
     }
 }
+
 
