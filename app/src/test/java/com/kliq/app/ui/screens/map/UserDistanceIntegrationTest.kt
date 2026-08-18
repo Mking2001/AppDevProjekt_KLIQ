@@ -25,6 +25,9 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.util.Locale
 
+import com.kliq.app.data.model.LocationPowerPolicy
+import com.kliq.app.data.model.LocationTrackingMode
+
 class FakeLocationRepository : LocationRepository {
     private val _locationUpdates = MutableStateFlow<LocationData?>(null)
     override val locationUpdates: StateFlow<LocationData?> = _locationUpdates
@@ -32,9 +35,36 @@ class FakeLocationRepository : LocationRepository {
     private val _isTrackingActive = MutableStateFlow(false)
     override val isTrackingActive: StateFlow<Boolean> = _isTrackingActive
 
+    private val _trackingMode = MutableStateFlow(LocationTrackingMode.BALANCED_AMBIENT)
+    override val trackingMode: StateFlow<LocationTrackingMode> = _trackingMode
+
+    private val _powerPolicy = MutableStateFlow(LocationPowerPolicy.BalancedAmbient)
+    override val powerPolicy: StateFlow<LocationPowerPolicy> = _powerPolicy
+
+    override val isStationary: StateFlow<Boolean> = MutableStateFlow(false)
+    override val isBurstActive: StateFlow<Boolean> = MutableStateFlow(false)
+    override val burstRemainingSeconds: StateFlow<Int> = MutableStateFlow(0)
+
     fun emitLocation(location: LocationData) {
         _locationUpdates.value = location
     }
+
+    override fun setTrackingMode(mode: LocationTrackingMode) {
+        _trackingMode.value = mode
+        _powerPolicy.value = LocationPowerPolicy.forMode(mode)
+    }
+
+    override fun requestHighAccuracyBurst(durationMs: Long) {
+        _trackingMode.value = LocationTrackingMode.HIGH_ACCURACY
+        _powerPolicy.value = LocationPowerPolicy.HighAccuracy
+    }
+
+    override fun cancelBurstSession() {
+        _trackingMode.value = LocationTrackingMode.BALANCED_AMBIENT
+        _powerPolicy.value = LocationPowerPolicy.BalancedAmbient
+    }
+
+    override fun setAppForegroundState(isForeground: Boolean) {}
 
     override fun startBackgroundTracking() { _isTrackingActive.value = true }
     override fun stopBackgroundTracking() { _isTrackingActive.value = false }

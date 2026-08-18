@@ -337,7 +337,3 @@ object MarkerBitmapHelper {
      */
     fun getCacheSize(): Int = cacheSize()
 }
-
-
-
-
