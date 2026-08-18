@@ -58,6 +58,14 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
             CrashReportingLogger.setCustomKey("app_version", BuildConfig.VERSION_NAME)
             CrashReportingLogger.setCustomKey("build_type", BuildConfig.BUILD_TYPE)
             CrashReportingLogger.logBreadcrumb("App initialization completed")
+
+            // Firebase Analytics Event
+            val analytics = com.google.firebase.analytics.FirebaseAnalytics.getInstance(this@KliqApplication)
+            val bundle = android.os.Bundle().apply {
+                putString(com.google.firebase.analytics.FirebaseAnalytics.Param.ITEM_NAME, "app_startup")
+                putString("session_id", sessionId)
+            }
+            analytics.logEvent(com.google.firebase.analytics.FirebaseAnalytics.Event.APP_OPEN, bundle)
         }
     }
 
