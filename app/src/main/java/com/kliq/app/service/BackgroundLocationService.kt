@@ -19,10 +19,11 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.location.Priority
 import com.kliq.app.MainActivity
 import com.kliq.app.data.model.LocationData
 import com.kliq.app.data.model.LocationPermissionState
+import com.kliq.app.data.model.LocationPowerPolicy
+import com.kliq.app.data.model.LocationTrackingMode
 import com.kliq.app.data.repository.LocationRepository
 import com.kliq.app.util.PermissionManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -30,14 +31,16 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * Android Foreground Service handling background location tracking for Kliq.
+ * Android Foreground Service handling battery-optimized background location tracking for Kliq.
  *
- * Implements an adaptive battery-saving interval algorithm (50m displacement filter, 1 to 5 min intervals)
- * and displays a persistent Kliq High-Contrast notification while active.
+ * Coordinates adaptive sampling policies (High-Accuracy burst, Balanced Ambient, and Idle Passive),
+ * dynamic FusedLocationProviderClient re-registration, and persistent High-Contrast notification updates.
  */
 @AndroidEntryPoint
 class BackgroundLocationService : Service() {
@@ -55,6 +58,7 @@ class BackgroundLocationService : Service() {
     private lateinit var locationCallback: LocationCallback
 
     private var isServiceRunning = false
+    private var activePolicy: LocationPowerPolicy = LocationPowerPolicy.BalancedAmbient
 
     override fun onCreate() {
         super.onCreate()
@@ -84,12 +88,36 @@ class BackgroundLocationService : Service() {
                 }
             }
         }
+
+        observePolicyChanges()
+    }
+
+    private fun observePolicyChanges() {
+        locationRepository.powerPolicy
+            .onEach { newPolicy ->
+                if (isServiceRunning && newPolicy != activePolicy) {
+                    activePolicy = newPolicy
+                    applyAdaptiveLocationPolicy(newPolicy)
+                    updateForegroundNotification()
+                }
+            }
+            .launchIn(serviceScope)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> startTrackingService()
             ACTION_STOP -> stopTrackingService()
+            ACTION_UPDATE_POWER_POLICY -> {
+                if (isServiceRunning) {
+                    applyAdaptiveLocationPolicy(locationRepository.powerPolicy.value)
+                    updateForegroundNotification()
+                }
+            }
+            ACTION_REQUEST_BURST -> {
+                val durationMs = intent.getLongExtra(EXTRA_BURST_DURATION_MS, 30_000L)
+                locationRepository.requestHighAccuracyBurst(durationMs)
+            }
         }
         return START_STICKY
     }
@@ -103,6 +131,7 @@ class BackgroundLocationService : Service() {
             return
         }
 
+        activePolicy = locationRepository.powerPolicy.value
         val notification = buildForegroundNotification()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(
@@ -114,24 +143,25 @@ class BackgroundLocationService : Service() {
             startForeground(NOTIFICATION_ID, notification)
         }
 
-        requestAdaptiveLocationUpdates()
+        applyAdaptiveLocationPolicy(activePolicy)
         isServiceRunning = true
     }
 
     @SuppressLint("MissingPermission")
-    private fun requestAdaptiveLocationUpdates() {
-        // Battery-optimized adaptive location request:
-        // Update interval: 60 sec (1 min) to 300 sec (5 min) with min displacement of 50m
-        val locationRequest = LocationRequest.Builder(
-            Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-            INTERVAL_ACTIVE_MS
-        ).apply {
-            setMinUpdateIntervalMillis(FASTEST_INTERVAL_MS)
-            setMinUpdateDistanceMeters(MIN_DISTANCE_DISPLACEMENT_METERS)
-            setMaxUpdateDelayMillis(MAX_UPDATE_DELAY_MS)
-        }.build()
-
+    private fun applyAdaptiveLocationPolicy(policy: LocationPowerPolicy) {
+        // Dynamically reconfigures location updates to match the current energy policy
         try {
+            fusedLocationClient.removeLocationUpdates(locationCallback)
+
+            val locationRequest = LocationRequest.Builder(
+                policy.priority,
+                policy.intervalMillis
+            ).apply {
+                setMinUpdateIntervalMillis(policy.minUpdateIntervalMillis)
+                setMinUpdateDistanceMeters(policy.minDistanceDisplacementMeters)
+                setMaxUpdateDelayMillis(policy.maxUpdateDelayMillis)
+            }.build()
+
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
@@ -139,6 +169,16 @@ class BackgroundLocationService : Service() {
             )
         } catch (e: Exception) {
             stopTrackingService()
+        }
+    }
+
+    private fun updateForegroundNotification() {
+        if (!isServiceRunning) return
+        try {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.notify(NOTIFICATION_ID, buildForegroundNotification())
+        } catch (e: Exception) {
+            // Ignore notification update failures during teardown
         }
     }
 
@@ -180,9 +220,32 @@ class BackgroundLocationService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val currentMode = locationRepository.trackingMode.value
+        val (titleText, bodyText) = when (currentMode) {
+            LocationTrackingMode.HIGH_ACCURACY -> {
+                val burstRemaining = locationRepository.burstRemainingSeconds.value
+                Pair(
+                    "Kliq GPS-Präzision aktiv",
+                    "High-Accuracy Verifizierung aktiv (${burstRemaining}s verbleibend)"
+                )
+            }
+            LocationTrackingMode.BALANCED_AMBIENT -> {
+                Pair(
+                    "Kliq Live-Standort aktiv",
+                    "Adaptives Tracking (>50m / 1-2 min) für Nightlife-Circle & Party-Map."
+                )
+            }
+            LocationTrackingMode.IDLE_PASSIVE -> {
+                Pair(
+                    "Kliq Standby (Batteriesparmodus)",
+                    "Drosselung aktiv: Geofence-basierte Trigger & passive Standortüberwachung."
+                )
+            }
+        }
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Kliq Live-Standort aktiv")
-            .setContentText("Dein Standort wird für Nightlife-Features & Kliq-Circle aktualisiert.")
+            .setContentTitle(titleText)
+            .setContentText(bodyText)
             .setSmallIcon(android.R.drawable.ic_menu_compass)
             .setColor(Color.parseColor("#7C4DFF"))
             .setOngoing(true)
@@ -202,14 +265,13 @@ class BackgroundLocationService : Service() {
     companion object {
         const val ACTION_START = "com.kliq.app.service.ACTION_START_LOCATION_TRACKING"
         const val ACTION_STOP = "com.kliq.app.service.ACTION_STOP_LOCATION_TRACKING"
+        const val ACTION_UPDATE_POWER_POLICY = "com.kliq.app.service.ACTION_UPDATE_POWER_POLICY"
+        const val ACTION_REQUEST_BURST = "com.kliq.app.service.ACTION_REQUEST_BURST"
+
+        const val EXTRA_BURST_DURATION_MS = "extra_burst_duration_ms"
 
         private const val NOTIFICATION_ID = 4301
         private const val CHANNEL_ID = "kliq_location_channel"
         private const val CHANNEL_NAME = "Kliq Live Location Services"
-
-        private const val INTERVAL_ACTIVE_MS = 60_000L // 1 Minute
-        private const val FASTEST_INTERVAL_MS = 30_000L // 30 Sekunden
-        private const val MAX_UPDATE_DELAY_MS = 300_000L // 5 Minuten
-        private const val MIN_DISTANCE_DISPLACEMENT_METERS = 50f // 50 Meter Adaptionsschwelle
     }
 }
