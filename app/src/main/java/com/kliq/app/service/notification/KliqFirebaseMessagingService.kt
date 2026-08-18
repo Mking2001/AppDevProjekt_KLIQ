@@ -27,21 +27,36 @@ class KliqFirebaseMessagingService : FirebaseMessagingService() {
         super.onMessageReceived(remoteMessage)
 
         val payload = ChatPushPayload.fromMap(remoteMessage.data)
-        if (payload.chatId.isBlank()) return
+        if (payload.chatId.isNotBlank()) {
+            val isDmEnabled = pushNotificationRepository.isDirectMessagesEnabled()
+            val isCityEnabled = pushNotificationRepository.isCityChatsEnabled()
 
-        val isDmEnabled = pushNotificationRepository.isDirectMessagesEnabled()
-        val isCityEnabled = pushNotificationRepository.isCityChatsEnabled()
-
-        val shouldShow = when (payload.notificationType) {
-            PushNotificationType.DIRECT_MESSAGE -> isDmEnabled
-            PushNotificationType.CITY_CHAT_MENTION -> isCityEnabled
-        }
-
-        if (shouldShow) {
-            serviceScope.launch {
-                pushNotificationRepository.onPushPayloadReceived(payload)
+            val shouldShow = when (payload.notificationType) {
+                PushNotificationType.DIRECT_MESSAGE -> isDmEnabled
+                PushNotificationType.CITY_CHAT_MENTION -> isCityEnabled
             }
-            notificationHelper.showChatNotification(payload)
+
+            if (shouldShow) {
+                serviceScope.launch {
+                    pushNotificationRepository.onPushPayloadReceived(payload)
+                }
+                notificationHelper.showChatNotification(payload)
+            }
+        } else {
+            // Allgemeine Benachrichtigung (z. B. aus Firebase-Konsole oder Kampagne)
+            val title = remoteMessage.notification?.title
+                ?: remoteMessage.data["title"]
+                ?: remoteMessage.data["sender_name"]
+                ?: "Kliq"
+            val body = remoteMessage.notification?.body
+                ?: remoteMessage.data["body"]
+                ?: remoteMessage.data["message"]
+                ?: remoteMessage.data["message_text"]
+                ?: ""
+
+            if (body.isNotBlank() || title.isNotBlank()) {
+                notificationHelper.showGeneralNotification(title, body)
+            }
         }
     }
 

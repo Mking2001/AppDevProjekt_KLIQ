@@ -66,6 +66,18 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
                 putString("session_id", sessionId)
             }
             analytics.logEvent(com.google.firebase.analytics.FirebaseAnalytics.Event.APP_OPEN, bundle)
+
+            // Globales Topic "all" für Sofort-Pushs abonnieren
+            try {
+                com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("all")
+                com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Timber.d("Kliq FCM Token: %s", task.result)
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "Fehler beim Abonnieren des FCM-Topics")
+            }
         }
     }
 
