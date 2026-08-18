@@ -12,7 +12,6 @@ import com.kliq.app.service.BackgroundLocationService
 import com.kliq.app.util.AdaptiveLocationController
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -29,8 +28,8 @@ import javax.inject.Singleton
 class LocationRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
     private val locationDao: LocationDao,
-    private val adaptiveController: AdaptiveLocationController = AdaptiveLocationController(),
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val adaptiveController: AdaptiveLocationController,
+    private val ioDispatcher: CoroutineDispatcher
 ) : LocationRepository {
 
     private val _locationUpdates = MutableStateFlow<LocationData?>(null)

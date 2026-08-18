@@ -1,6 +1,5 @@
 package com.kliq.app.util
 
-import android.location.Location
 import com.kliq.app.data.model.LocationData
 import com.kliq.app.data.model.LocationPowerPolicy
 import com.kliq.app.data.model.LocationTrackingMode
@@ -12,20 +11,31 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 /**
  * Controller managing adaptive location sampling intervals, device stationary detection,
  * burst session lifecycles, and application lifecycle-aware power throttling.
  */
 @Singleton
-class AdaptiveLocationController @Inject constructor(
-    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
-) {
-    private val scope = CoroutineScope(defaultDispatcher)
+class AdaptiveLocationController @Inject constructor() {
+
+    private var defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
+    private var scope: CoroutineScope = CoroutineScope(defaultDispatcher)
+
+    /**
+     * Secondary constructor allowing custom [CoroutineDispatcher] injection for testing.
+     */
+    constructor(dispatcher: CoroutineDispatcher) : this() {
+        this.defaultDispatcher = dispatcher
+        this.scope = CoroutineScope(dispatcher)
+    }
 
     private val _configuredMode = MutableStateFlow(LocationTrackingMode.BALANCED_AMBIENT)
     val configuredMode: StateFlow<LocationTrackingMode> = _configuredMode.asStateFlow()
@@ -57,6 +67,7 @@ class AdaptiveLocationController @Inject constructor(
         private const val STATIONARY_DISTANCE_THRESHOLD_METERS = 15.0f
         private const val CONSECUTIVE_STATIONARY_FIXES_REQUIRED = 2
         private const val DEFAULT_BURST_DURATION_MS = 30_000L
+        private const val EARTH_RADIUS_METERS = 6371000.0
     }
 
     /**
@@ -183,8 +194,14 @@ class AdaptiveLocationController @Inject constructor(
     }
 
     private fun calculateDistanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Float {
-        val results = FloatArray(1)
-        Location.distanceBetween(lat1, lon1, lat2, lon2, results)
-        return results[0]
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLon = Math.toRadians(lon2 - lon1)
+        val lat1Rad = Math.toRadians(lat1)
+        val lat2Rad = Math.toRadians(lat2)
+
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(lat1Rad) * cos(lat2Rad) * sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return (EARTH_RADIUS_METERS * c).toFloat()
     }
 }

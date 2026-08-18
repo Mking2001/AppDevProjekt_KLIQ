@@ -7,7 +7,6 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Typeface
-import android.util.LruCache
 import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import java.util.Locale
@@ -19,7 +18,11 @@ import java.util.Locale
 object MarkerBitmapHelper {
 
     private const val CACHE_SIZE = 128
-    private val bitmapDescriptorCache = LruCache<String, BitmapDescriptor>(CACHE_SIZE)
+    private val bitmapDescriptorCache = object : LinkedHashMap<String, BitmapDescriptor>(CACHE_SIZE, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, BitmapDescriptor>?): Boolean {
+            return size > CACHE_SIZE
+        }
+    }
 
     private const val COLOR_PRIMARY_PURPLE = 0xFF6B46C1.toInt()
     private const val COLOR_PURPLE_DARK_BG = 0xFF2D1B4E.toInt()
@@ -43,11 +46,15 @@ object MarkerBitmapHelper {
         hasActiveEvent: Boolean
     ): BitmapDescriptor {
         val cacheKey = "club_${category.lowercase(Locale.ROOT)}_${hasActiveEvent}"
-        bitmapDescriptorCache.get(cacheKey)?.let { return it }
+        synchronized(bitmapDescriptorCache) {
+            bitmapDescriptorCache[cacheKey]?.let { return it }
+        }
 
         val bitmap = createClubPinBitmap(category, hasActiveEvent)
         val descriptor = descriptorFactory(bitmap)
-        bitmapDescriptorCache.put(cacheKey, descriptor)
+        synchronized(bitmapDescriptorCache) {
+            bitmapDescriptorCache[cacheKey] = descriptor
+        }
         return descriptor
     }
 
@@ -60,11 +67,15 @@ object MarkerBitmapHelper {
     ): BitmapDescriptor {
         val initial = username.take(1).uppercase(Locale.ROOT).ifBlank { "K" }
         val cacheKey = "user_${initial}_${isOnline}"
-        bitmapDescriptorCache.get(cacheKey)?.let { return it }
+        synchronized(bitmapDescriptorCache) {
+            bitmapDescriptorCache[cacheKey]?.let { return it }
+        }
 
         val bitmap = createUserAvatarBitmap(initial, isOnline)
         val descriptor = descriptorFactory(bitmap)
-        bitmapDescriptorCache.put(cacheKey, descriptor)
+        synchronized(bitmapDescriptorCache) {
+            bitmapDescriptorCache[cacheKey] = descriptor
+        }
         return descriptor
     }
 
@@ -76,11 +87,15 @@ object MarkerBitmapHelper {
         primaryCategory: String = "Club"
     ): BitmapDescriptor {
         val cacheKey = "cluster_${count}_${primaryCategory.lowercase(Locale.ROOT)}"
-        bitmapDescriptorCache.get(cacheKey)?.let { return it }
+        synchronized(bitmapDescriptorCache) {
+            bitmapDescriptorCache[cacheKey]?.let { return it }
+        }
 
         val bitmap = createClusterBitmap(count)
         val descriptor = descriptorFactory(bitmap)
-        bitmapDescriptorCache.put(cacheKey, descriptor)
+        synchronized(bitmapDescriptorCache) {
+            bitmapDescriptorCache[cacheKey] = descriptor
+        }
         return descriptor
     }
 
@@ -241,14 +256,17 @@ object MarkerBitmapHelper {
      * Clears all cached bitmap descriptors.
      */
     fun clearCache() {
-        bitmapDescriptorCache.evictAll()
+        synchronized(bitmapDescriptorCache) {
+            bitmapDescriptorCache.clear()
+        }
     }
 
     /**
      * Returns the current number of cached bitmap descriptors.
      */
     fun getCacheSize(): Int {
-        return bitmapDescriptorCache.size()
+        return synchronized(bitmapDescriptorCache) {
+            bitmapDescriptorCache.size
+        }
     }
 }
-

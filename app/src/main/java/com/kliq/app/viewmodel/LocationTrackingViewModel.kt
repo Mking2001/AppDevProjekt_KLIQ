@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.model.LocationData
 import com.kliq.app.data.model.LocationPermissionState
+import com.kliq.app.data.model.LocationPowerPolicy
 import com.kliq.app.data.model.LocationTrackingMode
 import com.kliq.app.data.repository.LocationRepository
 import com.kliq.app.util.PermissionManager
@@ -61,33 +62,53 @@ class LocationTrackingViewModel @Inject constructor(
     }
 
     private fun observeRepositoryState() {
-        combine(
+        val trackingStatusFlow = combine(
             locationRepository.isTrackingActive,
             locationRepository.locationUpdates,
+            locationRepository.getLocationCount()
+        ) { isTracking, location, count ->
+            Triple(isTracking, location, count)
+        }
+
+        val adaptivePolicyFlow = combine(
             locationRepository.trackingMode,
             locationRepository.powerPolicy,
             locationRepository.isStationary,
             locationRepository.isBurstActive,
-            locationRepository.burstRemainingSeconds,
-            locationRepository.getLocationCount()
-        ) { isTracking, location, mode, policy, stationary, burst, burstSecs, count ->
+            locationRepository.burstRemainingSeconds
+        ) { mode, policy, stationary, burst, burstSecs ->
+            AdaptiveState(mode, policy, stationary, burst, burstSecs)
+        }
+
+        combine(
+            trackingStatusFlow,
+            adaptivePolicyFlow
+        ) { trackingStatus, adaptive ->
             LocationTrackingUiState(
-                isTrackingActive = isTracking,
-                currentLocation = location,
+                isTrackingActive = trackingStatus.first,
+                currentLocation = trackingStatus.second,
                 backgroundPermissionState = permissionManager.checkBackgroundLocationPermission(context),
-                isBatterySaverEnabled = mode != LocationTrackingMode.HIGH_ACCURACY,
-                trackingMode = mode,
-                isStationary = stationary,
-                isBurstActive = burst,
-                burstRemainingSeconds = burstSecs,
-                totalSavedPoints = count,
-                samplingIntervalMs = policy.intervalMillis,
-                minDisplacementMeters = policy.minDistanceDisplacementMeters
+                isBatterySaverEnabled = adaptive.mode != LocationTrackingMode.HIGH_ACCURACY,
+                trackingMode = adaptive.mode,
+                isStationary = adaptive.isStationary,
+                isBurstActive = adaptive.isBurstActive,
+                burstRemainingSeconds = adaptive.burstRemainingSeconds,
+                totalSavedPoints = trackingStatus.third,
+                samplingIntervalMs = adaptive.policy.intervalMillis,
+                minDisplacementMeters = adaptive.policy.minDistanceDisplacementMeters
             )
         }.onEach { state ->
             _uiState.value = state
         }.launchIn(viewModelScope)
     }
+
+    private data class AdaptiveState(
+        val mode: LocationTrackingMode,
+        val policy: LocationPowerPolicy,
+        val isStationary: Boolean,
+        val isBurstActive: Boolean,
+        val burstRemainingSeconds: Int
+    )
 
     fun toggleTracking() {
         val currentPermission = permissionManager.checkBackgroundLocationPermission(context)

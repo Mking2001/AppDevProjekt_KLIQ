@@ -5,6 +5,8 @@ import com.kliq.app.data.local.dao.LocationDao
 import com.kliq.app.data.local.entities.LocationEntity
 import com.kliq.app.data.model.LocationData
 import com.kliq.app.data.model.LocationPermissionState
+import com.kliq.app.data.model.LocationTrackingMode
+import com.kliq.app.util.AdaptiveLocationController
 import com.kliq.app.util.PermissionManager
 import com.kliq.app.viewmodel.LocationTrackingViewModel
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -55,7 +58,7 @@ class IntegrationFakeLocationDao : LocationDao {
 }
 
 /**
- * Automated Integration Test Suite for Kapitel 4.3: Background Location Tracking.
+ * Automated Integration Test Suite for Kapitel 4.3 & 9.7: Background Location Tracking and Adaptive GPS Optimization.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class BackgroundLocationIntegrationTest {
@@ -66,6 +69,7 @@ class BackgroundLocationIntegrationTest {
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher)
 
+    private lateinit var adaptiveController: AdaptiveLocationController
     private lateinit var repository: LocationRepositoryImpl
     private lateinit var viewModel: LocationTrackingViewModel
 
@@ -75,9 +79,11 @@ class BackgroundLocationIntegrationTest {
 
         `when`(permissionManager.checkBackgroundLocationPermission(context)).thenReturn(LocationPermissionState.Granted)
 
+        adaptiveController = AdaptiveLocationController(testDispatcher)
         repository = LocationRepositoryImpl(
             context = context,
             locationDao = fakeDao,
+            adaptiveController = adaptiveController,
             ioDispatcher = testDispatcher
         )
 
@@ -156,6 +162,42 @@ class BackgroundLocationIntegrationTest {
 
         assertTrue("Minor shift should be under 50m", distMinor < 50f)
         assertTrue("Major shift should be over 50m", distMajor > 50f)
+    }
+
+    @Test
+    fun testAdaptiveTrackingMode_transitionsFromBalancedToIdleOnStationary() = testScope.runTest {
+        viewModel.setTrackingMode(LocationTrackingMode.BALANCED_AMBIENT)
+        testDispatcher.scheduler.advanceUntilIdle()
+        assertEquals(LocationTrackingMode.BALANCED_AMBIENT, viewModel.uiState.value.trackingMode)
+
+        // Simulate stationary location updates
+        val fix1 = LocationData(latitude = 52.52000, longitude = 13.40500, speed = 0.0f)
+        val fix2 = LocationData(latitude = 52.52001, longitude = 13.40501, speed = 0.0f)
+        val fix3 = LocationData(latitude = 52.52001, longitude = 13.40501, speed = 0.0f)
+
+        repository.recordLocationUpdate(fix1)
+        repository.recordLocationUpdate(fix2)
+        repository.recordLocationUpdate(fix3)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isStationary)
+        assertEquals(LocationTrackingMode.IDLE_PASSIVE, viewModel.uiState.value.trackingMode)
+        assertTrue(viewModel.uiState.value.isBatterySaverEnabled)
+    }
+
+    @Test
+    fun testHighAccuracyBurst_activatesAndRevertsSeamlesslyInIntegration() = testScope.runTest {
+        viewModel.triggerHighAccuracyBurst(durationMs = 5_000L)
+        testDispatcher.scheduler.runCurrent()
+
+        assertTrue(viewModel.uiState.value.isBurstActive)
+        assertEquals(LocationTrackingMode.HIGH_ACCURACY, viewModel.uiState.value.trackingMode)
+
+        testDispatcher.scheduler.advanceTimeBy(6_000L)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isBurstActive)
+        assertEquals(LocationTrackingMode.BALANCED_AMBIENT, viewModel.uiState.value.trackingMode)
     }
 
     private fun calculateDistanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Float {

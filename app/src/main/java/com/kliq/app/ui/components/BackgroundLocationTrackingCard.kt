@@ -23,9 +23,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.BatterySaver
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.DirectionsWalk
 import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Lock
@@ -350,7 +350,7 @@ fun BackgroundLocationTrackingCard(
                         // Power Optimization Badge
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             val badgeColor = if (uiState.isStationary) EcoCyan else PurpleAccent
-                            val badgeIcon = if (uiState.isStationary) Icons.Default.BatterySaver else Icons.Default.DirectionsWalk
+                            val badgeIcon = if (uiState.isStationary) Icons.Default.BatterySaver else Icons.AutoMirrored.Filled.DirectionsWalk
                             val badgeText = if (uiState.isStationary) "Stationär (Drosselung)" else "Adaptiv (>${uiState.minDisplacementMeters.toInt()}m)"
 
                             Icon(
