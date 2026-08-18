@@ -19,14 +19,12 @@ object UseCaseModule {
 
     @Provides
     @Singleton
-    fun provideCalculateUserDistanceUseCase(): CalculateUserDistanceUseCase {
-        return CalculateUserDistanceUseCase()
-    }
-
-    @Provides
-    @Singleton
-    fun provideVerifyQRCodeUseCase(): VerifyQRCodeUseCase {
-        return VerifyQRCodeUseCase()
+    fun provideVerifyQRCodeUseCase(
+        socialRepository: com.kliq.app.data.repository.SocialRepository,
+        userRepository: com.kliq.app.data.repository.UserRepository,
+        verificationService: com.kliq.app.service.VerificationService
+    ): VerifyQRCodeUseCase {
+        return VerifyQRCodeUseCase(socialRepository, userRepository, verificationService)
     }
 
     @Provides

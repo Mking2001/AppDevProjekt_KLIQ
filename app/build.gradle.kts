@@ -5,7 +5,10 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
 }
+
 
 android {
     namespace = "com.kliq.app"
@@ -127,7 +130,8 @@ dependencies {
     implementation("androidx.camera:camera-view:$cameraxVersion")
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
 
-    // Firebase Cloud Messaging (FCM) & Crashlytics Error Reporting
+    // Firebase Cloud Messaging (FCM), Crashlytics & Analytics
+    implementation("com.google.firebase:firebase-analytics-ktx:21.5.1")
     implementation("com.google.firebase:firebase-messaging-ktx:23.4.1")
     implementation("com.google.firebase:firebase-crashlytics-ktx:18.6.2")
 
