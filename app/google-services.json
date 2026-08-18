@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "274613663077",
+    "project_id": "kliq-app-d215a",
+    "storage_bucket": "kliq-app-d215a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:274613663077:android:2c15da4fbad1eb11c31d8c",
+        "android_client_info": {
+          "package_name": "com.kliq.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHkOqj5rFGtw6V7WZmXK9yxOqV4CbVVCU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
