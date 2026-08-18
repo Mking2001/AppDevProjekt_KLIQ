@@ -1,7 +1,7 @@
 package com.kliq.app.util
 
 import com.kliq.app.data.model.Club
-import com.kliq.app.data.model.Location
+import com.kliq.app.data.model.GpsLocation
 import com.kliq.app.data.repository.ClubRepository
 import com.kliq.app.domain.usecase.GetClubsWithDistanceUseCase
 import com.kliq.app.ui.screens.map.MapViewModel
@@ -56,14 +56,14 @@ class ArchitectureRefactoringUnitTest {
                 name = "Berghain",
                 category = "Club",
                 averageRating = 4.9,
-                location = Location(latitude = 52.5112, longitude = 13.4430, address = "Am Wriezener Bahnhof")
+                location = GpsLocation(latitude = 52.5112, longitude = 13.4430, address = "Am Wriezener Bahnhof")
             ),
             Club(
                 id = "c2",
                 name = "Sunset Bar",
                 category = "Bar",
                 averageRating = 4.7,
-                location = Location(latitude = 52.5280, longitude = 13.4100, address = "Torstraße 140")
+                location = GpsLocation(latitude = 52.5280, longitude = 13.4100, address = "Torstraße 140")
             )
         )
 
