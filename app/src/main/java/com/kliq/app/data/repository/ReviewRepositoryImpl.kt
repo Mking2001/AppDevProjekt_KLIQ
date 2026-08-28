@@ -7,6 +7,8 @@ import com.kliq.app.data.model.Review
 import com.kliq.app.data.model.ReviewVerificationMethod
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.util.AntiSpamReviewValidator
+import com.kliq.app.data.generated.*
+import timber.log.Timber
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
@@ -22,7 +24,8 @@ class ReviewRepositoryImpl @Inject constructor(
     private val reviewDao: ReviewDao,
     private val clubDao: ClubDao,
     private val antiSpamValidator: AntiSpamReviewValidator,
-    private val apiService: KliqApiService? = null
+    private val apiService: KliqApiService? = null,
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
 ) : ReviewRepository {
 
     override fun getReviewsForClub(clubId: String): Flow<List<Review>> {
@@ -63,6 +66,35 @@ class ReviewRepositoryImpl @Inject constructor(
 
     override suspend fun syncReviewsForClub(clubId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            kliqConnector?.let { connector ->
+                try {
+                    val response = connector.getReviewsByClub.execute(clubId = clubId)
+                    val remoteReviews = response.data.reviews.map { r ->
+                        ReviewEntity(
+                            id = r.id,
+                            reviewerUserId = r.reviewerUserId,
+                            targetUserId = null,
+                            clubId = clubId,
+                            eventId = null,
+                            rating = r.rating,
+                            text = r.text,
+                            timestamp = r.timestamp,
+                            verificationMethod = try { ReviewVerificationMethod.valueOf(r.verificationMethod) } catch (e: Exception) { ReviewVerificationMethod.UNVERIFIED },
+                            isVerified = r.isVerified,
+                            reviewerUsername = r.reviewerUsername,
+                            reviewerAvatarUrl = r.reviewerAvatarUrl,
+                            helpfulVotesCount = r.helpfulVotesCount,
+                            flaggedCount = 0
+                        )
+                    }
+                    if (remoteReviews.isNotEmpty()) {
+                        remoteReviews.forEach { reviewDao.insertReview(it) }
+                        Timber.i("Synced %d reviews for club %s from Firebase SQL Connect", remoteReviews.size, clubId)
+                    }
+                } catch (e: Exception) {
+                    Timber.d(e, "Could not sync reviews from Firebase SQL Connect for club %s", clubId)
+                }
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -104,6 +136,7 @@ class ReviewRepositoryImpl @Inject constructor(
         )
 
         reviewDao.insertReview(entity)
+        pushReviewToCloudSql(entity)
         Result.success(entity.toDomain())
     }
 
@@ -131,6 +164,7 @@ class ReviewRepositoryImpl @Inject constructor(
         )
 
         reviewDao.insertReview(entity)
+        pushReviewToCloudSql(entity)
         Result.success(entity.toDomain())
     }
 
@@ -160,6 +194,7 @@ class ReviewRepositoryImpl @Inject constructor(
         )
 
         reviewDao.insertReview(entity)
+        pushReviewToCloudSql(entity)
         Result.success(entity.toDomain())
     }
 
@@ -195,7 +230,33 @@ class ReviewRepositoryImpl @Inject constructor(
         )
 
         reviewDao.insertReview(entity)
+        pushReviewToCloudSql(entity)
         Result.success(entity.toDomain())
+    }
+
+    private suspend fun pushReviewToCloudSql(entity: ReviewEntity) {
+        kliqConnector?.let { connector ->
+            try {
+                connector.createReview.execute(
+                    id = entity.id,
+                    reviewerUserId = entity.reviewerUserId,
+                    rating = entity.rating,
+                    text = entity.text,
+                    timestamp = entity.timestamp,
+                    reviewerUsername = entity.reviewerUsername
+                ) {
+                    this.verificationMethod = entity.verificationMethod.name
+                    this.isVerified = entity.isVerified
+                    this.clubId = entity.clubId
+                    this.eventId = entity.eventId
+                    this.targetUserId = entity.targetUserId
+                    this.reviewerAvatarUrl = entity.reviewerAvatarUrl
+                }
+                Timber.i("Successfully submitted review to Firebase SQL Connect: %s", entity.id)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to submit review to Firebase SQL Connect: %s", entity.id)
+            }
+        }
     }
 
     private fun ReviewEntity.toDomain(): Review {

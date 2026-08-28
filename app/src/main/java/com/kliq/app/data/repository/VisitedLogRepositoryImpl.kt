@@ -4,6 +4,8 @@ import com.kliq.app.data.local.dao.VisitedLogDao
 import com.kliq.app.data.local.entities.VisitedLogEntity
 import com.kliq.app.data.local.entities.toDomain
 import com.kliq.app.data.model.VisitedLog
+import com.kliq.app.data.generated.*
+import timber.log.Timber
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -15,7 +17,8 @@ import javax.inject.Singleton
 
 @Singleton
 class VisitedLogRepositoryImpl @Inject constructor(
-    private val visitedLogDao: VisitedLogDao
+    private val visitedLogDao: VisitedLogDao,
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
 ) : VisitedLogRepository {
 
     override fun getVisitedLogsForUser(userId: String): Flow<List<VisitedLog>> {
@@ -41,6 +44,21 @@ class VisitedLogRepositoryImpl @Inject constructor(
                 isVerifiedByGps = isVerifiedByGps
             )
             visitedLogDao.insertVisitedLog(entity)
+            kliqConnector?.let { connector ->
+                try {
+                    connector.logVisit.execute(
+                        id = entity.id,
+                        userId = userId,
+                        clubId = clubId,
+                        clubName = clubName,
+                        visitedAtTimestamp = visitedAtTimestamp,
+                        isVerifiedByGps = isVerifiedByGps
+                    )
+                    Timber.i("Logged club visit in Firebase SQL Connect: %s -> %s", userId, clubName)
+                } catch (e: Exception) {
+                    Timber.d(e, "Failed to log visit in Firebase SQL Connect")
+                }
+            }
             Result.success(entity.toDomain())
         } catch (e: Exception) {
             Result.failure(e)

@@ -119,29 +119,22 @@ class UserRepositoryImpl @Inject constructor(
             // 4. Sync to Firebase Data Connect Cloud SQL
             kliqConnector?.let { connector ->
                 try {
-                    connector.createUser.execute(
+                    connector.upsertUser.execute(
                         id = newUser.id,
                         username = newUser.username,
                         email = newUser.email
-                    )
-                    Timber.i("Successfully created user '%s' in Firebase SQL Connect", newUser.id)
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to create user in Firebase SQL Connect (createUser)")
-                }
-
-                try {
-                    connector.updateUserProfile.execute(id = newUser.id) {
-                        this.username = newUser.username
-                        this.bio = newUser.bio
-                        this.profilePictureUrl = newUser.profilePictureUrl
+                    ) {
+                        this.isVerified = newUser.isVerified
+                        this.gender = newUser.gender
                         this.age = newUser.age
                         this.hometown = newUser.hometown
-                        this.gender = newUser.gender
+                        this.profilePictureUrl = newUser.profilePictureUrl
+                        this.bio = newUser.bio
                         this.phoneNumber = newUser.phoneNumber
                     }
-                    Timber.i("Successfully updated profile for '%s' in Firebase SQL Connect", newUser.id)
+                    Timber.i("Successfully created user '%s' in Firebase SQL Connect", newUser.id)
                 } catch (e: Exception) {
-                    Timber.e(e, "Failed to update user profile in Firebase SQL Connect")
+                    Timber.e(e, "Failed to upsert user in Firebase SQL Connect (upsertUser)")
                 }
 
                 try {
@@ -263,14 +256,22 @@ class UserRepositoryImpl @Inject constructor(
         userDao.insertUser(user)
         kliqConnector?.let { connector ->
             try {
-                connector.createUser.execute(
+                connector.upsertUser.execute(
                     id = user.id,
                     username = user.username,
-                    email = user.email
-                )
+                    email = user.email.ifBlank { "${user.username.lowercase()}@kliq.app" }
+                ) {
+                    this.isVerified = user.isVerified
+                    this.gender = user.gender
+                    this.age = user.age
+                    this.hometown = user.hometown
+                    this.profilePictureUrl = user.profilePictureUrl
+                    this.bio = user.bio
+                    this.phoneNumber = user.phoneNumber
+                }
                 Timber.i("Saved user '%s' in Firebase SQL Connect", user.id)
             } catch (e: Exception) {
-                Timber.w(e, "Failed to save user in Firebase SQL Connect (createUser)")
+                Timber.w(e, "Failed to save user in Firebase SQL Connect (upsertUser)")
             }
         }
         Unit
@@ -288,33 +289,30 @@ class UserRepositoryImpl @Inject constructor(
         val updatedUser = UserEntity(
             id = userId,
             username = username,
-            email = existingUser?.email ?: "",
+            email = existingUser?.email?.ifBlank { "${username.lowercase()}@kliq.app" } ?: "${username.lowercase()}@kliq.app",
             age = age,
             hometown = hometown,
             profilePictureUrl = profilePictureUrl ?: existingUser?.profilePictureUrl,
             bio = bio.ifBlank { null },
             phoneNumber = existingUser?.phoneNumber,
             isVerified = existingUser?.isVerified ?: false,
+            gender = existingUser?.gender ?: "UNSPECIFIED",
             updatedAtTimestampMs = System.currentTimeMillis()
         )
         userDao.insertUser(updatedUser)
         kliqConnector?.let { connector ->
             try {
-                connector.createUser.execute(
+                connector.upsertUser.execute(
                     id = updatedUser.id,
                     username = updatedUser.username,
                     email = updatedUser.email
-                )
-            } catch (ignored: Exception) {
-                // User may already exist in Cloud SQL
-            }
-            try {
-                connector.updateUserProfile.execute(id = updatedUser.id) {
-                    this.username = updatedUser.username
-                    this.bio = updatedUser.bio
-                    this.profilePictureUrl = updatedUser.profilePictureUrl
+                ) {
+                    this.isVerified = updatedUser.isVerified
+                    this.gender = updatedUser.gender
                     this.age = updatedUser.age
                     this.hometown = updatedUser.hometown
+                    this.profilePictureUrl = updatedUser.profilePictureUrl
+                    this.bio = updatedUser.bio
                     this.phoneNumber = updatedUser.phoneNumber
                 }
                 Timber.i("Successfully updated profile for '%s' in Firebase SQL Connect", userId)
@@ -393,21 +391,27 @@ class UserRepositoryImpl @Inject constructor(
                 val newUser = UserEntity(
                     id = "usr_${System.currentTimeMillis()}",
                     username = "kliq_user_${fullNumber.takeLast(4)}",
-                    email = "user@kliq.app",
+                    email = "user_${fullNumber.takeLast(4)}@kliq.app",
                     profilePictureUrl = null,
                     bio = "Mitglied bei Kliq",
                     phoneNumber = fullNumber,
                     isVerified = true,
+                    gender = "UNSPECIFIED",
                     updatedAtTimestampMs = System.currentTimeMillis()
                 )
                 userDao.insertUser(newUser)
                 kliqConnector?.let { connector ->
                     try {
-                        connector.createUser.execute(
+                        connector.upsertUser.execute(
                             id = newUser.id,
                             username = newUser.username,
                             email = newUser.email
-                        )
+                        ) {
+                            this.isVerified = newUser.isVerified
+                            this.gender = newUser.gender
+                            this.bio = newUser.bio
+                            this.phoneNumber = newUser.phoneNumber
+                        }
                         Timber.i("OTP User created in Firebase SQL Connect: %s", newUser.id)
                     } catch (e: Exception) {
                         Timber.e(e, "Failed to create OTP user in Firebase SQL Connect: %s", newUser.id)
@@ -434,14 +438,29 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun blockUser(currentUserId: String, targetUserId: String, reason: String?): Result<Unit> = withContext(ioDispatcher) {
         try {
+            val timestamp = System.currentTimeMillis()
             blockedUserDao?.blockUser(
                 BlockedUserEntity(
                     userId = currentUserId,
                     blockedUserId = targetUserId,
                     reason = reason,
-                    blockedAtTimestampMs = System.currentTimeMillis()
+                    blockedAtTimestampMs = timestamp
                 )
             )
+            kliqConnector?.let { connector ->
+                try {
+                    connector.blockUser.execute(
+                        userId = currentUserId,
+                        blockedUserId = targetUserId,
+                        blockedAtTimestampMs = timestamp
+                    ) {
+                        this.reason = reason
+                    }
+                    Timber.i("Blocked user in Firebase SQL Connect: %s -> %s", currentUserId, targetUserId)
+                } catch (e: Exception) {
+                    Timber.d(e, "Could not sync blockUser to SQL Connect")
+                }
+            }
             try {
                 apiService.blockUser(
                     BlockUserRequestDto(
@@ -462,6 +481,17 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun unblockUser(currentUserId: String, targetUserId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
             blockedUserDao?.unblockUser(currentUserId, targetUserId)
+            kliqConnector?.let { connector ->
+                try {
+                    connector.unblockUser.execute(
+                        userId = currentUserId,
+                        blockedUserId = targetUserId
+                    )
+                    Timber.i("Unblocked user in Firebase SQL Connect: %s -> %s", currentUserId, targetUserId)
+                } catch (e: Exception) {
+                    Timber.d(e, "Could not sync unblockUser to SQL Connect")
+                }
+            }
             try {
                 apiService.unblockUser(currentUserId, targetUserId)
             } catch (ignored: Exception) {

@@ -21,6 +21,8 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import com.kliq.app.data.generated.*
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,7 +31,8 @@ class ClubRepositoryImpl @Inject constructor(
     private val clubDao: ClubDao,
     private val visitedLogDao: VisitedLogDao,
     private val apiService: KliqApiService,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
 ) : ClubRepository {
 
     private val gson = Gson()
@@ -98,8 +101,18 @@ class ClubRepositoryImpl @Inject constructor(
         }.flowOn(ioDispatcher)
     }
 
-    override suspend fun toggleFavorite(clubId: String, currentFavoriteState: Boolean) = withContext(Dispatchers.IO) {
-        clubDao.updateFavoriteStatus(clubId, !currentFavoriteState)
+    override suspend fun toggleFavorite(clubId: String, currentFavoriteState: Boolean): Unit = withContext(Dispatchers.IO) {
+        val newState = !currentFavoriteState
+        clubDao.updateFavoriteStatus(clubId, newState)
+        kliqConnector?.let { connector ->
+            try {
+                connector.toggleClubFavorite.execute(id = clubId, isFavorite = newState)
+                Timber.i("Toggled club favorite in Firebase SQL Connect: %s -> %b", clubId, newState)
+            } catch (e: Exception) {
+                Timber.d(e, "Failed to toggle club favorite in Firebase SQL Connect")
+            }
+        }
+        Unit
     }
 
     override suspend fun searchExternalClubs(
