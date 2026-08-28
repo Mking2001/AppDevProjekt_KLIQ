@@ -43,6 +43,7 @@ interface UserRepository {
         birthDateMs: Long,
         gender: String = "MALE",
         hometown: String = "",
+        phoneNumber: String = "",
         profilePictureUrl: String,
         searchIntent: SearchIntent,
         bio: String,

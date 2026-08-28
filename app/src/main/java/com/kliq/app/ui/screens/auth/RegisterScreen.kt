@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Male
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Transgender
 import androidx.compose.material.icons.filled.Visibility
@@ -307,22 +308,127 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                OutlinedTextField(
-                    value = uiState.hometown,
-                    onValueChange = viewModel::onHometownChanged,
-                    label = { Text("Heimatstadt*") },
-                    placeholder = { Text("z.B. Klagenfurt am Wörthersee") },
-                    leadingIcon = {
-                        Icon(Icons.Filled.LocationCity, contentDescription = null, tint = PurplePrimaryLight)
-                    },
-                    isError = uiState.hometownError != null,
-                    supportingText = {
-                        uiState.hometownError?.let { Text(it, color = ErrorRed, style = MaterialTheme.typography.labelSmall) }
-                    },
+                // Telefonnummer (+43 als Vorwahl)
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = customTextFieldColors()
-                )
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Top
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .height(56.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color.White.copy(alpha = 0.08f))
+                            .border(1.dp, PurplePrimaryLight.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "🇦🇹", style = MaterialTheme.typography.bodyLarge)
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = uiState.countryCode,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                color = Color.White
+                            )
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = uiState.phoneNumber,
+                        onValueChange = viewModel::onPhoneNumberChanged,
+                        label = { Text("Telefonnummer*") },
+                        placeholder = { Text("660 1234567") },
+                        leadingIcon = {
+                            Icon(Icons.Filled.Phone, contentDescription = null, tint = PurplePrimaryLight)
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, imeAction = ImeAction.Next),
+                        isError = uiState.phoneNumberError != null,
+                        supportingText = {
+                            uiState.phoneNumberError?.let { Text(it, color = ErrorRed, style = MaterialTheme.typography.labelSmall) }
+                        },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = customTextFieldColors()
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Heimatstadt mit Autocomplete für österreichische Großstädte
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedTextField(
+                        value = uiState.hometown,
+                        onValueChange = viewModel::onHometownChanged,
+                        label = { Text("Heimatstadt (Österreich)*") },
+                        placeholder = { Text("z.B. Klagenfurt, Wien, Graz...") },
+                        leadingIcon = {
+                            Icon(Icons.Filled.LocationCity, contentDescription = null, tint = PurplePrimaryLight)
+                        },
+                        trailingIcon = {
+                            if (com.kliq.app.data.model.AustrianCities.isValidCity(uiState.hometown)) {
+                                Icon(
+                                    imageVector = Icons.Filled.CheckCircle,
+                                    contentDescription = "Gültige Stadt",
+                                    tint = TealSecondary
+                                )
+                            }
+                        },
+                        isError = uiState.hometownError != null,
+                        supportingText = {
+                            if (com.kliq.app.data.model.AustrianCities.isValidCity(uiState.hometown)) {
+                                Text("✓ Stadt ausgewählt: ${uiState.hometown}", color = TealSecondary, style = MaterialTheme.typography.labelSmall)
+                            } else {
+                                uiState.hometownError?.let { Text(it, color = ErrorRed, style = MaterialTheme.typography.labelSmall) }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = customTextFieldColors()
+                    )
+
+                    // Autocomplete-Vorschläge
+                    if (uiState.isHometownDropdownExpanded && uiState.hometownSuggestions.isNotEmpty()) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF232035)),
+                            border = CardDefaults.outlinedCardBorder().copy(
+                                brush = Brush.linearGradient(
+                                    listOf(PurplePrimaryLight.copy(alpha = 0.5f), FuchsiaTertiary.copy(alpha = 0.3f))
+                                ),
+                                width = 1.dp
+                            )
+                        ) {
+                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                uiState.hometownSuggestions.take(5).forEach { city ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clickable { viewModel.onHometownSuggestionSelected(city) }
+                                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Filled.LocationCity,
+                                            contentDescription = null,
+                                            tint = PurplePrimaryLight,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text(
+                                            text = city,
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             // 3. Geschlecht (Pflicht)

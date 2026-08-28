@@ -148,9 +148,55 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun onHometownChanged(input: String) {
-        val error = if (input.trim().length < 2) "Heimatstadt muss mindestens 2 Zeichen lang sein." else null
+        val suggestions = com.kliq.app.data.model.AustrianCities.filter(input)
+        val isValid = com.kliq.app.data.model.AustrianCities.isValidCity(input)
+        val error = when {
+            input.isBlank() -> "Heimatstadt darf nicht leer sein."
+            !isValid && input.length >= 2 -> "Bitte wähle eine Stadt aus der Liste aus."
+            else -> null
+        }
         _uiState.update { current ->
-            val updated = current.copy(hometown = input, hometownError = error)
+            val updated = current.copy(
+                hometown = input,
+                hometownSuggestions = suggestions,
+                isHometownDropdownExpanded = suggestions.isNotEmpty() && !isValid,
+                hometownError = error
+            )
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onHometownSuggestionSelected(city: String) {
+        _uiState.update { current ->
+            val updated = current.copy(
+                hometown = city,
+                hometownSuggestions = emptyList(),
+                isHometownDropdownExpanded = false,
+                hometownError = null
+            )
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onHometownDropdownDismiss() {
+        _uiState.update { it.copy(isHometownDropdownExpanded = false) }
+    }
+
+    fun onCountryCodeChanged(code: String) {
+        _uiState.update { it.copy(countryCode = code) }
+    }
+
+    fun onPhoneNumberChanged(input: String) {
+        val clean = input.filter { it.isDigit() || it.isWhitespace() }
+        val digits = clean.filter { it.isDigit() }
+        val error = when {
+            digits.isBlank() -> "Telefonnummer darf nicht leer sein."
+            digits.length < 4 -> "Mindestens 4 Ziffern erforderlich."
+            digits.length > 15 -> "Maximal 15 Ziffern erlaubt."
+            else -> null
+        }
+        _uiState.update { current ->
+            val updated = current.copy(phoneNumber = clean, phoneNumberError = error)
             updated.copy(isFormValid = calculateIsFormValid(updated))
         }
     }
@@ -231,6 +277,9 @@ class RegisterViewModel @Inject constructor(
                 return@launch
             }
 
+            val digitsPhone = current.phoneNumber.filter { it.isDigit() }
+            val formattedFullPhone = "${current.countryCode}$digitsPhone"
+
             val result = userRepository.registerUser(
                 username = current.username.trim(),
                 firstName = current.firstName.trim(),
@@ -238,6 +287,7 @@ class RegisterViewModel @Inject constructor(
                 birthDateMs = current.birthDateMs ?: 0L,
                 gender = current.gender,
                 hometown = current.hometown.trim(),
+                phoneNumber = formattedFullPhone,
                 profilePictureUrl = current.profilePictureUrl ?: "",
                 searchIntent = current.searchIntent,
                 bio = current.bio.trim(),
@@ -264,13 +314,14 @@ class RegisterViewModel @Inject constructor(
         val firstNameValid = state.firstName.isNotBlank() && state.firstNameError == null
         val lastNameValid = state.lastName.isNotBlank() && state.lastNameError == null
         val birthDateValid = state.birthDateMs != null && state.birthDateError == null
-        val hometownValid = state.hometown.trim().length >= 2 && state.hometownError == null
+        val hometownValid = com.kliq.app.data.model.AustrianCities.isValidCity(state.hometown) && state.hometownError == null
+        val phoneValid = state.phoneNumber.filter { it.isDigit() }.length in 4..15 && state.phoneNumberError == null
         val profilePicValid = !state.profilePictureUrl.isNullOrBlank()
         val passwordValid = state.password.length >= 6 &&
                 state.passwordError == null &&
                 state.confirmPassword == state.password &&
                 state.confirmPasswordError == null
 
-        return usernameValid && firstNameValid && lastNameValid && birthDateValid && hometownValid && profilePicValid && passwordValid
+        return usernameValid && firstNameValid && lastNameValid && birthDateValid && hometownValid && phoneValid && profilePicValid && passwordValid
     }
 }

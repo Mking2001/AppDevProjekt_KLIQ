@@ -68,6 +68,7 @@ class UserRepositoryImpl @Inject constructor(
         birthDateMs: Long,
         gender: String,
         hometown: String,
+        phoneNumber: String,
         profilePictureUrl: String,
         searchIntent: SearchIntent,
         bio: String,
@@ -90,7 +91,7 @@ class UserRepositoryImpl @Inject constructor(
                 hometown = finalHometown,
                 profilePictureUrl = profilePictureUrl.ifBlank { null },
                 bio = bio.trim().ifBlank { "Hey, ich bin neu bei KLIQ!" },
-                phoneNumber = null,
+                phoneNumber = phoneNumber.trim().ifBlank { null },
                 isVerified = true,
                 gender = gender,
                 updatedAtTimestampMs = System.currentTimeMillis()
@@ -127,6 +128,7 @@ class UserRepositoryImpl @Inject constructor(
                         this.age = newUser.age
                         this.hometown = newUser.hometown
                         this.gender = newUser.gender
+                        this.phoneNumber = newUser.phoneNumber
                     }
                 } catch (ignored: Exception) { }
 
