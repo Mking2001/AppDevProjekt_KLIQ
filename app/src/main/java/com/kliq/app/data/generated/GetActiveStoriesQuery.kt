@@ -17,52 +17,42 @@ import kotlinx.coroutines.flow.filterNotNull as _flow_filterNotNull
 import kotlinx.coroutines.flow.map as _flow_map
 
 
-public interface GetReviewsByClubQuery :
+public interface GetActiveStoriesQuery :
     com.google.firebase.dataconnect.generated.GeneratedQuery<
       KliqConnectorConnector,
-      GetReviewsByClubQuery.Data,
-      GetReviewsByClubQuery.Variables
+      GetActiveStoriesQuery.Data,
+      Unit
     >
 {
-  
-    @kotlinx.serialization.Serializable
-  public data class Variables(
-  
-    val clubId: String,
-  
-  ) {
-    
-    
-  }
   
 
   
     @kotlinx.serialization.Serializable
   public data class Data(
   
-    val reviews: List<ReviewsItem>,
+    val stories: List<StoriesItem>,
   
   ) {
     
       
         @kotlinx.serialization.Serializable
-  public data class ReviewsItem(
+  public data class StoriesItem(
   
     val id: String,
   
-    val reviewerUserId: String,
+    val authorUserId: String,
   
-    val reviewerUsername: String,
+    val authorName: String,
   
-    val reviewerAvatarUrl: String?,
+    val avatarUrl: String?,
   
-    val rating: Int,
+    val imageUrl: String,
   
-    val text: String,
+    val headline: String,
   
-    val timestamp: Long,
+    val clubName: String?,
   
-    val helpfulVotesCount: Int,
+    val createdAtMs: Long,
   
   ) {
     
@@ -75,66 +65,45 @@ public interface GetReviewsByClubQuery :
   
 
   public companion object {
-    public val operationName: String = "GetReviewsByClub"
+    public val operationName: String = "GetActiveStories"
 
     public val dataDeserializer: kotlinx.serialization.DeserializationStrategy<Data> =
       kotlinx.serialization.serializer()
 
-    public val variablesSerializer: kotlinx.serialization.SerializationStrategy<Variables> =
+    public val variablesSerializer: kotlinx.serialization.SerializationStrategy<Unit> =
       kotlinx.serialization.serializer()
   }
 }
 
-public fun GetReviewsByClubQuery.ref(
-  
-    clubId: String,
-
-  
+public fun GetActiveStoriesQuery.ref(
   
 ): com.google.firebase.dataconnect.QueryRef<
-    GetReviewsByClubQuery.Data,
-    GetReviewsByClubQuery.Variables
+    GetActiveStoriesQuery.Data,
+    Unit
   > =
   ref(
     
-      GetReviewsByClubQuery.Variables(
-        clubId=clubId,
-  
-      )
+      Unit
     
   )
 
-public suspend fun GetReviewsByClubQuery.execute(
-
-  
-    
-      clubId: String,
+public suspend fun GetActiveStoriesQuery.execute(
 
   
 
   ): com.google.firebase.dataconnect.QueryResult<
-    GetReviewsByClubQuery.Data,
-    GetReviewsByClubQuery.Variables
+    GetActiveStoriesQuery.Data,
+    Unit
   > =
   ref(
-    
-      clubId=clubId,
-  
     
   ).execute()
 
 
-  public fun GetReviewsByClubQuery.flow(
+  public fun GetActiveStoriesQuery.flow(
     
-      clubId: String,
-
-  
-    
-    ): kotlinx.coroutines.flow.Flow<GetReviewsByClubQuery.Data> =
+    ): kotlinx.coroutines.flow.Flow<GetActiveStoriesQuery.Data> =
     ref(
-        
-          clubId=clubId,
-  
         
       ).subscribe()
       .flow

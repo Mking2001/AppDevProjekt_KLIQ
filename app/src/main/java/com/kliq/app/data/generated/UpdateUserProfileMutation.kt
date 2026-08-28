@@ -29,17 +29,25 @@ public interface UpdateUserProfileMutation :
   
     val username: com.google.firebase.dataconnect.OptionalVariable<String?>,
   
-    val bio: com.google.firebase.dataconnect.OptionalVariable<String?>,
+    val firstName: com.google.firebase.dataconnect.OptionalVariable<String?>,
   
-    val profilePictureUrl: com.google.firebase.dataconnect.OptionalVariable<String?>,
+    val lastName: com.google.firebase.dataconnect.OptionalVariable<String?>,
+  
+    val birthDateMs: com.google.firebase.dataconnect.OptionalVariable<Long?>,
   
     val age: com.google.firebase.dataconnect.OptionalVariable<Int?>,
   
-    val hometown: com.google.firebase.dataconnect.OptionalVariable<String?>,
-  
     val gender: com.google.firebase.dataconnect.OptionalVariable<String?>,
   
+    val hometown: com.google.firebase.dataconnect.OptionalVariable<String?>,
+  
+    val countryCode: com.google.firebase.dataconnect.OptionalVariable<String?>,
+  
     val phoneNumber: com.google.firebase.dataconnect.OptionalVariable<String?>,
+  
+    val profilePictureUrl: com.google.firebase.dataconnect.OptionalVariable<String?>,
+  
+    val bio: com.google.firebase.dataconnect.OptionalVariable<String?>,
   
   ) {
     
@@ -52,12 +60,16 @@ public interface UpdateUserProfileMutation :
       public interface Builder {
         public var id: String
         public var username: String?
-        public var bio: String?
-        public var profilePictureUrl: String?
+        public var firstName: String?
+        public var lastName: String?
+        public var birthDateMs: Long?
         public var age: Int?
-        public var hometown: String?
         public var gender: String?
+        public var hometown: String?
+        public var countryCode: String?
         public var phoneNumber: String?
+        public var profilePictureUrl: String?
+        public var bio: String?
         
       }
 
@@ -71,17 +83,25 @@ public interface UpdateUserProfileMutation :
           var id= id
             var username: com.google.firebase.dataconnect.OptionalVariable<String?> =
                 com.google.firebase.dataconnect.OptionalVariable.Undefined
-            var bio: com.google.firebase.dataconnect.OptionalVariable<String?> =
+            var firstName: com.google.firebase.dataconnect.OptionalVariable<String?> =
                 com.google.firebase.dataconnect.OptionalVariable.Undefined
-            var profilePictureUrl: com.google.firebase.dataconnect.OptionalVariable<String?> =
+            var lastName: com.google.firebase.dataconnect.OptionalVariable<String?> =
+                com.google.firebase.dataconnect.OptionalVariable.Undefined
+            var birthDateMs: com.google.firebase.dataconnect.OptionalVariable<Long?> =
                 com.google.firebase.dataconnect.OptionalVariable.Undefined
             var age: com.google.firebase.dataconnect.OptionalVariable<Int?> =
                 com.google.firebase.dataconnect.OptionalVariable.Undefined
-            var hometown: com.google.firebase.dataconnect.OptionalVariable<String?> =
-                com.google.firebase.dataconnect.OptionalVariable.Undefined
             var gender: com.google.firebase.dataconnect.OptionalVariable<String?> =
                 com.google.firebase.dataconnect.OptionalVariable.Undefined
+            var hometown: com.google.firebase.dataconnect.OptionalVariable<String?> =
+                com.google.firebase.dataconnect.OptionalVariable.Undefined
+            var countryCode: com.google.firebase.dataconnect.OptionalVariable<String?> =
+                com.google.firebase.dataconnect.OptionalVariable.Undefined
             var phoneNumber: com.google.firebase.dataconnect.OptionalVariable<String?> =
+                com.google.firebase.dataconnect.OptionalVariable.Undefined
+            var profilePictureUrl: com.google.firebase.dataconnect.OptionalVariable<String?> =
+                com.google.firebase.dataconnect.OptionalVariable.Undefined
+            var bio: com.google.firebase.dataconnect.OptionalVariable<String?> =
                 com.google.firebase.dataconnect.OptionalVariable.Undefined
             
 
@@ -94,35 +114,51 @@ public interface UpdateUserProfileMutation :
               get() = throw UnsupportedOperationException("getting builder values is not supported")
               set(value_) { username = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
               
-            override var bio: String?
+            override var firstName: String?
               get() = throw UnsupportedOperationException("getting builder values is not supported")
-              set(value_) { bio = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
+              set(value_) { firstName = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
               
-            override var profilePictureUrl: String?
+            override var lastName: String?
               get() = throw UnsupportedOperationException("getting builder values is not supported")
-              set(value_) { profilePictureUrl = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
+              set(value_) { lastName = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
+              
+            override var birthDateMs: Long?
+              get() = throw UnsupportedOperationException("getting builder values is not supported")
+              set(value_) { birthDateMs = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
               
             override var age: Int?
               get() = throw UnsupportedOperationException("getting builder values is not supported")
               set(value_) { age = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
               
+            override var gender: String?
+              get() = throw UnsupportedOperationException("getting builder values is not supported")
+              set(value_) { gender = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
+              
             override var hometown: String?
               get() = throw UnsupportedOperationException("getting builder values is not supported")
               set(value_) { hometown = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
               
-            override var gender: String?
+            override var countryCode: String?
               get() = throw UnsupportedOperationException("getting builder values is not supported")
-              set(value_) { gender = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
+              set(value_) { countryCode = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
               
             override var phoneNumber: String?
               get() = throw UnsupportedOperationException("getting builder values is not supported")
               set(value_) { phoneNumber = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
               
+            override var profilePictureUrl: String?
+              get() = throw UnsupportedOperationException("getting builder values is not supported")
+              set(value_) { profilePictureUrl = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
+              
+            override var bio: String?
+              get() = throw UnsupportedOperationException("getting builder values is not supported")
+              set(value_) { bio = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
+              
             
           }.apply(block_)
           .let {
             Variables(
-              id=id,username=username,bio=bio,profilePictureUrl=profilePictureUrl,age=age,hometown=hometown,gender=gender,phoneNumber=phoneNumber,
+              id=id,username=username,firstName=firstName,lastName=lastName,birthDateMs=birthDateMs,age=age,gender=gender,hometown=hometown,countryCode=countryCode,phoneNumber=phoneNumber,profilePictureUrl=profilePictureUrl,bio=bio,
             )
           }
         }

@@ -80,16 +80,16 @@ val connector: KliqConnectorConnector = KliqConnectorConnector.getInstance(
 ### KliqConnectorConnector - Query and Mutation Properties
 
 The `kliq-connector` Data Connect connector defines
-18 queries and
-27 mutations,
-a total of 45 operations.
+24 queries and
+38 mutations,
+a total of 62 operations.
 Each of these operations is exposed
 as a property of [KliqConnectorConnector].
 
 
 An example of the property for a query
-is the query named "GetAllChats",
-which can be accessed via the [KliqConnectorConnector.getAllChats] property.
+is the query named "CheckUsername",
+which can be accessed via the [KliqConnectorConnector.checkUsername] property.
 
 
 An example of the property for a mutation
@@ -172,15 +172,15 @@ last argument of the `execute()` method.
 If a query has no variables then it can be easily executed
 by calling the `execute()` method with no arguments.
 
-For example, the "GetAllChats" query has no variables
+For example, the "GetActiveStories" query has no variables
 and can be executed via the
-[KliqConnectorConnector.getAllChats]
+[KliqConnectorConnector.getActiveStories]
 property as follows:
 
 ```kotlin
 val connector = KliqConnectorConnector.instance
-val queryResult = connector.getAllChats.execute()
-println("GetAllChats query returned: ${queryResult.data}")
+val queryResult = connector.getActiveStories.execute()
+println("GetActiveStories query returned: ${queryResult.data}")
 ```
 
 
@@ -240,7 +240,7 @@ however, if they _are_ specified,
 then they are specified in a Kotlin DSL block as the last argument
 of the `execute()` method.
 
-For example, the "UpdateUserProfile" mutation has 7 optional variables ("username", "bio", "profilePictureUrl", "age", "hometown", "gender", and "phoneNumber")
+For example, the "UpdateUserProfile" mutation has 11 optional variables ("username", "firstName", "lastName", "birthDateMs", "age", "gender", "hometown", "countryCode", "phoneNumber", "profilePictureUrl", and "bio")
 and can be executed via the [KliqConnectorConnector.updateUserProfile]
 property as follows:
 
@@ -248,12 +248,16 @@ property as follows:
 val connector = KliqConnectorConnector.instance
 val mutationResult = connector.updateUserProfile.execute(id="corge") {
   username = "corge"
-  bio = "baz"
-  profilePictureUrl = "qux"
+  firstName = "quux"
+  lastName = "waldo"
+  birthDateMs = 9462808
   age = 2255
-  hometown = "waldo"
   gender = "waldo"
+  hometown = "waldo"
+  countryCode = "grault"
   phoneNumber = "thud"
+  profilePictureUrl = "qux"
+  bio = "baz"
 }
 println("UpdateUserProfile mutation returned: ${mutationResult.data}")
 ```

@@ -17,18 +17,18 @@ import kotlinx.coroutines.flow.filterNotNull as _flow_filterNotNull
 import kotlinx.coroutines.flow.map as _flow_map
 
 
-public interface GetUserByIdQuery :
+public interface GetFeedPostLikesQuery :
     com.google.firebase.dataconnect.generated.GeneratedQuery<
       KliqConnectorConnector,
-      GetUserByIdQuery.Data,
-      GetUserByIdQuery.Variables
+      GetFeedPostLikesQuery.Data,
+      GetFeedPostLikesQuery.Variables
     >
 {
   
     @kotlinx.serialization.Serializable
   public data class Variables(
   
-    val id: String,
+    val postId: String,
   
   ) {
     
@@ -40,41 +40,19 @@ public interface GetUserByIdQuery :
     @kotlinx.serialization.Serializable
   public data class Data(
   
-    val user: User?,
+    val feedPostLikes: List<FeedPostLikesItem>,
   
   ) {
     
       
         @kotlinx.serialization.Serializable
-  public data class User(
+  public data class FeedPostLikesItem(
   
-    val id: String,
+    val postId: String,
   
-    val username: String,
+    val userId: String,
   
-    val email: String,
-  
-    val firstName: String?,
-  
-    val lastName: String?,
-  
-    val birthDateMs: Long?,
-  
-    val age: Int?,
-  
-    val gender: String,
-  
-    val hometown: String?,
-  
-    val countryCode: String,
-  
-    val phoneNumber: String?,
-  
-    val profilePictureUrl: String?,
-  
-    val bio: String?,
-  
-    val updatedAt: @kotlinx.serialization.Serializable(with = com.google.firebase.dataconnect.serializers.TimestampSerializer::class) com.google.firebase.Timestamp?,
+    val createdAtMs: Long,
   
   ) {
     
@@ -87,7 +65,7 @@ public interface GetUserByIdQuery :
   
 
   public companion object {
-    public val operationName: String = "GetUserById"
+    public val operationName: String = "GetFeedPostLikes"
 
     public val dataDeserializer: kotlinx.serialization.DeserializationStrategy<Data> =
       kotlinx.serialization.serializer()
@@ -97,55 +75,55 @@ public interface GetUserByIdQuery :
   }
 }
 
-public fun GetUserByIdQuery.ref(
+public fun GetFeedPostLikesQuery.ref(
   
-    id: String,
+    postId: String,
 
   
   
 ): com.google.firebase.dataconnect.QueryRef<
-    GetUserByIdQuery.Data,
-    GetUserByIdQuery.Variables
+    GetFeedPostLikesQuery.Data,
+    GetFeedPostLikesQuery.Variables
   > =
   ref(
     
-      GetUserByIdQuery.Variables(
-        id=id,
+      GetFeedPostLikesQuery.Variables(
+        postId=postId,
   
       )
     
   )
 
-public suspend fun GetUserByIdQuery.execute(
+public suspend fun GetFeedPostLikesQuery.execute(
 
   
     
-      id: String,
+      postId: String,
 
   
 
   ): com.google.firebase.dataconnect.QueryResult<
-    GetUserByIdQuery.Data,
-    GetUserByIdQuery.Variables
+    GetFeedPostLikesQuery.Data,
+    GetFeedPostLikesQuery.Variables
   > =
   ref(
     
-      id=id,
+      postId=postId,
   
     
   ).execute()
 
 
-  public fun GetUserByIdQuery.flow(
+  public fun GetFeedPostLikesQuery.flow(
     
-      id: String,
+      postId: String,
 
   
     
-    ): kotlinx.coroutines.flow.Flow<GetUserByIdQuery.Data> =
+    ): kotlinx.coroutines.flow.Flow<GetFeedPostLikesQuery.Data> =
     ref(
         
-          id=id,
+          postId=postId,
   
         
       ).subscribe()

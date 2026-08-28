@@ -17,18 +17,18 @@ import kotlinx.coroutines.flow.filterNotNull as _flow_filterNotNull
 import kotlinx.coroutines.flow.map as _flow_map
 
 
-public interface GetUserByIdQuery :
+public interface GetUserPhotosQuery :
     com.google.firebase.dataconnect.generated.GeneratedQuery<
       KliqConnectorConnector,
-      GetUserByIdQuery.Data,
-      GetUserByIdQuery.Variables
+      GetUserPhotosQuery.Data,
+      GetUserPhotosQuery.Variables
     >
 {
   
     @kotlinx.serialization.Serializable
   public data class Variables(
   
-    val id: String,
+    val userId: String,
   
   ) {
     
@@ -40,41 +40,23 @@ public interface GetUserByIdQuery :
     @kotlinx.serialization.Serializable
   public data class Data(
   
-    val user: User?,
+    val userPhotos: List<UserPhotosItem>,
   
   ) {
     
       
         @kotlinx.serialization.Serializable
-  public data class User(
+  public data class UserPhotosItem(
   
     val id: String,
   
-    val username: String,
+    val userId: String,
   
-    val email: String,
+    val imageUrl: String,
   
-    val firstName: String?,
+    val displayOrder: Int,
   
-    val lastName: String?,
-  
-    val birthDateMs: Long?,
-  
-    val age: Int?,
-  
-    val gender: String,
-  
-    val hometown: String?,
-  
-    val countryCode: String,
-  
-    val phoneNumber: String?,
-  
-    val profilePictureUrl: String?,
-  
-    val bio: String?,
-  
-    val updatedAt: @kotlinx.serialization.Serializable(with = com.google.firebase.dataconnect.serializers.TimestampSerializer::class) com.google.firebase.Timestamp?,
+    val createdAt: @kotlinx.serialization.Serializable(with = com.google.firebase.dataconnect.serializers.TimestampSerializer::class) com.google.firebase.Timestamp?,
   
   ) {
     
@@ -87,7 +69,7 @@ public interface GetUserByIdQuery :
   
 
   public companion object {
-    public val operationName: String = "GetUserById"
+    public val operationName: String = "GetUserPhotos"
 
     public val dataDeserializer: kotlinx.serialization.DeserializationStrategy<Data> =
       kotlinx.serialization.serializer()
@@ -97,55 +79,55 @@ public interface GetUserByIdQuery :
   }
 }
 
-public fun GetUserByIdQuery.ref(
+public fun GetUserPhotosQuery.ref(
   
-    id: String,
+    userId: String,
 
   
   
 ): com.google.firebase.dataconnect.QueryRef<
-    GetUserByIdQuery.Data,
-    GetUserByIdQuery.Variables
+    GetUserPhotosQuery.Data,
+    GetUserPhotosQuery.Variables
   > =
   ref(
     
-      GetUserByIdQuery.Variables(
-        id=id,
+      GetUserPhotosQuery.Variables(
+        userId=userId,
   
       )
     
   )
 
-public suspend fun GetUserByIdQuery.execute(
+public suspend fun GetUserPhotosQuery.execute(
 
   
     
-      id: String,
+      userId: String,
 
   
 
   ): com.google.firebase.dataconnect.QueryResult<
-    GetUserByIdQuery.Data,
-    GetUserByIdQuery.Variables
+    GetUserPhotosQuery.Data,
+    GetUserPhotosQuery.Variables
   > =
   ref(
     
-      id=id,
+      userId=userId,
   
     
   ).execute()
 
 
-  public fun GetUserByIdQuery.flow(
+  public fun GetUserPhotosQuery.flow(
     
-      id: String,
+      userId: String,
 
   
     
-    ): kotlinx.coroutines.flow.Flow<GetUserByIdQuery.Data> =
+    ): kotlinx.coroutines.flow.Flow<GetUserPhotosQuery.Data> =
     ref(
         
-          id=id,
+          userId=userId,
   
         
       ).subscribe()

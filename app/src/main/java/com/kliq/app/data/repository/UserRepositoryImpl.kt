@@ -113,12 +113,16 @@ class UserRepositoryImpl @Inject constructor(
             // 4. Sync to Firebase Data Connect Cloud SQL
             kliqConnector?.let { connector ->
                 try {
+                    timber.log.Timber.d("DataConnect: Creating user %s (%s)...", newUser.id, newUser.username)
                     connector.createUser.execute(
                         id = newUser.id,
                         username = newUser.username,
                         email = newUser.email
                     )
-                } catch (ignored: Exception) { }
+                    timber.log.Timber.d("DataConnect: User created successfully on Cloud SQL!")
+                } catch (e: Exception) {
+                    timber.log.Timber.e(e, "DataConnect: Failed to create user on Cloud SQL")
+                }
 
                 try {
                     connector.updateUserProfile.execute(id = newUser.id) {
@@ -130,7 +134,10 @@ class UserRepositoryImpl @Inject constructor(
                         this.gender = newUser.gender
                         this.phoneNumber = newUser.phoneNumber
                     }
-                } catch (ignored: Exception) { }
+                    timber.log.Timber.d("DataConnect: User profile updated successfully on Cloud SQL!")
+                } catch (e: Exception) {
+                    timber.log.Timber.e(e, "DataConnect: Failed to update user profile on Cloud SQL")
+                }
 
                 try {
                     connector.upsertUserPreference.execute(
@@ -142,11 +149,15 @@ class UserRepositoryImpl @Inject constructor(
                         smokingHabit = SmokingHabit.NEVER.name,
                         drinkingHabit = DrinkingHabit.NEVER.name
                     )
-                } catch (ignored: Exception) { }
+                    timber.log.Timber.d("DataConnect: User preferences upserted successfully on Cloud SQL!")
+                } catch (e: Exception) {
+                    timber.log.Timber.e(e, "DataConnect: Failed to upsert user preferences on Cloud SQL")
+                }
             }
 
             Result.success(newUser)
         } catch (e: Exception) {
+            timber.log.Timber.e(e, "UserRepository.registerUser failed")
             Result.failure(e)
         }
     }

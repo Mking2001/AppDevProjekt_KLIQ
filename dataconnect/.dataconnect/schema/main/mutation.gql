@@ -1,0 +1,2118 @@
+extend type Mutation {
+  """
+  ✨ Insert a single `BlockedUser` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  blockedUser_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: BlockedUser_Data!
+  ): BlockedUser_KeyOutput! @fdc_generated(from: "BlockedUser", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Chat` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  chat_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Chat_Data!
+  ): Chat_KeyOutput! @fdc_generated(from: "Chat", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Club` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  club_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Club_Data!
+  ): Club_KeyOutput! @fdc_generated(from: "Club", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `ClubOffer` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  clubOffer_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ClubOffer_Data!
+  ): ClubOffer_KeyOutput! @fdc_generated(from: "ClubOffer", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `DirectMessage` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  directMessage_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: DirectMessage_Data!
+  ): DirectMessage_KeyOutput! @fdc_generated(from: "DirectMessage", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Event` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  event_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Event_Data!
+  ): Event_KeyOutput! @fdc_generated(from: "Event", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `FeedComment` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  feedComment_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: FeedComment_Data!
+  ): FeedComment_KeyOutput! @fdc_generated(from: "FeedComment", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `FeedPost` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  feedPost_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: FeedPost_Data!
+  ): FeedPost_KeyOutput! @fdc_generated(from: "FeedPost", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `FeedPostLike` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  feedPostLike_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: FeedPostLike_Data!
+  ): FeedPostLike_KeyOutput! @fdc_generated(from: "FeedPostLike", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Friend` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  friend_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Friend_Data!
+  ): Friend_KeyOutput! @fdc_generated(from: "Friend", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Message` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  message_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Message_Data!
+  ): Message_KeyOutput! @fdc_generated(from: "Message", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Review` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  review_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Review_Data!
+  ): Review_KeyOutput! @fdc_generated(from: "Review", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `Story` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  story_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: Story_Data!
+  ): Story_KeyOutput! @fdc_generated(from: "Story", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `User` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `UserLocation` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  userLocation_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: UserLocation_Data!
+  ): UserLocation_KeyOutput! @fdc_generated(from: "UserLocation", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `UserPhoto` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  userPhoto_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: UserPhoto_Data!
+  ): UserPhoto_KeyOutput! @fdc_generated(from: "UserPhoto", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `UserPreference` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  userPreference_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: UserPreference_Data!
+  ): UserPreference_KeyOutput! @fdc_generated(from: "UserPreference", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert a single `VisitedLog` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  visitedLog_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: VisitedLog_Data!
+  ): VisitedLog_KeyOutput! @fdc_generated(from: "VisitedLog", purpose: INSERT_SINGLE)
+  """
+  ✨ Insert `BlockedUser` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  blockedUser_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [BlockedUser_Data!]!
+  ): [BlockedUser_KeyOutput!]! @fdc_generated(from: "BlockedUser", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Chat` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  chat_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Chat_Data!]!
+  ): [Chat_KeyOutput!]! @fdc_generated(from: "Chat", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Club` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  club_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Club_Data!]!
+  ): [Club_KeyOutput!]! @fdc_generated(from: "Club", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ClubOffer` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  clubOffer_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ClubOffer_Data!]!
+  ): [ClubOffer_KeyOutput!]! @fdc_generated(from: "ClubOffer", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `DirectMessage` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  directMessage_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [DirectMessage_Data!]!
+  ): [DirectMessage_KeyOutput!]! @fdc_generated(from: "DirectMessage", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Event` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  event_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Event_Data!]!
+  ): [Event_KeyOutput!]! @fdc_generated(from: "Event", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `FeedComment` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  feedComment_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [FeedComment_Data!]!
+  ): [FeedComment_KeyOutput!]! @fdc_generated(from: "FeedComment", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `FeedPost` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  feedPost_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [FeedPost_Data!]!
+  ): [FeedPost_KeyOutput!]! @fdc_generated(from: "FeedPost", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `FeedPostLike` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  feedPostLike_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [FeedPostLike_Data!]!
+  ): [FeedPostLike_KeyOutput!]! @fdc_generated(from: "FeedPostLike", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Friend` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  friend_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Friend_Data!]!
+  ): [Friend_KeyOutput!]! @fdc_generated(from: "Friend", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Message` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  message_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Message_Data!]!
+  ): [Message_KeyOutput!]! @fdc_generated(from: "Message", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Review` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  review_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Review_Data!]!
+  ): [Review_KeyOutput!]! @fdc_generated(from: "Review", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `Story` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  story_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [Story_Data!]!
+  ): [Story_KeyOutput!]! @fdc_generated(from: "Story", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `User` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  user_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `UserLocation` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  userLocation_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [UserLocation_Data!]!
+  ): [UserLocation_KeyOutput!]! @fdc_generated(from: "UserLocation", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `UserPhoto` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  userPhoto_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [UserPhoto_Data!]!
+  ): [UserPhoto_KeyOutput!]! @fdc_generated(from: "UserPhoto", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `UserPreference` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  userPreference_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [UserPreference_Data!]!
+  ): [UserPreference_KeyOutput!]! @fdc_generated(from: "UserPreference", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `VisitedLog` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  visitedLog_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [VisitedLog_Data!]!
+  ): [VisitedLog_KeyOutput!]! @fdc_generated(from: "VisitedLog", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert or update a single `BlockedUser` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `BlockedUser`.
+  """
+  blockedUser_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: BlockedUser_Data!
+  ): BlockedUser_KeyOutput! @fdc_generated(from: "BlockedUser", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Chat` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Chat`.
+  """
+  chat_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Chat_Data!
+  ): Chat_KeyOutput! @fdc_generated(from: "Chat", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Club` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Club`.
+  """
+  club_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Club_Data!
+  ): Club_KeyOutput! @fdc_generated(from: "Club", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `ClubOffer` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ClubOffer`.
+  """
+  clubOffer_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ClubOffer_Data!
+  ): ClubOffer_KeyOutput! @fdc_generated(from: "ClubOffer", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `DirectMessage` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `DirectMessage`.
+  """
+  directMessage_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: DirectMessage_Data!
+  ): DirectMessage_KeyOutput! @fdc_generated(from: "DirectMessage", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Event` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Event`.
+  """
+  event_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Event_Data!
+  ): Event_KeyOutput! @fdc_generated(from: "Event", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `FeedComment` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `FeedComment`.
+  """
+  feedComment_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: FeedComment_Data!
+  ): FeedComment_KeyOutput! @fdc_generated(from: "FeedComment", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `FeedPost` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `FeedPost`.
+  """
+  feedPost_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: FeedPost_Data!
+  ): FeedPost_KeyOutput! @fdc_generated(from: "FeedPost", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `FeedPostLike` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `FeedPostLike`.
+  """
+  feedPostLike_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: FeedPostLike_Data!
+  ): FeedPostLike_KeyOutput! @fdc_generated(from: "FeedPostLike", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Friend` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Friend`.
+  """
+  friend_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Friend_Data!
+  ): Friend_KeyOutput! @fdc_generated(from: "Friend", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Message` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Message`.
+  """
+  message_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Message_Data!
+  ): Message_KeyOutput! @fdc_generated(from: "Message", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Review` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Review`.
+  """
+  review_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Review_Data!
+  ): Review_KeyOutput! @fdc_generated(from: "Review", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `Story` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Story`.
+  """
+  story_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: Story_Data!
+  ): Story_KeyOutput! @fdc_generated(from: "Story", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `User` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: User_Data!
+  ): User_KeyOutput! @fdc_generated(from: "User", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `UserLocation` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UserLocation`.
+  """
+  userLocation_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: UserLocation_Data!
+  ): UserLocation_KeyOutput! @fdc_generated(from: "UserLocation", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `UserPhoto` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UserPhoto`.
+  """
+  userPhoto_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: UserPhoto_Data!
+  ): UserPhoto_KeyOutput! @fdc_generated(from: "UserPhoto", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `UserPreference` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UserPreference`.
+  """
+  userPreference_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: UserPreference_Data!
+  ): UserPreference_KeyOutput! @fdc_generated(from: "UserPreference", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update a single `VisitedLog` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `VisitedLog`.
+  """
+  visitedLog_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: VisitedLog_Data!
+  ): VisitedLog_KeyOutput! @fdc_generated(from: "VisitedLog", purpose: UPSERT_SINGLE)
+  """
+  ✨ Insert or update `BlockedUser` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `BlockedUser`.
+  """
+  blockedUser_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [BlockedUser_Data!]!
+  ): [BlockedUser_KeyOutput!]! @fdc_generated(from: "BlockedUser", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Chat` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Chat`.
+  """
+  chat_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Chat_Data!]!
+  ): [Chat_KeyOutput!]! @fdc_generated(from: "Chat", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Club` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Club`.
+  """
+  club_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Club_Data!]!
+  ): [Club_KeyOutput!]! @fdc_generated(from: "Club", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ClubOffer` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ClubOffer`.
+  """
+  clubOffer_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ClubOffer_Data!]!
+  ): [ClubOffer_KeyOutput!]! @fdc_generated(from: "ClubOffer", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `DirectMessage` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `DirectMessage`.
+  """
+  directMessage_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [DirectMessage_Data!]!
+  ): [DirectMessage_KeyOutput!]! @fdc_generated(from: "DirectMessage", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Event` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Event`.
+  """
+  event_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Event_Data!]!
+  ): [Event_KeyOutput!]! @fdc_generated(from: "Event", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `FeedComment` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `FeedComment`.
+  """
+  feedComment_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [FeedComment_Data!]!
+  ): [FeedComment_KeyOutput!]! @fdc_generated(from: "FeedComment", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `FeedPost` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `FeedPost`.
+  """
+  feedPost_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [FeedPost_Data!]!
+  ): [FeedPost_KeyOutput!]! @fdc_generated(from: "FeedPost", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `FeedPostLike` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `FeedPostLike`.
+  """
+  feedPostLike_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [FeedPostLike_Data!]!
+  ): [FeedPostLike_KeyOutput!]! @fdc_generated(from: "FeedPostLike", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Friend` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Friend`.
+  """
+  friend_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Friend_Data!]!
+  ): [Friend_KeyOutput!]! @fdc_generated(from: "Friend", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Message` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Message`.
+  """
+  message_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Message_Data!]!
+  ): [Message_KeyOutput!]! @fdc_generated(from: "Message", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Review` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Review`.
+  """
+  review_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Review_Data!]!
+  ): [Review_KeyOutput!]! @fdc_generated(from: "Review", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `Story` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `Story`.
+  """
+  story_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [Story_Data!]!
+  ): [Story_KeyOutput!]! @fdc_generated(from: "Story", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `User` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `User`.
+  """
+  user_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [User_Data!]!
+  ): [User_KeyOutput!]! @fdc_generated(from: "User", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `UserLocation` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UserLocation`.
+  """
+  userLocation_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [UserLocation_Data!]!
+  ): [UserLocation_KeyOutput!]! @fdc_generated(from: "UserLocation", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `UserPhoto` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UserPhoto`.
+  """
+  userPhoto_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [UserPhoto_Data!]!
+  ): [UserPhoto_KeyOutput!]! @fdc_generated(from: "UserPhoto", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `UserPreference` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `UserPreference`.
+  """
+  userPreference_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [UserPreference_Data!]!
+  ): [UserPreference_KeyOutput!]! @fdc_generated(from: "UserPreference", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `VisitedLog` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `VisitedLog`.
+  """
+  visitedLog_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [VisitedLog_Data!]!
+  ): [VisitedLog_KeyOutput!]! @fdc_generated(from: "VisitedLog", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Update a single `BlockedUser` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `BlockedUser` or `null` if not found.
+  """
+  blockedUser_update(
+    """
+    The key used to identify the object.
+    """
+    key: BlockedUser_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BlockedUser_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: BlockedUser_Data!
+  ): BlockedUser_KeyOutput @fdc_generated(from: "BlockedUser", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Chat` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Chat` or `null` if not found.
+  """
+  chat_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Chat_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Chat_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Chat_Data!
+  ): Chat_KeyOutput @fdc_generated(from: "Chat", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Club` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Club` or `null` if not found.
+  """
+  club_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Club_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Club_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Club_Data!
+  ): Club_KeyOutput @fdc_generated(from: "Club", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ClubOffer` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ClubOffer` or `null` if not found.
+  """
+  clubOffer_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: ClubOffer_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ClubOffer_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ClubOffer_Data!
+  ): ClubOffer_KeyOutput @fdc_generated(from: "ClubOffer", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `DirectMessage` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `DirectMessage` or `null` if not found.
+  """
+  directMessage_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: DirectMessage_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: DirectMessage_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: DirectMessage_Data!
+  ): DirectMessage_KeyOutput @fdc_generated(from: "DirectMessage", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Event` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Event` or `null` if not found.
+  """
+  event_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Event_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Event_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Event_Data!
+  ): Event_KeyOutput @fdc_generated(from: "Event", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `FeedComment` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `FeedComment` or `null` if not found.
+  """
+  feedComment_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: FeedComment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: FeedComment_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: FeedComment_Data!
+  ): FeedComment_KeyOutput @fdc_generated(from: "FeedComment", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `FeedPost` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `FeedPost` or `null` if not found.
+  """
+  feedPost_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: FeedPost_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: FeedPost_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: FeedPost_Data!
+  ): FeedPost_KeyOutput @fdc_generated(from: "FeedPost", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `FeedPostLike` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `FeedPostLike` or `null` if not found.
+  """
+  feedPostLike_update(
+    """
+    The key used to identify the object.
+    """
+    key: FeedPostLike_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: FeedPostLike_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: FeedPostLike_Data!
+  ): FeedPostLike_KeyOutput @fdc_generated(from: "FeedPostLike", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Friend` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Friend` or `null` if not found.
+  """
+  friend_update(
+    """
+    The key used to identify the object.
+    """
+    key: Friend_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Friend_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Friend_Data!
+  ): Friend_KeyOutput @fdc_generated(from: "Friend", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Message` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Message` or `null` if not found.
+  """
+  message_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Message_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Message_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Message_Data!
+  ): Message_KeyOutput @fdc_generated(from: "Message", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Review` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Review` or `null` if not found.
+  """
+  review_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Review_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Review_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Review_Data!
+  ): Review_KeyOutput @fdc_generated(from: "Review", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `Story` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `Story` or `null` if not found.
+  """
+  story_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Story_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Story_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: Story_Data!
+  ): Story_KeyOutput @fdc_generated(from: "Story", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `User` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `User` or `null` if not found.
+  """
+  user_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: User_Data!
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `UserLocation` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `UserLocation` or `null` if not found.
+  """
+  userLocation_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: UserLocation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserLocation_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: UserLocation_Data!
+  ): UserLocation_KeyOutput @fdc_generated(from: "UserLocation", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `UserPhoto` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `UserPhoto` or `null` if not found.
+  """
+  userPhoto_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: UserPhoto_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserPhoto_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: UserPhoto_Data!
+  ): UserPhoto_KeyOutput @fdc_generated(from: "UserPhoto", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `UserPreference` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `UserPreference` or `null` if not found.
+  """
+  userPreference_update(
+    """
+    The key used to identify the object.
+    """
+    key: UserPreference_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserPreference_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: UserPreference_Data!
+  ): UserPreference_KeyOutput @fdc_generated(from: "UserPreference", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `VisitedLog` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `VisitedLog` or `null` if not found.
+  """
+  visitedLog_update(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: VisitedLog_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VisitedLog_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: VisitedLog_Data!
+  ): VisitedLog_KeyOutput @fdc_generated(from: "VisitedLog", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update `BlockedUser` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  blockedUser_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: BlockedUser_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: BlockedUser_Data!
+  ): Int! @fdc_generated(from: "BlockedUser", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Chat` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  chat_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Chat_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Chat_Data!
+  ): Int! @fdc_generated(from: "Chat", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Club` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  club_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Club_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Club_Data!
+  ): Int! @fdc_generated(from: "Club", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `ClubOffer` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  clubOffer_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ClubOffer_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ClubOffer_Data!
+  ): Int! @fdc_generated(from: "ClubOffer", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `DirectMessage` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  directMessage_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: DirectMessage_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: DirectMessage_Data!
+  ): Int! @fdc_generated(from: "DirectMessage", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Event` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  event_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Event_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Event_Data!
+  ): Int! @fdc_generated(from: "Event", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `FeedComment` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  feedComment_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: FeedComment_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: FeedComment_Data!
+  ): Int! @fdc_generated(from: "FeedComment", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `FeedPost` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  feedPost_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: FeedPost_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: FeedPost_Data!
+  ): Int! @fdc_generated(from: "FeedPost", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `FeedPostLike` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  feedPostLike_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: FeedPostLike_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: FeedPostLike_Data!
+  ): Int! @fdc_generated(from: "FeedPostLike", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Friend` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  friend_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Friend_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Friend_Data!
+  ): Int! @fdc_generated(from: "Friend", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Message` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  message_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Message_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Message_Data!
+  ): Int! @fdc_generated(from: "Message", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Review` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  review_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Review_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Review_Data!
+  ): Int! @fdc_generated(from: "Review", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `Story` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  story_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: Story_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: Story_Data!
+  ): Int! @fdc_generated(from: "Story", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `User` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  user_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: User_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: User_Data!
+  ): Int! @fdc_generated(from: "User", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `UserLocation` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  userLocation_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: UserLocation_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: UserLocation_Data!
+  ): Int! @fdc_generated(from: "UserLocation", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `UserPhoto` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  userPhoto_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: UserPhoto_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: UserPhoto_Data!
+  ): Int! @fdc_generated(from: "UserPhoto", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `UserPreference` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  userPreference_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: UserPreference_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: UserPreference_Data!
+  ): Int! @fdc_generated(from: "UserPreference", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Update `VisitedLog` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  visitedLog_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: VisitedLog_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: VisitedLog_Data!
+  ): Int! @fdc_generated(from: "VisitedLog", purpose: UPDATE_MULTIPLE)
+  """
+  ✨ Delete a single `BlockedUser` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  blockedUser_delete(
+    """
+    The key used to identify the object.
+    """
+    key: BlockedUser_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: BlockedUser_FirstRow
+  ): BlockedUser_KeyOutput @fdc_generated(from: "BlockedUser", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Chat` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  chat_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Chat_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Chat_FirstRow
+  ): Chat_KeyOutput @fdc_generated(from: "Chat", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Club` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  club_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Club_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Club_FirstRow
+  ): Club_KeyOutput @fdc_generated(from: "Club", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ClubOffer` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  clubOffer_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: ClubOffer_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ClubOffer_FirstRow
+  ): ClubOffer_KeyOutput @fdc_generated(from: "ClubOffer", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `DirectMessage` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  directMessage_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: DirectMessage_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: DirectMessage_FirstRow
+  ): DirectMessage_KeyOutput @fdc_generated(from: "DirectMessage", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Event` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  event_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Event_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Event_FirstRow
+  ): Event_KeyOutput @fdc_generated(from: "Event", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `FeedComment` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  feedComment_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: FeedComment_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: FeedComment_FirstRow
+  ): FeedComment_KeyOutput @fdc_generated(from: "FeedComment", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `FeedPost` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  feedPost_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: FeedPost_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: FeedPost_FirstRow
+  ): FeedPost_KeyOutput @fdc_generated(from: "FeedPost", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `FeedPostLike` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  feedPostLike_delete(
+    """
+    The key used to identify the object.
+    """
+    key: FeedPostLike_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: FeedPostLike_FirstRow
+  ): FeedPostLike_KeyOutput @fdc_generated(from: "FeedPostLike", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Friend` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  friend_delete(
+    """
+    The key used to identify the object.
+    """
+    key: Friend_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Friend_FirstRow
+  ): Friend_KeyOutput @fdc_generated(from: "Friend", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Message` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  message_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Message_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Message_FirstRow
+  ): Message_KeyOutput @fdc_generated(from: "Message", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Review` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  review_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Review_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Review_FirstRow
+  ): Review_KeyOutput @fdc_generated(from: "Review", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `Story` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  story_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: Story_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: Story_FirstRow
+  ): Story_KeyOutput @fdc_generated(from: "Story", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `User` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  user_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: User_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: User_FirstRow
+  ): User_KeyOutput @fdc_generated(from: "User", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `UserLocation` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  userLocation_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: UserLocation_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserLocation_FirstRow
+  ): UserLocation_KeyOutput @fdc_generated(from: "UserLocation", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `UserPhoto` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  userPhoto_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: UserPhoto_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserPhoto_FirstRow
+  ): UserPhoto_KeyOutput @fdc_generated(from: "UserPhoto", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `UserPreference` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  userPreference_delete(
+    """
+    The key used to identify the object.
+    """
+    key: UserPreference_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: UserPreference_FirstRow
+  ): UserPreference_KeyOutput @fdc_generated(from: "UserPreference", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `VisitedLog` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  visitedLog_delete(
+    """
+    The unique ID of the object.
+    """
+    id: String
+
+    """
+    ✨ `_expr` server value variant of `id` (The unique ID of the object.)
+    """
+    id_expr: String_Expr
+
+    """
+    The key used to identify the object.
+    """
+    key: VisitedLog_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: VisitedLog_FirstRow
+  ): VisitedLog_KeyOutput @fdc_generated(from: "VisitedLog", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete `BlockedUser` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  blockedUser_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: BlockedUser_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "BlockedUser", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Chat` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  chat_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Chat_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Chat", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Club` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  club_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Club_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Club", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ClubOffer` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  clubOffer_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ClubOffer_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ClubOffer", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `DirectMessage` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  directMessage_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: DirectMessage_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "DirectMessage", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Event` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  event_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Event_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Event", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `FeedComment` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  feedComment_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: FeedComment_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "FeedComment", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `FeedPost` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  feedPost_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: FeedPost_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "FeedPost", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `FeedPostLike` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  feedPostLike_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: FeedPostLike_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "FeedPostLike", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Friend` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  friend_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Friend_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Friend", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Message` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  message_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Message_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Message", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Review` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  review_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Review_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Review", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `Story` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  story_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: Story_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "Story", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `User` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  user_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: User_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "User", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `UserLocation` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  userLocation_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: UserLocation_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "UserLocation", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `UserPhoto` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  userPhoto_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: UserPhoto_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "UserPhoto", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `UserPreference` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  userPreference_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: UserPreference_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "UserPreference", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `VisitedLog` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  visitedLog_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: VisitedLog_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "VisitedLog", purpose: DELETE_MULTIPLE)
+}

@@ -58,8 +58,6 @@ public interface GetReviewsByUserQuery :
   
     val timestamp: Long,
   
-    val isVerified: Boolean,
-  
   ) {
     
     

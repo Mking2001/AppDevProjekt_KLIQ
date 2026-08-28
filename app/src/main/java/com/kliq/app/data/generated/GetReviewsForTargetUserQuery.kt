@@ -60,10 +60,6 @@ public interface GetReviewsForTargetUserQuery :
   
     val timestamp: Long,
   
-    val isVerified: Boolean,
-  
-    val verificationMethod: String,
-  
   ) {
     
     

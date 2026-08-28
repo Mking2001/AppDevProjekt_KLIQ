@@ -42,11 +42,15 @@ public interface ListUsersQuery :
   
     val username: String,
   
+    val firstName: String?,
+  
+    val lastName: String?,
+  
     val profilePictureUrl: String?,
   
-    val isVerified: Boolean,
-  
     val gender: String,
+  
+    val hometown: String?,
   
   ) {
     
