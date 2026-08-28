@@ -118,25 +118,21 @@ class UserRepositoryImpl @Inject constructor(
                         id = newUser.id,
                         username = newUser.username,
                         email = newUser.email
-                    )
+                    ) {
+                        this.firstName = firstName.trim().ifBlank { null }
+                        this.lastName = lastName.trim().ifBlank { null }
+                        this.birthDateMs = birthDateMs
+                        this.age = ageYears
+                        this.gender = gender
+                        this.hometown = finalHometown
+                        this.countryCode = "+43"
+                        this.phoneNumber = phoneNumber.trim().ifBlank { null }
+                        this.profilePictureUrl = profilePictureUrl.ifBlank { null }
+                        this.bio = newUser.bio
+                    }
                     timber.log.Timber.d("DataConnect: User created successfully on Cloud SQL!")
                 } catch (e: Exception) {
                     timber.log.Timber.e(e, "DataConnect: Failed to create user on Cloud SQL")
-                }
-
-                try {
-                    connector.updateUserProfile.execute(id = newUser.id) {
-                        this.username = newUser.username
-                        this.bio = newUser.bio
-                        this.profilePictureUrl = newUser.profilePictureUrl
-                        this.age = newUser.age
-                        this.hometown = newUser.hometown
-                        this.gender = newUser.gender
-                        this.phoneNumber = newUser.phoneNumber
-                    }
-                    timber.log.Timber.d("DataConnect: User profile updated successfully on Cloud SQL!")
-                } catch (e: Exception) {
-                    timber.log.Timber.e(e, "DataConnect: Failed to update user profile on Cloud SQL")
                 }
 
                 try {
