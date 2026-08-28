@@ -51,6 +51,8 @@ public interface CreateUserMutation :
   
     val bio: com.google.firebase.dataconnect.OptionalVariable<String?>,
   
+    val password: com.google.firebase.dataconnect.OptionalVariable<String?>,
+  
   ) {
     
     
@@ -73,6 +75,7 @@ public interface CreateUserMutation :
         public var phoneNumber: String?
         public var profilePictureUrl: String?
         public var bio: String?
+        public var password: String?
         
       }
 
@@ -105,6 +108,8 @@ public interface CreateUserMutation :
             var profilePictureUrl: com.google.firebase.dataconnect.OptionalVariable<String?> =
                 com.google.firebase.dataconnect.OptionalVariable.Undefined
             var bio: com.google.firebase.dataconnect.OptionalVariable<String?> =
+                com.google.firebase.dataconnect.OptionalVariable.Undefined
+            var password: com.google.firebase.dataconnect.OptionalVariable<String?> =
                 com.google.firebase.dataconnect.OptionalVariable.Undefined
             
 
@@ -161,11 +166,15 @@ public interface CreateUserMutation :
               get() = throw UnsupportedOperationException("getting builder values is not supported")
               set(value_) { bio = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
               
+            override var password: String?
+              get() = throw UnsupportedOperationException("getting builder values is not supported")
+              set(value_) { password = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
+              
             
           }.apply(block_)
           .let {
             Variables(
-              id=id,username=username,email=email,firstName=firstName,lastName=lastName,birthDateMs=birthDateMs,age=age,gender=gender,hometown=hometown,countryCode=countryCode,phoneNumber=phoneNumber,profilePictureUrl=profilePictureUrl,bio=bio,
+              id=id,username=username,email=email,firstName=firstName,lastName=lastName,birthDateMs=birthDateMs,age=age,gender=gender,hometown=hometown,countryCode=countryCode,phoneNumber=phoneNumber,profilePictureUrl=profilePictureUrl,bio=bio,password=password,
             )
           }
         }

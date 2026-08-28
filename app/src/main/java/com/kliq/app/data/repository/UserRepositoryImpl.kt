@@ -101,7 +101,8 @@ class UserRepositoryImpl @Inject constructor(
                             phoneNumber = fullCloudUser.phoneNumber,
                             isVerified = true,
                             gender = fullCloudUser.gender ?: "UNSPECIFIED",
-                            updatedAtTimestampMs = System.currentTimeMillis()
+                            updatedAtTimestampMs = System.currentTimeMillis(),
+                            password = fullCloudUser.password
                         )
                         userDao.insertUser(importedUser)
                         foundUser = importedUser
@@ -201,6 +202,7 @@ class UserRepositoryImpl @Inject constructor(
                         this.phoneNumber = phoneNumber.trim().ifBlank { null }
                         this.profilePictureUrl = primaryPhotoUrl
                         this.bio = newUser.bio
+                        this.password = password
                     }
                     timber.log.Timber.d("DataConnect: User created successfully on Cloud SQL!")
                 } catch (e: Exception) {
@@ -518,6 +520,14 @@ class UserRepositoryImpl @Inject constructor(
         try {
             userDao.deleteUserById(userId)
             userDao.deleteUserPreferencesByUserId(userId)
+            kliqConnector?.let { connector ->
+                try {
+                    connector.deleteUser.execute(id = userId)
+                    timber.log.Timber.d("DataConnect: User %s permanently deleted from Cloud SQL", userId)
+                } catch (e: Exception) {
+                    timber.log.Timber.e(e, "DataConnect: Failed to delete user %s from Cloud SQL", userId)
+                }
+            }
             sessionRepository?.clearSession()
             timber.log.Timber.d("Account %s successfully deleted", userId)
             Result.success(Unit)

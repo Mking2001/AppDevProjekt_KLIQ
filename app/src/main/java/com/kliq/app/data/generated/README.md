@@ -81,8 +81,8 @@ val connector: KliqConnectorConnector = KliqConnectorConnector.getInstance(
 
 The `kliq-connector` Data Connect connector defines
 24 queries and
-38 mutations,
-a total of 62 operations.
+39 mutations,
+a total of 63 operations.
 Each of these operations is exposed
 as a property of [KliqConnectorConnector].
 
@@ -240,7 +240,7 @@ however, if they _are_ specified,
 then they are specified in a Kotlin DSL block as the last argument
 of the `execute()` method.
 
-For example, the "UpdateUserProfile" mutation has 11 optional variables ("username", "firstName", "lastName", "birthDateMs", "age", "gender", "hometown", "countryCode", "phoneNumber", "profilePictureUrl", and "bio")
+For example, the "UpdateUserProfile" mutation has 12 optional variables ("username", "firstName", "lastName", "birthDateMs", "age", "gender", "hometown", "countryCode", "phoneNumber", "profilePictureUrl", "bio", and "password")
 and can be executed via the [KliqConnectorConnector.updateUserProfile]
 property as follows:
 
@@ -258,6 +258,7 @@ val mutationResult = connector.updateUserProfile.execute(id="corge") {
   phoneNumber = "thud"
   profilePictureUrl = "qux"
   bio = "baz"
+  password = "foo"
 }
 println("UpdateUserProfile mutation returned: ${mutationResult.data}")
 ```

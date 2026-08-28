@@ -17,6 +17,7 @@ type User @table {
   phoneNumber: String
   profilePictureUrl: String
   bio: String
+  password: String
   updatedAt: Timestamp @default(expr: "request.time")
 }
 

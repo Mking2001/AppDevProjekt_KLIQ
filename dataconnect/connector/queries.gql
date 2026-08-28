@@ -18,6 +18,7 @@ query GetUserById($id: String!) @auth(level: PUBLIC) {
     phoneNumber
     profilePictureUrl
     bio
+    password
     updatedAt
   }
 }
@@ -26,11 +27,14 @@ query ListUsers @auth(level: PUBLIC) {
   users {
     id
     username
+    email
+    phoneNumber
     firstName
     lastName
     profilePictureUrl
     gender
     hometown
+    password
   }
 }
 
@@ -38,6 +42,9 @@ query CheckUsername($username: String!) @auth(level: PUBLIC) {
   users(where: { username: { eq: $username } }) {
     id
     username
+    email
+    phoneNumber
+    password
   }
 }
 

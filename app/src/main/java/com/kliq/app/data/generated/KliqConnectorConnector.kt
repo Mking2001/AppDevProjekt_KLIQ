@@ -53,6 +53,8 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
   
     public val deleteStory: DeleteStoryMutation
   
+    public val deleteUser: DeleteUserMutation
+  
     public val deleteUserPhoto: DeleteUserPhotoMutation
   
     public val getActiveStories: GetActiveStoriesQuery
@@ -252,6 +254,10 @@ private class KliqConnectorConnectorImpl(
   
     override val deleteStory by lazy(LazyThreadSafetyMode.PUBLICATION) {
       DeleteStoryMutationImpl(this)
+    }
+  
+    override val deleteUser by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserMutationImpl(this)
     }
   
     override val deleteUserPhoto by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -458,6 +464,7 @@ private class KliqConnectorConnectorImpl(
         deleteFeedComment,
         deleteFeedPost,
         deleteStory,
+        deleteUser,
         deleteUserPhoto,
         likeFeedPost,
         logVisit,
@@ -897,6 +904,21 @@ private class DeleteStoryMutationImpl(
     DeleteStoryMutation.Companion.operationName,
     DeleteStoryMutation.Companion.dataDeserializer,
     DeleteStoryMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserMutation.Data,
+      DeleteUserMutation.Variables
+  >(
+    connector,
+    DeleteUserMutation.Companion.operationName,
+    DeleteUserMutation.Companion.dataDeserializer,
+    DeleteUserMutation.Companion.variablesSerializer,
   )
 
 

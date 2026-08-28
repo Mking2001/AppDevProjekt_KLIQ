@@ -74,6 +74,8 @@ public interface GetUserByIdQuery :
   
     val bio: String?,
   
+    val password: String?,
+  
     val updatedAt: @kotlinx.serialization.Serializable(with = com.google.firebase.dataconnect.serializers.TimestampSerializer::class) com.google.firebase.Timestamp?,
   
   ) {

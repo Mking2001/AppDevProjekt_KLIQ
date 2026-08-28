@@ -8,5 +8,5 @@ schemas:
         database: "kliq-app-d215a-database"
         cloudSql:
           instanceId: "kliq-app-d215a-instance"
-          schemaValidation: "COMPATIBLE"
+          schemaValidation: "STRICT"
 connectorDirs: ["./connector"]

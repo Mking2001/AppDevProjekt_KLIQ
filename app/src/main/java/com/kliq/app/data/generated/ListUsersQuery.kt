@@ -42,6 +42,10 @@ public interface ListUsersQuery :
   
     val username: String,
   
+    val email: String,
+  
+    val phoneNumber: String?,
+  
     val firstName: String?,
   
     val lastName: String?,
@@ -51,6 +55,8 @@ public interface ListUsersQuery :
     val gender: String,
   
     val hometown: String?,
+  
+    val password: String?,
   
   ) {
     
