@@ -7,6 +7,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import coil.memory.MemoryCache
+import com.kliq.app.data.seed.KliqDatabaseSeeder
 import com.kliq.app.service.crash.CrashReportingLogger
 import com.kliq.app.service.crash.KliqCrashlyticsTree
 import com.kliq.app.service.notification.NotificationChannelManager
@@ -23,7 +24,7 @@ import javax.inject.Inject
 /**
  * Application class for Kliq.
  * Configures global notification channels, Coil ImageLoader memory cache bounds,
- * ComponentCallbacks2 memory trimming, and async Crashlytics / Timber error reporting.
+ * ComponentCallbacks2 memory trimming, initial database seeding, and async Crashlytics / Timber error reporting.
  */
 @HiltAndroidApp
 class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
@@ -31,7 +32,14 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
     @Inject
     lateinit var notificationChannelManager: NotificationChannelManager
 
-    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    @Inject
+    lateinit var databaseSeeder: KliqDatabaseSeeder
+
+    /**
+     * Anwendungsweiter Scope für Initialisierungsarbeiten, die den
+     * Lebenszyklus einzelner Screens überdauern.
+     */
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var imageLoaderInstance: ImageLoader? = null
 
     override fun onCreate() {
@@ -39,6 +47,10 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
         notificationChannelManager.createNotificationChannels()
         registerComponentCallbacks(this)
         initCrashReportingAsync()
+
+        applicationScope.launch {
+            databaseSeeder.seedIfEmpty()
+        }
     }
 
     /**

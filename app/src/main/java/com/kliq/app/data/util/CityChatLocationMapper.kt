@@ -21,51 +21,64 @@ data class CityChatConfig(
 
 object CityChatLocationMapper {
 
+    /**
+     * Unterstuetzte Stadt-Gruppenchats. Der Zielmarkt Klagenfurt steht an erster
+     * Stelle und dient gleichzeitig als Fallback, wenn keine GPS-Position vorliegt.
+     */
     val SUPPORTED_CITIES = listOf(
         CityChatConfig(
-            id = "pub_1",
-            title = "Berlin - Tonight",
-            cityRegion = "Berlin",
-            latitude = 52.5200,
-            longitude = 13.4050,
-            avatarInitial = "B",
-            defaultOnlineCount = 248
-        ),
-        CityChatConfig(
-            id = "pub_2",
-            title = "München - Party Radar",
-            cityRegion = "München",
-            latitude = 48.1351,
-            longitude = 11.5820,
-            avatarInitial = "M",
-            defaultOnlineCount = 184
-        ),
-        CityChatConfig(
-            id = "pub_3",
-            title = "Hamburg - Reeperbahn",
-            cityRegion = "Hamburg",
-            latitude = 53.5511,
-            longitude = 9.9937,
-            avatarInitial = "H",
-            defaultOnlineCount = 192
-        ),
-        CityChatConfig(
-            id = "pub_4",
-            title = "Köln - Nightlife",
-            cityRegion = "Köln",
-            latitude = 50.9375,
-            longitude = 6.9603,
+            id = "pub_klagenfurt",
+            title = "Klagenfurt - Tonight",
+            cityRegion = "Klagenfurt",
+            latitude = 46.6236,
+            longitude = 14.3084,
             avatarInitial = "K",
-            defaultOnlineCount = 145
+            defaultOnlineCount = 138
         ),
         CityChatConfig(
-            id = "pub_5",
-            title = "Frankfurt - Party Scene",
-            cityRegion = "Frankfurt",
-            latitude = 50.1109,
-            longitude = 8.6821,
-            avatarInitial = "F",
-            defaultOnlineCount = 126
+            id = "pub_villach",
+            title = "Villach - Party Radar",
+            cityRegion = "Villach",
+            latitude = 46.6103,
+            longitude = 13.8558,
+            avatarInitial = "V",
+            defaultOnlineCount = 84
+        ),
+        CityChatConfig(
+            id = "pub_graz",
+            title = "Graz - Nightlife",
+            cityRegion = "Graz",
+            latitude = 47.0707,
+            longitude = 15.4395,
+            avatarInitial = "G",
+            defaultOnlineCount = 212
+        ),
+        CityChatConfig(
+            id = "pub_wien",
+            title = "Wien - Tonight",
+            cityRegion = "Wien",
+            latitude = 48.2082,
+            longitude = 16.3738,
+            avatarInitial = "W",
+            defaultOnlineCount = 396
+        ),
+        CityChatConfig(
+            id = "pub_salzburg",
+            title = "Salzburg - Party Scene",
+            cityRegion = "Salzburg",
+            latitude = 47.8095,
+            longitude = 13.0550,
+            avatarInitial = "S",
+            defaultOnlineCount = 147
+        ),
+        CityChatConfig(
+            id = "pub_ljubljana",
+            title = "Ljubljana - Crossborder",
+            cityRegion = "Ljubljana",
+            latitude = 46.0569,
+            longitude = 14.5058,
+            avatarInitial = "L",
+            defaultOnlineCount = 96
         )
     )
 

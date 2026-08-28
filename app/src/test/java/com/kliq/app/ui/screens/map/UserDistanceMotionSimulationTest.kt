@@ -58,14 +58,16 @@ class UserDistanceMotionSimulationTest {
 
     @Test
     fun testLiveMotionSimulation_userApproaching_distanceDecreasesContinuously() {
-        // Target User "Alex" (u1) is stationary at (52.5130, 13.4410)
-        // Current user moves towards Alex over 5 simulation steps from 2.5km away to 0m
+        // Zielperson Lena (usr_lena) steht fest an der Strandbar Loretto (46.6162, 14.2696).
+        // Der aktuelle Nutzer bewegt sich in 5 Schritten von 2,45 km auf 0 m heran.
+        // Die Breitengrad-Differenzen entsprechen dem ursprünglichen Berlin-Testfall,
+        // da ein Breitengrad unabhängig vom Standort ca. 111,32 km entspricht.
         val steps = listOf(
-            Pair(52.5350, 13.4410), // ~2.45 km away
-            Pair(52.5250, 13.4410), // ~1.33 km away
-            Pair(52.5175, 13.4410), // ~500 m away
-            Pair(52.51435, 13.4410), // ~150 m away
-            Pair(52.5130, 13.4410)   // 0 m (exact match)
+            Pair(46.6382, 14.2696), // ~2.45 km entfernt
+            Pair(46.6282, 14.2696), // ~1.33 km entfernt
+            Pair(46.6207, 14.2696), // ~500 m entfernt
+            Pair(46.61755, 14.2696), // ~150 m entfernt
+            Pair(46.6162, 14.2696)   // 0 m (exakte Übereinstimmung)
         )
 
         val recordedDistances = mutableListOf<Pair<Double?, String>>()
@@ -74,8 +76,8 @@ class UserDistanceMotionSimulationTest {
             fakeLocationRepository.emitLocation(LocationData(latitude = currentLat, longitude = currentLng))
             testDispatcher.scheduler.advanceUntilIdle()
 
-            val alex = viewModel.uiState.value.userMarkers.first { it.userId == "u1" }
-            recordedDistances.add(Pair(alex.distanceMeters, alex.formattedDistance))
+            val lena = viewModel.uiState.value.userMarkers.first { it.userId == "usr_lena" }
+            recordedDistances.add(Pair(lena.distanceMeters, lena.formattedDistance))
         }
 
         // Verify that distances strictly decrease across steps

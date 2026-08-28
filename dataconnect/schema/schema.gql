@@ -1,0 +1,221 @@
+# ============================================================
+# KLIQ Datenmodell — Firebase Data Connect Schema
+# Alle 13 Room-Entities übersetzt in GraphQL
+# ============================================================
+
+# ===== USER =====
+type User @table {
+  id: String! @col(name: "id")
+  username: String!
+  email: String!
+  age: Int
+  hometown: String
+  profilePictureUrl: String
+  bio: String
+  phoneNumber: String
+  isVerified: Boolean! @default(value: false)
+  gender: String! @default(value: "UNSPECIFIED")
+  updatedAt: Timestamp @default(expr: "request.time")
+}
+
+type UserPreference @table(key: "userId") {
+  userId: String! @col(name: "user_id")
+  user: User! @ref(fields: ["userId"], references: ["id"])
+  isDarkMode: Boolean! @default(value: false)
+  searchRadiusKm: Int! @default(value: 10)
+  pushNotificationsEnabled: Boolean! @default(value: true)
+  searchIntent: String! @default(value: "BOTH")
+  smokingHabit: String! @default(value: "NEVER")
+  drinkingHabit: String! @default(value: "NEVER")
+}
+
+# ===== CLUB =====
+type Club @table {
+  id: String! @col(name: "id")
+  name: String!
+  latitude: Float! @default(value: 0.0)
+  longitude: Float! @default(value: 0.0)
+  address: String! @default(value: "")
+  geofenceRadiusMeters: Float! @default(value: 200.0)
+  averageRating: Float! @default(value: 0.0)
+  openingHoursJson: String! @default(value: "")
+  isFavorite: Boolean! @default(value: false)
+  category: String! @default(value: "")
+  rating: Float! @default(value: 0.0)
+  imageUrl: String! @default(value: "")
+  region: String! @default(value: "")
+  city: String! @default(value: "")
+  postalCode: String! @default(value: "")
+  currentCapacityPercent: Int! @default(value: 0)
+  malePercentage: Int! @default(value: 0)
+  femalePercentage: Int! @default(value: 0)
+  totalLiveVisitors: Int! @default(value: 0)
+  externalSearchTags: String! @default(value: "")
+  websiteUrl: String
+  isPromoted: Boolean! @default(value: false)
+  phoneNumber: String
+  contactEmail: String
+  instagramHandle: String
+}
+
+# ===== EVENT =====
+type Event @table {
+  id: String! @col(name: "id")
+  club: Club!
+  title: String!
+  description: String!
+  startTime: Int64! @default(value: 0)
+  endTime: Int64! @default(value: 0)
+  price: String! @default(value: "")
+  time: String! @default(value: "")
+  specialOffersJson: String! @default(value: "")
+  searchKeywords: String! @default(value: "")
+  imageUrl: String
+  capacityLimit: Int! @default(value: 0)
+  isCancelled: Boolean! @default(value: false)
+  category: String! @default(value: "")
+}
+
+# ===== CLUB OFFER =====
+type ClubOffer @table {
+  id: String! @col(name: "id")
+  club: Club!
+  title: String!
+  description: String!
+  offerType: String!
+  discountCode: String
+  discountPercentage: Int
+  validUntil: Int64
+  imageUrl: String
+  termsAndConditions: String
+  isExclusive: Boolean! @default(value: false)
+}
+
+# ===== REVIEW =====
+type Review @table {
+  id: String! @col(name: "id")
+  reviewer: User! @ref(fields: ["reviewerUserId"], references: ["id"])
+  reviewerUserId: String!
+  targetUserId: String
+  club: Club @ref(fields: ["clubId"], references: ["id"])
+  clubId: String
+  event: Event @ref(fields: ["eventId"], references: ["id"])
+  eventId: String
+  rating: Int!
+  text: String!
+  timestamp: Int64!
+  verificationMethod: String! @default(value: "UNVERIFIED")
+  isVerified: Boolean! @default(value: false)
+  reviewerUsername: String! @default(value: "")
+  reviewerAvatarUrl: String
+  helpfulVotesCount: Int! @default(value: 0)
+  flaggedCount: Int! @default(value: 0)
+}
+
+# ===== CHAT =====
+type Chat @table {
+  id: String! @col(name: "id")
+  name: String!
+  cityRegion: String
+  lastMessageText: String!
+  lastMessageTimestampMs: Int64!
+  lastMessageTimestampIso: String! @default(value: "")
+  avatarInitial: String!
+  avatarUrl: String
+  unreadCount: Int! @default(value: 0)
+  chatType: String!
+  isOnline: Boolean! @default(value: false)
+  isPinned: Boolean! @default(value: false)
+  isMuted: Boolean! @default(value: false)
+  isArchived: Boolean! @default(value: false)
+  lastReadMessageId: String
+}
+
+# ===== MESSAGE =====
+type Message @table {
+  id: String! @col(name: "id")
+  chat: Chat!
+  senderUserId: String! @default(value: "")
+  senderName: String!
+  text: String!
+  timestampMs: Int64!
+  timestampIso: String! @default(value: "")
+  mediaUrl: String
+  messageType: String! @default(value: "TEXT")
+  thumbnailUrl: String
+  aspectRatio: Float! @default(value: 1.0)
+  mediaWidth: Int! @default(value: 0)
+  mediaHeight: Int! @default(value: 0)
+  caption: String
+  audioDurationMs: Int64! @default(value: 0)
+  status: String! @default(value: "SENT")
+  deliveredAtMs: Int64
+  readAtMs: Int64
+  isMine: Boolean!
+  replyToMessageId: String
+  isEdited: Boolean! @default(value: false)
+}
+
+# ===== DIRECT MESSAGE =====
+type DirectMessage @table {
+  id: String! @col(name: "id")
+  sender: User! @ref(fields: ["senderId"], references: ["id"])
+  senderId: String!
+  receiver: User! @ref(fields: ["receiverId"], references: ["id"])
+  receiverId: String!
+  text: String!
+  timestamp: Int64!
+  timestampIso: String! @default(value: "")
+  deliveryStatus: String! @default(value: "SENT")
+  deliveredAtMs: Int64
+  readAtMs: Int64
+  isEncrypted: Boolean! @default(value: true)
+  encryptionAlgorithm: String! @default(value: "AES-256-GCM")
+  mediaUrl: String
+  messageType: String! @default(value: "TEXT")
+  thumbnailUrl: String
+  aspectRatio: Float! @default(value: 1.0)
+  mediaWidth: Int! @default(value: 0)
+  mediaHeight: Int! @default(value: 0)
+  caption: String
+  audioDurationMs: Int64! @default(value: 0)
+}
+
+# ===== FRIEND (Social/Follow) =====
+type Friend @table(key: ["userId", "friendUserId"]) {
+  userId: String!
+  friendUserId: String!
+  status: String! @default(value: "ACCEPTED")
+  isQrVerified: Boolean! @default(value: true)
+  createdAtTimestampMs: Int64!
+}
+
+# ===== VISITED LOG =====
+type VisitedLog @table {
+  id: String! @col(name: "id")
+  user: User! @ref(fields: ["userId"], references: ["id"])
+  userId: String!
+  club: Club! @ref(fields: ["clubId"], references: ["id"])
+  clubId: String!
+  clubName: String!
+  visitedAtTimestamp: Int64!
+  isVerifiedByGps: Boolean!
+}
+
+# ===== BLOCKED USER =====
+type BlockedUser @table(key: ["userId", "blockedUserId"]) {
+  userId: String!
+  blockedUserId: String!
+  reason: String
+  blockedAtTimestampMs: Int64!
+}
+
+# ===== LOCATION (GPS Tracking) =====
+type UserLocation @table {
+  id: String! @col(name: "id")
+  latitude: Float!
+  longitude: Float!
+  accuracy: Float!
+  timestampMs: Int64!
+  speed: Float! @default(value: 0.0)
+}

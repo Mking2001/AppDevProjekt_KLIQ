@@ -10,6 +10,7 @@ import com.kliq.app.data.model.MapStyleConfig
 import com.kliq.app.data.repository.ClubRepository
 import com.kliq.app.data.repository.LocationRepository
 import com.kliq.app.data.repository.UserRepository
+import com.kliq.app.data.seed.KlagenfurtSeedData
 import com.kliq.app.domain.usecase.CalculateUserDistanceUseCase
 import com.kliq.app.util.HapticFeedbackManager
 import com.kliq.app.util.UserDistanceFormatter
@@ -106,8 +107,8 @@ data class VenueItemUi(
     val category: String,
     val distance: String,
     val rating: Float = 0f,
-    val latitude: Double = 52.5200,
-    val longitude: Double = 13.4050,
+    val latitude: Double = KlagenfurtSeedData.CITY_LATITUDE,
+    val longitude: Double = KlagenfurtSeedData.CITY_LONGITUDE,
     val address: String = "",
     val activeEventTitle: String? = null,
     val isFavorite: Boolean = false,
@@ -236,7 +237,6 @@ class MapViewModel @Inject constructor(
         }
     }
 
-
     fun updateUserDistances(currentLat: Double, currentLng: Double) {
         viewModelScope.launch(defaultDispatcher) {
             val updatedUsers = allUsers.map { user ->
@@ -270,7 +270,6 @@ class MapViewModel @Inject constructor(
             }
         }
     }
-
 
     private fun updateFilteredAndClusteredVenues() {
         viewModelScope.launch(defaultDispatcher) {
@@ -334,109 +333,83 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Liefert Venue-Marker aus dem Klagenfurt-Demonstrationsdatensatz.
+     * Greift nur, solange die Room-Datenbank noch nicht befuellt ist, und verwendet
+     * dieselben IDs wie der Seed, damit die Navigation zum Club-Detail funktioniert.
+     */
     private fun getFallbackVenues(): List<VenueItemUi> {
-        return listOf(
+        return KlagenfurtSeedData.clubs().map { club ->
             VenueItemUi(
-                id = "1",
-                name = "Berghain / Panorama Bar",
-                category = "Club",
-                distance = "0.3 km",
-                rating = 4.9f,
-                latitude = 52.5112,
-                longitude = 13.4430,
-                address = "Am Wriezener Bahnhof, 10243 Berlin",
-                activeEventTitle = "Klubnacht",
-                currentCapacityPercent = 85,
-                totalLiveVisitors = 380,
-                malePercentage = 52,
-                femalePercentage = 48
-            ),
-            VenueItemUi(
-                id = "2",
-                name = "Watergate",
-                category = "Club",
-                distance = "0.7 km",
-                rating = 4.7f,
-                latitude = 52.5011,
-                longitude = 13.4452,
-                address = "Falckensteinstraße 49, 10997 Berlin",
-                activeEventTitle = "Watergate Night",
-                currentCapacityPercent = 60,
-                totalLiveVisitors = 210,
-                malePercentage = 48,
-                femalePercentage = 52
-            ),
-            VenueItemUi(
-                id = "3",
-                name = "KitKatClub",
-                category = "Club",
-                distance = "1.2 km",
-                rating = 4.6f,
-                latitude = 52.5114,
-                longitude = 13.4172,
-                address = "Köpenicker Str. 76, 10179 Berlin",
-                activeEventTitle = "Symbiotikka",
-                currentCapacityPercent = 90,
-                totalLiveVisitors = 295,
-                malePercentage = 50,
-                femalePercentage = 50
-            ),
-            VenueItemUi(
-                id = "4",
-                name = "Sunset Lounge",
-                category = "Bar",
-                distance = "1.5 km",
-                rating = 4.8f,
-                latitude = 52.5280,
-                longitude = 13.4100,
-                address = "Torstraße 140, 10119 Berlin",
-                currentCapacityPercent = 40,
-                totalLiveVisitors = 85,
-                malePercentage = 45,
-                femalePercentage = 55
+                id = club.id,
+                name = club.name,
+                category = club.category,
+                distance = "",
+                rating = club.averageRating.toFloat(),
+                latitude = club.latitude,
+                longitude = club.longitude,
+                address = club.address,
+                currentCapacityPercent = club.currentCapacityPercent,
+                totalLiveVisitors = club.totalLiveVisitors,
+                malePercentage = club.malePercentage,
+                femalePercentage = club.femalePercentage
             )
-        )
+        }
     }
 
+    /**
+     * Liefert Nutzer-Marker im Stadtgebiet Klagenfurt. Die IDs entsprechen den
+     * Profilen aus [KlagenfurtSeedData], damit Chat und Profilaufruf funktionieren.
+     */
     private fun getFallbackUsers(): List<UserMarkerUiState> {
         return listOf(
             UserMarkerUiState(
-                userId = "u1",
-                username = "Alex",
-                latitude = 52.5130,
-                longitude = 13.4410,
+                userId = "usr_lena",
+                username = "Lena P.",
+                latitude = 46.6162,
+                longitude = 14.2696,
                 isOnline = true,
-                statusMessage = "Looking for Techno party",
-                searchIntent = "Party",
-                isLocationSharingEnabled = true
-            ),
-            UserMarkerUiState(
-                userId = "u2",
-                username = "Sophie",
-                latitude = 52.5050,
-                longitude = 13.4480,
-                isOnline = true,
-                statusMessage = "Drinks at Watergate?",
+                statusMessage = "Sundowner an der Strandbar",
                 searchIntent = "Bar & Lounge",
                 isLocationSharingEnabled = true
             ),
             UserMarkerUiState(
-                userId = "u3",
-                username = "Leon",
-                latitude = 52.5180,
-                longitude = 13.4120,
+                userId = "usr_david",
+                username = "David M.",
+                latitude = 46.6108,
+                longitude = 14.3126,
+                isOnline = true,
+                statusMessage = "Floor 2 im Volksgarten",
+                searchIntent = "Party",
+                isLocationSharingEnabled = true
+            ),
+            UserMarkerUiState(
+                userId = "usr_tobias",
+                username = "Tobias R.",
+                latitude = 46.6251,
+                longitude = 14.3121,
+                isOnline = true,
+                statusMessage = "Soundcheck im Bollwerk",
+                searchIntent = "Live-Musik",
+                isLocationSharingEnabled = true
+            ),
+            UserMarkerUiState(
+                userId = "usr_sarah",
+                username = "Sarah H.",
+                latitude = 46.6247,
+                longitude = 14.3096,
                 isOnline = false,
-                statusMessage = "Chilling",
+                statusMessage = "Cocktail in der Altstadt",
                 searchIntent = "Chill",
                 isLocationSharingEnabled = true
             ),
             UserMarkerUiState(
-                userId = "u4",
-                username = "Private User",
-                latitude = 52.5200,
-                longitude = 13.4000,
+                userId = "usr_nina",
+                username = "Nina S.",
+                latitude = 46.6229,
+                longitude = 14.3067,
                 isOnline = false,
-                statusMessage = "Invisible",
+                statusMessage = "Standort privat",
                 searchIntent = null,
                 isLocationSharingEnabled = false
             )
@@ -472,9 +445,16 @@ class MapViewModel @Inject constructor(
         triggerAutoFitCameraAnimation()
     }
 
+    /**
+     * Zentriert die Karte auf die letzte bekannte GPS-Position.
+     * Liegt noch kein Fix vor, wird auf das Stadtzentrum Klagenfurt zurueckgefallen,
+     * damit der Nutzer nicht auf einer leeren Weltkarte landet.
+     */
     fun onLocationRequested() {
-        val targetLat = 52.5112
-        val targetLng = 13.4430
+        val lastKnown = locationRepository?.locationUpdates?.value
+        val targetLat = lastKnown?.latitude ?: KlagenfurtSeedData.CITY_LATITUDE
+        val targetLng = lastKnown?.longitude ?: KlagenfurtSeedData.CITY_LONGITUDE
+
         _uiState.update { state ->
             state.copy(
                 isLocationEnabled = true,
@@ -676,5 +656,3 @@ class MapViewModel @Inject constructor(
         blockedUserIds = emptySet()
     }
 }
-
-

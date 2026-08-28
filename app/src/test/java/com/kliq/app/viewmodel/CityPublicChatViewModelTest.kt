@@ -1,10 +1,12 @@
 package com.kliq.app.viewmodel
 
 import com.kliq.app.data.model.LocationData
-import com.kliq.app.data.repository.ChatRepository
 import com.kliq.app.data.repository.LocationRepository
+import com.kliq.app.data.repository.SessionRepository
 import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.data.util.CityChatLocationMapper
+import com.kliq.app.domain.CurrentUserProvider
+import com.kliq.app.testing.FakeChatRepository
 import com.kliq.app.ui.screens.chat.ChatListViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,27 +24,38 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.`when`
+import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 
+/**
+ * Prüft die GPS-gestützte Zuordnung des Stadt-Gruppenchats sowie den
+ * manuellen Stadtwechsel. Zielmarkt ist Klagenfurt.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CityPublicChatViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val userRepository: UserRepository = mock(UserRepository::class.java)
-    private val chatRepository: ChatRepository = mock(ChatRepository::class.java)
+    private val sessionRepository: SessionRepository = mock(SessionRepository::class.java)
     private val locationRepository: LocationRepository = mock(LocationRepository::class.java)
     private val locationUpdatesFlow = MutableStateFlow<LocationData?>(null)
 
+    private lateinit var chatRepository: FakeChatRepository
     private lateinit var viewModel: ChatListViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        `when`(userRepository.getBlockedUserIds("current_user")).thenReturn(flowOf(emptyList()))
-        `when`(chatRepository.getAllChats()).thenReturn(flowOf(emptyList()))
+        `when`(userRepository.getBlockedUserIds(anyString())).thenReturn(flowOf(emptyList()))
         `when`(locationRepository.locationUpdates).thenReturn(locationUpdatesFlow)
 
-        viewModel = ChatListViewModel(userRepository, chatRepository, locationRepository)
+        chatRepository = FakeChatRepository()
+        viewModel = ChatListViewModel(
+            chatRepository = chatRepository,
+            userRepository = userRepository,
+            locationRepository = locationRepository,
+            currentUserProvider = CurrentUserProvider(sessionRepository, userRepository)
+        )
     }
 
     @After
@@ -51,33 +64,52 @@ class CityPublicChatViewModelTest {
     }
 
     @Test
-    fun testLocationUpdatesReflectActiveGpsCityChat() = runTest {
-        val hamburgLocation = LocationData(latitude = 53.5511, longitude = 9.9937)
-        locationUpdatesFlow.value = hamburgLocation
+    fun locationUpdate_selectsNearestSupportedCity() = runTest {
+        val villachLocation = LocationData(latitude = 46.6103, longitude = 13.8558)
+        locationUpdatesFlow.value = villachLocation
         testDispatcher.scheduler.advanceUntilIdle()
 
         val activeChat = viewModel.uiState.value.activeGpsCityChat
         assertNotNull(activeChat)
-        assertEquals("Hamburg - Reeperbahn", activeChat?.title)
+        assertEquals("Villach - Party Radar", activeChat?.title)
         assertTrue(activeChat?.isGpsAssigned == true)
     }
 
     @Test
-    fun testManualCitySelectionUpdatesActiveChat() {
-        val munichConfig = CityChatLocationMapper.SUPPORTED_CITIES[1] // Munich
-        viewModel.selectCityChat(munichConfig)
+    fun locationUpdate_createsCityChatInRepository() = runTest {
+        locationUpdatesFlow.value = LocationData(latitude = 46.6236, longitude = 14.3084)
+        testDispatcher.scheduler.advanceUntilIdle()
 
-        val activeChat = viewModel.uiState.value.activeGpsCityChat
-        assertEquals("München - Party Radar", activeChat?.title)
-        assertFalse(viewModel.uiState.value.isCitySwitcherOpen)
+        val state = viewModel.uiState.value
+        assertTrue(state.publicChats.any { it.id == "pub_klagenfurt" })
     }
 
     @Test
-    fun testCitySwitcherOpenAndClose() {
+    fun manualCitySelection_updatesActiveChatAndClosesSwitcher() = runTest {
+        val grazConfig = CityChatLocationMapper.SUPPORTED_CITIES.first { it.cityRegion == "Graz" }
+
+        viewModel.selectCityChat(grazConfig)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals("Graz - Nightlife", viewModel.uiState.value.activeGpsCityChat?.title)
+        assertFalse(viewModel.uiState.value.isCitySwitcherOpen)
+        assertTrue(viewModel.uiState.value.publicChats.any { it.id == grazConfig.id })
+    }
+
+    @Test
+    fun citySwitcher_opensAndCloses() {
         viewModel.openCitySwitcher()
         assertTrue(viewModel.uiState.value.isCitySwitcherOpen)
 
         viewModel.closeCitySwitcher()
         assertFalse(viewModel.uiState.value.isCitySwitcherOpen)
+    }
+
+    @Test
+    fun defaultCity_isKlagenfurtWhenNoLocationAvailable() = runTest {
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val activeChat = viewModel.uiState.value.activeGpsCityChat
+        assertEquals("Klagenfurt - Tonight", activeChat?.title)
     }
 }

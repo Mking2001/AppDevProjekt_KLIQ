@@ -1,0 +1,298 @@
+# ============================================================
+# KLIQ Queries — Firebase Data Connect
+# ============================================================
+
+# ===== USER Queries =====
+query GetUserById($id: String!) @auth(level: USER) {
+  user(id: $id) {
+    id
+    username
+    email
+    age
+    hometown
+    profilePictureUrl
+    bio
+    phoneNumber
+    isVerified
+    gender
+    updatedAt
+  }
+}
+
+query ListUsers @auth(level: USER) {
+  users {
+    id
+    username
+    profilePictureUrl
+    isVerified
+    gender
+  }
+}
+
+query GetUserPreferences($userId: String!) @auth(level: USER) {
+  userPreferences(where: { userId: { eq: $userId } }) {
+    userId
+    isDarkMode
+    searchRadiusKm
+    pushNotificationsEnabled
+    searchIntent
+    smokingHabit
+    drinkingHabit
+  }
+}
+
+# ===== CLUB Queries =====
+query GetAllClubs @auth(level: PUBLIC) {
+  clubs {
+    id
+    name
+    latitude
+    longitude
+    address
+    category
+    rating
+    imageUrl
+    region
+    city
+    currentCapacityPercent
+    malePercentage
+    femalePercentage
+    totalLiveVisitors
+    isFavorite
+    isPromoted
+  }
+}
+
+query GetClubById($id: String!) @auth(level: PUBLIC) {
+  club(id: $id) {
+    id
+    name
+    latitude
+    longitude
+    address
+    geofenceRadiusMeters
+    averageRating
+    openingHoursJson
+    category
+    rating
+    imageUrl
+    region
+    city
+    postalCode
+    websiteUrl
+    phoneNumber
+    contactEmail
+    instagramHandle
+    currentCapacityPercent
+    malePercentage
+    femalePercentage
+    totalLiveVisitors
+    externalSearchTags
+    isFavorite
+    isPromoted
+  }
+}
+
+query GetClubsByRegion($region: String!) @auth(level: PUBLIC) {
+  clubs(where: { region: { eq: $region } }) {
+    id
+    name
+    latitude
+    longitude
+    address
+    category
+    rating
+    imageUrl
+    city
+  }
+}
+
+query GetClubsByCity($city: String!) @auth(level: PUBLIC) {
+  clubs(where: { city: { eq: $city } }) {
+    id
+    name
+    latitude
+    longitude
+    address
+    category
+    rating
+    imageUrl
+    region
+  }
+}
+
+# ===== EVENT Queries =====
+query GetEventsByClub($clubId: String!) @auth(level: PUBLIC) {
+  events(where: { club: { id: { eq: $clubId } } }) {
+    id
+    title
+    description
+    startTime
+    endTime
+    price
+    time
+    imageUrl
+    category
+    isCancelled
+    capacityLimit
+  }
+}
+
+# ===== CLUB OFFER Queries =====
+query GetOffersByClub($clubId: String!) @auth(level: PUBLIC) {
+  clubOffers(where: { club: { id: { eq: $clubId } } }) {
+    id
+    title
+    description
+    offerType
+    discountCode
+    discountPercentage
+    validUntil
+    imageUrl
+    isExclusive
+  }
+}
+
+# ===== REVIEW Queries =====
+query GetReviewsByClub($clubId: String!) @auth(level: PUBLIC) {
+  reviews(where: { clubId: { eq: $clubId } }) {
+    id
+    reviewerUserId
+    reviewerUsername
+    reviewerAvatarUrl
+    rating
+    text
+    timestamp
+    isVerified
+    verificationMethod
+    helpfulVotesCount
+  }
+}
+
+query GetReviewsByUser($userId: String!) @auth(level: USER) {
+  reviews(where: { reviewerUserId: { eq: $userId } }) {
+    id
+    clubId
+    rating
+    text
+    timestamp
+    isVerified
+  }
+}
+
+query GetReviewsForTargetUser($targetUserId: String!) @auth(level: USER) {
+  reviews(where: { targetUserId: { eq: $targetUserId } }) {
+    id
+    reviewerUserId
+    reviewerUsername
+    rating
+    text
+    timestamp
+    isVerified
+    verificationMethod
+  }
+}
+
+# ===== CHAT Queries =====
+query GetAllChats @auth(level: USER) {
+  chats {
+    id
+    name
+    chatType
+    cityRegion
+    lastMessageText
+    lastMessageTimestampMs
+    lastMessageTimestampIso
+    avatarInitial
+    avatarUrl
+    unreadCount
+    isOnline
+    isPinned
+    isMuted
+    isArchived
+  }
+}
+
+query GetMessagesByChat($chatId: String!) @auth(level: USER) {
+  messages(
+    where: { chat: { id: { eq: $chatId } } }
+    orderBy: [{ timestampMs: ASC }]
+  ) {
+    id
+    senderUserId
+    senderName
+    text
+    timestampMs
+    timestampIso
+    mediaUrl
+    messageType
+    thumbnailUrl
+    caption
+    audioDurationMs
+    status
+    deliveredAtMs
+    readAtMs
+    isMine
+    replyToMessageId
+    isEdited
+  }
+}
+
+# ===== DIRECT MESSAGE Queries =====
+query GetDirectMessages($senderId: String!, $receiverId: String!) @auth(level: USER) {
+  directMessages(
+    where: {
+      _or: [
+        { senderId: { eq: $senderId }, receiverId: { eq: $receiverId } }
+        { senderId: { eq: $receiverId }, receiverId: { eq: $senderId } }
+      ]
+    }
+    orderBy: [{ timestamp: ASC }]
+  ) {
+    id
+    senderId
+    receiverId
+    text
+    timestamp
+    deliveryStatus
+    mediaUrl
+    messageType
+    caption
+    audioDurationMs
+  }
+}
+
+# ===== FRIEND (Social) Queries =====
+query GetFriendsByUser($userId: String!) @auth(level: USER) {
+  friends(where: { userId: { eq: $userId }, status: { eq: "ACCEPTED" } }) {
+    userId
+    friendUserId
+    status
+    isQrVerified
+    createdAtTimestampMs
+  }
+}
+
+# ===== VISITED LOG Queries =====
+query GetVisitedLogsByUser($userId: String!) @auth(level: USER) {
+  visitedLogs(
+    where: { userId: { eq: $userId } }
+    orderBy: [{ visitedAtTimestamp: DESC }]
+  ) {
+    id
+    clubId
+    clubName
+    visitedAtTimestamp
+    isVerifiedByGps
+  }
+}
+
+# ===== BLOCKED USER Queries =====
+query GetBlockedUsers($userId: String!) @auth(level: USER) {
+  blockedUsers(where: { userId: { eq: $userId } }) {
+    userId
+    blockedUserId
+    reason
+    blockedAtTimestampMs
+  }
+}

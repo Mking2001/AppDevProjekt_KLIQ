@@ -57,8 +57,6 @@ import com.kliq.app.viewmodel.GroupPresenceViewModel
 @Composable
 fun ChatDetailScreen(
     chatId: String,
-    chatTitle: String = "Berlin - Tonight",
-    chatType: ChatType = ChatType.PUBLIC_CITY,
     onNavigateBack: () -> Unit,
     chatViewModel: ChatDetailViewModel = hiltViewModel(),
     presenceViewModel: GroupPresenceViewModel = hiltViewModel()
@@ -69,8 +67,14 @@ fun ChatDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
 
+    val chatType = chatUiState.chatType
+    val chatTitle = chatUiState.conversationName
+
     LaunchedEffect(chatId) {
         chatViewModel.loadConversation(chatId)
+    }
+
+    LaunchedEffect(chatId, chatType) {
         if (chatType == ChatType.PUBLIC_CITY) {
             presenceViewModel.loadGroupPresence(chatId)
         }
@@ -113,7 +117,7 @@ fun ChatDetailScreen(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = chatTitle.take(1),
+                                    text = chatUiState.conversationInitial.ifBlank { chatTitle.take(1) },
                                     style = MaterialTheme.typography.labelLarge,
                                     color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Bold

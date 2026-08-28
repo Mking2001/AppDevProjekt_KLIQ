@@ -1,33 +1,35 @@
 package com.kliq.app.ui.screens.chat
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.model.ChatMessage
-import com.kliq.app.data.model.MessageStatus
-import com.kliq.app.data.model.formatMsToIso
+import com.kliq.app.data.model.ChatType
+import com.kliq.app.data.model.MessageType
+import com.kliq.app.data.repository.ChatRepository
 import com.kliq.app.data.repository.UserRepository
+import com.kliq.app.domain.CurrentUserProvider
+import com.kliq.app.util.ImageCompressor
+import com.kliq.app.util.VoicePlayerManager
+import com.kliq.app.util.VoiceRecorderManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import android.content.Context
-import android.net.Uri
-import com.kliq.app.data.model.MessageType
-import com.kliq.app.util.ImageCompressor
-import com.kliq.app.util.VoicePlayerManager
-import com.kliq.app.util.VoiceRecorderManager
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ChatDetailUiState(
     val conversationName: String = "",
     val conversationInitial: String = "",
     val targetUserId: String = "",
+    val chatType: ChatType = ChatType.PRIVATE,
     val messages: List<ChatMessage> = emptyList(),
     val currentInput: String = "",
     val selectedImageUri: String? = null,
@@ -49,9 +51,18 @@ data class ChatDetailUiState(
     val errorMessage: String? = null
 )
 
+/**
+ * ViewModel für den Chat-Detail-Screen.
+ *
+ * Nachrichten werden ausschließlich über das [ChatRepository] gelesen und geschrieben.
+ * Der Nachrichtenverlauf liegt damit in der Room-Datenbank und überlebt das Verlassen
+ * des Screens. Beim Öffnen eines Chats wird der Ungelesen-Zähler zurückgesetzt.
+ */
 @HiltViewModel
 class ChatDetailViewModel @Inject constructor(
+    private val chatRepository: ChatRepository,
     private val userRepository: UserRepository,
+    private val currentUserProvider: CurrentUserProvider,
     private val imageCompressor: ImageCompressor,
     private val voiceRecorderManager: VoiceRecorderManager,
     private val voicePlayerManager: VoicePlayerManager
@@ -60,29 +71,160 @@ class ChatDetailViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ChatDetailUiState())
     val uiState: StateFlow<ChatDetailUiState> = _uiState.asStateFlow()
 
-    private var messageCounter = 100
     private var currentChatId: String = ""
     private var recordingTickerJob: Job? = null
+    private var messageObserverJob: Job? = null
+    private var chatObserverJob: Job? = null
+    private var blockObserverJob: Job? = null
 
+    /**
+     * Bindet den Screen an einen Chat. Legt den Chat an, falls er noch nicht existiert,
+     * beobachtet Metadaten und Nachrichtenverlauf und markiert den Chat als gelesen.
+     *
+     * Chat-Typ und Ersatztitel werden aus der ID abgeleitet, damit der Screen selbst
+     * keine Annahmen über den Chat treffen muss.
+     *
+     * @param chatId ID des Chats. Bei Einstieg aus einem Nutzerprofil hat sie die Form `chat_<userId>`.
+     */
     fun loadConversation(chatId: String) {
+        if (chatId.isBlank()) return
+
+        val chatType = resolveChatType(chatId)
+        val fallbackTitle = resolveFallbackTitle(chatId, chatType)
+
         currentChatId = chatId
-        val (name, initial, online, targetId, messages) = getMockConversation(chatId)
         _uiState.update {
             it.copy(
-                conversationName = name,
-                conversationInitial = initial,
-                targetUserId = targetId,
-                messages = messages,
-                isOnline = online
+                targetUserId = resolveTargetUserId(chatId),
+                chatType = chatType
             )
         }
 
         viewModelScope.launch {
-            userRepository.isUserBlocked("current_user", targetId)
+            chatRepository.createChatIfMissing(
+                chatId = chatId,
+                name = fallbackTitle,
+                chatType = chatType
+            ).onFailure { error ->
+                _uiState.update {
+                    it.copy(errorMessage = "Chat konnte nicht geöffnet werden: ${error.localizedMessage}")
+                }
+            }
+
+            chatRepository.markChatAsRead(chatId)
+            chatRepository.markAllSentMessagesAsDelivered(chatId)
+        }
+
+        observeChatMetadata(chatId)
+        observeMessages(chatId)
+        observeBlockedState()
+    }
+
+    private fun observeChatMetadata(chatId: String) {
+        chatObserverJob?.cancel()
+        chatObserverJob = viewModelScope.launch {
+            chatRepository.getChatById(chatId)
+                .catch { error ->
+                    _uiState.update {
+                        it.copy(errorMessage = "Chatdaten konnten nicht geladen werden: ${error.localizedMessage}")
+                    }
+                }
+                .collect { conversation ->
+                    if (conversation == null) return@collect
+                    _uiState.update { state ->
+                        state.copy(
+                            conversationName = conversation.name,
+                            conversationInitial = conversation.avatarInitial,
+                            chatType = conversation.chatType,
+                            isOnline = conversation.isOnline
+                        )
+                    }
+                }
+        }
+    }
+
+    private fun observeMessages(chatId: String) {
+        messageObserverJob?.cancel()
+        messageObserverJob = viewModelScope.launch {
+            chatRepository.getMessagesForChat(chatId)
+                .catch { error ->
+                    _uiState.update {
+                        it.copy(errorMessage = "Nachrichten konnten nicht geladen werden: ${error.localizedMessage}")
+                    }
+                }
+                .collect { messages ->
+                    _uiState.update { it.copy(messages = withDateHeaders(messages)) }
+                }
+        }
+    }
+
+    private fun observeBlockedState() {
+        blockObserverJob?.cancel()
+        blockObserverJob = viewModelScope.launch {
+            val currentUserId = currentUserProvider.userId()
+            val targetId = _uiState.value.targetUserId
+            if (targetId.isBlank()) return@launch
+
+            userRepository.isUserBlocked(currentUserId, targetId)
                 .catch { }
                 .collect { isBlocked ->
                     _uiState.update { it.copy(isBlocked = isBlocked) }
                 }
+        }
+    }
+
+    /**
+     * Leitet den Chat-Typ aus der ID-Konvention ab. Stadt-Gruppenchats
+     * verwenden das Praefix `pub_`, alles andere gilt als Direktnachricht.
+     */
+    private fun resolveChatType(chatId: String): ChatType =
+        if (chatId.startsWith("pub_")) ChatType.PUBLIC_CITY else ChatType.PRIVATE
+
+    /**
+     * Ersatztitel, falls der Chat erstmalig angelegt wird und noch kein
+     * Datensatz mit Anzeigename vorliegt.
+     */
+    private fun resolveFallbackTitle(chatId: String, chatType: ChatType): String = when {
+        chatType == ChatType.PUBLIC_CITY -> "Kliq Stadt-Chat"
+        chatId.startsWith("chat_") -> "Direktnachricht"
+        else -> "Kliq Chat"
+    }
+
+    /**
+     * Leitet die Gegenstellen-ID aus der Chat-ID ab.
+     * Unterstützt die Konventionen `chat_<userId>` und `priv_<name>`.
+     */
+    private fun resolveTargetUserId(chatId: String): String = when {
+        chatId.startsWith("chat_") -> chatId.removePrefix("chat_")
+        chatId.startsWith("priv_") -> "usr_${chatId.removePrefix("priv_")}"
+        else -> chatId
+    }
+
+    /**
+     * Setzt Datumstrenner auf die erste Nachricht jedes Kalendertags.
+     */
+    private fun withDateHeaders(messages: List<ChatMessage>): List<ChatMessage> {
+        var lastDay = ""
+        return messages.map { message ->
+            val day = message.timestampIso.take(10)
+            if (day != lastDay) {
+                lastDay = day
+                message.copy(dateHeader = formatDateHeader(message.timestampMs))
+            } else {
+                message.copy(dateHeader = null)
+            }
+        }
+    }
+
+    private fun formatDateHeader(timestampMs: Long): String {
+        val dayMs = 24L * 60L * 60L * 1000L
+        val today = System.currentTimeMillis() / dayMs
+        val messageDay = timestampMs / dayMs
+        return when (today - messageDay) {
+            0L -> "Heute"
+            1L -> "Gestern"
+            else -> java.text.SimpleDateFormat("dd.MM.yyyy", java.util.Locale.GERMAN)
+                .format(java.util.Date(timestampMs))
         }
     }
 
@@ -91,56 +233,50 @@ class ChatDetailViewModel @Inject constructor(
         _uiState.update { it.copy(currentInput = input) }
     }
 
+    /**
+     * Persistiert die eingegebene Textnachricht und leert das Eingabefeld.
+     * Die Liste wird über den Room-Flow aktualisiert, nicht lokal fortgeschrieben.
+     */
     fun onSendMessage() {
         if (_uiState.value.isBlocked) return
         val text = _uiState.value.currentInput.trim()
-        if (text.isEmpty()) return
+        if (text.isEmpty() || currentChatId.isBlank()) return
 
-        val now = System.currentTimeMillis()
-        val newMessage = ChatMessage(
-            id = "msg_${messageCounter++}",
-            chatId = currentChatId.ifBlank { "mock_chat" },
-            senderUserId = "usr_current",
-            senderName = "Du",
-            text = text,
-            timestampMs = now,
-            timestampIso = formatMsToIso(now),
-            status = MessageStatus.SENT,
-            isMine = true
-        )
+        _uiState.update { it.copy(currentInput = "") }
 
-        _uiState.update { state ->
-            state.copy(
-                messages = state.messages + newMessage,
-                currentInput = ""
-            )
+        viewModelScope.launch {
+            val senderId = currentUserProvider.userId()
+
+            chatRepository.sendTextMessage(
+                chatId = currentChatId,
+                senderUserId = senderId,
+                senderName = "Du",
+                text = text
+            ).onSuccess { message ->
+                advanceMessageStatus(message.id)
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        currentInput = text,
+                        errorMessage = "Nachricht konnte nicht gesendet werden: ${error.localizedMessage}"
+                    )
+                }
+            }
         }
-
-        simulateMessageStatusTransition(newMessage.id)
     }
 
-    private fun simulateMessageStatusTransition(messageId: String) {
+    /**
+     * Führt den Zustellungs- und Lesestatus einer gesendeten Nachricht nach.
+     * Die Statuswerte werden in der Datenbank aktualisiert und bleiben erhalten.
+     */
+    private fun advanceMessageStatus(messageId: String) {
         viewModelScope.launch {
-            kotlinx.coroutines.delay(1200)
-            _uiState.update { state ->
-                val updatedMessages = state.messages.map { msg ->
-                    if (msg.id == messageId) {
-                        msg.copy(status = MessageStatus.DELIVERED, deliveredAtMs = System.currentTimeMillis())
-                    } else msg
-                }
-                state.copy(messages = updatedMessages)
-            }
+            delay(DELIVERY_DELAY_MS)
+            chatRepository.markMessageAsDelivered(messageId)
 
             if (_uiState.value.isOnline) {
-                kotlinx.coroutines.delay(2000)
-                _uiState.update { state ->
-                    val updatedMessages = state.messages.map { msg ->
-                        if (msg.id == messageId) {
-                            msg.copy(status = MessageStatus.READ, readAtMs = System.currentTimeMillis())
-                        } else msg
-                    }
-                    state.copy(messages = updatedMessages)
-                }
+                delay(READ_DELAY_MS)
+                chatRepository.markMessageAsRead(messageId)
             }
         }
     }
@@ -172,9 +308,13 @@ class ChatDetailViewModel @Inject constructor(
         _uiState.update { it.copy(selectedImageUri = null, imageCaption = "", isCompressingImage = false) }
     }
 
+    /**
+     * Komprimiert das ausgewählte Bild, speichert es lokal und persistiert
+     * die zugehörige Bildnachricht.
+     */
     fun sendSelectedImage(context: Context) {
         val imageUriString = _uiState.value.selectedImageUri ?: return
-        if (_uiState.value.isBlocked) return
+        if (_uiState.value.isBlocked || currentChatId.isBlank()) return
 
         _uiState.update { it.copy(isCompressingImage = true) }
 
@@ -182,40 +322,43 @@ class ChatDetailViewModel @Inject constructor(
             try {
                 val uri = Uri.parse(imageUriString)
                 val compressedResult = imageCompressor.compressAndSaveImage(context, uri)
-                val now = System.currentTimeMillis()
+                val caption = _uiState.value.imageCaption
+                val senderId = currentUserProvider.userId()
 
-                val newMediaMessage = ChatMessage(
-                    id = "msg_${messageCounter++}",
-                    chatId = currentChatId.ifBlank { "mock_chat" },
-                    senderUserId = "usr_current",
+                chatRepository.sendMediaMessage(
+                    chatId = currentChatId,
+                    senderUserId = senderId,
                     senderName = "Du",
-                    text = _uiState.value.imageCaption.ifBlank { "📷 Foto" },
-                    timestampMs = now,
-                    timestampIso = formatMsToIso(now),
+                    text = caption.ifBlank { "Foto" },
                     mediaUrl = compressedResult.mediaUrl,
+                    messageType = MessageType.IMAGE,
                     thumbnailUrl = compressedResult.thumbnailUrl,
                     aspectRatio = compressedResult.aspectRatio,
                     mediaWidth = compressedResult.width,
                     mediaHeight = compressedResult.height,
-                    captionText = _uiState.value.imageCaption,
-                    messageType = MessageType.IMAGE,
-                    status = MessageStatus.SENT,
-                    isMine = true
-                )
-
-                _uiState.update { state ->
-                    state.copy(
-                        messages = state.messages + newMediaMessage,
-                        selectedImageUri = null,
-                        imageCaption = "",
-                        isCompressingImage = false
-                    )
+                    captionText = caption.ifBlank { null }
+                ).onSuccess { message ->
+                    _uiState.update {
+                        it.copy(
+                            selectedImageUri = null,
+                            imageCaption = "",
+                            isCompressingImage = false
+                        )
+                    }
+                    advanceMessageStatus(message.id)
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isCompressingImage = false,
+                            errorMessage = "Bild konnte nicht gesendet werden: ${error.localizedMessage}"
+                        )
+                    }
                 }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
                         isCompressingImage = false,
-                        errorMessage = "Fehler beim Komprimieren/Senden des Bildes: ${e.localizedMessage}"
+                        errorMessage = "Fehler beim Komprimieren des Bildes: ${e.localizedMessage}"
                     )
                 }
             }
@@ -233,7 +376,7 @@ class ChatDetailViewModel @Inject constructor(
     fun reportUser(reason: String, details: String = "") {
         val targetId = _uiState.value.targetUserId
         viewModelScope.launch {
-            userRepository.reportUser("current_user", targetId, reason, details)
+            userRepository.reportUser(currentUserProvider.userId(), targetId, reason, details)
             _uiState.update {
                 it.copy(
                     isReportDialogVisible = false,
@@ -262,7 +405,7 @@ class ChatDetailViewModel @Inject constructor(
     fun confirmBlockUser(reason: String? = null) {
         val targetId = _uiState.value.targetUserId
         viewModelScope.launch {
-            userRepository.blockUser("current_user", targetId, reason)
+            userRepository.blockUser(currentUserProvider.userId(), targetId, reason)
             _uiState.update {
                 it.copy(
                     isBlocked = true,
@@ -276,7 +419,7 @@ class ChatDetailViewModel @Inject constructor(
     fun unblockUser() {
         val targetId = _uiState.value.targetUserId
         viewModelScope.launch {
-            userRepository.unblockUser("current_user", targetId)
+            userRepository.unblockUser(currentUserProvider.userId(), targetId)
             _uiState.update {
                 it.copy(
                     isBlocked = false,
@@ -314,17 +457,20 @@ class ChatDetailViewModel @Inject constructor(
                 val duration = System.currentTimeMillis() - startTime
                 val amp = voiceRecorderManager.getMaxAmplitudeNormalized()
                 _uiState.update { state ->
-                    val updatedAmplitudes = (state.recordingAmplitudes + amp).takeLast(30)
+                    val updatedAmplitudes = (state.recordingAmplitudes + amp).takeLast(RECORDING_WAVEFORM_SAMPLES)
                     state.copy(
                         recordingDurationMs = duration,
                         recordingAmplitudes = updatedAmplitudes
                     )
                 }
-                delay(100)
+                delay(RECORDING_TICK_MS)
             }
         }
     }
 
+    /**
+     * Beendet die Aufnahme und persistiert die Sprachnachricht.
+     */
     fun stopAndSendVoiceRecording() {
         recordingTickerJob?.cancel()
         recordingTickerJob = null
@@ -338,28 +484,24 @@ class ChatDetailViewModel @Inject constructor(
             )
         }
 
-        if (result != null) {
-            val now = System.currentTimeMillis()
-            val newVoiceMsg = ChatMessage(
-                id = "msg_${messageCounter++}",
-                chatId = currentChatId.ifBlank { "mock_chat" },
-                senderUserId = "usr_current",
+        if (result == null || currentChatId.isBlank()) return
+
+        viewModelScope.launch {
+            val senderId = currentUserProvider.userId()
+
+            chatRepository.sendVoiceMessage(
+                chatId = currentChatId,
+                senderUserId = senderId,
                 senderName = "Du",
-                text = "🎤 Sprachnachricht",
-                timestampMs = now,
-                timestampIso = formatMsToIso(now),
-                mediaUrl = result.filePath,
-                messageType = MessageType.VOICE,
-                audioDurationMs = result.durationMs,
-                status = MessageStatus.SENT,
-                isMine = true
-            )
-
-            _uiState.update { state ->
-                state.copy(messages = state.messages + newVoiceMsg)
+                audioUrl = result.filePath,
+                audioDurationMs = result.durationMs
+            ).onSuccess { message ->
+                advanceMessageStatus(message.id)
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(errorMessage = "Sprachnachricht konnte nicht gesendet werden: ${error.localizedMessage}")
+                }
             }
-
-            simulateMessageStatusTransition(newVoiceMsg.id)
         }
     }
 
@@ -422,116 +564,10 @@ class ChatDetailViewModel @Inject constructor(
         voicePlayerManager.release()
     }
 
-    private fun getMockConversation(chatId: String): ConversationData {
-        val now = System.currentTimeMillis()
-        return when (chatId) {
-            "pub_1" -> ConversationData(
-                name = "Berlin - Tonight",
-                initial = "B",
-                isOnline = false,
-                targetUserId = "usr_pub_group",
-                messages = listOf(
-                    ChatMessage(
-                        id = "1",
-                        chatId = chatId,
-                        senderUserId = "usr_1",
-                        senderName = "Max K.",
-                        text = "Hey Leute, wer ist heute dabei?",
-                        timestampMs = now - 3600000L,
-                        timestampIso = formatMsToIso(now - 3600000L),
-                        mediaUrl = null,
-                        status = MessageStatus.READ,
-                        isMine = false,
-                        dateHeader = "Heute"
-                    ),
-                    ChatMessage(
-                        id = "2",
-                        chatId = chatId,
-                        senderUserId = "usr_2",
-                        senderName = "Du",
-                        text = "Bin auf jeden Fall am Start! 🙋‍♂️",
-                        timestampMs = now - 3000000L,
-                        timestampIso = formatMsToIso(now - 3000000L),
-                        mediaUrl = null,
-                        status = MessageStatus.READ,
-                        isMine = true
-                    ),
-                    ChatMessage(
-                        id = "3",
-                        chatId = chatId,
-                        senderUserId = "usr_3",
-                        senderName = "Lisa W.",
-                        text = "Ich auch! Komme direkt nach der Arbeit",
-                        timestampMs = now - 2400000L,
-                        timestampIso = formatMsToIso(now - 2400000L),
-                        mediaUrl = null,
-                        status = MessageStatus.READ,
-                        isMine = false
-                    )
-                )
-            )
-            "priv_1" -> ConversationData(
-                name = "Lisa W.",
-                initial = "L",
-                isOnline = true,
-                targetUserId = "usr_3",
-                messages = listOf(
-                    ChatMessage(
-                        id = "1",
-                        chatId = chatId,
-                        senderUserId = "usr_2",
-                        senderName = "Du",
-                        text = "Hey Lisa! Kommst du heute Abend?",
-                        timestampMs = now - 7200000L,
-                        timestampIso = formatMsToIso(now - 7200000L),
-                        mediaUrl = null,
-                        status = MessageStatus.READ,
-                        isMine = true,
-                        dateHeader = "Heute"
-                    ),
-                    ChatMessage(
-                        id = "2",
-                        chatId = chatId,
-                        senderUserId = "usr_3",
-                        senderName = "Lisa W.",
-                        text = "Hey! Ja klar, freue mich schon 🥳",
-                        timestampMs = now - 3600000L,
-                        timestampIso = formatMsToIso(now - 3600000L),
-                        mediaUrl = "https://kliq-app.de/uploads/sample.jpg",
-                        status = MessageStatus.READ,
-                        isMine = false
-                    )
-                )
-            )
-            else -> ConversationData(
-                name = "Unbekannter Chat",
-                initial = "?",
-                isOnline = false,
-                targetUserId = "usr_unknown",
-                messages = listOf(
-                    ChatMessage(
-                        id = "1",
-                        chatId = chatId,
-                        senderUserId = "usr_sys",
-                        senderName = "System",
-                        text = "Willkommen im Chat!",
-                        timestampMs = now,
-                        timestampIso = formatMsToIso(now),
-                        mediaUrl = null,
-                        status = MessageStatus.READ,
-                        isMine = false,
-                        dateHeader = "Heute"
-                    )
-                )
-            )
-        }
+    private companion object {
+        const val DELIVERY_DELAY_MS = 1_200L
+        const val READ_DELAY_MS = 2_000L
+        const val RECORDING_TICK_MS = 100L
+        const val RECORDING_WAVEFORM_SAMPLES = 30
     }
-
-    private data class ConversationData(
-        val name: String,
-        val initial: String,
-        val isOnline: Boolean,
-        val targetUserId: String,
-        val messages: List<ChatMessage>
-    )
 }

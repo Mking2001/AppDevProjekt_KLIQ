@@ -1,6 +1,7 @@
 package com.kliq.app.ui.navigation
 
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -16,9 +17,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
@@ -31,6 +35,10 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navDeepLink
 import com.kliq.app.data.model.ChatPushPayload
+import com.kliq.app.ui.components.KliqAboutDialog
+import com.kliq.app.ui.components.KliqSettingsDialog
+import com.kliq.app.ui.components.clearApplicationCache
+import com.kliq.app.ui.components.openAppNotificationSettings
 import com.kliq.app.ui.screens.auth.PhoneLoginScreen
 import com.kliq.app.ui.screens.chat.ChatDetailScreen
 import com.kliq.app.ui.screens.chat.ChatListScreen
@@ -83,6 +91,10 @@ fun KliqMainScaffold(
     navController: NavHostController = rememberNavController()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val themeState by themeViewModel.themeState.collectAsStateWithLifecycle()
+    var isSettingsDialogVisible by remember { mutableStateOf(false) }
+    var isAboutDialogVisible by remember { mutableStateOf(false) }
     val navigationState by navigationViewModel.navigationState.collectAsStateWithLifecycle()
     val topBarState by topBarViewModel.uiState.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -159,14 +171,14 @@ fun KliqMainScaffold(
                 onDismissMenu = topBarViewModel::dismissMenu,
                 onMenuAction = { action ->
                     when (action) {
-                        TopBarMenuAction.Settings -> { /* Settings-Screen öffnen */ }
+                        TopBarMenuAction.Settings -> { isSettingsDialogVisible = true }
                         TopBarMenuAction.EditProfile -> {
                             navController.navigate(NavigationRoute.Profile.route) {
                                 launchSingleTop = true
                             }
                         }
                         TopBarMenuAction.ToggleTheme -> { themeViewModel.toggleTheme() }
-                        TopBarMenuAction.About -> { /* About-Dialog anzeigen */ }
+                        TopBarMenuAction.About -> { isAboutDialogVisible = true }
                         TopBarMenuAction.Logout -> {
                             authViewModel.logout()
                             navController.navigate(CoreRoutes.PHONE_LOGIN) {
@@ -180,6 +192,11 @@ fun KliqMainScaffold(
                         launchSingleTop = true
                     }
                 },
+                onNavigateToChatDetail = { chatId ->
+                    navController.navigate(ChatRoutes.chatDetail(chatId)) {
+                        launchSingleTop = true
+                    }
+                },
                 onNavigateToClub = { clubId ->
                     navController.navigate(ClubRoutes.clubDetail(clubId)) {
                         launchSingleTop = true
@@ -188,6 +205,27 @@ fun KliqMainScaffold(
             )
         }
     }
+
+    KliqSettingsDialog(
+        isVisible = isSettingsDialogVisible,
+        themeMode = themeState.themeMode,
+        onToggleTheme = { themeViewModel.toggleTheme() },
+        onOpenNotificationSettings = { openAppNotificationSettings(context) },
+        onClearCache = {
+            val removed = clearApplicationCache(context)
+            Toast.makeText(
+                context,
+                if (removed > 0) "Cache geleert ($removed Einträge)." else "Der Cache war bereits leer.",
+                Toast.LENGTH_SHORT
+            ).show()
+        },
+        onDismiss = { isSettingsDialogVisible = false }
+    )
+
+    KliqAboutDialog(
+        isVisible = isAboutDialogVisible,
+        onDismiss = { isAboutDialogVisible = false }
+    )
 }
 
 @Composable
@@ -202,6 +240,7 @@ private fun KliqNavHost(
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
     onNavigateToChat: () -> Unit,
+    onNavigateToChatDetail: (String) -> Unit,
     onNavigateToClub: (String) -> Unit
 ) {
     val routes = NavigationRoute.bottomBarItems.map { it.route }
@@ -273,7 +312,9 @@ private fun KliqNavHost(
                 topBarState = topBarState,
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
-                onMenuAction = onMenuAction
+                onMenuAction = onMenuAction,
+                onNavigateToClub = onNavigateToClub,
+                onNavigateToChat = onNavigateToChatDetail
             )
         }
         composable(NavigationRoute.Notifications.route) {
@@ -294,7 +335,8 @@ private fun KliqNavHost(
                     navController.navigate(ProfileRoutes.QR_SCANNER) {
                         launchSingleTop = true
                     }
-                }
+                },
+                onNavigateToClub = onNavigateToClub
             )
         }
         composable(NavigationRoute.ProfileCreation.route) {

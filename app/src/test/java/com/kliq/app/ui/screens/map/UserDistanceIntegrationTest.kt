@@ -120,42 +120,43 @@ class UserDistanceIntegrationTest {
 
     @Test
     fun testUpdateUserDistances_exactMatchCoordinates_returnsZeroMeters() {
-        // Alex (u1) is at 52.5130, 13.4410 in fallback list
-        viewModel.updateUserDistances(52.5130, 13.4410)
+        // Lena (usr_lena) ist im Klagenfurt-Fallback-Datensatz an der Strandbar Loretto
+        // positioniert: 46.6162, 14.2696 (siehe MapViewModel.getFallbackUsers()).
+        viewModel.updateUserDistances(46.6162, 14.2696)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val alex = viewModel.uiState.value.userMarkers.first { it.userId == "u1" }
-        assertNotNull(alex.distanceMeters)
-        assertEquals(0.0, alex.distanceMeters!!, 0.1)
-        assertEquals("0 m", alex.formattedDistance)
+        val lena = viewModel.uiState.value.userMarkers.first { it.userId == "usr_lena" }
+        assertNotNull(lena.distanceMeters)
+        assertEquals(0.0, lena.distanceMeters!!, 0.1)
+        assertEquals("0 m", lena.formattedDistance)
     }
 
     @Test
     fun testUpdateUserDistances_farAwayCoordinates_formatsInKilometers() {
-        // Positioned far from Berlin (e.g. Munich: 48.1351, 11.5820)
-        viewModel.updateUserDistances(48.1351, 11.5820)
+        // Positioniert weit entfernt von Klagenfurt (Wien: 48.2082, 16.3738).
+        viewModel.updateUserDistances(48.2082, 16.3738)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val alex = viewModel.uiState.value.userMarkers.first { it.userId == "u1" }
-        assertNotNull(alex.distanceMeters)
-        assertTrue(alex.distanceMeters!! > 400000.0) // > 400 km
-        assertTrue(alex.formattedDistance.endsWith("km"))
+        val lena = viewModel.uiState.value.userMarkers.first { it.userId == "usr_lena" }
+        assertNotNull(lena.distanceMeters)
+        assertTrue(lena.distanceMeters!! > 200000.0) // > 200 km
+        assertTrue(lena.formattedDistance.endsWith("km"))
     }
 
     @Test
     fun testLocationRepositoryUpdates_automaticallyRecalculateDistances() {
         // Emit location via reactive flow
-        fakeLocationRepository.emitLocation(LocationData(latitude = 52.5130, longitude = 13.4410))
+        fakeLocationRepository.emitLocation(LocationData(latitude = 46.6162, longitude = 14.2696))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val alex = viewModel.uiState.value.userMarkers.first { it.userId == "u1" }
-        assertEquals("0 m", alex.formattedDistance)
+        val lena = viewModel.uiState.value.userMarkers.first { it.userId == "usr_lena" }
+        assertEquals("0 m", lena.formattedDistance)
 
-        // Emit new location snapshot (Potsdam ~ 26 km away)
-        fakeLocationRepository.emitLocation(LocationData(latitude = 52.3988, longitude = 13.0657))
+        // Emit new location snapshot (Villach, ca. 40 km entfernt)
+        fakeLocationRepository.emitLocation(LocationData(latitude = 46.6103, longitude = 13.8558))
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val updatedAlex = viewModel.uiState.value.userMarkers.first { it.userId == "u1" }
-        assertTrue(updatedAlex.formattedDistance.endsWith("km"))
+        val updatedLena = viewModel.uiState.value.userMarkers.first { it.userId == "usr_lena" }
+        assertTrue(updatedLena.formattedDistance.endsWith("km"))
     }
 }

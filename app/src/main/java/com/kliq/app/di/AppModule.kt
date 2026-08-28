@@ -7,11 +7,14 @@ import com.kliq.app.data.local.dao.ChatDao
 import com.kliq.app.data.local.dao.ClubDao
 import com.kliq.app.data.local.dao.DirectMessageDao
 import com.kliq.app.data.local.dao.EventDao
+import com.kliq.app.data.local.dao.FeedDao
 import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.MockSmsVerificationService
 import com.kliq.app.data.remote.SmsVerificationService
+import com.kliq.app.data.generated.KliqConnectorConnector
+import com.kliq.app.data.generated.instance
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,6 +45,9 @@ object AppModule {
 
     @Provides
     fun provideReviewDao(database: KliqDatabase): ReviewDao = database.reviewDao()
+
+    @Provides
+    fun provideFeedDao(database: KliqDatabase): FeedDao = database.feedDao()
 
     @Provides
     fun provideChatDao(database: KliqDatabase): ChatDao = database.chatDao()
@@ -131,6 +137,15 @@ object AppModule {
     @Singleton
     fun provideHapticFeedbackManager(impl: com.kliq.app.util.HapticFeedbackManagerImpl): com.kliq.app.util.HapticFeedbackManager {
         return impl
+    }
+
+    // =========================================================================
+    // Firebase Data Connect (SQL Connect)
+    // =========================================================================
+    @Provides
+    @Singleton
+    fun provideKliqConnector(): KliqConnectorConnector {
+        return KliqConnectorConnector.instance
     }
 }
 

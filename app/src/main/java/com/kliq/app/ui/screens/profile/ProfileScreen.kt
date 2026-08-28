@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,16 +31,22 @@ import androidx.compose.material.icons.outlined.Edit
 import com.kliq.app.ui.components.KliqIcon
 import com.kliq.app.ui.components.KliqIconCategory
 import com.kliq.app.ui.components.KliqIconSize
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ScrollableTabRow
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -79,6 +86,7 @@ fun ProfileScreen(
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
     onNavigateToQrScanner: () -> Unit = {},
+    onNavigateToClub: (String) -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -86,6 +94,15 @@ fun ProfileScreen(
     var tempCameraImageUri by remember { mutableStateOf<Uri?>(null) }
 
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(uiState.errorMessage, uiState.infoMessage) {
+        val message = uiState.errorMessage ?: uiState.infoMessage
+        if (message != null) {
+            snackbarHostState.showSnackbar(message)
+            viewModel.onMessageShown()
+        }
+    }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -141,37 +158,58 @@ fun ProfileScreen(
         onDismissMenu = onDismissMenu,
         onMenuAction = onMenuAction
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 16.dp)
-        ) {
-            item {
-                ProfileHeader(
-                    uiState = uiState,
-                    onEditProfile = { viewModel.onEditProfile() },
-                    onShowQrCode = { viewModel.showQrCodeModal() },
-                    onAvatarClick = { viewModel.openProfileImageViewer() },
-                    onCameraBadgeClick = { showImagePickerSheet = true }
-                )
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(bottom = 16.dp)
+            ) {
+                item {
+                    ProfileHeader(
+                        uiState = uiState,
+                        onEditProfile = { viewModel.onEditProfile() },
+                        onShowQrCode = { viewModel.showQrCodeModal() },
+                        onAvatarClick = { viewModel.openProfileImageViewer() },
+                        onCameraBadgeClick = { showImagePickerSheet = true }
+                    )
+                }
+
+                item {
+                    ProfileTabRow(
+                        tabs = uiState.tabs,
+                        selectedTabIndex = uiState.selectedTabIndex,
+                        onTabSelected = { viewModel.onTabSelected(it) }
+                    )
+                }
+
+                item {
+                    ProfileTabContent(
+                        uiState = uiState,
+                        onEventClick = onNavigateToClub
+                    )
+                }
             }
 
-            item {
-                ProfileTabRow(
-                    tabs = uiState.tabs,
-                    selectedTabIndex = uiState.selectedTabIndex,
-                    onTabSelected = { viewModel.onTabSelected(it) }
-                )
-            }
-
-            item {
-                ProfileTabContent(
-                    selectedTabIndex = uiState.selectedTabIndex
-                )
-            }
+            SnackbarHost(
+                hostState = snackbarHostState,
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
+
+    ProfileEditDialog(
+        isVisible = uiState.isEditDialogVisible,
+        name = uiState.editName,
+        bio = uiState.editBio,
+        location = uiState.editLocation,
+        isSaving = uiState.isSavingProfile,
+        onNameChange = viewModel::onEditNameChanged,
+        onBioChange = viewModel::onEditBioChanged,
+        onLocationChange = viewModel::onEditLocationChanged,
+        onSave = viewModel::onSaveProfile,
+        onDismiss = viewModel::onEditDialogDismissed
+    )
 
     ProfileImagePickerBottomSheet(
         isVisible = showImagePickerSheet,
@@ -397,86 +435,90 @@ private fun ProfileTabRow(
     }
 }
 
+/**
+ * Rendert den Inhalt des aktuell gewählten Profil-Tabs.
+ *
+ * @param onEventClick Callback mit der Club-ID beim Antippen einer Event-Karte.
+ */
 @Composable
-private fun ProfileTabContent(selectedTabIndex: Int) {
-    when (selectedTabIndex) {
-        0 -> PostsGrid()
-        1 -> EventsList()
-        2 -> VisitedHistoryScreen(userId = "current_user")
-        3 -> AboutSection()
+private fun ProfileTabContent(
+    uiState: ProfileUiState,
+    onEventClick: (String) -> Unit
+) {
+    when (uiState.selectedTabIndex) {
+        0 -> OwnPostsList(posts = uiState.ownPosts)
+        1 -> EventsList(events = uiState.upcomingEvents, onEventClick = onEventClick)
+        2 -> VisitedHistoryScreen(userId = uiState.userId)
+        3 -> AboutSection(bio = uiState.bio, location = uiState.location)
     }
 }
 
+/**
+ * Liste der eigenen Beitraege im Tab "Beitraege".
+ */
 @Composable
-private fun PostsGrid() {
-    val itemCount = 9
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(2.dp)
-    ) {
-        for (row in 0 until (itemCount + 2) / 3) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                for (col in 0 until 3) {
-                    val index = row * 3 + col
-                    if (index < itemCount) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                                .background(
-                                    brush = Brush.verticalGradient(
-                                        colors = listOf(
-                                            MaterialTheme.colorScheme.surfaceVariant,
-                                            MaterialTheme.colorScheme.primaryContainer
-                                                .copy(alpha = 0.3f + (index * 0.05f).coerceAtMost(0.4f))
-                                        )
-                                    )
-                                )
-                        )
-                    } else {
-                        Spacer(modifier = Modifier.weight(1f))
-                    }
-                }
-            }
+private fun OwnPostsList(posts: List<ProfilePostUi>) {
+    if (posts.isEmpty()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp, vertical = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Noch keine eigenen Beitraege",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Erstelle im Home-Feed ueber das Plus-Symbol deinen ersten Beitrag.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
         }
+        return
     }
-}
 
-@Composable
-private fun EventsList() {
     Column(
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        val events = listOf(
-            "Techno Night" to "Sa, 15. Mai · Club Luna",
-            "Rooftop Party" to "Fr, 21. Mai · Skybar",
-            "After Work" to "Do, 27. Mai · Bar Central"
-        )
-        events.forEach { (title, details) ->
-            Box(
+        posts.forEach { post ->
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.surfaceVariant)
                     .padding(16.dp)
             ) {
-                Column {
+                Text(
+                    text = post.contentText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = details,
-                        style = MaterialTheme.typography.bodySmall,
+                        text = post.timeAgo,
+                        style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    if (!post.clubName.isNullOrBlank()) {
+                        Text(
+                            text = " - ${post.clubName}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = if (post.likeCount == 1) "1 Like" else "${post.likeCount} Likes",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
@@ -484,26 +526,103 @@ private fun EventsList() {
     }
 }
 
+/**
+ * Kommende Event-Agenda im Tab "Events".
+ * Jede Karte fuehrt in die Detailansicht des zugehoerigen Clubs.
+ */
 @Composable
-private fun AboutSection() {
+private fun EventsList(
+    events: List<ProfileEventUi>,
+    onEventClick: (String) -> Unit
+) {
+    if (events.isEmpty()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp, vertical = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Keine anstehenden Events",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground
+            )
+        }
+        return
+    }
+
+    Column(
+        modifier = Modifier.padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        events.forEach { event ->
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .clickable { onEventClick(event.clubId) }
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = event.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = listOf(event.dateLabel, event.clubName, event.price)
+                        .filter { it.isNotBlank() }
+                        .joinToString(" - "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+/**
+ * Beschreibungstext, Standort und Interessen im Tab "Ueber mich".
+ */
+@Composable
+private fun AboutSection(bio: String, location: String) {
     Column(
         modifier = Modifier.padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
-            text = "Über mich",
+            text = "Ueber mich",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onBackground
         )
         Text(
-            text = "Hey! Ich bin Max und immer auf der Suche nach den besten Events und Locations in München. " +
-                    "Egal ob Techno, House oder einfach ein gemütlicher Abend – ich bin dabei! " +
-                    "Verbinde dich mit mir und lass uns zusammen feiern. 🎶",
+            text = bio.ifBlank { PROFILE_BIO_PLACEHOLDER },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface,
             lineHeight = MaterialTheme.typography.bodyMedium.lineHeight
         )
+
+        if (location.isNotBlank()) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                KliqIcon(
+                    imageVector = Icons.Filled.LocationOn,
+                    contentDescription = null,
+                    size = KliqIconSize.SMALL,
+                    category = KliqIconCategory.ACTION,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = location,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -518,8 +637,7 @@ private fun AboutSection() {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            val interests = listOf("🎵 Musik", "🌙 Nightlife", "📸 Fotografie")
-            interests.forEach { interest ->
+            PROFILE_INTERESTS.forEach { interest ->
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
@@ -535,6 +653,102 @@ private fun AboutSection() {
             }
         }
     }
+}
+
+/** Hinweistext, solange keine Profilbeschreibung hinterlegt ist. */
+private const val PROFILE_BIO_PLACEHOLDER =
+    "Noch keine Beschreibung hinterlegt. Ergaenze sie ueber die Schaltflaeche Bearbeiten."
+
+/** Interessen-Schlagworte des Profil-Tabs. */
+private val PROFILE_INTERESTS = listOf("Musik", "Nightlife", "Fotografie")
+
+/**
+ * Dialog zum Bearbeiten von Anzeigename, Beschreibung und Standort.
+ *
+ * @param isVisible Ob der Dialog angezeigt wird.
+ * @param isSaving Ob gerade gespeichert wird.
+ * @param onSave Callback zum Uebernehmen der Aenderungen.
+ * @param onDismiss Callback zum Verwerfen der Aenderungen.
+ */
+@Composable
+private fun ProfileEditDialog(
+    isVisible: Boolean,
+    name: String,
+    bio: String,
+    location: String,
+    isSaving: Boolean,
+    onNameChange: (String) -> Unit,
+    onBioChange: (String) -> Unit,
+    onLocationChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (!isVisible) return
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Profil bearbeiten",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text(text = "Anzeigename") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    enabled = !isSaving
+                )
+                OutlinedTextField(
+                    value = bio,
+                    onValueChange = onBioChange,
+                    label = { Text(text = "Ueber mich") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    minLines = 3,
+                    enabled = !isSaving
+                )
+                OutlinedTextField(
+                    value = location,
+                    onValueChange = onLocationChange,
+                    label = { Text(text = "Standort") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    enabled = !isSaving
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onSave,
+                enabled = !isSaving && name.isNotBlank(),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                if (isSaving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(text = "Speichern", fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isSaving) {
+                Text(text = "Abbrechen")
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface
+    )
 }
 
 private fun createProfileTempImageUri(context: Context): Uri? {

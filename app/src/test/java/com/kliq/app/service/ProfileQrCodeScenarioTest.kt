@@ -1,5 +1,6 @@
 package com.kliq.app.service
 
+import com.kliq.app.testing.createTestProfileViewModel
 import com.google.zxing.BinaryBitmap
 import com.google.zxing.RGBLuminanceSource
 import com.google.zxing.common.HybridBinarizer
@@ -55,7 +56,7 @@ class ProfileQrCodeScenarioTest {
             )
         )
 
-        viewModel = ProfileViewModel(userRepository, qrCodeService)
+        viewModel = createTestProfileViewModel(userRepository, qrCodeService)
         viewModel.loadProfileData("user_kliq_1001")
     }
 

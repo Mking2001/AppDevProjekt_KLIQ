@@ -9,6 +9,7 @@ import com.kliq.app.data.local.dao.ClubDao
 import com.kliq.app.data.local.dao.ClubOfferDao
 import com.kliq.app.data.local.dao.DirectMessageDao
 import com.kliq.app.data.local.dao.EventDao
+import com.kliq.app.data.local.dao.FeedDao
 import com.kliq.app.data.local.dao.LocationDao
 import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.SocialDao
@@ -20,10 +21,13 @@ import com.kliq.app.data.local.entities.ClubEntity
 import com.kliq.app.data.local.entities.ClubOfferEntity
 import com.kliq.app.data.local.entities.DirectMessageEntity
 import com.kliq.app.data.local.entities.EventEntity
+import com.kliq.app.data.local.entities.FeedCommentEntity
+import com.kliq.app.data.local.entities.FeedPostEntity
 import com.kliq.app.data.local.entities.FriendEntity
 import com.kliq.app.data.local.entities.LocationEntity
 import com.kliq.app.data.local.entities.MessageEntity
 import com.kliq.app.data.local.entities.ReviewEntity
+import com.kliq.app.data.local.entities.StoryEntity
 import com.kliq.app.data.local.entities.UserEntity
 import com.kliq.app.data.local.entities.UserPreferencesEntity
 import com.kliq.app.data.local.entities.VisitedLogEntity
@@ -42,9 +46,12 @@ import com.kliq.app.data.local.entities.VisitedLogEntity
         LocationEntity::class,
         FriendEntity::class,
         VisitedLogEntity::class,
-        BlockedUserEntity::class
+        BlockedUserEntity::class,
+        FeedPostEntity::class,
+        FeedCommentEntity::class,
+        StoryEntity::class
     ],
-    version = 19,
+    version = 20,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)
@@ -60,4 +67,5 @@ abstract class KliqDatabase : RoomDatabase() {
     abstract fun socialDao(): SocialDao
     abstract fun visitedLogDao(): VisitedLogDao
     abstract fun blockedUserDao(): BlockedUserDao
+    abstract fun feedDao(): FeedDao
 }

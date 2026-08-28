@@ -12,6 +12,8 @@ import com.kliq.app.data.repository.ClubEventOfferRepository
 import com.kliq.app.data.repository.ClubEventOfferRepositoryImpl
 import com.kliq.app.data.repository.EventRepository
 import com.kliq.app.data.repository.EventRepositoryImpl
+import com.kliq.app.data.repository.FeedRepository
+import com.kliq.app.data.repository.FeedRepositoryImpl
 import com.kliq.app.data.repository.GroupPresenceRepository
 import com.kliq.app.data.repository.GroupPresenceRepositoryImpl
 import com.kliq.app.data.repository.ReviewRepository
@@ -57,6 +59,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindChatRepository(impl: ChatRepositoryImpl): ChatRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFeedRepository(impl: FeedRepositoryImpl): FeedRepository
 
     @Binds
     @Singleton

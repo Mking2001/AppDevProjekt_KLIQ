@@ -6,41 +6,63 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+/**
+ * Prüft die GPS-Zuordnung der Stadt-Gruppenchats für den Zielmarkt
+ * Klagenfurt und die umliegenden unterstützten Städte.
+ */
 class CityChatLocationMapperTest {
 
     @Test
-    fun testGPSLocationMapsToClosestCityBerlin() {
-        val berlinLocation = LocationData(latitude = 52.5200, longitude = 13.4050)
-        val config = CityChatLocationMapper.resolveCityForLocation(berlinLocation)
+    fun testGPSLocationMapsToClosestCityKlagenfurt() {
+        val klagenfurtLocation = LocationData(latitude = 46.6236, longitude = 14.3084)
+        val config = CityChatLocationMapper.resolveCityForLocation(klagenfurtLocation)
 
-        assertEquals("pub_1", config.id)
-        assertEquals("Berlin - Tonight", config.title)
-        assertEquals("Berlin", config.cityRegion)
+        assertEquals("pub_klagenfurt", config.id)
+        assertEquals("Klagenfurt - Tonight", config.title)
+        assertEquals("Klagenfurt", config.cityRegion)
     }
 
     @Test
-    fun testGPSLocationMapsToClosestCityMunich() {
-        val munichLocation = LocationData(latitude = 48.1351, longitude = 11.5820)
-        val config = CityChatLocationMapper.resolveCityForLocation(munichLocation)
+    fun testGPSLocationMapsToClosestCityVillach() {
+        val villachLocation = LocationData(latitude = 46.6103, longitude = 13.8558)
+        val config = CityChatLocationMapper.resolveCityForLocation(villachLocation)
 
-        assertEquals("pub_2", config.id)
-        assertEquals("München - Party Radar", config.title)
-        assertEquals("München", config.cityRegion)
+        assertEquals("pub_villach", config.id)
+        assertEquals("Villach - Party Radar", config.title)
+        assertEquals("Villach", config.cityRegion)
+    }
+
+    @Test
+    fun testGPSLocationMapsToClosestCityGraz() {
+        val grazLocation = LocationData(latitude = 47.0707, longitude = 15.4395)
+        val config = CityChatLocationMapper.resolveCityForLocation(grazLocation)
+
+        assertEquals("pub_graz", config.id)
+        assertEquals("Graz", config.cityRegion)
     }
 
     @Test
     fun testNullLocationResolvesDefaultCity() {
         val config = CityChatLocationMapper.resolveCityForLocation(null)
-        assertEquals("pub_1", config.id)
-        assertEquals("Berlin", config.cityRegion)
+        assertEquals("pub_klagenfurt", config.id)
+        assertEquals("Klagenfurt", config.cityRegion)
     }
 
     @Test
     fun testDistanceCalculationInKm() {
         val dist = CityChatLocationMapper.calculateDistanceInKm(
-            52.5200, 13.4050, // Berlin
-            48.1351, 11.5820  // Munich
+            46.6236, 14.3084, // Klagenfurt
+            47.0707, 15.4395  // Graz
         )
-        assertTrue(dist > 450.0 && dist < 600.0)
+        assertTrue("Erwartet 90 bis 130 km, war $dist", dist > 90.0 && dist < 130.0)
+    }
+
+    @Test
+    fun testAllSupportedCitiesHaveUniqueIdsAndCoordinates() {
+        val cities = CityChatLocationMapper.SUPPORTED_CITIES
+
+        assertEquals(cities.size, cities.map { it.id }.toSet().size)
+        assertTrue(cities.all { it.latitude != 0.0 && it.longitude != 0.0 })
+        assertTrue(cities.all { it.avatarInitial.length == 1 })
     }
 }

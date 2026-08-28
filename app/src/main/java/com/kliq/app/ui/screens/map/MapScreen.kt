@@ -2,6 +2,11 @@ package com.kliq.app.ui.screens.map
 
 import android.Manifest
 import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -18,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -91,6 +97,8 @@ import com.kliq.app.viewmodel.PermissionViewModel
  * @param onToggleMenu Callback for menu toggle.
  * @param onDismissMenu Callback for menu dismiss.
  * @param onMenuAction Callback for menu actions.
+ * @param onNavigateToClub Navigation zur Club-Detailansicht.
+ * @param onNavigateToChat Navigation in einen Chat mit der angetippten Person.
  * @param viewModel Hilt-injected [MapViewModel].
  * @param permissionViewModel Hilt-injected [PermissionViewModel].
  */
@@ -100,6 +108,8 @@ fun MapScreen(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
+    onNavigateToClub: (String) -> Unit = {},
+    onNavigateToChat: (String) -> Unit = {},
     viewModel: MapViewModel = hiltViewModel(),
     permissionViewModel: PermissionViewModel = hiltViewModel()
 ) {
@@ -305,6 +315,7 @@ fun MapScreen(
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxWidth()
+                .statusBarsPadding()
         ) {
             MapFilterSegmentedControl(
                 selectedMode = uiState.locationFilterMode,
@@ -376,10 +387,12 @@ fun MapScreen(
             venue = uiState.selectedVenue,
             isVisible = uiState.selectedVenue != null,
             onDismiss = { viewModel.onQuickViewDismissed() },
-            onNavigateDetails = { /* Navigate to Venue Detail */ },
+            onNavigateDetails = { clubId -> onNavigateToClub(clubId) },
+            onOpenRoute = { venue -> launchExternalRoute(context, venue) },
             onToggleFavorite = { clubId, isFav -> viewModel.toggleFavorite(clubId, isFav) },
             modifier = Modifier
                 .align(Alignment.TopCenter)
+                .statusBarsPadding()
                 .padding(top = 135.dp)
         )
 
@@ -388,9 +401,10 @@ fun MapScreen(
             user = uiState.selectedUser,
             isVisible = uiState.selectedUser != null,
             onDismiss = { viewModel.onUserQuickViewDismissed() },
-            onSendMessage = { /* Trigger chat navigation */ },
+            onSendMessage = { userId -> onNavigateToChat("chat_$userId") },
             modifier = Modifier
                 .align(Alignment.TopCenter)
+                .statusBarsPadding()
                 .padding(top = 135.dp)
         )
 
@@ -554,6 +568,42 @@ private fun VenueCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
+        }
+    }
+}
+
+/**
+ * Startet die Routenführung in einer externen Karten-App.
+ *
+ * Es wird zunächst der Google-Maps-Navigationsintent versucht. Ist die App nicht
+ * installiert, wird auf einen generischen `geo:`-Intent ausgewichen. Steht keine
+ * Karten-App zur Verfügung, erhält der Nutzer eine Rückmeldung statt eines Absturzes.
+ *
+ * Voraussetzung unter Android 11 und höher ist die `<queries>`-Deklaration im Manifest.
+ *
+ * @param context Kontext zum Starten der Activity.
+ * @param venue Ziel-Venue mit Koordinaten und Namen.
+ */
+private fun launchExternalRoute(context: Context, venue: VenueItemUi) {
+    val label = Uri.encode(venue.name)
+    val navigationUri = Uri.parse("google.navigation:q=${venue.latitude},${venue.longitude}")
+    val fallbackUri = Uri.parse("geo:${venue.latitude},${venue.longitude}?q=${venue.latitude},${venue.longitude}($label)")
+
+    val navigationIntent = Intent(Intent.ACTION_VIEW, navigationUri).apply {
+        setPackage("com.google.android.apps.maps")
+    }
+
+    try {
+        context.startActivity(navigationIntent)
+    } catch (e: ActivityNotFoundException) {
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, fallbackUri))
+        } catch (e2: ActivityNotFoundException) {
+            Toast.makeText(
+                context,
+                "Es ist keine Karten-App für die Routenführung installiert.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 }

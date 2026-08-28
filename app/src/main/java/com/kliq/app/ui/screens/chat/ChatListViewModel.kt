@@ -5,12 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.model.ChatConversation
 import com.kliq.app.data.model.ChatListItem
 import com.kliq.app.data.model.ChatType
-import com.kliq.app.data.model.LastMessage
-import com.kliq.app.data.model.UserStatus
-import com.kliq.app.data.model.toChatConversation
 import com.kliq.app.data.model.toChatListItem
 import com.kliq.app.data.repository.ChatRepository
+import com.kliq.app.data.repository.LocationRepository
 import com.kliq.app.data.repository.UserRepository
+import com.kliq.app.data.util.CityChatConfig
+import com.kliq.app.data.util.CityChatLocationMapper
+import com.kliq.app.domain.CurrentUserProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,10 +21,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-import com.kliq.app.data.repository.LocationRepository
-import com.kliq.app.data.util.CityChatConfig
-import com.kliq.app.data.util.CityChatLocationMapper
 
 data class ChatListUiState(
     val publicChats: List<ChatListItem> = emptyList(),
@@ -36,126 +33,66 @@ data class ChatListUiState(
     val isSearchActive: Boolean = false,
     val activeGpsCityChat: ChatListItem? = null,
     val isCitySwitcherOpen: Boolean = false,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
     val error: String? = null
 )
 
+/**
+ * ViewModel für die Chat-Übersicht.
+ *
+ * Die Chat-Liste wird ausschließlich aus dem [ChatRepository] gespeist. Archivieren,
+ * Löschen und das Zurücksetzen des Ungelesen-Zählers schreiben in die Datenbank;
+ * die Anzeige folgt dem Room-Flow. Damit bleibt die Liste konsistent zu den
+ * tatsächlich gespeicherten Chats.
+ */
 @HiltViewModel
 class ChatListViewModel @Inject constructor(
+    private val chatRepository: ChatRepository,
     private val userRepository: UserRepository,
-    private val chatRepository: ChatRepository? = null,
-    private val locationRepository: LocationRepository? = null
+    private val locationRepository: LocationRepository,
+    private val currentUserProvider: CurrentUserProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ChatListUiState())
     val uiState: StateFlow<ChatListUiState> = _uiState.asStateFlow()
 
-    private var rawPublicChats: List<ChatListItem> = emptyList()
-    private var rawPrivateChats: List<ChatListItem> = emptyList()
-    private var rawArchivedChats: List<ChatListItem> = emptyList()
-    private var currentBlockedUserIds: Set<String> = emptySet()
+    private var activeChats: List<ChatListItem> = emptyList()
+    private var archivedChats: List<ChatListItem> = emptyList()
+    private var blockedUserIds: Set<String> = emptySet()
 
     init {
-        loadInitialData()
-        observeBlockedUsers()
+        observeChats()
         observeLocationUpdates()
     }
 
-    private fun loadInitialData() {
-        val now = System.currentTimeMillis()
-        val mockPublic = listOf(
-            ChatListItem(
-                id = "pub_1",
-                title = "Berlin - Tonight",
-                cityRegion = "Berlin",
-                lastMessage = LastMessage(
-                    text = "Heute ab 23 Uhr im Watergate! 🎶",
-                    timestampMs = now - 600000L
-                ),
-                avatarInitial = "B",
-                unreadCount = 5,
-                chatType = ChatType.PUBLIC_CITY
-            ),
-            ChatListItem(
-                id = "pub_2",
-                title = "München - Party Radar",
-                cityRegion = "München",
-                lastMessage = LastMessage(
-                    text = "Hat jemand noch Tickets für Rote Sonne?",
-                    timestampMs = now - 3600000L
-                ),
-                avatarInitial = "M",
-                unreadCount = 12,
-                chatType = ChatType.PUBLIC_CITY
-            ),
-            ChatListItem(
-                id = "pub_3",
-                title = "Hamburg - Reeperbahn",
-                cityRegion = "Hamburg",
-                lastMessage = LastMessage(
-                    text = "Line-up steht! Schaut mal rein 👀",
-                    timestampMs = now - 86400000L
-                ),
-                avatarInitial = "H",
-                unreadCount = 0,
-                chatType = ChatType.PUBLIC_CITY
-            )
-        )
-
-        val mockPrivate = listOf(
-            ChatListItem(
-                id = "priv_1",
-                title = "Lisa W.",
-                lastMessage = LastMessage(
-                    text = "Treffen wir uns vor dem Eingang?",
-                    timestampMs = now - 900000L
-                ),
-                avatarInitial = "L",
-                unreadCount = 2,
-                chatType = ChatType.PRIVATE,
-                userStatus = UserStatus.ONLINE
-            ),
-            ChatListItem(
-                id = "priv_2",
-                title = "Max K.",
-                lastMessage = LastMessage(
-                    text = "War ein geiler Abend! 🔥",
-                    timestampMs = now - 7200000L
-                ),
-                avatarInitial = "M",
-                unreadCount = 0,
-                chatType = ChatType.PRIVATE,
-                userStatus = UserStatus.ONLINE
-            )
-        )
-
-        rawPublicChats = mockPublic
-        rawPrivateChats = mockPrivate
-
-        applyFilters()
-
-        chatRepository?.let { repo ->
-            viewModelScope.launch {
-                repo.getAllChats()
-                    .catch { }
-                    .collect { conversations ->
-                        if (conversations.isNotEmpty()) {
-                            val items = conversations.map { it.toChatListItem() }
-                            rawPublicChats = items.filter { it.chatType == ChatType.PUBLIC_CITY }
-                            rawPrivateChats = items.filter { it.chatType == ChatType.PRIVATE }
-                            applyFilters()
-                        }
-                    }
-            }
-        }
-    }
-
-    private fun observeBlockedUsers() {
+    /**
+     * Beobachtet aktive Chats, archivierte Chats und die Blockierliste gemeinsam,
+     * damit jede Änderung genau eine Neuberechnung der Anzeige auslöst.
+     */
+    private fun observeChats() {
         viewModelScope.launch {
-            userRepository.getBlockedUserIds("current_user")
-                .catch { }
-                .collect { blockedIds ->
-                    currentBlockedUserIds = blockedIds.toSet()
+            val currentUserId = currentUserProvider.userId()
+
+            combine(
+                chatRepository.getActiveChats(),
+                chatRepository.getArchivedChats(),
+                userRepository.getBlockedUserIds(currentUserId)
+            ) { active, archived, blocked ->
+                Triple(active, archived, blocked)
+            }
+                .catch { error ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            error = "Chats konnten nicht geladen werden: ${error.localizedMessage}"
+                        )
+                    }
+                }
+                .collect { (active, archived, blocked) ->
+                    activeChats = active.map { it.toChatListItem() }
+                    archivedChats = archived.map { it.toChatListItem() }
+                    blockedUserIds = blocked.toSet()
+                    _uiState.update { it.copy(isLoading = false, error = null) }
                     applyFilters()
                 }
         }
@@ -171,7 +108,7 @@ class ChatListViewModel @Inject constructor(
     }
 
     fun onToggleSearch(active: Boolean) {
-        _uiState.update { 
+        _uiState.update {
             it.copy(
                 isSearchActive = active,
                 searchQuery = if (!active) "" else it.searchQuery
@@ -180,29 +117,39 @@ class ChatListViewModel @Inject constructor(
         applyFilters()
     }
 
+    /**
+     * Setzt den Ungelesen-Zähler eines Chats zurück, sobald er geöffnet wird.
+     * Das Badge verschwindet dadurch dauerhaft und nicht nur für die Sitzung.
+     */
+    fun onChatOpened(chatId: String) {
+        viewModelScope.launch {
+            chatRepository.markChatAsRead(chatId)
+        }
+    }
+
     private fun applyFilters() {
         val query = _uiState.value.searchQuery.trim().lowercase()
 
-        val filteredPrivate = rawPrivateChats.filter { item ->
-            val notBlocked = !currentBlockedUserIds.contains(item.id) &&
-                    !currentBlockedUserIds.contains("usr_${item.title}")
-            val matchesQuery = query.isEmpty() ||
-                    item.title.lowercase().contains(query) ||
-                    item.lastMessage.text.lowercase().contains(query)
-            notBlocked && matchesQuery
-        }
-
-        val filteredPublic = rawPublicChats.filter { item ->
-            query.isEmpty() ||
-                    item.title.lowercase().contains(query) ||
+        fun matchesQuery(item: ChatListItem): Boolean {
+            if (query.isEmpty()) return true
+            return item.title.lowercase().contains(query) ||
                     item.lastMessage.text.lowercase().contains(query)
         }
 
-        val filteredArchived = rawArchivedChats.filter { item ->
-            query.isEmpty() ||
-                    item.title.lowercase().contains(query) ||
-                    item.lastMessage.text.lowercase().contains(query)
+        fun isFromBlockedUser(item: ChatListItem): Boolean {
+            if (item.chatType != ChatType.PRIVATE) return false
+            return blockedUserIds.any { blockedId ->
+                item.id == blockedId || item.id == "chat_$blockedId" || item.id == "priv_$blockedId"
+            }
         }
+
+        val filteredPublic = activeChats.filter {
+            it.chatType == ChatType.PUBLIC_CITY && matchesQuery(it)
+        }
+        val filteredPrivate = activeChats.filter {
+            it.chatType == ChatType.PRIVATE && !isFromBlockedUser(it) && matchesQuery(it)
+        }
+        val filteredArchived = archivedChats.filter { matchesQuery(it) }
 
         _uiState.update { state ->
             state.copy(
@@ -219,18 +166,11 @@ class ChatListViewModel @Inject constructor(
 
     fun onConfirmDeleteChat() {
         val target = _uiState.value.pendingDeleteChat ?: return
-        rawPublicChats = rawPublicChats.filter { it.id != target.id }
-        rawPrivateChats = rawPrivateChats.filter { it.id != target.id }
-        rawArchivedChats = rawArchivedChats.filter { it.id != target.id }
-
-        chatRepository?.let { repo ->
-            viewModelScope.launch {
-                repo.deleteChat(target.id)
-            }
-        }
-
         _uiState.update { it.copy(pendingDeleteChat = null) }
-        applyFilters()
+
+        viewModelScope.launch {
+            chatRepository.deleteChat(target.id)
+        }
     }
 
     fun onDismissDeleteDialog() {
@@ -238,50 +178,24 @@ class ChatListViewModel @Inject constructor(
     }
 
     fun onChatDeleted(chatId: String) {
-        val target = (rawPublicChats + rawPrivateChats + rawArchivedChats).find { it.id == chatId }
+        val target = (activeChats + archivedChats).find { it.id == chatId }
         if (target != null) {
             onRequestDeleteChat(target)
         } else {
-            rawPublicChats = rawPublicChats.filter { it.id != chatId }
-            rawPrivateChats = rawPrivateChats.filter { it.id != chatId }
-            rawArchivedChats = rawArchivedChats.filter { it.id != chatId }
-            applyFilters()
+            viewModelScope.launch { chatRepository.deleteChat(chatId) }
         }
     }
 
     fun onArchiveChat(item: ChatListItem) {
-        rawPublicChats = rawPublicChats.filter { it.id != item.id }
-        rawPrivateChats = rawPrivateChats.filter { it.id != item.id }
-        if (rawArchivedChats.none { it.id == item.id }) {
-            rawArchivedChats = rawArchivedChats + item
+        viewModelScope.launch {
+            chatRepository.archiveChat(item.id, isArchived = true)
         }
-
-        chatRepository?.let { repo ->
-            viewModelScope.launch {
-                repo.archiveChat(item.id, isArchived = true)
-            }
-        }
-        applyFilters()
     }
 
     fun onUnarchiveChat(item: ChatListItem) {
-        rawArchivedChats = rawArchivedChats.filter { it.id != item.id }
-        if (item.chatType == ChatType.PUBLIC_CITY) {
-            if (rawPublicChats.none { it.id == item.id }) {
-                rawPublicChats = rawPublicChats + item
-            }
-        } else {
-            if (rawPrivateChats.none { it.id == item.id }) {
-                rawPrivateChats = rawPrivateChats + item
-            }
+        viewModelScope.launch {
+            chatRepository.archiveChat(item.id, isArchived = false)
         }
-
-        chatRepository?.let { repo ->
-            viewModelScope.launch {
-                repo.archiveChat(item.id, isArchived = false)
-            }
-        }
-        applyFilters()
     }
 
     fun onToggleArchivedSection(show: Boolean) {
@@ -289,46 +203,61 @@ class ChatListViewModel @Inject constructor(
     }
 
     fun onChatArchived(chatId: String) {
-        val target = (rawPublicChats + rawPrivateChats).find { it.id == chatId }
-        if (target != null) {
-            onArchiveChat(target)
-        } else {
-            rawPublicChats = rawPublicChats.filter { it.id != chatId }
-            rawPrivateChats = rawPrivateChats.filter { it.id != chatId }
-            applyFilters()
+        viewModelScope.launch {
+            chatRepository.archiveChat(chatId, isArchived = true)
         }
     }
 
+    /**
+     * Stellt einen archivierten oder gelöschten Chat wieder her.
+     * Bei gelöschten Chats wird der Datensatz neu angelegt.
+     */
     fun onUndoDelete(item: ChatListItem) {
-        if (item.chatType == ChatType.PUBLIC_CITY) {
-            rawPublicChats = listOf(item) + rawPublicChats.filter { it.id != item.id }
-        } else {
-            rawPrivateChats = listOf(item) + rawPrivateChats.filter { it.id != item.id }
+        viewModelScope.launch {
+            chatRepository.createChatIfMissing(
+                chatId = item.id,
+                name = item.title,
+                chatType = item.chatType,
+                cityRegion = item.cityRegion,
+                avatarInitial = item.avatarInitial
+            )
+            chatRepository.archiveChat(item.id, isArchived = false)
         }
-        rawArchivedChats = rawArchivedChats.filter { it.id != item.id }
-        applyFilters()
     }
 
     fun onUndoDelete(chat: ChatConversation) {
         onUndoDelete(chat.toChatListItem())
     }
 
+    /**
+     * Ordnet dem Nutzer anhand der GPS-Position den nächstgelegenen Stadt-Chat zu
+     * und legt diesen bei Bedarf in der Datenbank an.
+     */
     private fun observeLocationUpdates() {
-        val locRepo = locationRepository ?: return
         viewModelScope.launch {
-            locRepo.locationUpdates.collect { location ->
+            locationRepository.locationUpdates.collect { location ->
                 val resolvedConfig = CityChatLocationMapper.resolveCityForLocation(location)
                 val distance = if (location != null) {
                     CityChatLocationMapper.calculateDistanceInKm(
                         location.latitude, location.longitude,
                         resolvedConfig.latitude, resolvedConfig.longitude
                     )
-                } else 2.5
+                } else {
+                    null
+                }
 
                 val gpsAssignedItem = CityChatLocationMapper.buildCityChatListItem(
                     config = resolvedConfig,
                     distanceKm = distance,
                     isGpsAssigned = true
+                )
+
+                chatRepository.createChatIfMissing(
+                    chatId = resolvedConfig.id,
+                    name = resolvedConfig.title,
+                    chatType = ChatType.PUBLIC_CITY,
+                    cityRegion = resolvedConfig.cityRegion,
+                    avatarInitial = resolvedConfig.avatarInitial
                 )
 
                 _uiState.update { it.copy(activeGpsCityChat = gpsAssignedItem) }
@@ -344,20 +273,31 @@ class ChatListViewModel @Inject constructor(
         _uiState.update { it.copy(isCitySwitcherOpen = false) }
     }
 
+    /**
+     * Wechselt manuell in einen anderen Stadt-Chat und legt ihn bei Bedarf an.
+     */
     fun selectCityChat(config: CityChatConfig) {
         val newItem = CityChatLocationMapper.buildCityChatListItem(
             config = config,
-            distanceKm = 0.0,
+            distanceKm = null,
             isGpsAssigned = false
         )
-        rawPublicChats = listOf(newItem) + rawPublicChats.filter { it.id != newItem.id }
-        _uiState.update { 
+
+        viewModelScope.launch {
+            chatRepository.createChatIfMissing(
+                chatId = config.id,
+                name = config.title,
+                chatType = ChatType.PUBLIC_CITY,
+                cityRegion = config.cityRegion,
+                avatarInitial = config.avatarInitial
+            )
+        }
+
+        _uiState.update {
             it.copy(
                 activeGpsCityChat = newItem,
                 isCitySwitcherOpen = false
             )
         }
-        applyFilters()
     }
 }
-

@@ -1,5 +1,6 @@
 package com.kliq.app.ui.screens.profile
 
+import com.kliq.app.testing.createTestProfileViewModel
 import com.kliq.app.data.local.entities.UserEntity
 import com.kliq.app.data.repository.UserRepository
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +31,7 @@ class ProfileViewModelTest {
         Dispatchers.setMain(testDispatcher)
         fakeUserRepository = FakeUserRepository()
         val qrCodeService = com.kliq.app.service.QrCodeServiceImpl(testDispatcher)
-        viewModel = ProfileViewModel(fakeUserRepository, qrCodeService)
+        viewModel = createTestProfileViewModel(fakeUserRepository, qrCodeService)
     }
 
     @After
