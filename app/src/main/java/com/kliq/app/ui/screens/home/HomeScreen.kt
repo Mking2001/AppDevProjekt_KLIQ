@@ -147,21 +147,6 @@ fun HomeScreen(
         onToggleMenu = onToggleMenu,
         onDismissMenu = onDismissMenu,
         onMenuAction = onMenuAction,
-        navigationIcon = {
-            IconButton(
-                onClick = { viewModel.onToggleUserSearch() },
-                modifier = Modifier
-                    .size(44.dp)
-                    .talkBackDescription("Leute suchen")
-            ) {
-                Icon(
-                    imageVector = Icons.Outlined.Search,
-                    contentDescription = "Leute suchen",
-                    tint = PurplePrimary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-        },
         actions = {
             IconButton(
                 onClick = onNavigateToActivities,

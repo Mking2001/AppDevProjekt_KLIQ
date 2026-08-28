@@ -40,14 +40,14 @@ data class ExploreUiState(
     val errorMessage: String? = null
 ) {
     companion object {
-        val CATEGORIES = listOf("Trending", "Clubs", "Bars", "Pubs", "Events", "Restaurants")
+        val CATEGORIES = listOf("Trending", "Clubs", "Bars", "Pubs", "Lounges")
     }
 }
 
 /**
  * Darstellungsmodell eines Eintrags im Discovery-Grid.
  *
- * @param id Club- oder Event-ID, die für die Detailnavigation verwendet wird.
+ * @param id Club-ID, die für die Detailnavigation verwendet wird.
  * @param category Anzeigekategorie, gleichzeitig Filterkriterium.
  * @param isFavorite Ob der Eintrag als Favorit markiert ist.
  * @param isEvent Ob es sich um einen Event- statt Venue-Eintrag handelt.
@@ -59,6 +59,7 @@ data class DiscoverItemUi(
     val category: String,
     val rating: Float = 0f,
     val region: String = "",
+    val imageUrl: String? = null,
     val creatorUserId: String? = null,
     val isFavorite: Boolean = false,
     val isOpenNow: Boolean = false,
@@ -68,14 +69,14 @@ data class DiscoverItemUi(
 /**
  * ViewModel für den Explore-Screen.
  *
- * Bezieht Venues und Events reaktiv aus [ClubRepository] und [EventRepository].
+ * Bezieht echte Venues (Clubs & Bars) reaktiv aus [ClubRepository].
  * Der Favoriten-Zustand wird über das Repository in Room geschrieben und ist
  * damit über Screens und App-Starts hinweg konsistent.
  */
 @HiltViewModel
 class ExploreViewModel @Inject constructor(
     private val clubRepository: ClubRepository,
-    private val eventRepository: EventRepository,
+    private val eventRepository: EventRepository? = null,
     private val userRepository: UserRepository,
     private val currentUserProvider: CurrentUserProvider
 ) : ViewModel() {
@@ -92,54 +93,35 @@ class ExploreViewModel @Inject constructor(
     }
 
     /**
-     * Führt Venues und Events zu einer Ergebnisliste zusammen.
-     * Beide Quellen liegen in Room, weshalb ein `combine` genügt und
-     * jede Änderung am Favoriten-Status unmittelbar sichtbar wird.
+     * Lädt ausschließlich reale Clubs und Bars.
      */
     private fun observeDiscoverContent() {
         viewModelScope.launch {
-            combine(
-                clubRepository.getAllClubs(),
-                eventRepository.getAllEvents()
-            ) { clubs, events ->
-                val clubItems = clubs.map { club ->
-                    DiscoverItemUi(
-                        id = club.id,
-                        title = club.name,
-                        subtitle = club.location.address.ifBlank { club.region },
-                        category = normalizeCategory(club.category),
-                        rating = club.averageRating.toFloat(),
-                        region = club.region.ifBlank { club.location.address },
-                        isFavorite = club.isFavorite,
-                        isOpenNow = club.operatingHours.isOpenNow
-                    )
-                }
-
-                val clubNamesById = clubs.associate { it.id to it.name }
-                val eventItems = events.map { event ->
-                    DiscoverItemUi(
-                        id = event.clubId,
-                        title = event.title,
-                        subtitle = clubNamesById[event.clubId] ?: event.description.take(40),
-                        category = "Events",
-                        rating = clubs.find { it.id == event.clubId }?.averageRating?.toFloat() ?: 0f,
-                        region = clubs.find { it.id == event.clubId }?.region.orEmpty(),
-                        isEvent = true
-                    )
-                }
-
-                clubItems + eventItems
-            }
+            clubRepository.getAllClubs()
                 .catch { error ->
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = "Inhalte konnten nicht geladen werden: ${error.localizedMessage}"
+                            errorMessage = "Clubs & Bars konnten nicht geladen werden: ${error.localizedMessage}"
                         )
                     }
                 }
-                .collect { items ->
-                    allItems = items
+                .collect { clubs ->
+                    val clubItems = clubs.map { club ->
+                        DiscoverItemUi(
+                            id = club.id,
+                            title = club.name,
+                            subtitle = club.location.address.ifBlank { club.region },
+                            category = normalizeCategory(club.category),
+                            rating = club.averageRating.toFloat(),
+                            region = club.region.ifBlank { club.location.address },
+                            imageUrl = club.imageUrl.ifBlank { "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?auto=format&fit=crop&w=1200&q=80" },
+                            isFavorite = club.isFavorite,
+                            isOpenNow = club.operatingHours.isOpenNow,
+                            isEvent = false
+                        )
+                    }
+                    allItems = clubItems
                     _uiState.update { it.copy(isLoading = false) }
                     applyFilters()
                 }

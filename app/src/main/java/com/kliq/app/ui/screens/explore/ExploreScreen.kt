@@ -50,9 +50,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.kliq.app.ui.components.KliqCategoryChip
 import com.kliq.app.ui.components.KliqScreenScaffold
 import com.kliq.app.ui.navigation.TopBarMenuAction
@@ -265,8 +267,8 @@ private fun DiscoverGridCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(0.85f)
-            .clip(RoundedCornerShape(16.dp))
+            .aspectRatio(0.82f)
+            .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable { onClick() }
             .talkBackDescription(
@@ -274,16 +276,40 @@ private fun DiscoverGridCard(
                         if (item.isFavorite) ", als Favorit markiert" else ""
             )
     ) {
+        // Club / Bar Bild
+        if (!item.imageUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = item.imageUrl,
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        )
+                    )
+            )
+        }
+
+        // Gradient-Overlay für optimale Lesbarkeit
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.0f),
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f)
+                            Color.Black.copy(alpha = 0.15f),
+                            Color.Black.copy(alpha = 0.35f),
+                            Color.Black.copy(alpha = 0.75f),
+                            Color.Black.copy(alpha = 0.95f)
                         ),
                         startY = 0f,
                         endY = Float.POSITIVE_INFINITY
@@ -291,17 +317,46 @@ private fun DiscoverGridCard(
                 )
         )
 
-        if (item.isEvent) {
-            Icon(
-                imageVector = Icons.Filled.Event,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(36.dp)
+        // Kategorie-Badge oben links
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(10.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
+                .padding(horizontal = 8.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text = item.category,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
         }
 
+        // Favoriten-Button oben rechts
+        IconButton(
+            onClick = onToggleFavorite,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(6.dp)
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.45f))
+                .talkBackDescription(
+                    if (item.isFavorite) "${item.title} aus Favoriten entfernen"
+                    else "${item.title} zu Favoriten hinzufügen"
+                )
+        ) {
+            Icon(
+                imageVector = if (item.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                contentDescription = null,
+                tint = if (item.isFavorite) Color(0xFFFF4081) else Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        // Club-Infos unten
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
@@ -309,88 +364,53 @@ private fun DiscoverGridCard(
         ) {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = item.subtitle,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                color = Color.White.copy(alpha = 0.8f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = null,
                     tint = Color(0xFFFFB800),
-                    modifier = Modifier.size(13.dp)
+                    modifier = Modifier.size(14.dp)
                 )
                 Spacer(modifier = Modifier.width(3.dp))
                 Text(
                     text = item.rating.toString(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = Color.White
                 )
 
-                if (!item.isEvent) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (item.isOpenNow) Color(0xFF3DDC84)
-                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (item.isOpenNow) "Offen" else "Zu",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
-                }
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = item.category,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        if (!item.isEvent) {
-            IconButton(
-                onClick = onToggleFavorite,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .talkBackDescription(
-                        if (item.isFavorite) "${item.title} aus Favoriten entfernen"
-                        else "${item.title} zu Favoriten hinzufügen"
-                    )
-            ) {
-                Icon(
-                    imageVector = if (item.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = null,
-                    tint = if (item.isFavorite) PurplePrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(7.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (item.isOpenNow) Color(0xFF3DDC84)
+                            else Color(0xFFFF5252)
+                        )
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = if (item.isOpenNow) "Offen" else "Geschlossen",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = if (item.isOpenNow) Color(0xFF3DDC84) else Color.White.copy(alpha = 0.7f)
                 )
             }
         }

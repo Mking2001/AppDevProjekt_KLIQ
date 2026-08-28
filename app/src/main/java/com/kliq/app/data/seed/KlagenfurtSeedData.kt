@@ -70,6 +70,7 @@ object KlagenfurtSeedData {
             address = "Gerichtsstraße 4, 9020 Klagenfurt",
             category = "Club",
             averageRating = 4.7,
+            imageUrl = "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=80",
             geofenceRadiusMeters = 200.0,
             weeklySchedule = mapOf(
                 "Montag" to "Geschlossen",
@@ -98,6 +99,7 @@ object KlagenfurtSeedData {
             address = "Heuplatz 2, 9020 Klagenfurt",
             category = "Club",
             averageRating = 4.5,
+            imageUrl = "https://images.unsplash.com/photo-1545128485-c400e7702796?auto=format&fit=crop&w=1200&q=80",
             geofenceRadiusMeters = 150.0,
             weeklySchedule = mapOf(
                 "Montag" to "Geschlossen",
@@ -126,6 +128,7 @@ object KlagenfurtSeedData {
             address = "Speckbacherstraße 1, 9020 Klagenfurt",
             category = "Bar",
             averageRating = 4.6,
+            imageUrl = "https://images.unsplash.com/photo-1514933651103-005eec06c04b?auto=format&fit=crop&w=1200&q=80",
             geofenceRadiusMeters = 100.0,
             weeklySchedule = mapOf(
                 "Montag" to "18:00 - 02:00",
@@ -152,6 +155,7 @@ object KlagenfurtSeedData {
             address = "Völkermarkter Ring 25, 9020 Klagenfurt",
             category = "Club",
             averageRating = 4.4,
+            imageUrl = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=80",
             geofenceRadiusMeters = 120.0,
             weeklySchedule = mapOf(
                 "Montag" to "Geschlossen",
@@ -178,6 +182,7 @@ object KlagenfurtSeedData {
             address = "Theatergasse 4, 9020 Klagenfurt",
             category = "Bar",
             averageRating = 4.8,
+            imageUrl = "https://images.unsplash.com/photo-1572116469696-31de0f17cc34?auto=format&fit=crop&w=1200&q=80",
             geofenceRadiusMeters = 90.0,
             weeklySchedule = mapOf(
                 "Montag" to "16:00 - 01:00",
@@ -562,6 +567,7 @@ object KlagenfurtSeedData {
         femalePercentage: Int,
         searchTags: String,
         nowMs: Long,
+        imageUrl: String = "",
         websiteUrl: String? = null,
         phoneNumber: String? = null,
         isPromoted: Boolean = false
@@ -601,6 +607,7 @@ object KlagenfurtSeedData {
             openingHoursJson = openingHoursJson,
             category = category,
             rating = averageRating.toFloat(),
+            imageUrl = imageUrl.ifBlank { "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?auto=format&fit=crop&w=1200&q=80" },
             region = REGION_NAME,
             currentCapacityPercent = capacityPercent,
             malePercentage = malePercentage,
