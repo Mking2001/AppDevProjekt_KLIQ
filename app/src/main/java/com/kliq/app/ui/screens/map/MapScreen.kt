@@ -271,7 +271,11 @@ fun MapScreen(
 
     val mapProperties = remember(uiState.styleConfig, uiState.isLocationEnabled, hasLocationPermission) {
         val styleOptions = try {
-            MapStyleOptions.loadRawResourceStyle(context, uiState.styleConfig.styleRawResId)
+            if (uiState.styleConfig.isCustomStyleEnabled) {
+                MapStyleOptions.loadRawResourceStyle(context, uiState.styleConfig.styleRawResId)
+            } else {
+                null
+            }
         } catch (e: Exception) {
             Timber.w(e, "MapStyle konnte nicht aus Raw-Resource geladen werden")
             null
@@ -338,8 +342,13 @@ fun MapScreen(
                                 null
                             }
                         }
+                        val userMarkerState = remember(userMarker.userId) {
+                            MarkerState(position = LatLng(userMarker.latitude, userMarker.longitude))
+                        }.apply {
+                            position = LatLng(userMarker.latitude, userMarker.longitude)
+                        }
                         Marker(
-                            state = MarkerState(position = LatLng(userMarker.latitude, userMarker.longitude)),
+                            state = userMarkerState,
                             title = userMarker.username,
                             snippet = userMarker.statusMessage ?: if (userMarker.isOnline) "Online" else "Zuletzt aktiv",
                             icon = userIcon,
@@ -370,8 +379,13 @@ fun MapScreen(
                                         null
                                     }
                                 }
+                                val singleMarkerState = remember(markerItem.id) {
+                                    MarkerState(position = markerItem.position)
+                                }.apply {
+                                    position = markerItem.position
+                                }
                                 Marker(
-                                    state = MarkerState(position = markerItem.position),
+                                    state = singleMarkerState,
                                     title = venue.name,
                                     snippet = "${venue.category} · ${venue.distance} · ★ ${venue.rating}" +
                                             (venue.activeEventTitle?.let { " · 🎉 $it" } ?: ""),
@@ -398,8 +412,13 @@ fun MapScreen(
                                         null
                                     }
                                 }
+                                val clusterMarkerState = remember(markerItem.id) {
+                                    MarkerState(position = markerItem.position)
+                                }.apply {
+                                    position = markerItem.position
+                                }
                                 Marker(
-                                    state = MarkerState(position = markerItem.position),
+                                    state = clusterMarkerState,
                                     title = "${markerItem.count} Standorte in der Nähe",
                                     snippet = "${markerItem.primaryCategory}-Gruppe · Tippen zum Heranzoomen",
                                     icon = clusterIcon,

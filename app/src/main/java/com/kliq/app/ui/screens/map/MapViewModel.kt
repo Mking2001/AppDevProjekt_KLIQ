@@ -164,7 +164,6 @@ class MapViewModel @Inject constructor(
     private var blockedUserIds: Set<String> = emptySet()
 
     init {
-        MarkerBitmapHelper.prewarmCache()
         setupFilters()
         loadUserMarkers()
         observeClubRepository()
