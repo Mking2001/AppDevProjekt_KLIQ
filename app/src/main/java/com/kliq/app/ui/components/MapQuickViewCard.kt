@@ -37,6 +37,7 @@ fun MapQuickViewCard(
     isVisible: Boolean,
     onDismiss: () -> Unit,
     onNavigateDetails: (String) -> Unit,
+    onOpenRoute: (VenueItemUi) -> Unit = {},
     onToggleFavorite: ((String, Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -271,7 +272,7 @@ fun MapQuickViewCard(
                             Text("Details")
                         }
                         FilledTonalButton(
-                            onClick = { /* Navigation action */ },
+                            onClick = { onOpenRoute(currentVenue) },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(12.dp)
                         ) {
