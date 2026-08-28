@@ -62,6 +62,7 @@ class TopBarViewModel @Inject constructor() : ViewModel() {
             NavigationRoute.Home.route -> "Kliq"
             NavigationRoute.Explore.route -> "Entdecken"
             NavigationRoute.Map.route -> "Karte"
+            NavigationRoute.Messages.route -> "Nachrichten"
             NavigationRoute.Notifications.route -> "Aktivität"
             NavigationRoute.Profile.route -> "Profil"
             else -> "Kliq"

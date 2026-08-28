@@ -103,7 +103,6 @@ fun KliqMainScaffold(
     val currentRoute = navBackStackEntry?.destination?.route ?: NavigationRoute.Home.route
 
     val showBottomBar = currentRoute !in listOf(
-        ChatRoutes.CHAT_LIST,
         ChatRoutes.CHAT_DETAIL,
         CoreRoutes.SPLASH,
         CoreRoutes.AUTH_SELECTION,
@@ -191,8 +190,8 @@ fun KliqMainScaffold(
                         }
                     }
                 },
-                onNavigateToChat = {
-                    navController.navigate(ChatRoutes.CHAT_LIST) {
+                onNavigateToActivities = {
+                    navController.navigate(NavigationRoute.Notifications.route) {
                         launchSingleTop = true
                     }
                 },
@@ -243,7 +242,7 @@ private fun KliqNavHost(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
-    onNavigateToChat: () -> Unit,
+    onNavigateToActivities: () -> Unit,
     onNavigateToChatDetail: (String) -> Unit,
     onNavigateToClub: (String) -> Unit
 ) {
@@ -331,7 +330,7 @@ private fun KliqNavHost(
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
                 onMenuAction = onMenuAction,
-                onNavigateToChat = onNavigateToChat
+                onNavigateToActivities = onNavigateToActivities
             )
         }
         composable(NavigationRoute.Explore.route) {
@@ -367,6 +366,7 @@ private fun KliqNavHost(
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
                 onMenuAction = onMenuAction,
+                onNavigateToActivities = onNavigateToActivities,
                 onNavigateToQrScanner = {
                     navController.navigate(ProfileRoutes.QR_SCANNER) {
                         launchSingleTop = true

@@ -28,15 +28,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.outlined.Edit
-import com.kliq.app.ui.components.KliqIcon
-import com.kliq.app.ui.components.KliqIconCategory
-import com.kliq.app.ui.components.KliqIconSize
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import com.kliq.app.ui.components.KliqIcon
+import com.kliq.app.ui.components.KliqIconCategory
+import com.kliq.app.ui.components.KliqIconSize
+import com.kliq.app.util.talkBackDescription
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ScrollableTabRow
@@ -85,6 +89,7 @@ fun ProfileScreen(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
+    onNavigateToActivities: () -> Unit = {},
     onNavigateToQrScanner: () -> Unit = {},
     onNavigateToClub: (String) -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel()
@@ -156,7 +161,19 @@ fun ProfileScreen(
         isMenuExpanded = topBarState.isMenuExpanded,
         onToggleMenu = onToggleMenu,
         onDismissMenu = onDismissMenu,
-        onMenuAction = onMenuAction
+        onMenuAction = onMenuAction,
+        actions = {
+            IconButton(
+                onClick = onNavigateToActivities,
+                modifier = Modifier.talkBackDescription("Aktivitäten öffnen")
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Aktivitäten",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn(

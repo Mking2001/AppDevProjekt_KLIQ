@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -104,7 +105,7 @@ fun HomeScreen(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
-    onNavigateToChat: () -> Unit = {},
+    onNavigateToActivities: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -139,12 +140,12 @@ fun HomeScreen(
         onMenuAction = onMenuAction,
         actions = {
             IconButton(
-                onClick = onNavigateToChat,
-                modifier = Modifier.talkBackDescription("Nachrichten öffnen")
+                onClick = onNavigateToActivities,
+                modifier = Modifier.talkBackDescription("Aktivitäten öffnen")
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.ChatBubbleOutline,
-                    contentDescription = null,
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Aktivitäten",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }

@@ -108,7 +108,7 @@ fun KliqBottomBar(
             ) {
                 NavigationRoute.bottomBarItems.forEach { navItem ->
                     val isSelected = currentRoute == navItem.route
-                    val showBadge = navItem is NavigationRoute.Notifications
+                    val showBadge = (navItem is NavigationRoute.Messages || navItem is NavigationRoute.Notifications)
                             && notificationBadgeCount > 0
 
                     KliqBottomBarItem(
