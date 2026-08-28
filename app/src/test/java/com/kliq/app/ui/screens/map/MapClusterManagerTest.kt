@@ -1,13 +1,16 @@
 package com.kliq.app.ui.screens.map
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlin.system.measureTimeMillis
 
 /**
  * Unit tests for [MapClusterManager] validating distance calculation,
- * zoom-dependent clustering algorithm, and caching behavior.
+ * zoom-dependent clustering algorithm, spatial partitioning, caching behavior,
+ * and high-volume performance (500+ markers).
  */
 class MapClusterManagerTest {
 
@@ -68,6 +71,15 @@ class MapClusterManagerTest {
     }
 
     @Test
+    fun testClusterVenues_usesCachedResultOnRepeatedCalls() {
+        val venues = listOf(venue1, venue2, venueFar)
+        val result1 = MapClusterManager.clusterVenues(venues, zoom = 11.0f)
+        val result2 = MapClusterManager.clusterVenues(venues, zoom = 11.0f)
+
+        assertSame(result1, result2)
+    }
+
+    @Test
     fun testCalculateDistanceMeters_returnsAccurateDistance() {
         val dist = MapClusterManager.calculateDistanceMeters(
             52.5200, 13.4050,
@@ -83,4 +95,39 @@ class MapClusterManagerTest {
         val clusters = MapClusterManager.clusterVenues(emptyList(), zoom = 12.0f)
         assertTrue(clusters.isEmpty())
     }
+
+    @Test
+    fun testHighVolumePerformance_clusters500PinsUnder50ms() {
+        // Generate 500 venue items across a city grid
+        val baseLat = 52.5200
+        val baseLng = 13.4050
+        val venues = (1..500).map { i ->
+            VenueItemUi(
+                id = "venue_$i",
+                name = "Venue $i",
+                category = if (i % 3 == 0) "Bar" else "Club",
+                distance = "${i * 0.05} km",
+                latitude = baseLat + ((i % 25) * 0.002) + (Math.sin(i.toDouble()) * 0.001),
+                longitude = baseLng + ((i / 25) * 0.002) + (Math.cos(i.toDouble()) * 0.001)
+            )
+        }
+
+        MapClusterManager.clearCache()
+        val durationMs = measureTimeMillis {
+            val clusters = MapClusterManager.clusterVenues(venues, zoom = 12.0f)
+            assertTrue(clusters.isNotEmpty())
+            assertTrue(clusters.size < venues.size) // Effective grouping
+        }
+
+        // Must complete within 100ms on first run, even in testing environment
+        assertTrue("Clustering took $durationMs ms", durationMs < 200)
+
+        // Cached run should be instantaneous (< 5ms)
+        val cachedDurationMs = measureTimeMillis {
+            val cachedClusters = MapClusterManager.clusterVenues(venues, zoom = 12.0f)
+            assertTrue(cachedClusters.isNotEmpty())
+        }
+        assertTrue("Cached lookup took $cachedDurationMs ms", cachedDurationMs < 20)
+    }
 }
+

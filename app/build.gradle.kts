@@ -7,7 +7,9 @@ plugins {
     id("com.google.devtools.ksp")
     id("com.google.gms.google-services")
     kotlin("plugin.serialization")
+    id("com.google.firebase.crashlytics")
 }
+
 
 android {
     namespace = "com.kliq.app"
@@ -133,8 +135,10 @@ dependencies {
     // Firebase BoM (manages all Firebase SDK versions)
     implementation(platform("com.google.firebase:firebase-bom:34.18.0"))
 
-    // Firebase Cloud Messaging (FCM)
-    implementation("com.google.firebase:firebase-messaging")
+    // Firebase Cloud Messaging (FCM), Crashlytics & Analytics
+    implementation("com.google.firebase:firebase-analytics-ktx:21.5.1")
+    implementation("com.google.firebase:firebase-messaging-ktx:23.4.1")
+    implementation("com.google.firebase:firebase-crashlytics-ktx:18.6.2")
 
     // Firebase Data Connect (SQL Connect)
     implementation("com.google.firebase:firebase-dataconnect")
@@ -143,15 +147,19 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-configurations.all {
-    resolutionStrategy {
-        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
-        force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    configurations.all {
+        resolutionStrategy {
+            force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
+            force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+        }
     }
-}
+
+    // Timber Logging Abstraction
+    implementation("com.jakewharton.timber:timber:5.0.1")
 
     // Coroutines Play Services (for .await() on Tasks)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+
 
     // Testing
     testImplementation("junit:junit:4.13.2")
@@ -171,4 +179,7 @@ configurations.all {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // LeakCanary Memory Leak Detection for Debug builds
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.13")
 }
