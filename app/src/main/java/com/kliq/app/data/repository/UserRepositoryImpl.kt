@@ -13,6 +13,7 @@ import com.kliq.app.data.model.UserReputationSummary
 import com.kliq.app.data.remote.BlockUserRequestDto
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.ReportUserRequestDto
+import com.kliq.app.data.generated.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -29,7 +30,8 @@ class UserRepositoryImpl @Inject constructor(
     private val apiService: KliqApiService,
     private val reviewDao: ReviewDao? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val blockedUserDao: BlockedUserDao? = null
+    private val blockedUserDao: BlockedUserDao? = null,
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
 ) : UserRepository {
 
     override fun getUserById(userId: String): Flow<UserEntity?> {
@@ -66,8 +68,20 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun saveUser(user: UserEntity) = withContext(ioDispatcher) {
+    override suspend fun saveUser(user: UserEntity): Unit = withContext(ioDispatcher) {
         userDao.insertUser(user)
+        kliqConnector?.let { connector ->
+            try {
+                connector.createUser.execute(
+                    id = user.id,
+                    username = user.username,
+                    email = user.email
+                )
+            } catch (ignored: Exception) {
+                // Graceful fallback for offline mode
+            }
+        }
+        Unit
     }
 
     override suspend fun saveProfile(
@@ -77,7 +91,7 @@ class UserRepositoryImpl @Inject constructor(
         hometown: String,
         bio: String,
         profilePictureUrl: String?
-    ) = withContext(ioDispatcher) {
+    ): Unit = withContext(ioDispatcher) {
         val existingUser = userDao.getUserByIdOneShot(userId)
         val updatedUser = UserEntity(
             id = userId,
@@ -92,6 +106,18 @@ class UserRepositoryImpl @Inject constructor(
             updatedAtTimestampMs = System.currentTimeMillis()
         )
         userDao.insertUser(updatedUser)
+        kliqConnector?.let { connector ->
+            try {
+                connector.createUser.execute(
+                    id = updatedUser.id,
+                    username = updatedUser.username,
+                    email = updatedUser.email
+                )
+            } catch (ignored: Exception) {
+                // Graceful fallback for offline mode
+            }
+        }
+        Unit
     }
 
     override suspend fun updateProfilePicture(userId: String, pictureUrl: String) = withContext(ioDispatcher) {

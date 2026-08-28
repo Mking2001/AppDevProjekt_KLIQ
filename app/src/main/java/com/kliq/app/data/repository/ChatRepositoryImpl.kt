@@ -11,6 +11,7 @@ import com.kliq.app.data.model.DirectMessage
 import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.model.formatMsToIso
 import com.kliq.app.data.remote.KliqApiService
+import com.kliq.app.data.generated.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -25,7 +26,8 @@ import javax.inject.Singleton
 class ChatRepositoryImpl @Inject constructor(
     private val chatDao: ChatDao,
     private val directMessageDao: DirectMessageDao,
-    private val apiService: KliqApiService? = null
+    private val apiService: KliqApiService? = null,
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
 ) : ChatRepository {
 
     override fun getAllChats(): Flow<List<ChatConversation>> {
@@ -110,6 +112,30 @@ class ChatRepositoryImpl @Inject constructor(
 
     override suspend fun syncChatMessages(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            kliqConnector?.let { connector ->
+                val response = connector.getMessagesByChat.execute(chatId = chatId)
+                val remoteMessages = response.data.messages.map { msg ->
+                    MessageEntity(
+                        id = msg.id,
+                        chatId = chatId,
+                        senderUserId = msg.senderUserId,
+                        senderName = msg.senderName,
+                        text = msg.text,
+                        timestampMs = msg.timestampMs,
+                        timestampIso = msg.timestampIso,
+                        mediaUrl = msg.mediaUrl,
+                        messageType = try { com.kliq.app.data.model.MessageType.valueOf(msg.messageType ?: "TEXT") } catch (e: Exception) { com.kliq.app.data.model.MessageType.TEXT },
+                        thumbnailUrl = msg.thumbnailUrl,
+                        caption = msg.caption,
+                        audioDurationMs = msg.audioDurationMs ?: 0L,
+                        status = try { MessageStatus.valueOf(msg.status) } catch (e: Exception) { MessageStatus.DELIVERED },
+                        isMine = msg.isMine
+                    )
+                }
+                if (remoteMessages.isNotEmpty()) {
+                    remoteMessages.forEach { chatDao.insertMessage(it) }
+                }
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -229,6 +255,30 @@ class ChatRepositoryImpl @Inject constructor(
                 unreadIncrement = 0
             )
 
+            kliqConnector?.let { connector ->
+                try {
+                    connector.sendMessage.execute(
+                        id = messageEntity.id,
+                        chatId = chatId,
+                        senderUserId = senderUserId,
+                        senderName = senderName,
+                        text = messageEntity.text,
+                        timestampMs = nowMs,
+                        isMine = true
+                    ) {
+                        this.messageType = messageType.name
+                        this.mediaUrl = mediaUrl
+                        this.thumbnailUrl = thumbnailUrl
+                        this.caption = captionText
+                        if (audioDurationMs > 0L) {
+                            this.audioDurationMs = audioDurationMs
+                        }
+                    }
+                } catch (ignored: Exception) {
+                    // Graceful fallback for offline / mock mode
+                }
+            }
+
             Result.success(messageEntity.toDomain())
         } catch (e: Exception) {
             Result.failure(e)
@@ -299,6 +349,24 @@ class ChatRepositoryImpl @Inject constructor(
             )
 
             directMessageDao.insertDirectMessage(entity)
+
+            kliqConnector?.let { connector ->
+                try {
+                    connector.sendDirectMessage.execute(
+                        id = msgId,
+                        senderId = senderId,
+                        receiverId = receiverId,
+                        text = text,
+                        timestamp = nowMs
+                    ) {
+                        this.messageType = com.kliq.app.data.model.MessageType.TEXT.name
+                        this.mediaUrl = mediaUrl
+                    }
+                } catch (ignored: Exception) {
+                    // Graceful fallback for offline mode
+                }
+            }
+
             Result.success(entity.toDomain(isMine = true))
         } catch (e: Exception) {
             Result.failure(e)
@@ -328,6 +396,29 @@ class ChatRepositoryImpl @Inject constructor(
 
     override suspend fun syncDirectMessages(userId: String, targetUserId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            kliqConnector?.let { connector ->
+                val response = connector.getDirectMessages.execute(senderId = userId, receiverId = targetUserId)
+                val remoteEntities = response.data.directMessages.map { msg ->
+                    DirectMessageEntity(
+                        messageId = msg.id,
+                        senderId = msg.senderId,
+                        receiverId = msg.receiverId,
+                        text = msg.text,
+                        timestamp = msg.timestamp,
+                        timestampIso = formatMsToIso(msg.timestamp),
+                        deliveryStatus = try { MessageStatus.valueOf(msg.deliveryStatus) } catch (e: Exception) { MessageStatus.DELIVERED },
+                        isEncrypted = true,
+                        encryptionAlgorithm = "AES-256-GCM",
+                        mediaUrl = msg.mediaUrl,
+                        messageType = try { com.kliq.app.data.model.MessageType.valueOf(msg.messageType ?: "TEXT") } catch (e: Exception) { com.kliq.app.data.model.MessageType.TEXT },
+                        caption = msg.caption,
+                        audioDurationMs = msg.audioDurationMs ?: 0L
+                    )
+                }
+                if (remoteEntities.isNotEmpty()) {
+                    directMessageDao.insertDirectMessages(remoteEntities)
+                }
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
