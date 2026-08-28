@@ -150,13 +150,15 @@ fun KliqMainScaffold(
                         currentRoute = currentRoute,
                         notificationBadgeCount = navigationState.notificationBadgeCount,
                         onTabSelected = { route ->
-                            navigationViewModel.onTabSelected(route)
-                            navController.navigate(route) {
-                                popUpTo(navController.graph.startDestinationId) {
-                                    saveState = true
+                            if (route != currentRoute) {
+                                navigationViewModel.onTabSelected(route)
+                                navController.navigate(route) {
+                                    popUpTo(navController.graph.startDestinationId) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
-                                launchSingleTop = true
-                                restoreState = true
                             }
                         }
                     )

@@ -47,9 +47,29 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
         notificationChannelManager.createNotificationChannels()
         registerComponentCallbacks(this)
         initCrashReportingAsync()
+        initMapsSdk()
 
         applicationScope.launch {
             databaseSeeder.seedIfEmpty()
+        }
+    }
+
+    private fun initMapsSdk() {
+        try {
+            com.google.android.gms.maps.MapsInitializer.initialize(
+                this,
+                com.google.android.gms.maps.MapsInitializer.Renderer.LATEST
+            ) { renderer ->
+                timber.log.Timber.d("Google Maps SDK globally initialized with renderer: %s", renderer)
+                MarkerBitmapHelper.prewarmCache()
+            }
+        } catch (e: Exception) {
+            timber.log.Timber.e(e, "Fehler bei MapsInitializer.initialize in KliqApplication")
+            try {
+                com.google.android.gms.maps.MapsInitializer.initialize(this)
+            } catch (eFallback: Exception) {
+                timber.log.Timber.e(eFallback, "Fallback MapsInitializer.initialize ebenfalls fehlgeschlagen")
+            }
         }
     }
 
