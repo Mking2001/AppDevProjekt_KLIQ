@@ -37,27 +37,33 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun checkUsernameAvailability(username: String): Boolean = withContext(ioDispatcher) {
         val trimmed = username.trim()
-        if (trimmed.length < 3) return@withContext false
+        if (trimmed.isBlank()) return@withContext false
+        if (userDao.getUserByUsername(trimmed) != null) return@withContext false
 
-        // 1. Check local Room DB
-        val localUser = userDao.getUserByUsername(trimmed)
-        if (localUser != null) {
-            return@withContext false
-        }
-
-        // 2. Check Firebase Data Connect Cloud SQL (if available)
         kliqConnector?.let { connector ->
             try {
-                val cloudUsers = connector.listUsers.execute().data.users
-                val existsInCloud = cloudUsers.any { it.username.equals(trimmed, ignoreCase = true) }
-                if (existsInCloud) {
+                val res = connector.checkUsername.execute(username = trimmed)
+                if (res.data.users.isNotEmpty()) {
                     return@withContext false
                 }
-            } catch (ignored: Exception) {
-                // If offline, rely on local DB check
+            } catch (e: Exception) {
+                timber.log.Timber.d("DataConnect: checkUsername: %s", e.message)
             }
         }
+        true
+    }
 
+    override suspend fun checkEmailAvailability(email: String): Boolean = withContext(ioDispatcher) {
+        val trimmed = email.trim()
+        if (trimmed.isBlank()) return@withContext false
+        if (userDao.getUserByEmail(trimmed) != null) return@withContext false
+        true
+    }
+
+    override suspend fun checkPhoneAvailability(phoneNumber: String): Boolean = withContext(ioDispatcher) {
+        val trimmed = phoneNumber.trim()
+        if (trimmed.isBlank()) return@withContext false
+        if (userDao.getUserByPhone(trimmed) != null) return@withContext false
         true
     }
 
@@ -72,6 +78,7 @@ class UserRepositoryImpl @Inject constructor(
         countryCode: String,
         phoneNumber: String,
         profilePictureUrl: String,
+        photos: List<String>,
         searchIntent: SearchIntent,
         smokingHabit: SmokingHabit,
         drinkingHabit: DrinkingHabit,
@@ -83,6 +90,7 @@ class UserRepositoryImpl @Inject constructor(
             val userId = "usr_${System.currentTimeMillis()}"
             val finalHometown = hometown.trim().ifBlank { "${firstName.trim()} ${lastName.trim()}".trim() }
             val finalEmail = email.trim().ifBlank { "${trimmedUsername.lowercase()}@kliq.app" }
+            val primaryPhotoUrl = photos.firstOrNull { it.isNotBlank() } ?: profilePictureUrl.ifBlank { null }
 
             // Calculate approximate age from birthDateMs
             val nowMs = System.currentTimeMillis()
@@ -94,7 +102,7 @@ class UserRepositoryImpl @Inject constructor(
                 email = finalEmail,
                 age = ageYears,
                 hometown = finalHometown,
-                profilePictureUrl = profilePictureUrl.ifBlank { null },
+                profilePictureUrl = primaryPhotoUrl,
                 bio = bio.trim().ifBlank { "Hey, ich bin neu bei KLIQ!" },
                 phoneNumber = phoneNumber.trim().ifBlank { null },
                 isVerified = true,
@@ -134,7 +142,7 @@ class UserRepositoryImpl @Inject constructor(
                         this.hometown = finalHometown
                         this.countryCode = countryCode.ifBlank { "+43" }
                         this.phoneNumber = phoneNumber.trim().ifBlank { null }
-                        this.profilePictureUrl = profilePictureUrl.ifBlank { null }
+                        this.profilePictureUrl = primaryPhotoUrl
                         this.bio = newUser.bio
                     }
                     timber.log.Timber.d("DataConnect: User created successfully on Cloud SQL!")
@@ -155,6 +163,25 @@ class UserRepositoryImpl @Inject constructor(
                     timber.log.Timber.d("DataConnect: User preferences upserted successfully on Cloud SQL!")
                 } catch (e: Exception) {
                     timber.log.Timber.e(e, "DataConnect: Failed to upsert user preferences on Cloud SQL")
+                }
+
+                // Sync all gallery photos
+                photos.forEachIndexed { index, photoUrl ->
+                    if (photoUrl.isNotBlank()) {
+                        try {
+                            val photoId = "photo_${userId}_${System.currentTimeMillis()}_$index"
+                            connector.addUserPhoto.execute(
+                                id = photoId,
+                                userId = userId,
+                                imageUrl = photoUrl
+                            ) {
+                                this.displayOrder = index
+                            }
+                            timber.log.Timber.d("DataConnect: User photo %d synced to Cloud SQL", index)
+                        } catch (e: Exception) {
+                            timber.log.Timber.e(e, "DataConnect: Failed to sync photo %d to Cloud SQL", index)
+                        }
+                    }
                 }
             }
 

@@ -36,6 +36,8 @@ interface UserRepository {
     suspend fun requestOtp(countryCode: String, phoneNumber: String): Result<Boolean>
     suspend fun verifyOtp(countryCode: String, phoneNumber: String, otpCode: String): Result<UserEntity>
     suspend fun checkUsernameAvailability(username: String): Boolean = true
+    suspend fun checkEmailAvailability(email: String): Boolean = true
+    suspend fun checkPhoneAvailability(phoneNumber: String): Boolean = true
     suspend fun registerUser(
         username: String,
         email: String,
@@ -47,6 +49,7 @@ interface UserRepository {
         countryCode: String = "+43",
         phoneNumber: String = "",
         profilePictureUrl: String,
+        photos: List<String> = emptyList(),
         searchIntent: SearchIntent,
         smokingHabit: SmokingHabit = SmokingHabit.NEVER,
         drinkingHabit: DrinkingHabit = DrinkingHabit.NEVER,

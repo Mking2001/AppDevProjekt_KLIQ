@@ -16,6 +16,28 @@ sealed class UsernameCheckStatus {
 }
 
 /**
+ * Status der E-Mail-Verfügbarkeitsprüfung.
+ */
+sealed class EmailCheckStatus {
+    data object Idle : EmailCheckStatus()
+    data object Checking : EmailCheckStatus()
+    data object Available : EmailCheckStatus()
+    data class Taken(val message: String = "Diese E-Mail-Adresse wird bereits verwendet.") : EmailCheckStatus()
+    data class Invalid(val message: String) : EmailCheckStatus()
+}
+
+/**
+ * Status der Telefonnummer-Verfügbarkeitsprüfung.
+ */
+sealed class PhoneCheckStatus {
+    data object Idle : PhoneCheckStatus()
+    data object Checking : PhoneCheckStatus()
+    data object Available : PhoneCheckStatus()
+    data class Taken(val message: String = "Diese Telefonnummer ist bereits registriert.") : PhoneCheckStatus()
+    data class Invalid(val message: String) : PhoneCheckStatus()
+}
+
+/**
  * UI State für den vollständigen Registrierungs-Flow.
  */
 data class RegisterUiState(
@@ -23,6 +45,7 @@ data class RegisterUiState(
     val usernameStatus: UsernameCheckStatus = UsernameCheckStatus.Idle,
     val usernameError: String? = null,
     val email: String = "",
+    val emailStatus: EmailCheckStatus = EmailCheckStatus.Idle,
     val emailError: String? = null,
     val firstName: String = "",
     val firstNameError: String? = null,
@@ -39,9 +62,15 @@ data class RegisterUiState(
     val countryCode: String = "+43",
     val isCountryCodeDropdownExpanded: Boolean = false,
     val phoneNumber: String = "",
+    val phoneStatus: PhoneCheckStatus = PhoneCheckStatus.Idle,
     val phoneNumberError: String? = null,
-    val profilePictureUrl: String? = null,
+    // Bis zu 4 Profilbilder (Hauptbild an Index 0 + bis zu 3 weitere)
+    val photos: List<String> = emptyList(),
+    val selectedPhotoSlotIndex: Int = 0,
     val profilePictureError: String? = null,
+    // Vorschau Modal
+    val isPreviewModalOpen: Boolean = false,
+    val previewPhotoIndex: Int = 0,
     val searchIntent: SearchIntent = SearchIntent.BOTH,
     val smokingHabit: SmokingHabit = SmokingHabit.OCCASIONALLY,
     val drinkingHabit: DrinkingHabit = DrinkingHabit.SOCIAL,
@@ -57,4 +86,7 @@ data class RegisterUiState(
     val errorMessage: String? = null,
     val isRegistrationSuccessful: Boolean = false,
     val isFormValid: Boolean = false
-)
+) {
+    val profilePictureUrl: String?
+        get() = photos.firstOrNull { it.isNotBlank() }
+}
