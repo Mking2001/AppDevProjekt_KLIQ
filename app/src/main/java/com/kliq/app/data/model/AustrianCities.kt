@@ -1,0 +1,71 @@
+package com.kliq.app.data.model
+
+/**
+ * Vordefinierte Liste der österreichischen Großstädte und Bezirkshauptstädte für die Heimatstadt-Auswahl.
+ */
+object AustrianCities {
+    val CITIES: List<String> = listOf(
+        "Wien",
+        "Graz",
+        "Linz",
+        "Salzburg",
+        "Innsbruck",
+        "Klagenfurt am Wörthersee",
+        "Villach",
+        "Wels",
+        "Sankt Pölten",
+        "Dornbirn",
+        "Wiener Neustadt",
+        "Steyr",
+        "Feldkirch",
+        "Bregenz",
+        "Leonding",
+        "Klosterneuburg",
+        "Baden",
+        "Wolfsberg",
+        "Leoben",
+        "Krems an der Donau",
+        "Traun",
+        "Amstetten",
+        "Lustenau",
+        "Kapfenberg",
+        "Mödling",
+        "Hallein",
+        "Kufstein",
+        "Braunau am Inn",
+        "Spittal an der Drau",
+        "Schwechat",
+        "Telfs",
+        "Saalfelden am Steinernen Meer",
+        "Ansfelden",
+        "Hohenems",
+        "Bludenz",
+        "Eisenstadt",
+        "Lienz",
+        "Vöcklabruck",
+        "Gmunden",
+        "St. Veit an der Glan",
+        "Völkermarkt",
+        "Feldkirchen in Kärnten",
+        "Hermagor",
+        "Neunkirchen",
+        "Korneuburg",
+        "Tulln an der Donau"
+    )
+
+    /**
+     * Filtert Städte anhand einer Eingabe (case-insensitive).
+     */
+    fun filter(query: String): List<String> {
+        if (query.isBlank()) return emptyList()
+        val trimmed = query.trim()
+        return CITIES.filter { it.contains(trimmed, ignoreCase = true) }
+    }
+
+    /**
+     * Prüft, ob ein eingegebener Name einer der vordefinierten Städte entspricht.
+     */
+    fun isValidCity(cityName: String): Boolean {
+        return CITIES.any { it.equals(cityName.trim(), ignoreCase = true) }
+    }
+}

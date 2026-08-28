@@ -77,18 +77,10 @@ class KliqDatabaseSeeder @Inject constructor(
     }
 
     private suspend fun seedFeed() {
-        val nowMs = System.currentTimeMillis()
-
-        if (feedDao.countFeedPosts() == 0) {
-            feedDao.insertFeedPosts(KlagenfurtSeedData.feedPosts(nowMs))
-            feedDao.insertComments(KlagenfurtSeedData.feedComments(nowMs))
-            Log.d(TAG, "Feed-Beiträge und Kommentare eingefügt")
-        }
-
-        if (feedDao.countStories() == 0) {
-            feedDao.insertStories(KlagenfurtSeedData.stories(nowMs))
-            Log.d(TAG, "Storys eingefügt")
-        }
+        // Clean out all legacy mock posts, comments, and stories
+        feedDao.deleteMockStories()
+        feedDao.deleteMockPosts()
+        feedDao.deleteMockComments()
     }
 
     private companion object {

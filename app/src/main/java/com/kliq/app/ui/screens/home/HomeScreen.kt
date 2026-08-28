@@ -1,8 +1,13 @@
 package com.kliq.app.ui.screens.home
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,12 +28,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.PhotoCamera
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -39,6 +51,8 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -50,6 +64,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,6 +74,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.kliq.app.ui.components.KliqFeedCard
 import com.kliq.app.ui.components.KliqScreenScaffold
 import com.kliq.app.ui.navigation.TopBarMenuAction
@@ -87,11 +105,24 @@ fun HomeScreen(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
-    onNavigateToChat: () -> Unit = {},
+    onNavigateToActivities: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    val storyMediaLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.onPostStory(context, it) }
+    }
+
+    val postImageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.onComposerImageSelected(context, it) }
+    }
 
     LaunchedEffect(uiState.errorMessage, uiState.infoMessage) {
         val message = uiState.errorMessage ?: uiState.infoMessage
@@ -109,12 +140,12 @@ fun HomeScreen(
         onMenuAction = onMenuAction,
         actions = {
             IconButton(
-                onClick = onNavigateToChat,
-                modifier = Modifier.talkBackDescription("Nachrichten öffnen")
+                onClick = onNavigateToActivities,
+                modifier = Modifier.talkBackDescription("Aktivitäten öffnen")
             ) {
                 Icon(
-                    imageVector = Icons.Outlined.ChatBubbleOutline,
-                    contentDescription = null,
+                    imageVector = Icons.Outlined.Notifications,
+                    contentDescription = "Aktivitäten",
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -143,7 +174,18 @@ fun HomeScreen(
             ) {
                 item {
                     StoryRow(
+                        myStory = uiState.myStory,
+                        myProfilePictureUrl = uiState.myProfilePictureUrl,
+                        myUserName = uiState.myUserName,
+                        isPostingStory = uiState.isPostingStory,
                         stories = uiState.storyItems,
+                        onMyStoryClick = {
+                            uiState.myStory?.let { viewModel.onStoryOpened(it.id) }
+                                ?: storyMediaLauncher.launch("image/*")
+                        },
+                        onAddStoryClick = {
+                            storyMediaLauncher.launch("image/*")
+                        },
                         onStoryClick = { storyId -> viewModel.onStoryOpened(storyId) }
                     )
                 }
@@ -175,7 +217,7 @@ fun HomeScreen(
                         imageUrl = feedItem.imageUrl,
                         onLikeClick = { viewModel.onLikePost(feedItem.id) },
                         onCommentClick = { viewModel.onCommentsOpened(feedItem.id) },
-                        onShareClick = { viewModel.onCommentsOpened(feedItem.id) },
+                        onShareClick = { viewModel.onSharePostOpened(feedItem) },
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
@@ -191,8 +233,15 @@ fun HomeScreen(
     if (uiState.isComposerVisible) {
         PostComposerDialog(
             text = uiState.composerText,
+            imageUri = uiState.composerImageUri,
+            location = uiState.composerLocation,
+            isEventPinned = uiState.composerIsEventPinned,
             isPublishing = uiState.isPublishing,
             onTextChange = viewModel::onComposerTextChanged,
+            onPickImage = { postImageLauncher.launch("image/*") },
+            onRemoveImage = viewModel::onComposerImageRemoved,
+            onLocationChange = viewModel::onComposerLocationChanged,
+            onToggleEventPinned = viewModel::onToggleComposerEventPinned,
             onPublish = viewModel::onPublishPost,
             onDismiss = viewModel::onComposerDismissed
         )
@@ -201,6 +250,7 @@ fun HomeScreen(
     uiState.activeStory?.let { story ->
         StoryViewerDialog(
             story = story,
+            onDeleteClick = { viewModel.onDeleteStory(story.id) },
             onDismiss = viewModel::onStoryDismissed
         )
     }
@@ -214,24 +264,144 @@ fun HomeScreen(
             onDismiss = viewModel::onCommentsDismissed
         )
     }
+
+    uiState.activeSharePost?.let { sharePost ->
+        SharePostSheet(
+            post = sharePost,
+            searchQuery = uiState.shareSearchQuery,
+            contacts = uiState.shareContacts,
+            onSearchQueryChanged = viewModel::onShareSearchQueryChanged,
+            onSendToContact = viewModel::onSharePostToChat,
+            onDismiss = viewModel::onSharePostDismissed
+        )
+    }
 }
 
 /**
- * Horizontale Story-Leiste. Ungesehene Storys erhalten einen Gradient-Rahmen,
- * der nach dem Öffnen verschwindet.
- *
- * @param stories Anzuzeigende Storys.
- * @param onStoryClick Callback mit der Story-ID beim Antippen.
+ * Horizontale Story-Leiste. Erstes Element ist die eigene Story (Instagram-Style).
  */
 @Composable
 private fun StoryRow(
+    myStory: StoryItemUi?,
+    myProfilePictureUrl: String?,
+    myUserName: String,
+    isPostingStory: Boolean,
     stories: List<StoryItemUi>,
+    onMyStoryClick: () -> Unit,
+    onAddStoryClick: () -> Unit,
     onStoryClick: (String) -> Unit
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // 1. Deine Story (Instagram-Style)
+        item(key = "my_own_story_item") {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .width(72.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable {
+                        if (myStory != null) onMyStoryClick() else onAddStoryClick()
+                    }
+                    .ensureMinTouchTarget(48.dp)
+            ) {
+                Box(
+                    modifier = Modifier.size(64.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Profilbild-Kreis
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .then(
+                                if (myStory != null) {
+                                    Modifier.border(
+                                        width = 2.5.dp,
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(
+                                                PurplePrimaryLight,
+                                                FuchsiaTertiary,
+                                                PurplePrimary
+                                            )
+                                        ),
+                                        shape = CircleShape
+                                    )
+                                } else {
+                                    Modifier.border(
+                                        width = 1.2.dp,
+                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                                        shape = CircleShape
+                                    )
+                                }
+                            )
+                            .padding(3.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (!myProfilePictureUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = myProfilePictureUrl,
+                                contentDescription = "Deine Story",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Text(
+                                text = myUserName.take(1).uppercase(),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Plus-Badge (+)
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .align(Alignment.BottomEnd)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(2.dp)
+                            .clip(CircleShape)
+                            .background(PurplePrimary)
+                            .clickable { onAddStoryClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isPostingStory) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(12.dp),
+                                color = Color.White,
+                                strokeWidth = 1.5.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "Story hinzufügen",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Deine Story",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = if (myStory != null) FontWeight.SemiBold else FontWeight.Normal,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // 2. Storys von anderen Nutzern
         items(stories, key = { it.id }) { story ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -274,12 +444,21 @@ private fun StoryRow(
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = story.userName.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold
-                    )
+                    if (!story.imageUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = story.imageUrl,
+                            contentDescription = story.userName,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = story.userName.take(1).uppercase(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -323,13 +502,20 @@ private fun EmptyFeedHint() {
 }
 
 /**
- * Dialog zum Erstellen eines neuen Beitrags.
+ * Dialog zum Erstellen eines neuen Beitrags mit Bild, Ort und Event-Pin.
  */
 @Composable
 private fun PostComposerDialog(
     text: String,
+    imageUri: String?,
+    location: String,
+    isEventPinned: Boolean,
     isPublishing: Boolean,
     onTextChange: (String) -> Unit,
+    onPickImage: () -> Unit,
+    onRemoveImage: () -> Unit,
+    onLocationChange: (String) -> Unit,
+    onToggleEventPinned: () -> Unit,
     onPublish: () -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -343,22 +529,151 @@ private fun PostComposerDialog(
             )
         },
         text = {
-            OutlinedTextField(
-                value = text,
-                onValueChange = onTextChange,
-                placeholder = { Text(text = "Was läuft heute Abend?") },
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(min = 120.dp),
-                shape = RoundedCornerShape(12.dp),
-                minLines = 4,
-                enabled = !isPublishing
-            )
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = onTextChange,
+                    placeholder = { Text(text = "Was läuft heute Abend?") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 90.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    minLines = 3,
+                    enabled = !isPublishing
+                )
+
+                // Bild-Vorschau oder Hinzufügen-Button
+                if (!imageUri.isNullOrBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                    ) {
+                        AsyncImage(
+                            model = imageUri,
+                            contentDescription = "Ausgewähltes Bild",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        IconButton(
+                            onClick = onRemoveImage,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(6.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.65f))
+                                .size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Close,
+                                contentDescription = "Bild entfernen",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+                } else {
+                    Button(
+                        onClick = onPickImage,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.AddPhotoAlternate,
+                            contentDescription = null,
+                            tint = PurplePrimaryLight,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Foto hinzufügen",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    }
+                }
+
+                // Standort-Eingabe (optional)
+                OutlinedTextField(
+                    value = location,
+                    onValueChange = onLocationChange,
+                    placeholder = { Text("Ort / Location (optional)") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.LocationOn, contentDescription = null, tint = PurplePrimaryLight)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    shape = RoundedCornerShape(12.dp),
+                    enabled = !isPublishing
+                )
+
+                // Auf Karte fixieren (Event) Button / Switch
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            if (isEventPinned) PurplePrimary.copy(alpha = 0.2f)
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                        )
+                        .border(
+                            width = 1.dp,
+                            color = if (isEventPinned) PurplePrimary else Color.Transparent,
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                        .clickable { onToggleEventPinned() }
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Place,
+                            contentDescription = null,
+                            tint = if (isEventPinned) PurplePrimaryLight else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Auf Karte fixieren (Event)",
+                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+                                color = if (isEventPinned) Color.White else MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = if (isEventPinned) "Wird auf der Karte markiert" else "Nur im Feed sichtbar",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (isEventPinned) PurplePrimaryLight else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                    Switch(
+                        checked = isEventPinned,
+                        onCheckedChange = { onToggleEventPinned() },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = PurplePrimary
+                        )
+                    )
+                }
+            }
         },
         confirmButton = {
             Button(
                 onClick = onPublish,
-                enabled = !isPublishing && text.isNotBlank(),
+                enabled = !isPublishing && (text.isNotBlank() || !imageUri.isNullOrBlank()),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 if (isPublishing) {
@@ -382,18 +697,19 @@ private fun PostComposerDialog(
 }
 
 /**
- * Vollbild-Anzeige einer Story mit Kliq-Farbverlauf als Motivfläche.
+ * Vollbild-Anzeige einer Story mit Erstellungszeitpunkt, Standort und Löschen-Option.
  */
 @Composable
 private fun StoryViewerDialog(
     story: StoryItemUi,
+    onDeleteClick: () -> Unit,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(520.dp)
+                .height(560.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(
                     brush = Brush.verticalGradient(
@@ -405,60 +721,135 @@ private fun StoryViewerDialog(
                     )
                 )
         ) {
-            IconButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .talkBackDescription("Story schließen")
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Close,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary
+            if (!story.imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = story.imageUrl,
+                    contentDescription = story.headline,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                // Top gradient scrim for readability
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(130.dp)
+                        .align(Alignment.TopCenter)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Black.copy(alpha = 0.8f), Color.Transparent)
+                            )
+                        )
+                )
+                // Bottom gradient scrim for readability
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))
+                            )
+                        )
                 )
             }
 
-            Column(
+            // Top Action Row: Author Info & Controls
+            Row(
                 modifier = Modifier
+                    .fillMaxWidth()
                     .align(Alignment.TopStart)
-                    .padding(20.dp)
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
             ) {
-                Text(
-                    text = story.userName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-                if (!story.clubName.isNullOrBlank()) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = story.userName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+
                     Spacer(modifier = Modifier.height(4.dp))
+
+                    // Erstellungszeitpunkt (Uhrzeit) & Standort
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (story.createdAtFormatted.isNotBlank()) {
+                            Icon(
+                                imageVector = Icons.Filled.Schedule,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = story.createdAtFormatted,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                        }
+
+                        if (!story.clubName.isNullOrBlank()) {
+                            if (story.createdAtFormatted.isNotBlank()) {
+                                Text(
+                                    text = " • ",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White.copy(alpha = 0.7f)
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.Filled.LocationOn,
+                                contentDescription = null,
+                                tint = PurplePrimaryLight,
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = story.clubName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                        }
+                    }
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Story löschen Knopf
+                    IconButton(
+                        onClick = onDeleteClick,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.55f))
+                    ) {
                         Icon(
-                            imageVector = Icons.Filled.LocationOn,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
-                            modifier = Modifier.size(14.dp)
+                            imageVector = Icons.Filled.Delete,
+                            contentDescription = "Story löschen",
+                            tint = Color(0xFFFF5252),
+                            modifier = Modifier.size(18.dp)
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = story.clubName,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    // Schließen Knopf
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(Color.Black.copy(alpha = 0.55f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = "Schließen",
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
             }
-
-            Text(
-                text = story.headline.ifBlank { "Story von ${story.userName}" },
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(horizontal = 24.dp)
-            )
         }
     }
 }

@@ -2,6 +2,8 @@ package com.kliq.app.ui.navigation
 
 import android.net.Uri
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.outlined.Chat
 import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
@@ -44,6 +46,13 @@ sealed class NavigationRoute(
         label = "Karte",
         selectedIcon = Icons.Filled.Map,
         unselectedIcon = Icons.Outlined.Map
+    )
+
+    data object Messages : NavigationRoute(
+        route = "chat_list",
+        label = "Nachrichten",
+        selectedIcon = Icons.AutoMirrored.Filled.Chat,
+        unselectedIcon = Icons.AutoMirrored.Outlined.Chat
     )
 
     data object Notifications : NavigationRoute(
@@ -92,7 +101,7 @@ sealed class NavigationRoute(
 
         /** Ordered list of all bottom bar tabs */
         val bottomBarItems: List<NavigationRoute>
-            get() = listOf(Home, Explore, Map, Notifications, Profile)
+            get() = listOf(Home, Explore, Map, Messages, Profile)
     }
 }
 
@@ -136,7 +145,9 @@ object ChatRoutes {
  */
 object CoreRoutes {
     const val SPLASH = "splash"
+    const val AUTH_SELECTION = "auth_selection"
     const val PHONE_LOGIN = "phone_login"
+    const val REGISTER = "register"
 }
 
 /**

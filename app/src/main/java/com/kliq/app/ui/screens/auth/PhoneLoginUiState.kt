@@ -32,7 +32,7 @@ data class CountryCodeOption(
  * @property supportedCountries Die verfuegbaren Ländervorwahlen zur Auswahl.
  */
 data class PhoneLoginUiState(
-    val countryCode: String = "+49",
+    val countryCode: String = "+43",
     val selectedCountry: CountryCodeOption = DEFAULT_COUNTRY,
     val phoneNumber: String = "",
     val isValidPhoneNumber: Boolean = false,
@@ -64,11 +64,11 @@ data class PhoneLoginUiState(
         get() = isValidOtp && !isLoading && isOtpSent
 
     companion object {
-        val DEFAULT_COUNTRY = CountryCodeOption("Deutschland", "🇩🇪", "+49", "DE")
+        val DEFAULT_COUNTRY = CountryCodeOption("Österreich", "🇦🇹", "+43", "AT")
 
         val DEFAULT_COUNTRIES = listOf(
-            CountryCodeOption("Deutschland", "🇩🇪", "+49", "DE"),
             CountryCodeOption("Österreich", "🇦🇹", "+43", "AT"),
+            CountryCodeOption("Deutschland", "🇩🇪", "+49", "DE"),
             CountryCodeOption("Schweiz", "🇨🇭", "+41", "CH"),
             CountryCodeOption("Vereinigte Staaten", "🇺🇸", "+1", "US"),
             CountryCodeOption("Vereinigtes Königreich", "🇬🇧", "+44", "GB"),

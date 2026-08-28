@@ -49,8 +49,21 @@ interface FeedRepository {
         text: String
     ): Result<FeedComment>
 
+    /** Erstellt eine neue Story des Nutzers. */
+    suspend fun createStory(
+        authorUserId: String,
+        authorName: String,
+        imageUrl: String,
+        avatarUrl: String? = null,
+        headline: String = "",
+        clubName: String? = null
+    ): Result<Story> = Result.failure(NotImplementedError())
+
     /** Markiert eine Story als gesehen. */
     suspend fun markStoryAsSeen(storyId: String)
+
+    /** Löscht eine Story aus der Datenbank. */
+    suspend fun deleteStory(storyId: String): Result<Unit> = Result.success(Unit)
 
     /** Entfernt einen Beitrag samt Kommentaren. */
     suspend fun deletePost(postId: String)

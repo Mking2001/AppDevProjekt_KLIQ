@@ -55,8 +55,26 @@ interface FeedDao {
     suspend fun countStories(): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStory(story: StoryEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertStories(stories: List<StoryEntity>)
 
     @Query("UPDATE stories SET isSeen = 1 WHERE id = :storyId")
     suspend fun markStoryAsSeen(storyId: String)
+
+    @Query("DELETE FROM stories WHERE id = :storyId")
+    suspend fun deleteStory(storyId: String)
+
+    @Query("DELETE FROM stories WHERE createdAtMs < :minCreatedAtMs")
+    suspend fun deleteExpiredStories(minCreatedAtMs: Long)
+
+    @Query("DELETE FROM stories WHERE id LIKE 'story_kf_%'")
+    suspend fun deleteMockStories()
+
+    @Query("DELETE FROM feed_posts WHERE id LIKE 'post_kf_%'")
+    suspend fun deleteMockPosts()
+
+    @Query("DELETE FROM feed_comments WHERE id LIKE 'cmt_kf_%'")
+    suspend fun deleteMockComments()
 }

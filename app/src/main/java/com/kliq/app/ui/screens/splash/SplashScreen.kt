@@ -42,7 +42,8 @@ import kotlinx.coroutines.delay
 fun SplashScreen(
     authViewModel: AuthViewModel = hiltViewModel(),
     onNavigateToHome: () -> Unit = {},
-    onNavigateToPhoneLogin: () -> Unit = {},
+    onNavigateToAuthSelection: () -> Unit = {},
+    onNavigateToPhoneLogin: () -> Unit = onNavigateToAuthSelection,
     onSplashFinished: (() -> Unit)? = null
 ) {
     val authState by authViewModel.uiState.collectAsStateWithLifecycle()
@@ -55,7 +56,7 @@ fun SplashScreen(
                 onSplashFinished?.invoke()
             }
             is AuthUiState.Unauthenticated, is AuthUiState.Error -> {
-                onNavigateToPhoneLogin()
+                onNavigateToAuthSelection()
                 onSplashFinished?.invoke()
             }
             is AuthUiState.Loading -> {

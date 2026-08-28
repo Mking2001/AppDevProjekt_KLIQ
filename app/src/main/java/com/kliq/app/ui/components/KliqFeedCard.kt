@@ -205,58 +205,75 @@ fun KliqFeedCard(
  */
 @Composable
 private fun FeedCardMedia(imageUrl: String?, clubName: String?) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(180.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        PurplePrimary.copy(alpha = 0.55f),
-                        FuchsiaTertiary.copy(alpha = 0.35f),
-                        MaterialTheme.colorScheme.surfaceVariant
-                    )
-                )
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        if (!imageUrl.isNullOrBlank()) {
+    if (imageUrl.isNullOrBlank() && clubName.isNullOrBlank()) {
+        return
+    }
+
+    if (!imageUrl.isNullOrBlank()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        ) {
             AsyncImage(
                 model = imageUrl,
                 contentDescription = clubName?.let { "Beitragsbild von $it" } ?: "Beitragsbild",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-            return@Box
-        }
-
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                imageVector = Icons.Outlined.NightsStay,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
-                modifier = Modifier.size(40.dp)
-            )
 
             if (!clubName.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Filled.LocationOn,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = clubName,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(8.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.65f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Filled.LocationOn,
+                            contentDescription = null,
+                            tint = PurplePrimary,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = clubName,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = androidx.compose.ui.graphics.Color.White
+                        )
+                    }
                 }
             }
         }
+        return
+    }
+
+    // Only location tag without image
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(PurplePrimary.copy(alpha = 0.15f))
+            .padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Filled.LocationOn,
+            contentDescription = null,
+            tint = PurplePrimary,
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = clubName ?: "",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = PurplePrimary
+        )
     }
 }
