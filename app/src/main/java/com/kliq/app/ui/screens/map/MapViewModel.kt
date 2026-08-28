@@ -176,7 +176,7 @@ class MapViewModel @Inject constructor(
     private fun setupFilters() {
         _uiState.update { state ->
             state.copy(
-                filters = listOf("Alle", "Clubs", "Bars", "Events", "Restaurants")
+                filters = listOf("Alle", "Clubs", "Bars", "Events")
             )
         }
     }
@@ -534,14 +534,24 @@ class MapViewModel @Inject constructor(
 
     fun toggleFavorite(clubId: String, currentFavoriteState: Boolean) {
         val nextFavorite = !currentFavoriteState
+        allVenues = allVenues.map { venue ->
+            if (venue.id == clubId) venue.copy(isFavorite = nextFavorite) else venue
+        }
         _uiState.update { state ->
             val updatedVenue = state.selectedVenue?.let {
                 if (it.id == clubId) it.copy(isFavorite = nextFavorite) else it
             }
-            state.copy(selectedVenue = updatedVenue)
+            val updatedNearby = state.nearbyVenues.map {
+                if (it.id == clubId) it.copy(isFavorite = nextFavorite) else it
+            }
+            state.copy(selectedVenue = updatedVenue, nearbyVenues = updatedNearby)
         }
         viewModelScope.launch {
-            clubRepository.toggleFavorite(clubId, currentFavoriteState)
+            try {
+                clubRepository.toggleFavorite(clubId, currentFavoriteState)
+            } catch (ignored: Exception) {
+                // Keep local UI state optimistic
+            }
         }
     }
 
