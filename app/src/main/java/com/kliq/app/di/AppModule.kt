@@ -7,6 +7,7 @@ import com.kliq.app.data.local.dao.ChatDao
 import com.kliq.app.data.local.dao.ClubDao
 import com.kliq.app.data.local.dao.DirectMessageDao
 import com.kliq.app.data.local.dao.EventDao
+import com.kliq.app.data.local.dao.FeedDao
 import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.remote.KliqApiService
@@ -44,6 +45,9 @@ object AppModule {
 
     @Provides
     fun provideReviewDao(database: KliqDatabase): ReviewDao = database.reviewDao()
+
+    @Provides
+    fun provideFeedDao(database: KliqDatabase): FeedDao = database.feedDao()
 
     @Provides
     fun provideChatDao(database: KliqDatabase): ChatDao = database.chatDao()
