@@ -12,11 +12,14 @@ import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.model.formatMsToIso
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.generated.*
+import timber.log.Timber
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
@@ -31,6 +34,37 @@ class ChatRepositoryImpl @Inject constructor(
 ) : ChatRepository {
 
     override fun getAllChats(): Flow<List<ChatConversation>> {
+        kliqConnector?.let { connector ->
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val response = connector.getAllChats.execute()
+                    val remoteChats = response.data.chats.map { c ->
+                        ChatEntity(
+                            id = c.id,
+                            name = c.name,
+                            cityRegion = c.cityRegion,
+                            lastMessageText = c.lastMessageText,
+                            lastMessageTimestampMs = c.lastMessageTimestampMs,
+                            lastMessageTimestampIso = c.lastMessageTimestampIso,
+                            avatarInitial = c.avatarInitial,
+                            avatarUrl = c.avatarUrl,
+                            unreadCount = c.unreadCount,
+                            chatType = try { com.kliq.app.data.model.ChatType.valueOf(c.chatType) } catch (e: Exception) { com.kliq.app.data.model.ChatType.PUBLIC_CITY },
+                            isOnline = c.isOnline,
+                            isPinned = c.isPinned,
+                            isMuted = c.isMuted,
+                            isArchived = c.isArchived
+                        )
+                    }
+                    if (remoteChats.isNotEmpty()) {
+                        remoteChats.forEach { chatDao.insertChat(it) }
+                        Timber.i("Synced %d chats from Firebase SQL Connect", remoteChats.size)
+                    }
+                } catch (e: Exception) {
+                    Timber.d(e, "Could not sync chats from Firebase SQL Connect (offline or empty)")
+                }
+            }
+        }
         return chatDao.getAllChats().map { entities ->
             entities.map { it.toDomain() }
         }.flowOn(Dispatchers.IO)
@@ -92,8 +126,29 @@ class ChatRepositoryImpl @Inject constructor(
                 chatType = chatType
             )
             chatDao.insertChat(entity)
+            Timber.i("Saved chat locally in Room: %s (%s)", entity.id, entity.name)
+
+            kliqConnector?.let { connector ->
+                try {
+                    connector.createChat.execute(
+                        id = entity.id,
+                        name = entity.name,
+                        chatType = entity.chatType.name,
+                        lastMessageText = "",
+                        lastMessageTimestampMs = nowMs,
+                        avatarInitial = entity.avatarInitial
+                    ) {
+                        this.cityRegion = cityRegion
+                    }
+                    Timber.i("Successfully created chat in Firebase SQL Connect: %s", entity.id)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to create chat in Firebase SQL Connect: %s", entity.id)
+                }
+            }
+
             Result.success(entity.toDomain())
         } catch (e: Exception) {
+            Timber.e(e, "Error creating chat in ChatRepositoryImpl")
             Result.failure(e)
         }
     }
@@ -134,10 +189,12 @@ class ChatRepositoryImpl @Inject constructor(
                 }
                 if (remoteMessages.isNotEmpty()) {
                     remoteMessages.forEach { chatDao.insertMessage(it) }
+                    Timber.i("Synced %d messages for chat %s from Firebase SQL Connect", remoteMessages.size, chatId)
                 }
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            Timber.e(e, "Error syncing chat messages for %s from Firebase SQL Connect", chatId)
             Result.failure(e)
         }
     }
@@ -274,13 +331,15 @@ class ChatRepositoryImpl @Inject constructor(
                             this.audioDurationMs = audioDurationMs
                         }
                     }
-                } catch (ignored: Exception) {
-                    // Graceful fallback for offline / mock mode
+                    Timber.i("Successfully sent message %s to Firebase SQL Connect in chat %s", messageEntity.id, chatId)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to send message to Firebase SQL Connect in chat %s", chatId)
                 }
             }
 
             Result.success(messageEntity.toDomain())
         } catch (e: Exception) {
+            Timber.e(e, "Error in sendInternalMessage for chat %s", chatId)
             Result.failure(e)
         }
     }
@@ -362,13 +421,15 @@ class ChatRepositoryImpl @Inject constructor(
                         this.messageType = com.kliq.app.data.model.MessageType.TEXT.name
                         this.mediaUrl = mediaUrl
                     }
-                } catch (ignored: Exception) {
-                    // Graceful fallback for offline mode
+                    Timber.i("Successfully sent DirectMessage %s to Firebase SQL Connect (%s -> %s)", msgId, senderId, receiverId)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to send DirectMessage to Firebase SQL Connect")
                 }
             }
 
             Result.success(entity.toDomain(isMine = true))
         } catch (e: Exception) {
+            Timber.e(e, "Error in sendDirectMessage")
             Result.failure(e)
         }
     }
@@ -417,10 +478,12 @@ class ChatRepositoryImpl @Inject constructor(
                 }
                 if (remoteEntities.isNotEmpty()) {
                     directMessageDao.insertDirectMessages(remoteEntities)
+                    Timber.i("Synced %d direct messages between %s and %s from Firebase SQL Connect", remoteEntities.size, userId, targetUserId)
                 }
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            Timber.e(e, "Error syncing direct messages from Firebase SQL Connect")
             Result.failure(e)
         }
     }
