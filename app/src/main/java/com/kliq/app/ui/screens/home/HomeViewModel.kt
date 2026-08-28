@@ -262,7 +262,13 @@ class HomeViewModel @Inject constructor(
      * Öffnet eine Story im Vollbild und markiert sie dauerhaft als gesehen.
      */
     fun onStoryOpened(storyId: String) {
-        val story = _uiState.value.storyItems.find { it.id == storyId } ?: return
+        val state = _uiState.value
+        val story = if (state.myStory?.id == storyId) {
+            state.myStory
+        } else {
+            state.storyItems.find { it.id == storyId }
+        } ?: return
+
         _uiState.update { it.copy(activeStory = story) }
 
         viewModelScope.launch {

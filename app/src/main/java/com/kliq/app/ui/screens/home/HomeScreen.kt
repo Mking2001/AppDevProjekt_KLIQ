@@ -266,6 +266,9 @@ private fun StoryRow(
                 modifier = Modifier
                     .width(72.dp)
                     .clip(RoundedCornerShape(12.dp))
+                    .clickable {
+                        if (myStory != null) onMyStoryClick() else onAddStoryClick()
+                    }
                     .ensureMinTouchTarget(48.dp)
             ) {
                 Box(
@@ -299,10 +302,7 @@ private fun StoryRow(
                             )
                             .padding(3.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .clickable {
-                                if (myStory != null) onMyStoryClick() else onAddStoryClick()
-                            },
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
                     ) {
                         if (!myProfilePictureUrl.isNullOrBlank()) {
