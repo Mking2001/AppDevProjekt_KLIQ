@@ -1,6 +1,8 @@
 package com.kliq.app.ui.screens.auth
 
+import com.kliq.app.data.model.DrinkingHabit
 import com.kliq.app.data.model.SearchIntent
+import com.kliq.app.data.model.SmokingHabit
 
 /**
  * Status der Username-Verfügbarkeitsprüfung gegen Room und Firebase Cloud SQL.
@@ -20,6 +22,8 @@ data class RegisterUiState(
     val username: String = "",
     val usernameStatus: UsernameCheckStatus = UsernameCheckStatus.Idle,
     val usernameError: String? = null,
+    val email: String = "",
+    val emailError: String? = null,
     val firstName: String = "",
     val firstNameError: String? = null,
     val lastName: String = "",
@@ -33,11 +37,14 @@ data class RegisterUiState(
     val isHometownDropdownExpanded: Boolean = false,
     val hometownError: String? = null,
     val countryCode: String = "+43",
+    val isCountryCodeDropdownExpanded: Boolean = false,
     val phoneNumber: String = "",
     val phoneNumberError: String? = null,
     val profilePictureUrl: String? = null,
     val profilePictureError: String? = null,
     val searchIntent: SearchIntent = SearchIntent.BOTH,
+    val smokingHabit: SmokingHabit = SmokingHabit.OCCASIONALLY,
+    val drinkingHabit: DrinkingHabit = DrinkingHabit.SOCIAL,
     val bio: String = "",
     val password: String = "",
     val passwordError: String? = null,

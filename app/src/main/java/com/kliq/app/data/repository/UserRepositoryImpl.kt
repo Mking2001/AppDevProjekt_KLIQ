@@ -63,14 +63,18 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun registerUser(
         username: String,
+        email: String,
         firstName: String,
         lastName: String,
         birthDateMs: Long,
         gender: String,
         hometown: String,
+        countryCode: String,
         phoneNumber: String,
         profilePictureUrl: String,
         searchIntent: SearchIntent,
+        smokingHabit: SmokingHabit,
+        drinkingHabit: DrinkingHabit,
         bio: String,
         password: String
     ): Result<UserEntity> = withContext(ioDispatcher) {
@@ -78,6 +82,7 @@ class UserRepositoryImpl @Inject constructor(
             val trimmedUsername = username.trim()
             val userId = "usr_${System.currentTimeMillis()}"
             val finalHometown = hometown.trim().ifBlank { "${firstName.trim()} ${lastName.trim()}".trim() }
+            val finalEmail = email.trim().ifBlank { "${trimmedUsername.lowercase()}@kliq.app" }
 
             // Calculate approximate age from birthDateMs
             val nowMs = System.currentTimeMillis()
@@ -86,7 +91,7 @@ class UserRepositoryImpl @Inject constructor(
             val newUser = UserEntity(
                 id = userId,
                 username = trimmedUsername,
-                email = "${trimmedUsername.lowercase()}@kliq.app",
+                email = finalEmail,
                 age = ageYears,
                 hometown = finalHometown,
                 profilePictureUrl = profilePictureUrl.ifBlank { null },
@@ -103,7 +108,9 @@ class UserRepositoryImpl @Inject constructor(
             // 2. Save Preferences in Room
             val preferences = UserPreferencesEntity(
                 userId = userId,
-                searchIntent = searchIntent
+                searchIntent = searchIntent,
+                smokingHabit = smokingHabit,
+                drinkingHabit = drinkingHabit
             )
             userDao.insertUserPreferences(preferences)
 
@@ -113,7 +120,7 @@ class UserRepositoryImpl @Inject constructor(
             // 4. Sync to Firebase Data Connect Cloud SQL
             kliqConnector?.let { connector ->
                 try {
-                    timber.log.Timber.d("DataConnect: Creating user %s (%s)...", newUser.id, newUser.username)
+                    timber.log.Timber.d("DataConnect: Creating user %s (%s, %s)...", newUser.id, newUser.username, newUser.email)
                     connector.createUser.execute(
                         id = newUser.id,
                         username = newUser.username,
@@ -125,7 +132,7 @@ class UserRepositoryImpl @Inject constructor(
                         this.age = ageYears
                         this.gender = gender
                         this.hometown = finalHometown
-                        this.countryCode = "+43"
+                        this.countryCode = countryCode.ifBlank { "+43" }
                         this.phoneNumber = phoneNumber.trim().ifBlank { null }
                         this.profilePictureUrl = profilePictureUrl.ifBlank { null }
                         this.bio = newUser.bio
@@ -142,8 +149,8 @@ class UserRepositoryImpl @Inject constructor(
                         searchRadiusKm = 10,
                         pushNotificationsEnabled = true,
                         searchIntent = searchIntent.name,
-                        smokingHabit = SmokingHabit.NEVER.name,
-                        drinkingHabit = DrinkingHabit.NEVER.name
+                        smokingHabit = smokingHabit.name,
+                        drinkingHabit = drinkingHabit.name
                     )
                     timber.log.Timber.d("DataConnect: User preferences upserted successfully on Cloud SQL!")
                 } catch (e: Exception) {

@@ -38,14 +38,18 @@ interface UserRepository {
     suspend fun checkUsernameAvailability(username: String): Boolean = true
     suspend fun registerUser(
         username: String,
+        email: String,
         firstName: String,
         lastName: String,
         birthDateMs: Long,
         gender: String = "MALE",
         hometown: String = "",
+        countryCode: String = "+43",
         phoneNumber: String = "",
         profilePictureUrl: String,
         searchIntent: SearchIntent,
+        smokingHabit: SmokingHabit = SmokingHabit.NEVER,
+        drinkingHabit: DrinkingHabit = DrinkingHabit.NEVER,
         bio: String,
         password: String
     ): Result<UserEntity>

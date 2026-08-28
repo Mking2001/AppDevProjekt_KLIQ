@@ -4,7 +4,9 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kliq.app.data.model.DrinkingHabit
 import com.kliq.app.data.model.SearchIntent
+import com.kliq.app.data.model.SmokingHabit
 import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.data.util.ImageCompressor
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -72,6 +74,20 @@ class RegisterViewModel @Inject constructor(
                     updated.copy(isFormValid = calculateIsFormValid(updated))
                 }
             }
+        }
+    }
+
+    fun onEmailChanged(input: String) {
+        val trimmed = input.trim()
+        val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+        val error = when {
+            trimmed.isBlank() -> "E-Mail darf nicht leer sein."
+            !emailRegex.matches(trimmed) -> "Bitte gib eine gültige E-Mail-Adresse ein."
+            else -> null
+        }
+        _uiState.update { current ->
+            val updated = current.copy(email = input, emailError = error)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
         }
     }
 
@@ -183,7 +199,15 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun onCountryCodeChanged(code: String) {
-        _uiState.update { it.copy(countryCode = code) }
+        _uiState.update { it.copy(countryCode = code, isCountryCodeDropdownExpanded = false) }
+    }
+
+    fun toggleCountryCodeDropdown() {
+        _uiState.update { it.copy(isCountryCodeDropdownExpanded = !it.isCountryCodeDropdownExpanded) }
+    }
+
+    fun dismissCountryCodeDropdown() {
+        _uiState.update { it.copy(isCountryCodeDropdownExpanded = false) }
     }
 
     fun onPhoneNumberChanged(input: String) {
@@ -204,6 +228,20 @@ class RegisterViewModel @Inject constructor(
     fun onSearchIntentSelected(intent: SearchIntent) {
         _uiState.update { current ->
             val updated = current.copy(searchIntent = intent)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onSmokingHabitSelected(habit: SmokingHabit) {
+        _uiState.update { current ->
+            val updated = current.copy(smokingHabit = habit)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onDrinkingHabitSelected(habit: DrinkingHabit) {
+        _uiState.update { current ->
+            val updated = current.copy(drinkingHabit = habit)
             updated.copy(isFormValid = calculateIsFormValid(updated))
         }
     }
@@ -282,14 +320,18 @@ class RegisterViewModel @Inject constructor(
 
             val result = userRepository.registerUser(
                 username = current.username.trim(),
+                email = current.email.trim(),
                 firstName = current.firstName.trim(),
                 lastName = current.lastName.trim(),
                 birthDateMs = current.birthDateMs ?: 0L,
                 gender = current.gender,
                 hometown = current.hometown.trim(),
+                countryCode = current.countryCode,
                 phoneNumber = formattedFullPhone,
                 profilePictureUrl = current.profilePictureUrl ?: "",
                 searchIntent = current.searchIntent,
+                smokingHabit = current.smokingHabit,
+                drinkingHabit = current.drinkingHabit,
                 bio = current.bio.trim(),
                 password = current.password
             )
@@ -311,6 +353,7 @@ class RegisterViewModel @Inject constructor(
         val usernameValid = state.username.isNotBlank() &&
                 state.usernameError == null &&
                 state.usernameStatus is UsernameCheckStatus.Available
+        val emailValid = state.email.isNotBlank() && state.emailError == null
         val firstNameValid = state.firstName.isNotBlank() && state.firstNameError == null
         val lastNameValid = state.lastName.isNotBlank() && state.lastNameError == null
         val birthDateValid = state.birthDateMs != null && state.birthDateError == null
@@ -322,6 +365,6 @@ class RegisterViewModel @Inject constructor(
                 state.confirmPassword == state.password &&
                 state.confirmPasswordError == null
 
-        return usernameValid && firstNameValid && lastNameValid && birthDateValid && hometownValid && phoneValid && profilePicValid && passwordValid
+        return usernameValid && emailValid && firstNameValid && lastNameValid && birthDateValid && hometownValid && phoneValid && profilePicValid && passwordValid
     }
 }

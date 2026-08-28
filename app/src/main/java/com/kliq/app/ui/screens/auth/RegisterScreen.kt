@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,16 +31,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.AlternateEmail
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Female
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Male
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Transgender
@@ -50,6 +52,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -84,7 +88,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.kliq.app.data.model.CountryCodes
+import com.kliq.app.data.model.DrinkingHabit
 import com.kliq.app.data.model.SearchIntent
+import com.kliq.app.data.model.SmokingHabit
 import com.kliq.app.ui.theme.DarkBackground
 import com.kliq.app.ui.theme.ErrorRed
 import com.kliq.app.ui.theme.FuchsiaTertiary
@@ -221,8 +228,9 @@ fun RegisterScreen(
                 )
             }
 
-            // 2. Benutzername (@username) mit Datenbank-Verfügbarkeitsprüfung
-            SectionCard(title = "Benutzername & Name") {
+            // 2. Benutzername, E-Mail & Name
+            SectionCard(title = "Benutzerdaten*") {
+                // Benutzername
                 OutlinedTextField(
                     value = uiState.username,
                     onValueChange = viewModel::onUsernameChanged,
@@ -281,6 +289,28 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
+                // E-Mail-Adresse
+                OutlinedTextField(
+                    value = uiState.email,
+                    onValueChange = viewModel::onEmailChanged,
+                    label = { Text("E-Mail-Adresse*") },
+                    placeholder = { Text("z.B. max.mustermann@gmail.com") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Email, contentDescription = null, tint = PurplePrimaryLight)
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
+                    isError = uiState.emailError != null,
+                    supportingText = {
+                        uiState.emailError?.let { Text(it, color = ErrorRed, style = MaterialTheme.typography.labelSmall) }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = customTextFieldColors()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Vorname & Nachname
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -308,29 +338,62 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Telefonnummer (+43 als Vorwahl)
+                // Telefonnummer mit wählbarer Ländervorwahl
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.Top
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .height(56.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color.White.copy(alpha = 0.08f))
-                            .border(1.dp, PurplePrimaryLight.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 12.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(text = "🇦🇹", style = MaterialTheme.typography.bodyLarge)
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = uiState.countryCode,
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                                color = Color.White
-                            )
+                    Box {
+                        Box(
+                            modifier = Modifier
+                                .height(56.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.White.copy(alpha = 0.08f))
+                                .border(1.dp, PurplePrimaryLight.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                .clickable { viewModel.toggleCountryCodeDropdown() }
+                                .padding(horizontal = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = CountryCodes.getFlag(uiState.countryCode),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = uiState.countryCode,
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = Color.White
+                                )
+                                Icon(
+                                    imageVector = Icons.Filled.ArrowDropDown,
+                                    contentDescription = "Vorwahl wählen",
+                                    tint = Color.White.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+
+                        DropdownMenu(
+                            expanded = uiState.isCountryCodeDropdownExpanded,
+                            onDismissRequest = { viewModel.dismissCountryCodeDropdown() },
+                            modifier = Modifier.background(Color(0xFF232035))
+                        ) {
+                            CountryCodes.list.forEach { item ->
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(text = item.flag, fontSize = 18.sp)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(text = item.countryName, color = Color.White, fontWeight = FontWeight.Medium)
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Text(text = "(${item.code})", color = PurplePrimaryLight, fontSize = 13.sp)
+                                        }
+                                    },
+                                    onClick = { viewModel.onCountryCodeChanged(item.code) }
+                                )
+                            }
                         }
                     }
 
@@ -464,7 +527,6 @@ fun RegisterScreen(
             // 4. Geburtsdatum (18+ Validierung)
             SectionCard(title = "Geburtsdatum (Mindestalter 18 Jahre)*") {
                 val calendar = Calendar.getInstance()
-                // Default to 20 years ago
                 val initialYear = calendar.get(Calendar.YEAR) - 20
                 val initialMonth = calendar.get(Calendar.MONTH)
                 val initialDay = calendar.get(Calendar.DAY_OF_MONTH)
@@ -482,7 +544,6 @@ fun RegisterScreen(
                         initialMonth,
                         initialDay
                     ).apply {
-                        // Max date = exactly 18 years ago
                         val maxCal = Calendar.getInstance().apply {
                             add(Calendar.YEAR, -18)
                         }
@@ -516,7 +577,36 @@ fun RegisterScreen(
                 }
             }
 
-            // 4. Such-Präferenz ("Was suchst du?")
+            // 5. Rauch- & Alkoholkonsum (Segmented Bars gemäß Screenshot)
+            SectionCard(title = "Lifestyle & Gewohnheiten*") {
+                // Rauchkonsum
+                SegmentedPillBar(
+                    label = "Rauchkonsum:",
+                    options = listOf(
+                        SmokingHabit.NEVER to "Nicht Raucher",
+                        SmokingHabit.OCCASIONALLY to "PartyRaucher",
+                        SmokingHabit.REGULARLY to "Raucher"
+                    ),
+                    selectedOption = uiState.smokingHabit,
+                    onOptionSelected = { viewModel.onSmokingHabitSelected(it) }
+                )
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                // Alkoholkonsum
+                SegmentedPillBar(
+                    label = "Alkoholkonsum:",
+                    options = listOf(
+                        DrinkingHabit.NEVER to "Nicht Trinker",
+                        DrinkingHabit.SOCIAL to "Genuss Trinker",
+                        DrinkingHabit.FREQUENTLY to "Säufer"
+                    ),
+                    selectedOption = uiState.drinkingHabit,
+                    onOptionSelected = { viewModel.onDrinkingHabitSelected(it) }
+                )
+            }
+
+            // 6. Such-Präferenz ("Was suchst du?")
             SectionCard(title = "Nach was suchst du?*") {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -546,7 +636,7 @@ fun RegisterScreen(
                 }
             }
 
-            // 5. Bio (Optional)
+            // 7. Bio (Optional)
             SectionCard(title = "Über dich (Bio - Optional)") {
                 OutlinedTextField(
                     value = uiState.bio,
@@ -560,7 +650,7 @@ fun RegisterScreen(
                 )
             }
 
-            // 6. Passwort & Passwort wiederholen
+            // 8. Passwort & Passwort wiederholen
             SectionCard(title = "Sicherheit & Passwort*") {
                 OutlinedTextField(
                     value = uiState.password,
@@ -619,7 +709,7 @@ fun RegisterScreen(
                 )
             }
 
-            // 7. Registrieren Button
+            // 9. Registrieren Button
             Button(
                 onClick = viewModel::onRegister,
                 enabled = uiState.isFormValid && !uiState.isLoading,
@@ -656,6 +746,58 @@ fun RegisterScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+private fun <T> SegmentedPillBar(
+    label: String,
+    options: List<Pair<T, String>>,
+    selectedOption: T,
+    onOptionSelected: (T) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            color = Color.White,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+                .clip(CircleShape)
+                .background(Color.Black)
+                .border(1.dp, Color.White.copy(alpha = 0.15f), CircleShape)
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            options.forEach { (option, title) ->
+                val isSelected = option == selectedOption
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(CircleShape)
+                        .background(if (isSelected) Color.White else Color.Transparent)
+                        .clickable { onOptionSelected(option) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            fontSize = 13.sp
+                        ),
+                        color = if (isSelected) Color.Black else Color.White,
+                        maxLines = 1
+                    )
+                }
+            }
         }
     }
 }

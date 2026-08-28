@@ -5,15 +5,15 @@ enum class SmokingHabit(
     val description: String
 ) {
     NEVER(
-        title = "Nie",
+        title = "Nicht Raucher",
         description = "Ich rauche gar nicht"
     ),
     OCCASIONALLY(
-        title = "Gelegentlich",
+        title = "PartyRaucher",
         description = "Ab und zu beim Feiern oder in Gesellschaft"
     ),
     REGULARLY(
-        title = "Regelmäßig",
+        title = "Raucher",
         description = "Regelmäßiger Raucher im Alltag"
     );
 
