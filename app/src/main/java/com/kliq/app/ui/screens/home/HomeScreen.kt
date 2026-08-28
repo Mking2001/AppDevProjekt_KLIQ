@@ -47,6 +47,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -140,6 +147,21 @@ fun HomeScreen(
         onToggleMenu = onToggleMenu,
         onDismissMenu = onDismissMenu,
         onMenuAction = onMenuAction,
+        navigationIcon = {
+            IconButton(
+                onClick = { viewModel.onToggleUserSearch() },
+                modifier = Modifier
+                    .size(44.dp)
+                    .talkBackDescription("Leute suchen")
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Search,
+                    contentDescription = "Leute suchen",
+                    tint = PurplePrimary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        },
         actions = {
             IconButton(
                 onClick = onNavigateToActivities,
@@ -189,6 +211,17 @@ fun HomeScreen(
                             storyMediaLauncher.launch("image/*")
                         },
                         onStoryClick = { storyId -> viewModel.onStoryOpened(storyId) }
+                    )
+                }
+
+                item {
+                    UserSearchBarSection(
+                        query = uiState.userSearchQuery,
+                        onQueryChanged = { viewModel.onUserSearchQueryChanged(it) },
+                        onClear = { viewModel.onClearUserSearch() },
+                        isSearching = uiState.isSearchingUsers,
+                        searchResults = uiState.userSearchResults,
+                        onUserClick = { userId -> onNavigateToUserProfile(userId) }
                     )
                 }
 
@@ -977,6 +1010,226 @@ private fun CommentSheet(
                     }
                 }
             )
+        }
+    }
+}
+
+/**
+ * Prominente Suchleiste und Live-Ergebnisliste zur Nutzersuche im Home-Screen.
+ */
+@Composable
+fun UserSearchBarSection(
+    query: String,
+    onQueryChanged: (String) -> Unit,
+    onClear: () -> Unit,
+    isSearching: Boolean,
+    searchResults: List<SearchedUserUi>,
+    onUserClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+    ) {
+        // Suchleiste (groß, gut lesbar und stylish)
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+            border = BorderStroke(
+                width = 1.dp,
+                color = if (query.isNotBlank()) PurplePrimary else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Search,
+                    contentDescription = "Suche",
+                    tint = if (query.isNotBlank()) PurplePrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Box(modifier = Modifier.weight(1f)) {
+                    if (query.isEmpty()) {
+                        Text(
+                            text = "Leute & Freunde suchen...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    BasicTextField(
+                        value = query,
+                        onValueChange = onQueryChanged,
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        cursorBrush = SolidColor(PurplePrimary),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                if (isSearching) {
+                    CircularProgressIndicator(
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(20.dp),
+                        color = PurplePrimary
+                    )
+                } else if (query.isNotEmpty()) {
+                    IconButton(
+                        onClick = onClear,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Suche leeren",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Live-Suchergebnisse
+        if (query.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            if (searchResults.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = PurplePrimary.copy(alpha = 0.35f)
+                    ),
+                    shadowElevation = 4.dp
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            text = "Gefundene Profile (${searchResults.size})",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = PurplePrimary,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+
+                        searchResults.forEach { user ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { onUserClick(user.id) }
+                                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (!user.profilePictureUrl.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = user.profilePictureUrl,
+                                        contentDescription = user.username,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .border(1.5.dp, PurplePrimary, CircleShape)
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                Brush.linearGradient(
+                                                    listOf(PurplePrimary, FuchsiaTertiary)
+                                                )
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = user.username.take(2).uppercase(),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "@${user.username}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (user.isVerified) {
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Icon(
+                                                imageVector = Icons.Filled.Verified,
+                                                contentDescription = "Verifiziert",
+                                                tint = PurplePrimary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                    if (!user.hometown.isNullOrBlank()) {
+                                        Text(
+                                            text = user.hometown,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                TextButton(
+                                    onClick = { onUserClick(user.id) },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = PurplePrimary
+                                    )
+                                ) {
+                                    Text("Profil", fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (!isSearching) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Kein Profil für \"$query\" gefunden",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
     }
 }

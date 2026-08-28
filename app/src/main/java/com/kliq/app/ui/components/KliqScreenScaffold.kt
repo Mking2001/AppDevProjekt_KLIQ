@@ -41,6 +41,7 @@ fun KliqScreenScaffold(
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
     modifier: Modifier = Modifier,
+    navigationIcon: @Composable () -> Unit = {},
     actions: @Composable () -> Unit = {},
     showTopBar: Boolean = true,
     floatingActionButton: @Composable () -> Unit = {},
@@ -68,6 +69,7 @@ fun KliqScreenScaffold(
                     onToggleMenu = onToggleMenu,
                     onDismissMenu = onDismissMenu,
                     onMenuAction = onMenuAction,
+                    navigationIcon = navigationIcon,
                     actions = actions
                 )
             }

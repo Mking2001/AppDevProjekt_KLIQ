@@ -55,7 +55,23 @@ data class HomeUiState(
     val errorMessage: String? = null,
     val infoMessage: String? = null,
     val myProfilePictureUrl: String? = null,
-    val myUserName: String = "Du"
+    val myUserName: String = "Du",
+    val userSearchQuery: String = "",
+    val userSearchResults: List<SearchedUserUi> = emptyList(),
+    val isSearchingUsers: Boolean = false,
+    val isUserSearchActive: Boolean = false
+)
+
+/**
+ * Darstellungsmodell eines gesuchten Nutzers.
+ */
+data class SearchedUserUi(
+    val id: String,
+    val username: String,
+    val displayName: String,
+    val profilePictureUrl: String? = null,
+    val hometown: String? = null,
+    val isVerified: Boolean = false
 )
 
 /**
@@ -574,6 +590,47 @@ class HomeViewModel @Inject constructor(
 
     fun onSharePostDismissed() {
         _uiState.update { it.copy(activeSharePost = null, shareSearchQuery = "") }
+    }
+
+    fun onUserSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(userSearchQuery = query, isUserSearchActive = query.isNotBlank()) }
+        if (query.isBlank()) {
+            _uiState.update { it.copy(userSearchResults = emptyList(), isSearchingUsers = false) }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSearchingUsers = true) }
+            val currentUserId = currentUserProvider.userId()
+            val results = userRepository?.searchUsers(query.trim()) ?: emptyList()
+            val mapped = results
+                .filter { it.id != currentUserId }
+                .map { user ->
+                    SearchedUserUi(
+                        id = user.id,
+                        username = user.username,
+                        displayName = user.hometown?.takeIf { it.isNotBlank() } ?: user.username,
+                        profilePictureUrl = user.profilePictureUrl,
+                        hometown = user.hometown,
+                        isVerified = user.isVerified
+                    )
+                }
+            _uiState.update { it.copy(userSearchResults = mapped, isSearchingUsers = false) }
+        }
+    }
+
+    fun onClearUserSearch() {
+        _uiState.update {
+            it.copy(
+                userSearchQuery = "",
+                userSearchResults = emptyList(),
+                isSearchingUsers = false,
+                isUserSearchActive = false
+            )
+        }
+    }
+
+    fun onToggleUserSearch() {
+        _uiState.update { it.copy(isUserSearchActive = !it.isUserSearchActive) }
     }
 
     fun onMessageShown() {

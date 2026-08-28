@@ -70,6 +70,7 @@ fun KliqTopBar(
     onToggleMenu: () -> Unit,
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
+    navigationIcon: @Composable () -> Unit = {},
     actions: @Composable () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -84,6 +85,7 @@ fun KliqTopBar(
                     modifier = Modifier.accessibilityHeading()
                 )
             },
+            navigationIcon = navigationIcon,
             actions = {
                 actions()
                 OverflowMenuButton(

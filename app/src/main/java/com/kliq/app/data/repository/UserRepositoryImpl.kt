@@ -536,4 +536,46 @@ class UserRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
+    override suspend fun searchUsers(query: String): List<UserEntity> = withContext(ioDispatcher) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) return@withContext emptyList()
+
+        // 1. Search locally in Room
+        val localResults = userDao.searchUsers(trimmed).toMutableList()
+
+        // 2. Search in Cloud SQL
+        if (kliqConnector != null) {
+            try {
+                val cloudUsers = kliqConnector.listUsers.execute().data.users
+                val matches = cloudUsers.filter {
+                    it.username.contains(trimmed, ignoreCase = true) ||
+                    (it.firstName?.contains(trimmed, ignoreCase = true) == true) ||
+                    (it.lastName?.contains(trimmed, ignoreCase = true) == true) ||
+                    (it.hometown?.contains(trimmed, ignoreCase = true) == true)
+                }
+                for (cloudUser in matches) {
+                    if (localResults.none { it.id == cloudUser.id }) {
+                        val imported = UserEntity(
+                            id = cloudUser.id,
+                            username = cloudUser.username,
+                            email = cloudUser.email ?: "${cloudUser.username}@kliq.app",
+                            hometown = cloudUser.hometown ?: "${cloudUser.firstName.orEmpty()} ${cloudUser.lastName.orEmpty()}".trim().ifBlank { null },
+                            profilePictureUrl = cloudUser.profilePictureUrl,
+                            phoneNumber = cloudUser.phoneNumber,
+                            gender = cloudUser.gender ?: "UNSPECIFIED",
+                            isVerified = true,
+                            updatedAtTimestampMs = System.currentTimeMillis()
+                        )
+                        userDao.insertUser(imported)
+                        localResults.add(imported)
+                    }
+                }
+            } catch (e: Exception) {
+                timber.log.Timber.e(e, "DataConnect: Cloud SQL user search failed")
+            }
+        }
+
+        localResults.distinctBy { it.id }
+    }
 }
