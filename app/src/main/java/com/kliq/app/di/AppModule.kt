@@ -144,8 +144,12 @@ object AppModule {
     // =========================================================================
     @Provides
     @Singleton
-    fun provideKliqConnector(): KliqConnectorConnector {
-        return KliqConnectorConnector.instance
+    fun provideKliqConnector(): KliqConnectorConnector? {
+        return try {
+            KliqConnectorConnector.instance
+        } catch (e: Throwable) {
+            null
+        }
     }
 }
 

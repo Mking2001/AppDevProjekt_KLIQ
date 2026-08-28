@@ -76,6 +76,7 @@ class ChatDetailViewModel @Inject constructor(
     private var messageObserverJob: Job? = null
     private var chatObserverJob: Job? = null
     private var blockObserverJob: Job? = null
+    private var syncJob: Job? = null
 
     /**
      * Bindet den Screen an einen Chat. Legt den Chat an, falls er noch nicht existiert,
@@ -118,6 +119,18 @@ class ChatDetailViewModel @Inject constructor(
         observeChatMetadata(chatId)
         observeMessages(chatId)
         observeBlockedState()
+
+        syncJob?.cancel()
+        syncJob = viewModelScope.launch {
+            while (isActive) {
+                chatRepository.syncChatMessages(chatId)
+                val targetId = _uiState.value.targetUserId
+                if (targetId.isNotBlank()) {
+                    chatRepository.syncDirectMessages(currentUserProvider.userId(), targetId)
+                }
+                delay(3000L)
+            }
+        }
     }
 
     private fun observeChatMetadata(chatId: String) {
