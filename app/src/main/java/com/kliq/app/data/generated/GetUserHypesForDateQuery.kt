@@ -17,18 +17,20 @@ import kotlinx.coroutines.flow.filterNotNull as _flow_filterNotNull
 import kotlinx.coroutines.flow.map as _flow_map
 
 
-public interface GetClubByIdQuery :
+public interface GetUserHypesForDateQuery :
     com.google.firebase.dataconnect.generated.GeneratedQuery<
       KliqConnectorConnector,
-      GetClubByIdQuery.Data,
-      GetClubByIdQuery.Variables
+      GetUserHypesForDateQuery.Data,
+      GetUserHypesForDateQuery.Variables
     >
 {
   
     @kotlinx.serialization.Serializable
   public data class Variables(
   
-    val id: String,
+    val userId: String,
+  
+    val dateString: String,
   
   ) {
     
@@ -40,67 +42,21 @@ public interface GetClubByIdQuery :
     @kotlinx.serialization.Serializable
   public data class Data(
   
-    val club: Club?,
+    val clubHypes: List<ClubHypesItem>,
   
   ) {
     
       
         @kotlinx.serialization.Serializable
-  public data class Club(
+  public data class ClubHypesItem(
   
-    val id: String,
+    val clubId: String,
   
-    val name: String,
+    val userId: String,
   
-    val latitude: Double,
+    val dateString: String,
   
-    val longitude: Double,
-  
-    val address: String,
-  
-    val geofenceRadiusMeters: Double,
-  
-    val averageRating: Double,
-  
-    val openingHoursJson: String,
-  
-    val category: String,
-  
-    val rating: Double,
-  
-    val imageUrl: String,
-  
-    val region: String,
-  
-    val city: String,
-  
-    val postalCode: String,
-  
-    val websiteUrl: String?,
-  
-    val phoneNumber: String?,
-  
-    val contactEmail: String?,
-  
-    val instagramHandle: String?,
-  
-    val currentCapacityPercent: Int,
-  
-    val malePercentage: Int,
-  
-    val femalePercentage: Int,
-  
-    val totalLiveVisitors: Int,
-  
-    val externalSearchTags: String,
-  
-    val isFavorite: Boolean,
-  
-    val isPromoted: Boolean,
-  
-    val flameCount: Int,
-  
-    val flameDate: String?,
+    val createdAtMs: Long,
   
   ) {
     
@@ -113,7 +69,7 @@ public interface GetClubByIdQuery :
   
 
   public companion object {
-    public val operationName: String = "GetClubById"
+    public val operationName: String = "GetUserHypesForDate"
 
     public val dataDeserializer: kotlinx.serialization.DeserializationStrategy<Data> =
       kotlinx.serialization.serializer()
@@ -123,55 +79,55 @@ public interface GetClubByIdQuery :
   }
 }
 
-public fun GetClubByIdQuery.ref(
+public fun GetUserHypesForDateQuery.ref(
   
-    id: String,
+    userId: String,dateString: String,
 
   
   
 ): com.google.firebase.dataconnect.QueryRef<
-    GetClubByIdQuery.Data,
-    GetClubByIdQuery.Variables
+    GetUserHypesForDateQuery.Data,
+    GetUserHypesForDateQuery.Variables
   > =
   ref(
     
-      GetClubByIdQuery.Variables(
-        id=id,
+      GetUserHypesForDateQuery.Variables(
+        userId=userId,dateString=dateString,
   
       )
     
   )
 
-public suspend fun GetClubByIdQuery.execute(
+public suspend fun GetUserHypesForDateQuery.execute(
 
   
     
-      id: String,
+      userId: String,dateString: String,
 
   
 
   ): com.google.firebase.dataconnect.QueryResult<
-    GetClubByIdQuery.Data,
-    GetClubByIdQuery.Variables
+    GetUserHypesForDateQuery.Data,
+    GetUserHypesForDateQuery.Variables
   > =
   ref(
     
-      id=id,
+      userId=userId,dateString=dateString,
   
     
   ).execute()
 
 
-  public fun GetClubByIdQuery.flow(
+  public fun GetUserHypesForDateQuery.flow(
     
-      id: String,
+      userId: String,dateString: String,
 
   
     
-    ): kotlinx.coroutines.flow.Flow<GetClubByIdQuery.Data> =
+    ): kotlinx.coroutines.flow.Flow<GetUserHypesForDateQuery.Data> =
     ref(
         
-          id=id,
+          userId=userId,dateString=dateString,
   
         
       ).subscribe()

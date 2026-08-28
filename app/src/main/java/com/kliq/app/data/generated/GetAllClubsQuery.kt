@@ -70,6 +70,10 @@ public interface GetAllClubsQuery :
   
     val isPromoted: Boolean,
   
+    val flameCount: Int,
+  
+    val flameDate: String?,
+  
   ) {
     
     

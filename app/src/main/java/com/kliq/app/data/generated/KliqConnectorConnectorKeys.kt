@@ -36,6 +36,20 @@ package com.kliq.app.data.generated
   }
 
   @kotlinx.serialization.Serializable
+  public data class ClubHypeKey(
+  
+    val clubId: String,
+  
+    val userId: String,
+  
+    val dateString: String,
+  
+  ) {
+    
+    
+  }
+
+  @kotlinx.serialization.Serializable
   public data class ClubKey(
   
     val id: String,

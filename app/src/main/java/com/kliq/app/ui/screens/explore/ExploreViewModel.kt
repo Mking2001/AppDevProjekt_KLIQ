@@ -63,6 +63,8 @@ data class DiscoverItemUi(
     val creatorUserId: String? = null,
     val isFavorite: Boolean = false,
     val isOpenNow: Boolean = false,
+    val flameCount: Int = 0,
+    val isHypedToday: Boolean = false,
     val isEvent: Boolean = false
 )
 
@@ -93,11 +95,34 @@ class ExploreViewModel @Inject constructor(
     }
 
     /**
-     * Lädt ausschließlich reale Clubs und Bars.
+     * Lädt ausschließlich reale Clubs und Bars und kombiniert diese mit
+     * den täglichen Flammen/Hypes des Nutzers.
      */
     private fun observeDiscoverContent() {
         viewModelScope.launch {
-            clubRepository.getAllClubs()
+            val currentUserId = currentUserProvider.userId()
+            combine(
+                clubRepository.getAllClubs(),
+                clubRepository.getHypedClubIdsToday(currentUserId)
+            ) { clubs, hypedIds ->
+                val hypedSet = hypedIds.toSet()
+                clubs.map { club ->
+                    DiscoverItemUi(
+                        id = club.id,
+                        title = club.name,
+                        subtitle = club.location.address.ifBlank { club.region },
+                        category = normalizeCategory(club.category),
+                        rating = club.averageRating.toFloat(),
+                        region = club.region.ifBlank { club.location.address },
+                        imageUrl = club.imageUrl.ifBlank { "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?auto=format&fit=crop&w=1200&q=80" },
+                        isFavorite = club.isFavorite,
+                        isOpenNow = club.operatingHours.isOpenNow,
+                        flameCount = club.flameCount,
+                        isHypedToday = hypedSet.contains(club.id),
+                        isEvent = false
+                    )
+                }
+            }
                 .catch { error ->
                     _uiState.update {
                         it.copy(
@@ -106,22 +131,8 @@ class ExploreViewModel @Inject constructor(
                         )
                     }
                 }
-                .collect { clubs ->
-                    val clubItems = clubs.map { club ->
-                        DiscoverItemUi(
-                            id = club.id,
-                            title = club.name,
-                            subtitle = club.location.address.ifBlank { club.region },
-                            category = normalizeCategory(club.category),
-                            rating = club.averageRating.toFloat(),
-                            region = club.region.ifBlank { club.location.address },
-                            imageUrl = club.imageUrl.ifBlank { "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?auto=format&fit=crop&w=1200&q=80" },
-                            isFavorite = club.isFavorite,
-                            isOpenNow = club.operatingHours.isOpenNow,
-                            isEvent = false
-                        )
-                    }
-                    allItems = clubItems
+                .collect { items ->
+                    allItems = items
                     _uiState.update { it.copy(isLoading = false) }
                     applyFilters()
                 }
@@ -148,9 +159,9 @@ class ExploreViewModel @Inject constructor(
             value.contains("club") -> "Clubs"
             value.contains("bar") -> "Bars"
             value.contains("pub") -> "Pubs"
+            value.contains("lounge") -> "Lounges"
             value.contains("restaurant") -> "Restaurants"
-            value.contains("event") -> "Events"
-            else -> "Trending"
+            else -> "Clubs"
         }
     }
 
@@ -181,7 +192,6 @@ class ExploreViewModel @Inject constructor(
 
     /**
      * Setzt oder entfernt die Favoriten-Markierung eines Venues.
-     * Events besitzen keinen eigenen Favoriten-Status und werden übersprungen.
      */
     fun onToggleFavorite(itemId: String) {
         val item = allItems.find { it.id == itemId && !it.isEvent } ?: return
@@ -190,6 +200,21 @@ class ExploreViewModel @Inject constructor(
                 .onFailure { error ->
                     _uiState.update {
                         it.copy(errorMessage = "Favorit konnte nicht gespeichert werden: ${error.localizedMessage}")
+                    }
+                }
+        }
+    }
+
+    /**
+     * Toggelt die tägliche Flamme (Hype) für einen Club.
+     */
+    fun onToggleHype(clubId: String) {
+        viewModelScope.launch {
+            val userId = currentUserProvider.userId()
+            clubRepository.toggleClubHype(clubId, userId)
+                .onFailure { error ->
+                    _uiState.update {
+                        it.copy(errorMessage = "Flamme konnte nicht vergeben werden: ${error.localizedMessage}")
                     }
                 }
         }
@@ -218,10 +243,19 @@ class ExploreViewModel @Inject constructor(
             matchesQuery && matchesRating && matchesCategory
         }
 
-        _uiState.update { it.copy(discoverItems = filtered) }
+        val sorted = if (selectedCategory == "Trending" || selectedCategory == null) {
+            filtered.sortedByDescending { it.flameCount }
+        } else {
+            filtered
+        }
+
+        _uiState.update { it.copy(discoverItems = sorted) }
     }
 
-    /** Setzt die Fehlermeldung zurück, nachdem sie angezeigt wurde. */
+    fun onErrorMessageDismissed() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
     fun onMessageShown() {
         _uiState.update { it.copy(errorMessage = null) }
     }

@@ -83,6 +83,29 @@ fun ClubDetailScreen(
                 },
                 actions = {
                     uiState.club?.let { club ->
+                        // Flame Hype Button
+                        Surface(
+                            onClick = { viewModel.toggleHype() },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (club.isHypedToday) Color(0xFFFF5722) else MaterialTheme.colorScheme.surfaceVariant,
+                            border = if (club.isHypedToday) androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFFD54F)) else null,
+                            modifier = Modifier.padding(end = 6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text(text = "🔥", style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    text = "${club.flameCount}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (club.isHypedToday) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
                         AnimatedFavoriteButton(
                             isFavorite = club.isFavorite,
                             onToggleFavorite = { viewModel.toggleFavorite() }
@@ -112,15 +135,25 @@ fun ClubDetailScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(200.dp)
-                            .clip(RoundedCornerShape(16.dp))
+                            .height(210.dp)
+                            .clip(RoundedCornerShape(18.dp))
                             .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Club Bild: ${club.name}",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        if (club.imageUrl.isNotBlank()) {
+                            coil.compose.AsyncImage(
+                                model = club.imageUrl,
+                                contentDescription = club.name,
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Text(
+                                text = club.name,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
 
                     LiveVisitorStatsCard(state = analyticsState)

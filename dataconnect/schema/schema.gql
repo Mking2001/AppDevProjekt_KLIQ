@@ -126,6 +126,18 @@ type Club @table {
   phoneNumber: String
   contactEmail: String
   instagramHandle: String
+  flameCount: Int! @default(value: 0)
+  flameDate: String
+}
+
+# ===== CLUB HYPE (Tägliche Flammen) =====
+type ClubHype @table(key: ["clubId", "userId", "dateString"]) {
+  club: Club! @ref(fields: ["clubId"], references: ["id"])
+  clubId: String!
+  user: User! @ref(fields: ["userId"], references: ["id"])
+  userId: String!
+  dateString: String!
+  createdAtMs: Int64!
 }
 
 # ===== EVENT =====

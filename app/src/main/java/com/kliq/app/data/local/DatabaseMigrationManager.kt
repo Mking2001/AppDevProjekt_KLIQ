@@ -22,13 +22,33 @@ object DatabaseMigrationManager {
         }
     }
 
+    val MIGRATION_21_22 = object : Migration(21, 22) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            try {
+                db.execSQL("ALTER TABLE clubs ADD COLUMN flameCount INTEGER NOT NULL DEFAULT 0")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_21_22 flameCount: ${e.message}")
+            }
+            try {
+                db.execSQL("ALTER TABLE clubs ADD COLUMN flameDate TEXT NOT NULL DEFAULT ''")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_21_22 flameDate: ${e.message}")
+            }
+            try {
+                db.execSQL("CREATE TABLE IF NOT EXISTS club_hypes (clubId TEXT NOT NULL, userId TEXT NOT NULL, dateString TEXT NOT NULL, createdAtMs INTEGER NOT NULL, PRIMARY KEY(clubId, userId, dateString))")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_21_22 club_hypes: ${e.message}")
+            }
+        }
+    }
+
     fun buildDatabase(context: Context): KliqDatabase {
         return Room.databaseBuilder(
             context,
             KliqDatabase::class.java,
             DATABASE_NAME
         )
-        .addMigrations(MIGRATION_20_21)
+        .addMigrations(MIGRATION_20_21, MIGRATION_21_22)
         .fallbackToDestructiveMigration()
         .fallbackToDestructiveMigrationOnDowngrade()
         .addCallback(object : RoomDatabase.Callback() {

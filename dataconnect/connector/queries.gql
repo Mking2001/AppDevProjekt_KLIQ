@@ -147,6 +147,8 @@ query GetAllClubs @auth(level: PUBLIC) {
     totalLiveVisitors
     isFavorite
     isPromoted
+    flameCount
+    flameDate
   }
 }
 
@@ -177,6 +179,20 @@ query GetClubById($id: String!) @auth(level: PUBLIC) {
     externalSearchTags
     isFavorite
     isPromoted
+    flameCount
+    flameDate
+  }
+}
+
+query GetUserHypesForDate($userId: String!, $dateString: String!) @auth(level: PUBLIC) {
+  clubHypes(where: {
+    userId: { eq: $userId }
+    dateString: { eq: $dateString }
+  }) {
+    clubId
+    userId
+    dateString
+    createdAtMs
   }
 }
 

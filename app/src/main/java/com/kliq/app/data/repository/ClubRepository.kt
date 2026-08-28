@@ -17,4 +17,7 @@ interface ClubRepository {
     suspend fun isUserWithinGeofence(clubId: String, userLat: Double, userLon: Double): Boolean
     fun getClubGenderRatio(clubId: String, timeWindowMs: Long = 14400000L): Flow<GenderRatio>
     suspend fun calculateClubGenderRatio(clubId: String, timeWindowMs: Long = 14400000L): GenderRatio
+    fun isClubHypedToday(clubId: String, userId: String): Flow<Boolean>
+    fun getHypedClubIdsToday(userId: String): Flow<List<String>>
+    suspend fun toggleClubHype(clubId: String, userId: String): Result<Boolean>
 }

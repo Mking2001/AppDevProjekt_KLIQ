@@ -275,6 +275,43 @@ mutation ToggleClubFavorite($id: String!, $isFavorite: Boolean!) @auth(level: PU
   club_update(id: $id, data: { isFavorite: $isFavorite })
 }
 
+mutation UpdateClubFlames(
+  $id: String!,
+  $flameCount: Int!,
+  $flameDate: String
+) @auth(level: PUBLIC) {
+  club_update(id: $id, data: {
+    flameCount: $flameCount
+    flameDate: $flameDate
+  })
+}
+
+mutation AddClubHype(
+  $clubId: String!,
+  $userId: String!,
+  $dateString: String!,
+  $createdAtMs: Int64!
+) @auth(level: PUBLIC) {
+  clubHype_insert(data: {
+    clubId: $clubId
+    userId: $userId
+    dateString: $dateString
+    createdAtMs: $createdAtMs
+  })
+}
+
+mutation RemoveClubHype(
+  $clubId: String!,
+  $userId: String!,
+  $dateString: String!
+) @auth(level: PUBLIC) {
+  clubHype_delete(key: {
+    clubId: $clubId
+    userId: $userId
+    dateString: $dateString
+  })
+}
+
 # ===== EVENT Mutations =====
 mutation CreateEvent(
   $id: String!,

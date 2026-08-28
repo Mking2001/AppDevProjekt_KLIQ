@@ -19,6 +19,8 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
   override val dataConnect: com.google.firebase.dataconnect.FirebaseDataConnect
 
   
+    public val addClubHype: AddClubHypeMutation
+  
     public val addFriend: AddFriendMutation
   
     public val addUserPhoto: AddUserPhotoMutation
@@ -95,6 +97,8 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
   
     public val getUserById: GetUserByIdQuery
   
+    public val getUserHypesForDate: GetUserHypesForDateQuery
+  
     public val getUserPhotos: GetUserPhotosQuery
   
     public val getUserPreferences: GetUserPreferencesQuery
@@ -106,6 +110,8 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
     public val listUsers: ListUsersQuery
   
     public val logVisit: LogVisitMutation
+  
+    public val removeClubHype: RemoveClubHypeMutation
   
     public val removeFriend: RemoveFriendMutation
   
@@ -126,6 +132,8 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
     public val unlikeFeedPost: UnlikeFeedPostMutation
   
     public val updateChatLastMessage: UpdateChatLastMessageMutation
+  
+    public val updateClubFlames: UpdateClubFlamesMutation
   
     public val updateClubLiveStats: UpdateClubLiveStatsMutation
   
@@ -187,6 +195,10 @@ public fun KliqConnectorConnector.Companion.getInstance(
 private class KliqConnectorConnectorImpl(
   override val dataConnect: com.google.firebase.dataconnect.FirebaseDataConnect
 ) : KliqConnectorConnector {
+  
+    override val addClubHype by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      AddClubHypeMutationImpl(this)
+    }
   
     override val addFriend by lazy(LazyThreadSafetyMode.PUBLICATION) {
       AddFriendMutationImpl(this)
@@ -340,6 +352,10 @@ private class KliqConnectorConnectorImpl(
       GetUserByIdQueryImpl(this)
     }
   
+    override val getUserHypesForDate by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      GetUserHypesForDateQueryImpl(this)
+    }
+  
     override val getUserPhotos by lazy(LazyThreadSafetyMode.PUBLICATION) {
       GetUserPhotosQueryImpl(this)
     }
@@ -362,6 +378,10 @@ private class KliqConnectorConnectorImpl(
   
     override val logVisit by lazy(LazyThreadSafetyMode.PUBLICATION) {
       LogVisitMutationImpl(this)
+    }
+  
+    override val removeClubHype by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      RemoveClubHypeMutationImpl(this)
     }
   
     override val removeFriend by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -402,6 +422,10 @@ private class KliqConnectorConnectorImpl(
   
     override val updateChatLastMessage by lazy(LazyThreadSafetyMode.PUBLICATION) {
       UpdateChatLastMessageMutationImpl(this)
+    }
+  
+    override val updateClubFlames by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      UpdateClubFlamesMutationImpl(this)
     }
   
     override val updateClubLiveStats by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -448,7 +472,8 @@ private class KliqConnectorConnectorImpl(
   @com.google.firebase.dataconnect.ExperimentalFirebaseDataConnect
   override fun mutations(): List<com.google.firebase.dataconnect.generated.GeneratedMutation<KliqConnectorConnector, *, *>> =
     listOf(
-      addFriend,
+      addClubHype,
+        addFriend,
         addUserPhoto,
         archiveChat,
         blockUser,
@@ -468,6 +493,7 @@ private class KliqConnectorConnectorImpl(
         deleteUserPhoto,
         likeFeedPost,
         logVisit,
+        removeClubHype,
         removeFriend,
         sendDirectMessage,
         sendMessage,
@@ -478,6 +504,7 @@ private class KliqConnectorConnectorImpl(
         unblockUser,
         unlikeFeedPost,
         updateChatLastMessage,
+        updateClubFlames,
         updateClubLiveStats,
         updateDirectMessageStatus,
         updateFeedPost,
@@ -513,6 +540,7 @@ private class KliqConnectorConnectorImpl(
         getReviewsByUser,
         getReviewsForTargetUser,
         getUserById,
+        getUserHypesForDate,
         getUserPhotos,
         getUserPreferences,
         getVisitedLogsByUser,
@@ -650,6 +678,21 @@ private open class KliqConnectorConnectorGeneratedMutationImpl<Data, Variables>(
     "connector=$connector)"
 }
 
+
+
+private class AddClubHypeMutationImpl(
+  connector: KliqConnectorConnector
+):
+  AddClubHypeMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      AddClubHypeMutation.Data,
+      AddClubHypeMutation.Variables
+  >(
+    connector,
+    AddClubHypeMutation.Companion.operationName,
+    AddClubHypeMutation.Companion.dataDeserializer,
+    AddClubHypeMutation.Companion.variablesSerializer,
+  )
 
 
 private class AddFriendMutationImpl(
@@ -1222,6 +1265,21 @@ private class GetUserByIdQueryImpl(
   )
 
 
+private class GetUserHypesForDateQueryImpl(
+  connector: KliqConnectorConnector
+):
+  GetUserHypesForDateQuery,
+  KliqConnectorConnectorGeneratedQueryImpl<
+      GetUserHypesForDateQuery.Data,
+      GetUserHypesForDateQuery.Variables
+  >(
+    connector,
+    GetUserHypesForDateQuery.Companion.operationName,
+    GetUserHypesForDateQuery.Companion.dataDeserializer,
+    GetUserHypesForDateQuery.Companion.variablesSerializer,
+  )
+
+
 private class GetUserPhotosQueryImpl(
   connector: KliqConnectorConnector
 ):
@@ -1309,6 +1367,21 @@ private class LogVisitMutationImpl(
     LogVisitMutation.Companion.operationName,
     LogVisitMutation.Companion.dataDeserializer,
     LogVisitMutation.Companion.variablesSerializer,
+  )
+
+
+private class RemoveClubHypeMutationImpl(
+  connector: KliqConnectorConnector
+):
+  RemoveClubHypeMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      RemoveClubHypeMutation.Data,
+      RemoveClubHypeMutation.Variables
+  >(
+    connector,
+    RemoveClubHypeMutation.Companion.operationName,
+    RemoveClubHypeMutation.Companion.dataDeserializer,
+    RemoveClubHypeMutation.Companion.variablesSerializer,
   )
 
 
@@ -1459,6 +1532,21 @@ private class UpdateChatLastMessageMutationImpl(
     UpdateChatLastMessageMutation.Companion.operationName,
     UpdateChatLastMessageMutation.Companion.dataDeserializer,
     UpdateChatLastMessageMutation.Companion.variablesSerializer,
+  )
+
+
+private class UpdateClubFlamesMutationImpl(
+  connector: KliqConnectorConnector
+):
+  UpdateClubFlamesMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      UpdateClubFlamesMutation.Data,
+      UpdateClubFlamesMutation.Variables
+  >(
+    connector,
+    UpdateClubFlamesMutation.Companion.operationName,
+    UpdateClubFlamesMutation.Companion.dataDeserializer,
+    UpdateClubFlamesMutation.Companion.variablesSerializer,
   )
 
 

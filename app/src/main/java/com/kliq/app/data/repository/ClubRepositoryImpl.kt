@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import com.kliq.app.data.generated.*
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,10 +30,15 @@ class ClubRepositoryImpl @Inject constructor(
     private val clubDao: ClubDao,
     private val visitedLogDao: VisitedLogDao,
     private val apiService: KliqApiService,
-    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
 ) : ClubRepository {
 
     private val gson = Gson()
+
+    private fun getTodayDateString(): String {
+        return java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+    }
 
     override fun getAllClubs(): Flow<List<Club>> {
         return clubDao.getAllClubs().map { entities ->
@@ -196,6 +202,79 @@ class ClubRepositoryImpl @Inject constructor(
         return r * c
     }
 
+    override fun isClubHypedToday(clubId: String, userId: String): Flow<Boolean> {
+        val today = getTodayDateString()
+        return clubDao.isClubHypedToday(clubId, userId, today).flowOn(ioDispatcher)
+    }
+
+    override fun getHypedClubIdsToday(userId: String): Flow<List<String>> {
+        val today = getTodayDateString()
+        return clubDao.getHypedClubIdsToday(userId, today).flowOn(ioDispatcher)
+    }
+
+    override suspend fun toggleClubHype(clubId: String, userId: String): Result<Boolean> = withContext(ioDispatcher) {
+        try {
+            val today = getTodayDateString()
+            val isHyped = clubDao.isClubHypedToday(clubId, userId, today).firstOrNull() ?: false
+            val club = clubDao.getClubById(clubId).firstOrNull()
+
+            val currentFlames = if (club != null) {
+                if (club.flameDate == today) club.flameCount else 0
+            } else 0
+
+            val newIsHyped = !isHyped
+            val newFlames = if (newIsHyped) currentFlames + 1 else maxOf(0, currentFlames - 1)
+
+            if (newIsHyped) {
+                clubDao.insertClubHype(
+                    com.kliq.app.data.local.entities.ClubHypeEntity(
+                        clubId = clubId,
+                        userId = userId,
+                        dateString = today,
+                        createdAtMs = System.currentTimeMillis()
+                    )
+                )
+            } else {
+                clubDao.deleteClubHype(clubId, userId, today)
+            }
+
+            clubDao.updateFlameCount(clubId, newFlames, today)
+
+            // Cloud SQL sync
+            kliqConnector?.let { connector ->
+                try {
+                    if (newIsHyped) {
+                        connector.addClubHype.execute(
+                            clubId = clubId,
+                            userId = userId,
+                            dateString = today,
+                            createdAtMs = System.currentTimeMillis()
+                        )
+                    } else {
+                        connector.removeClubHype.execute(
+                            clubId = clubId,
+                            userId = userId,
+                            dateString = today
+                        )
+                    }
+                    connector.updateClubFlames.execute(
+                        id = clubId,
+                        flameCount = newFlames
+                    ) {
+                        this.flameDate = today
+                    }
+                } catch (e: Exception) {
+                    timber.log.Timber.d("DataConnect: toggleClubHype cloud sync: %s", e.message)
+                }
+            }
+
+            Result.success(newIsHyped)
+        } catch (e: Exception) {
+            timber.log.Timber.e(e, "toggleClubHype failed")
+            Result.failure(e)
+        }
+    }
+
     private fun ClubEntity.toDomain(): Club {
         val schedule = try {
             val type = object : TypeToken<Map<String, Any>>() {}.type
@@ -208,6 +287,9 @@ class ClubRepositoryImpl @Inject constructor(
             OperatingHours(isOpenNow = false, todayHours = "")
         }
 
+        val today = getTodayDateString()
+        val effectiveFlames = if (flameDate == today) flameCount else 0
+
         return Club(
             id = id,
             name = name,
@@ -219,6 +301,7 @@ class ClubRepositoryImpl @Inject constructor(
             category = category,
             imageUrl = imageUrl,
             region = region,
+            flameCount = effectiveFlames,
             externalSearchTags = externalSearchTags,
             websiteUrl = websiteUrl,
             phoneNumber = phoneNumber,

@@ -80,9 +80,9 @@ val connector: KliqConnectorConnector = KliqConnectorConnector.getInstance(
 ### KliqConnectorConnector - Query and Mutation Properties
 
 The `kliq-connector` Data Connect connector defines
-24 queries and
-39 mutations,
-a total of 63 operations.
+25 queries and
+42 mutations,
+a total of 67 operations.
 Each of these operations is exposed
 as a property of [KliqConnectorConnector].
 
@@ -93,8 +93,8 @@ which can be accessed via the [KliqConnectorConnector.checkUsername] property.
 
 
 An example of the property for a mutation
-is the mutation named "AddFriend",
-which can be accessed via the [KliqConnectorConnector.addFriend] property.
+is the mutation named "AddClubHype",
+which can be accessed via the [KliqConnectorConnector.addClubHype] property.
 
 
 ### KliqConnectorConnector - The `dataConnect` Property

@@ -35,8 +35,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -204,7 +206,8 @@ fun ExploreScreen(
                                 DiscoverGridCard(
                                     item = item,
                                     onClick = { onNavigateToClub(item.id) },
-                                    onToggleFavorite = { viewModel.onToggleFavorite(item.id) }
+                                    onToggleFavorite = { viewModel.onToggleFavorite(item.id) },
+                                    onToggleHype = { viewModel.onToggleHype(item.id) }
                                 )
                             }
                         }
@@ -252,27 +255,29 @@ private fun EmptyDiscoverHint() {
 
 /**
  * Einzelne Kachel des Discovery-Grids.
- * Zeigt Titel, Untertitel, Bewertung, Kategorie-Badge, Öffnungsstatus
- * und einen Favoriten-Umschalter.
+ * Zeigt Club-Bild, Titel, Untertitel, Bewertung, Kategorie-Badge, Öffnungsstatus,
+ * Favoriten-Umschalter und den Flammenknopf (Tages-Hype 🔥).
  *
  * @param onClick Callback beim Antippen der Kachel.
  * @param onToggleFavorite Callback beim Antippen des Favoriten-Symbols.
+ * @param onToggleHype Callback beim Antippen des Flammen-Symbols.
  */
 @Composable
 private fun DiscoverGridCard(
     item: DiscoverItemUi,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onToggleHype: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(0.82f)
+            .aspectRatio(0.80f)
             .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable { onClick() }
             .talkBackDescription(
-                "${item.title}, ${item.category}, Bewertung ${item.rating} von 5 Sternen" +
+                "${item.title}, ${item.category}, Bewertung ${item.rating} von 5 Sternen, ${item.flameCount} Flammen" +
                         if (item.isFavorite) ", als Favorit markiert" else ""
             )
     ) {
@@ -306,10 +311,10 @@ private fun DiscoverGridCard(
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            Color.Black.copy(alpha = 0.15f),
+                            Color.Black.copy(alpha = 0.20f),
                             Color.Black.copy(alpha = 0.35f),
-                            Color.Black.copy(alpha = 0.75f),
-                            Color.Black.copy(alpha = 0.95f)
+                            Color.Black.copy(alpha = 0.80f),
+                            Color.Black.copy(alpha = 0.96f)
                         ),
                         startY = 0f,
                         endY = Float.POSITIVE_INFINITY
@@ -356,15 +361,43 @@ private fun DiscoverGridCard(
             )
         }
 
-        // Club-Infos unten
+        // Flammenknopf (Tages-Hype 🔥) - Oben rechts neben Favorit oder schwebend unten rechts
+        Surface(
+            onClick = onToggleHype,
+            shape = RoundedCornerShape(12.dp),
+            color = if (item.isHypedToday) Color(0xFFFF5722) else Color.Black.copy(alpha = 0.65f),
+            border = if (item.isHypedToday) BorderStroke(1.dp, Color(0xFFFFD54F)) else BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    text = "🔥",
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Text(
+                    text = "${item.flameCount}",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (item.isHypedToday) Color.White else Color.White.copy(alpha = 0.9f)
+                )
+            }
+        }
+
+        // Club-Infos unten links
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(12.dp)
+                .padding(start = 10.dp, bottom = 10.dp, end = 68.dp)
         ) {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
                 maxLines = 1,
@@ -378,14 +411,14 @@ private fun DiscoverGridCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     imageVector = Icons.Filled.Star,
                     contentDescription = null,
                     tint = Color(0xFFFFB800),
-                    modifier = Modifier.size(14.dp)
+                    modifier = Modifier.size(13.dp)
                 )
                 Spacer(modifier = Modifier.width(3.dp))
                 Text(
@@ -395,19 +428,19 @@ private fun DiscoverGridCard(
                     color = Color.White
                 )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Box(
                     modifier = Modifier
-                        .size(7.dp)
+                        .size(6.dp)
                         .clip(CircleShape)
                         .background(
                             if (item.isOpenNow) Color(0xFF3DDC84)
                             else Color(0xFFFF5252)
                         )
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(3.dp))
                 Text(
-                    text = if (item.isOpenNow) "Offen" else "Geschlossen",
+                    text = if (item.isOpenNow) "Offen" else "Zu",
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Medium,
                     color = if (item.isOpenNow) Color(0xFF3DDC84) else Color.White.copy(alpha = 0.7f)

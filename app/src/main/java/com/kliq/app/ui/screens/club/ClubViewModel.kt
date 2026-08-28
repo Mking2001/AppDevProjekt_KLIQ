@@ -24,7 +24,8 @@ data class ClubUiState(
 
 @HiltViewModel
 class ClubViewModel @Inject constructor(
-    private val clubRepository: ClubRepository
+    private val clubRepository: ClubRepository,
+    private val currentUserProvider: com.kliq.app.domain.CurrentUserProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ClubUiState())
@@ -40,17 +41,20 @@ class ClubViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            val userId = currentUserProvider.userId()
             
-            clubRepository.getClubById(clubId).collect { repositoryClub ->
+            kotlinx.coroutines.flow.combine(
+                clubRepository.getClubById(clubId),
+                clubRepository.isClubHypedToday(clubId, userId)
+            ) { repositoryClub, isHyped ->
                 if (repositoryClub != null) {
-                    _uiState.update {
-                        it.copy(isLoading = false, club = repositoryClub)
-                    }
+                    repositoryClub.copy(isHypedToday = isHyped)
                 } else {
-                    val fallbackClub = getFallbackClub(clubId)
-                    _uiState.update {
-                        it.copy(isLoading = false, club = fallbackClub)
-                    }
+                    getFallbackClub(clubId).copy(isHypedToday = isHyped)
+                }
+            }.collect { club ->
+                _uiState.update {
+                    it.copy(isLoading = false, club = club)
                 }
             }
         }
@@ -64,6 +68,14 @@ class ClubViewModel @Inject constructor(
         }
         viewModelScope.launch {
             clubRepository.toggleFavorite(currentClub.id, currentClub.isFavorite)
+        }
+    }
+
+    fun toggleHype() {
+        val currentClub = _uiState.value.club ?: return
+        viewModelScope.launch {
+            val userId = currentUserProvider.userId()
+            clubRepository.toggleClubHype(currentClub.id, userId)
         }
     }
 

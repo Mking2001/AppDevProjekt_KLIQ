@@ -89,6 +89,7 @@ object KlagenfurtSeedData {
             websiteUrl = "https://www.eventstage-klagenfurt.at",
             phoneNumber = "+43 463 000001",
             isPromoted = true,
+            flameCount = 48,
             nowMs = nowMs
         ),
         buildClub(
@@ -118,6 +119,7 @@ object KlagenfurtSeedData {
             websiteUrl = "https://www.teatro-club.at",
             phoneNumber = "+43 463 000002",
             isPromoted = true,
+            flameCount = 35,
             nowMs = nowMs
         ),
         buildClub(
@@ -145,6 +147,7 @@ object KlagenfurtSeedData {
             femalePercentage = 50,
             searchTags = "Speki Speckbacher Bar Cocktails Szene Treffpunkt",
             phoneNumber = "+43 463 000003",
+            flameCount = 28,
             nowMs = nowMs
         ),
         buildClub(
@@ -172,6 +175,7 @@ object KlagenfurtSeedData {
             femalePercentage = 46,
             searchTags = "Stereo Club Live Alternative Indie Rock DJ Sets",
             phoneNumber = "+43 463 000004",
+            flameCount = 22,
             nowMs = nowMs
         ),
         buildClub(
@@ -201,6 +205,7 @@ object KlagenfurtSeedData {
             websiteUrl = "https://www.gig-klagenfurt.at",
             phoneNumber = "+43 463 000005",
             isPromoted = true,
+            flameCount = 19,
             nowMs = nowMs
         )
     )
@@ -570,11 +575,13 @@ object KlagenfurtSeedData {
         imageUrl: String = "",
         websiteUrl: String? = null,
         phoneNumber: String? = null,
-        isPromoted: Boolean = false
+        isPromoted: Boolean = false,
+        flameCount: Int = 0
     ): ClubEntity {
         val calendar = Calendar.getInstance().apply { timeInMillis = nowMs }
         val today = OpeningHoursHelper.getCurrentDayGermanName(calendar)
         val todayHours = weeklySchedule[today] ?: "Geschlossen"
+        val dateString = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(calendar.time)
         val isOpenNow = OpeningHoursHelper.determineLiveStatus(
             operatingHours = OperatingHours(
                 isOpenNow = false,
@@ -618,7 +625,9 @@ object KlagenfurtSeedData {
             isPromoted = isPromoted,
             city = CITY_NAME,
             postalCode = "9020",
-            phoneNumber = phoneNumber
+            phoneNumber = phoneNumber,
+            flameCount = flameCount,
+            flameDate = dateString
         )
     }
 
