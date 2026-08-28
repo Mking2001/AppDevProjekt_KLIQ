@@ -1,0 +1,258 @@
+package com.kliq.app.ui.screens.auth
+
+import android.content.Context
+import android.net.Uri
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kliq.app.data.model.SearchIntent
+import com.kliq.app.data.repository.UserRepository
+import com.kliq.app.data.util.ImageCompressor
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import javax.inject.Inject
+
+@HiltViewModel
+class RegisterViewModel @Inject constructor(
+    private val userRepository: UserRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(RegisterUiState())
+    val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
+
+    private var usernameCheckJob: Job? = null
+
+    fun onUsernameChanged(input: String) {
+        val trimmed = input.trim()
+        val error = when {
+            input.isBlank() -> "Benutzername darf nicht leer sein."
+            trimmed.length < 3 -> "Mindestens 3 Zeichen erforderlich."
+            trimmed.length > 20 -> "Maximal 20 Zeichen erlaubt."
+            !trimmed.matches(Regex("^[a-zA-Z0-9_]+$")) -> "Nur Buchstaben, Zahlen und _ erlaubt."
+            else -> null
+        }
+
+        _uiState.update { current ->
+            val status = if (error != null) {
+                UsernameCheckStatus.Invalid(error)
+            } else {
+                UsernameCheckStatus.Checking
+            }
+            val updated = current.copy(
+                username = input,
+                usernameError = error,
+                usernameStatus = status
+            )
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+
+        if (error == null && trimmed.length >= 3) {
+            usernameCheckJob?.cancel()
+            usernameCheckJob = viewModelScope.launch {
+                delay(300) // Debounce
+                val isAvailable = userRepository.checkUsernameAvailability(trimmed)
+                _uiState.update { current ->
+                    val newStatus = if (isAvailable) {
+                        UsernameCheckStatus.Available
+                    } else {
+                        UsernameCheckStatus.Taken("Dieser Benutzername ist bereits vergeben.")
+                    }
+                    val updated = current.copy(
+                        usernameStatus = newStatus,
+                        usernameError = if (isAvailable) null else "Dieser Benutzername ist bereits vergeben."
+                    )
+                    updated.copy(isFormValid = calculateIsFormValid(updated))
+                }
+            }
+        }
+    }
+
+    fun onFirstNameChanged(input: String) {
+        val error = if (input.isBlank()) "Vorname darf nicht leer sein." else null
+        _uiState.update { current ->
+            val updated = current.copy(firstName = input, firstNameError = error)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onLastNameChanged(input: String) {
+        val error = if (input.isBlank()) "Nachname darf nicht leer sein." else null
+        _uiState.update { current ->
+            val updated = current.copy(lastName = input, lastNameError = error)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onBirthDateSelected(timestampMs: Long) {
+        val now = System.currentTimeMillis()
+        val ageYears = ((now - timestampMs) / (365.25 * 24 * 60 * 60 * 1000L)).toInt()
+        val error = when {
+            timestampMs > now -> "Ungültiges Datum."
+            ageYears < 18 -> "Du musst mindestens 18 Jahre alt sein (Mindestalter für Clubs)."
+            ageYears > 120 -> "Bitte gib ein realistisches Geburtsdatum an."
+            else -> null
+        }
+
+        val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.GERMANY)
+        val formattedDate = formatter.format(Date(timestampMs))
+
+        _uiState.update { current ->
+            val updated = current.copy(
+                birthDateMs = timestampMs,
+                birthDateFormatted = formattedDate,
+                birthDateError = error
+            )
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onImageSelected(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isProcessingImage = true, errorMessage = null) }
+            val compressor = ImageCompressor(context)
+            val result = compressor.compressAndSaveImage(uri)
+
+            result.onSuccess { savedPath ->
+                _uiState.update { current ->
+                    val updated = current.copy(
+                        profilePictureUrl = savedPath,
+                        profilePictureError = null,
+                        isProcessingImage = false
+                    )
+                    updated.copy(isFormValid = calculateIsFormValid(updated))
+                }
+            }.onFailure { exception ->
+                _uiState.update { current ->
+                    current.copy(
+                        isProcessingImage = false,
+                        profilePictureError = "Bild konnte nicht verarbeitet werden: ${exception.localizedMessage}"
+                    )
+                }
+            }
+        }
+    }
+
+    fun onSearchIntentSelected(intent: SearchIntent) {
+        _uiState.update { current ->
+            val updated = current.copy(searchIntent = intent)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onBioChanged(input: String) {
+        _uiState.update { it.copy(bio = input) }
+    }
+
+    fun onPasswordChanged(input: String) {
+        val error = when {
+            input.length < 6 -> "Passwort muss mindestens 6 Zeichen lang sein."
+            else -> null
+        }
+        _uiState.update { current ->
+            val confirmError = if (current.confirmPassword.isNotBlank() && current.confirmPassword != input) {
+                "Passwörter stimmen nicht überein."
+            } else null
+
+            val updated = current.copy(
+                password = input,
+                passwordError = error,
+                confirmPasswordError = confirmError
+            )
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onConfirmPasswordChanged(input: String) {
+        val error = when {
+            input != _uiState.value.password -> "Passwörter stimmen nicht überein."
+            else -> null
+        }
+        _uiState.update { current ->
+            val updated = current.copy(
+                confirmPassword = input,
+                confirmPasswordError = error
+            )
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun togglePasswordVisibility() {
+        _uiState.update { it.copy(isPasswordVisible = !it.isPasswordVisible) }
+    }
+
+    fun toggleConfirmPasswordVisibility() {
+        _uiState.update { it.copy(isConfirmPasswordVisible = !it.isConfirmPasswordVisible) }
+    }
+
+    fun onRegister() {
+        val current = _uiState.value
+        if (!calculateIsFormValid(current)) {
+            _uiState.update { it.copy(errorMessage = "Bitte fülle alle Pflichtfelder korrekt aus.") }
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+
+            // Final check on username availability
+            val isAvailable = userRepository.checkUsernameAvailability(current.username.trim())
+            if (!isAvailable) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        usernameStatus = UsernameCheckStatus.Taken("Dieser Benutzername ist leider bereits vergeben."),
+                        usernameError = "Dieser Benutzername ist leider bereits vergeben.",
+                        errorMessage = "Der Benutzername ist bereits vergeben. Bitte wähle einen anderen."
+                    )
+                }
+                return@launch
+            }
+
+            val result = userRepository.registerUser(
+                username = current.username.trim(),
+                firstName = current.firstName.trim(),
+                lastName = current.lastName.trim(),
+                birthDateMs = current.birthDateMs ?: 0L,
+                profilePictureUrl = current.profilePictureUrl ?: "",
+                searchIntent = current.searchIntent,
+                bio = current.bio.trim(),
+                password = current.password
+            )
+
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false, isRegistrationSuccessful = true) }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = "Registrierung fehlgeschlagen: ${error.localizedMessage ?: "Unbekannter Fehler"}"
+                    )
+                }
+            }
+        }
+    }
+
+    private fun calculateIsFormValid(state: RegisterUiState): Boolean {
+        val usernameValid = state.username.isNotBlank() &&
+                state.usernameError == null &&
+                state.usernameStatus is UsernameCheckStatus.Available
+        val firstNameValid = state.firstName.isNotBlank() && state.firstNameError == null
+        val lastNameValid = state.lastName.isNotBlank() && state.lastNameError == null
+        val birthDateValid = state.birthDateMs != null && state.birthDateError == null
+        val profilePicValid = !state.profilePictureUrl.isNullOrBlank()
+        val passwordValid = state.password.length >= 6 &&
+                state.passwordError == null &&
+                state.confirmPassword == state.password &&
+                state.confirmPasswordError == null
+
+        return usernameValid && firstNameValid && lastNameValid && birthDateValid && profilePicValid && passwordValid
+    }
+}

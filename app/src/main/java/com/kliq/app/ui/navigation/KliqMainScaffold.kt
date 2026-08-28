@@ -39,7 +39,9 @@ import com.kliq.app.ui.components.KliqAboutDialog
 import com.kliq.app.ui.components.KliqSettingsDialog
 import com.kliq.app.ui.components.clearApplicationCache
 import com.kliq.app.ui.components.openAppNotificationSettings
+import com.kliq.app.ui.screens.auth.AuthSelectionScreen
 import com.kliq.app.ui.screens.auth.PhoneLoginScreen
+import com.kliq.app.ui.screens.auth.RegisterScreen
 import com.kliq.app.ui.screens.chat.ChatDetailScreen
 import com.kliq.app.ui.screens.chat.ChatListScreen
 import com.kliq.app.ui.screens.club.ClubDetailScreen
@@ -104,7 +106,9 @@ fun KliqMainScaffold(
         ChatRoutes.CHAT_LIST,
         ChatRoutes.CHAT_DETAIL,
         CoreRoutes.SPLASH,
+        CoreRoutes.AUTH_SELECTION,
         CoreRoutes.PHONE_LOGIN,
+        CoreRoutes.REGISTER,
         ProfileRoutes.QR_SCANNER
     )
 
@@ -181,7 +185,7 @@ fun KliqMainScaffold(
                         TopBarMenuAction.About -> { isAboutDialogVisible = true }
                         TopBarMenuAction.Logout -> {
                             authViewModel.logout()
-                            navController.navigate(CoreRoutes.PHONE_LOGIN) {
+                            navController.navigate(CoreRoutes.AUTH_SELECTION) {
                                 popUpTo(0) { inclusive = true }
                             }
                         }
@@ -269,10 +273,24 @@ private fun KliqNavHost(
                         popUpTo(CoreRoutes.SPLASH) { inclusive = true }
                     }
                 },
-                onNavigateToPhoneLogin = {
-                    navController.navigate(CoreRoutes.PHONE_LOGIN) {
+                onNavigateToAuthSelection = {
+                    navController.navigate(CoreRoutes.AUTH_SELECTION) {
                         popUpTo(CoreRoutes.SPLASH) { inclusive = true }
                     }
+                }
+            )
+        }
+        composable(
+            route = CoreRoutes.AUTH_SELECTION,
+            enterTransition = { defaultFadeEnterTransition() },
+            exitTransition = { defaultFadeExitTransition() }
+        ) {
+            AuthSelectionScreen(
+                onNavigateToLogin = {
+                    navController.navigate(CoreRoutes.PHONE_LOGIN)
+                },
+                onNavigateToRegister = {
+                    navController.navigate(CoreRoutes.REGISTER)
                 }
             )
         }
@@ -284,7 +302,25 @@ private fun KliqNavHost(
             PhoneLoginScreen(
                 onLoginSuccess = {
                     navController.navigate(NavigationRoute.Home.route) {
-                        popUpTo(CoreRoutes.PHONE_LOGIN) { inclusive = true }
+                        popUpTo(CoreRoutes.AUTH_SELECTION) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(
+            route = CoreRoutes.REGISTER,
+            enterTransition = { detailPushEnterTransition() },
+            exitTransition = { detailPushExitTransition() },
+            popEnterTransition = { detailPopEnterTransition() },
+            popExitTransition = { detailPopExitTransition() }
+        ) {
+            RegisterScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onRegistrationSuccess = {
+                    navController.navigate(NavigationRoute.Home.route) {
+                        popUpTo(CoreRoutes.AUTH_SELECTION) { inclusive = true }
                     }
                 }
             )

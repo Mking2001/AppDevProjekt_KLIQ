@@ -31,8 +31,119 @@ class UserRepositoryImpl @Inject constructor(
     private val reviewDao: ReviewDao? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val blockedUserDao: BlockedUserDao? = null,
-    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null,
+    private val sessionRepository: SessionRepository? = null
 ) : UserRepository {
+
+    override suspend fun checkUsernameAvailability(username: String): Boolean = withContext(ioDispatcher) {
+        val trimmed = username.trim()
+        if (trimmed.length < 3) return@withContext false
+
+        // 1. Check local Room DB
+        val localUser = userDao.getUserByUsername(trimmed)
+        if (localUser != null) {
+            return@withContext false
+        }
+
+        // 2. Check Firebase Data Connect Cloud SQL (if available)
+        kliqConnector?.let { connector ->
+            try {
+                val cloudUsers = connector.listUsers.execute().data.users
+                val existsInCloud = cloudUsers.any { it.username.equals(trimmed, ignoreCase = true) }
+                if (existsInCloud) {
+                    return@withContext false
+                }
+            } catch (ignored: Exception) {
+                // If offline, rely on local DB check
+            }
+        }
+
+        true
+    }
+
+    override suspend fun registerUser(
+        username: String,
+        firstName: String,
+        lastName: String,
+        birthDateMs: Long,
+        profilePictureUrl: String,
+        searchIntent: SearchIntent,
+        bio: String,
+        password: String
+    ): Result<UserEntity> = withContext(ioDispatcher) {
+        try {
+            val trimmedUsername = username.trim()
+            val userId = "usr_${System.currentTimeMillis()}"
+            val fullName = "${firstName.trim()} ${lastName.trim()}".trim()
+
+            // Calculate approximate age from birthDateMs
+            val nowMs = System.currentTimeMillis()
+            val ageYears = ((nowMs - birthDateMs) / (365.25 * 24 * 60 * 60 * 1000L)).toInt().coerceAtLeast(18)
+
+            val newUser = UserEntity(
+                id = userId,
+                username = trimmedUsername,
+                email = "${trimmedUsername.lowercase()}@kliq.app",
+                age = ageYears,
+                hometown = fullName,
+                profilePictureUrl = profilePictureUrl.ifBlank { null },
+                bio = bio.trim().ifBlank { "Hey, ich bin neu bei KLIQ!" },
+                phoneNumber = null,
+                isVerified = true,
+                updatedAtTimestampMs = System.currentTimeMillis()
+            )
+
+            // 1. Save User in Room
+            userDao.insertUser(newUser)
+
+            // 2. Save Preferences in Room
+            val preferences = UserPreferencesEntity(
+                userId = userId,
+                searchIntent = searchIntent
+            )
+            userDao.insertUserPreferences(preferences)
+
+            // 3. Save Session so user is authenticated
+            sessionRepository?.saveSession(token = "jwt_$userId", userId = userId)
+
+            // 4. Sync to Firebase Data Connect Cloud SQL
+            kliqConnector?.let { connector ->
+                try {
+                    connector.createUser.execute(
+                        id = newUser.id,
+                        username = newUser.username,
+                        email = newUser.email
+                    )
+                } catch (ignored: Exception) { }
+
+                try {
+                    connector.updateUserProfile.execute(id = newUser.id) {
+                        this.username = newUser.username
+                        this.bio = newUser.bio
+                        this.profilePictureUrl = newUser.profilePictureUrl
+                        this.age = newUser.age
+                        this.hometown = newUser.hometown
+                    }
+                } catch (ignored: Exception) { }
+
+                try {
+                    connector.upsertUserPreference.execute(
+                        userId = newUser.id,
+                        isDarkMode = false,
+                        searchRadiusKm = 10,
+                        pushNotificationsEnabled = true,
+                        searchIntent = searchIntent.name,
+                        smokingHabit = SmokingHabit.NEVER.name,
+                        drinkingHabit = DrinkingHabit.NEVER.name
+                    )
+                } catch (ignored: Exception) { }
+            }
+
+            Result.success(newUser)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     override fun getUserById(userId: String): Flow<UserEntity?> {
         return userDao.getUserById(userId).flowOn(ioDispatcher)

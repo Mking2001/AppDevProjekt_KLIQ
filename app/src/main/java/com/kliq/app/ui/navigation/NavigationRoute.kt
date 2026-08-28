@@ -136,7 +136,9 @@ object ChatRoutes {
  */
 object CoreRoutes {
     const val SPLASH = "splash"
+    const val AUTH_SELECTION = "auth_selection"
     const val PHONE_LOGIN = "phone_login"
+    const val REGISTER = "register"
 }
 
 /**
