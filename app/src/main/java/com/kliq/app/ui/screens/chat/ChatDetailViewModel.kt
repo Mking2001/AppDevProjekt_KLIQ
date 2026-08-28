@@ -29,6 +29,7 @@ data class ChatDetailUiState(
     val conversationName: String = "",
     val conversationInitial: String = "",
     val targetUserId: String = "",
+    val chatType: ChatType = ChatType.PRIVATE,
     val messages: List<ChatMessage> = emptyList(),
     val currentInput: String = "",
     val selectedImageUri: String? = null,
@@ -80,19 +81,24 @@ class ChatDetailViewModel @Inject constructor(
      * Bindet den Screen an einen Chat. Legt den Chat an, falls er noch nicht existiert,
      * beobachtet Metadaten und Nachrichtenverlauf und markiert den Chat als gelesen.
      *
+     * Chat-Typ und Ersatztitel werden aus der ID abgeleitet, damit der Screen selbst
+     * keine Annahmen über den Chat treffen muss.
+     *
      * @param chatId ID des Chats. Bei Einstieg aus einem Nutzerprofil hat sie die Form `chat_<userId>`.
-     * @param fallbackTitle Titel, der beim erstmaligen Anlegen des Chats verwendet wird.
-     * @param chatType Typ des Chats, relevant für die Zuordnung in der Chat-Liste.
      */
-    fun loadConversation(
-        chatId: String,
-        fallbackTitle: String = "Kliq Chat",
-        chatType: ChatType = ChatType.PRIVATE
-    ) {
+    fun loadConversation(chatId: String) {
         if (chatId.isBlank()) return
 
+        val chatType = resolveChatType(chatId)
+        val fallbackTitle = resolveFallbackTitle(chatId, chatType)
+
         currentChatId = chatId
-        _uiState.update { it.copy(targetUserId = resolveTargetUserId(chatId)) }
+        _uiState.update {
+            it.copy(
+                targetUserId = resolveTargetUserId(chatId),
+                chatType = chatType
+            )
+        }
 
         viewModelScope.launch {
             chatRepository.createChatIfMissing(
@@ -129,6 +135,7 @@ class ChatDetailViewModel @Inject constructor(
                         state.copy(
                             conversationName = conversation.name,
                             conversationInitial = conversation.avatarInitial,
+                            chatType = conversation.chatType,
                             isOnline = conversation.isOnline
                         )
                     }
@@ -164,6 +171,23 @@ class ChatDetailViewModel @Inject constructor(
                     _uiState.update { it.copy(isBlocked = isBlocked) }
                 }
         }
+    }
+
+    /**
+     * Leitet den Chat-Typ aus der ID-Konvention ab. Stadt-Gruppenchats
+     * verwenden das Praefix `pub_`, alles andere gilt als Direktnachricht.
+     */
+    private fun resolveChatType(chatId: String): ChatType =
+        if (chatId.startsWith("pub_")) ChatType.PUBLIC_CITY else ChatType.PRIVATE
+
+    /**
+     * Ersatztitel, falls der Chat erstmalig angelegt wird und noch kein
+     * Datensatz mit Anzeigename vorliegt.
+     */
+    private fun resolveFallbackTitle(chatId: String, chatType: ChatType): String = when {
+        chatType == ChatType.PUBLIC_CITY -> "Kliq Stadt-Chat"
+        chatId.startsWith("chat_") -> "Direktnachricht"
+        else -> "Kliq Chat"
     }
 
     /**

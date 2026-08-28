@@ -341,7 +341,10 @@ fun ChatListScreen(
                             Column {
                                 ChatListItem(
                                     item = chat,
-                                    onClick = { onChatSelected(chat.id) }
+                                    onClick = {
+                                        viewModel.onChatOpened(chat.id)
+                                        onChatSelected(chat.id)
+                                    }
                                 )
                                 Divider(
                                     modifier = Modifier.padding(start = 84.dp),
