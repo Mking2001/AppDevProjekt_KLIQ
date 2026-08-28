@@ -35,7 +35,7 @@ object MarkerBitmapHelper {
     private const val COLOR_OFFLINE_GRAY = 0xFF64748B.toInt()         // Slate Gray Offline Indicator
     private const val COLOR_CLUSTER_GLOW = 0x667C3AED.toInt()         // Translucent Purple Cluster Halo
 
-    internal var descriptorFactory: (Bitmap?) -> BitmapDescriptor = { bitmap ->
+    internal var descriptorFactory: (Bitmap?) -> BitmapDescriptor? = { bitmap ->
         try {
             if (bitmap != null) {
                 BitmapDescriptorFactory.fromBitmap(bitmap)
@@ -43,27 +43,18 @@ object MarkerBitmapHelper {
                 BitmapDescriptorFactory.defaultMarker()
             }
         } catch (e: Throwable) {
-            createFallbackBitmapDescriptor()
+            createTestFallbackDescriptor()
         }
     }
 
-    private fun createFallbackBitmapDescriptor(): BitmapDescriptor {
+    private fun createTestFallbackDescriptor(): BitmapDescriptor? {
         return try {
-            val unsafeClass = Class.forName("sun.misc.Unsafe")
-            val unsafeField = unsafeClass.getDeclaredField("theUnsafe")
-            unsafeField.isAccessible = true
-            val unsafe = unsafeField.get(null)
-            val allocateInstanceMethod = unsafeClass.getMethod("allocateInstance", Class::class.java)
-            allocateInstanceMethod.invoke(unsafe, BitmapDescriptor::class.java) as BitmapDescriptor
-        } catch (e: Throwable) {
-            try {
-                val constructor = BitmapDescriptor::class.java.declaredConstructors.first()
-                constructor.isAccessible = true
-                val wrapper = com.google.android.gms.dynamic.ObjectWrapper.wrap("mock")
-                constructor.newInstance(wrapper) as BitmapDescriptor
-            } catch (t: Throwable) {
-                throw IllegalStateException("Cannot create BitmapDescriptor in test environment", t)
-            }
+            val constructor = BitmapDescriptor::class.java.declaredConstructors.first()
+            constructor.isAccessible = true
+            val wrapper = com.google.android.gms.dynamic.ObjectWrapper.wrap("mock")
+            constructor.newInstance(wrapper) as BitmapDescriptor
+        } catch (t: Throwable) {
+            null
         }
     }
 
@@ -73,16 +64,18 @@ object MarkerBitmapHelper {
     fun getClubMarkerBitmap(
         category: String,
         hasActiveEvent: Boolean
-    ): BitmapDescriptor {
+    ): BitmapDescriptor? {
         val cacheKey = "club_${category.lowercase(Locale.ROOT)}_${hasActiveEvent}"
         synchronized(cacheLock) {
             bitmapDescriptorCache[cacheKey]?.let { return it }
         }
 
-        val bitmap = createClubPinBitmap(category, hasActiveEvent)
+        val bitmap = createClubPinBitmap(category, hasActiveEvent) ?: return null
         val descriptor = descriptorFactory(bitmap)
-        synchronized(cacheLock) {
-            bitmapDescriptorCache[cacheKey] = descriptor
+        if (descriptor != null) {
+            synchronized(cacheLock) {
+                bitmapDescriptorCache[cacheKey] = descriptor
+            }
         }
         return descriptor
     }
@@ -93,17 +86,19 @@ object MarkerBitmapHelper {
     fun getUserMarkerBitmap(
         username: String,
         isOnline: Boolean
-    ): BitmapDescriptor {
+    ): BitmapDescriptor? {
         val initial = username.take(1).uppercase(Locale.ROOT).ifBlank { "K" }
         val cacheKey = "user_${initial}_${isOnline}"
         synchronized(cacheLock) {
             bitmapDescriptorCache[cacheKey]?.let { return it }
         }
 
-        val bitmap = createUserAvatarBitmap(initial, isOnline)
+        val bitmap = createUserAvatarBitmap(initial, isOnline) ?: return null
         val descriptor = descriptorFactory(bitmap)
-        synchronized(cacheLock) {
-            bitmapDescriptorCache[cacheKey] = descriptor
+        if (descriptor != null) {
+            synchronized(cacheLock) {
+                bitmapDescriptorCache[cacheKey] = descriptor
+            }
         }
         return descriptor
     }
@@ -114,16 +109,18 @@ object MarkerBitmapHelper {
     fun getClusterMarkerBitmap(
         count: Int,
         primaryCategory: String = "Club"
-    ): BitmapDescriptor {
+    ): BitmapDescriptor? {
         val cacheKey = "cluster_${count}_${primaryCategory.lowercase(Locale.ROOT)}"
         synchronized(cacheLock) {
             bitmapDescriptorCache[cacheKey]?.let { return it }
         }
 
-        val bitmap = createClusterBitmap(count)
+        val bitmap = createClusterBitmap(count) ?: return null
         val descriptor = descriptorFactory(bitmap)
-        synchronized(cacheLock) {
-            bitmapDescriptorCache[cacheKey] = descriptor
+        if (descriptor != null) {
+            synchronized(cacheLock) {
+                bitmapDescriptorCache[cacheKey] = descriptor
+            }
         }
         return descriptor
     }

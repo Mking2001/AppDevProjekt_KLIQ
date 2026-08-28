@@ -176,7 +176,7 @@ class MapViewModel @Inject constructor(
     private fun setupFilters() {
         _uiState.update { state ->
             state.copy(
-                filters = listOf("Alle", "Clubs", "Bars", "Events", "Restaurants")
+                filters = listOf("Alle", "Clubs", "Bars", "Events")
             )
         }
     }
@@ -490,23 +490,22 @@ class MapViewModel @Inject constructor(
         triggerAutoFitCameraAnimation()
     }
 
-    /**
-     * Zentriert die Karte auf die letzte bekannte GPS-Position.
-     * Liegt noch kein Fix vor, wird auf das Stadtzentrum Klagenfurt zurueckgefallen,
-     * damit der Nutzer nicht auf einer leeren Weltkarte landet.
-     */
-    fun onLocationRequested() {
-        val lastKnown = locationRepository?.locationUpdates?.value
-        val targetLat = lastKnown?.latitude ?: KlagenfurtSeedData.CITY_LATITUDE
-        val targetLng = lastKnown?.longitude ?: KlagenfurtSeedData.CITY_LONGITUDE
+    fun onLocationLoadingStarted() {
+        _uiState.update { it.copy(isLoadingLocation = true) }
+    }
 
+    /**
+     * Verarbeitet empfangene GPS-Koordinaten vom FusedLocationProviderClient
+     * und zentriert die Karte direkt auf den Standort des Nutzers.
+     */
+    fun onLocationReceived(lat: Double, lng: Double) {
         _uiState.update { state ->
             state.copy(
                 isLocationEnabled = true,
-                isLoadingLocation = true,
+                isLoadingLocation = false,
                 cameraPosition = CameraPositionStateData(
-                    latitude = targetLat,
-                    longitude = targetLng,
+                    latitude = lat,
+                    longitude = lng,
                     zoom = 15.0f,
                     tilt = 0.0f,
                     bearing = 0.0f
@@ -514,14 +513,13 @@ class MapViewModel @Inject constructor(
             )
         }
         updateFilteredAndClusteredVenues()
-        updateUserDistances(targetLat, targetLng)
-        _uiState.update { it.copy(isLoadingLocation = false) }
+        updateUserDistances(lat, lng)
 
         viewModelScope.launch {
             _cameraEventFlow.emit(
                 MapCameraAnimationEvent.AnimateToLocation(
-                    latitude = targetLat,
-                    longitude = targetLng,
+                    latitude = lat,
+                    longitude = lng,
                     zoom = 15.0f,
                     tilt = 0.0f,
                     bearing = 0.0f,
@@ -532,16 +530,38 @@ class MapViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Zentriert die Karte auf die letzte bekannte GPS-Position.
+     * Liegt noch kein Fix vor, wird auf das Stadtzentrum Klagenfurt zurueckgefallen,
+     * damit der Nutzer nicht auf einer leeren Weltkarte landet.
+     */
+    fun onLocationRequested() {
+        val lastKnown = locationRepository?.locationUpdates?.value
+        val targetLat = lastKnown?.latitude ?: KlagenfurtSeedData.CITY_LATITUDE
+        val targetLng = lastKnown?.longitude ?: KlagenfurtSeedData.CITY_LONGITUDE
+        onLocationReceived(targetLat, targetLng)
+    }
+
     fun toggleFavorite(clubId: String, currentFavoriteState: Boolean) {
         val nextFavorite = !currentFavoriteState
+        allVenues = allVenues.map { venue ->
+            if (venue.id == clubId) venue.copy(isFavorite = nextFavorite) else venue
+        }
         _uiState.update { state ->
             val updatedVenue = state.selectedVenue?.let {
                 if (it.id == clubId) it.copy(isFavorite = nextFavorite) else it
             }
-            state.copy(selectedVenue = updatedVenue)
+            val updatedNearby = state.nearbyVenues.map {
+                if (it.id == clubId) it.copy(isFavorite = nextFavorite) else it
+            }
+            state.copy(selectedVenue = updatedVenue, nearbyVenues = updatedNearby)
         }
         viewModelScope.launch {
-            clubRepository.toggleFavorite(clubId, currentFavoriteState)
+            try {
+                clubRepository.toggleFavorite(clubId, currentFavoriteState)
+            } catch (ignored: Exception) {
+                // Keep local UI state optimistic
+            }
         }
     }
 

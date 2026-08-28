@@ -35,9 +35,9 @@ object KlagenfurtSeedData {
     const val CITY_NAME = "Klagenfurt"
     const val REGION_NAME = "Kärnten"
 
-    /** Zentrum Klagenfurt (Neuer Platz) als Standard-Kameraposition und Referenzpunkt. */
-    const val CITY_LATITUDE = 46.6236
-    const val CITY_LONGITUDE = 14.3084
+    /** Zentrum Klagenfurt als Standard-Kameraposition und Referenzpunkt. */
+    const val CITY_LATITUDE = 46.6247
+    const val CITY_LONGITUDE = 14.3053
 
     /** ID des lokalen Demo-Nutzers, unter der die App ohne Anmeldung arbeitet. */
     const val CURRENT_USER_ID = "current_user"
@@ -53,24 +53,24 @@ object KlagenfurtSeedData {
     private const val DAY_MS = 24L * HOUR_MS
 
     // =====================================================================
-    // Clubs, Bars und Event-Locations
+    // Clubs, Bars und Event-Locations (Klagenfurt)
     // =====================================================================
 
     /**
-     * Liefert den vollständigen Venue-Datensatz für Klagenfurt.
+     * Liefert den vollständigen Venue-Datensatz für Klagenfurt (5 Clubs & Bars).
      *
      * @param nowMs Referenzzeit zur Bestimmung des Geöffnet-Status.
      */
     fun clubs(nowMs: Long = System.currentTimeMillis()): List<ClubEntity> = listOf(
         buildClub(
-            id = "club_volksgarten",
-            name = "Volksgarten Klagenfurt",
-            latitude = 46.6108,
-            longitude = 14.3126,
-            address = "Südring, 9020 Klagenfurt",
+            id = "club_eventstage",
+            name = "Eventstage Klagenfurt",
+            latitude = 46.6358,
+            longitude = 14.3160,
+            address = "Gerichtsstraße 4, 9020 Klagenfurt",
             category = "Club",
-            averageRating = 4.6,
-            geofenceRadiusMeters = 250.0,
+            averageRating = 4.7,
+            geofenceRadiusMeters = 200.0,
             weeklySchedule = mapOf(
                 "Montag" to "Geschlossen",
                 "Dienstag" to "Geschlossen",
@@ -80,78 +80,105 @@ object KlagenfurtSeedData {
                 "Samstag" to "22:00 - 05:00",
                 "Sonntag" to "Geschlossen"
             ),
-            capacityPercent = 78,
-            liveVisitors = 420,
-            malePercentage = 51,
-            femalePercentage = 49,
-            searchTags = "Techno House Electro Grossraumdiskothek Wochenende",
-            websiteUrl = "https://www.kliq-demo.at/volksgarten",
+            capacityPercent = 82,
+            liveVisitors = 380,
+            malePercentage = 52,
+            femalePercentage = 48,
+            searchTags = "Eventstage Club Disco Techno Charts Großveranstaltung Klagenfurt",
+            websiteUrl = "https://www.eventstage-klagenfurt.at",
             phoneNumber = "+43 463 000001",
             isPromoted = true,
             nowMs = nowMs
         ),
         buildClub(
-            id = "club_bollwerk",
-            name = "Bollwerk",
-            latitude = 46.6251,
-            longitude = 14.3121,
-            address = "Kardinalschütt, 9020 Klagenfurt",
+            id = "club_teatro",
+            name = "Teatro Club",
+            latitude = 46.6210,
+            longitude = 14.3080,
+            address = "Heuplatz 2, 9020 Klagenfurt",
             category = "Club",
-            averageRating = 4.4,
+            averageRating = 4.5,
             geofenceRadiusMeters = 150.0,
             weeklySchedule = mapOf(
                 "Montag" to "Geschlossen",
                 "Dienstag" to "Geschlossen",
-                "Mittwoch" to "20:00 - 02:00",
-                "Donnerstag" to "20:00 - 02:00",
-                "Freitag" to "21:00 - 04:00",
-                "Samstag" to "21:00 - 04:00",
+                "Mittwoch" to "21:00 - 04:00",
+                "Donnerstag" to "21:00 - 04:00",
+                "Freitag" to "22:00 - 05:00",
+                "Samstag" to "22:00 - 05:00",
                 "Sonntag" to "Geschlossen"
             ),
-            capacityPercent = 64,
-            liveVisitors = 180,
-            malePercentage = 55,
-            femalePercentage = 45,
-            searchTags = "Live Konzert Rock Indie Alternative Bühne",
-            websiteUrl = "https://www.kliq-demo.at/bollwerk",
+            capacityPercent = 74,
+            liveVisitors = 210,
+            malePercentage = 48,
+            femalePercentage = 52,
+            searchTags = "Teatro Club Nightlife Charts House Innenstadt",
+            websiteUrl = "https://www.teatro-club.at",
             phoneNumber = "+43 463 000002",
+            isPromoted = true,
             nowMs = nowMs
         ),
         buildClub(
-            id = "club_duchamp",
-            name = "Duchamp Bar",
-            latitude = 46.6247,
-            longitude = 14.3096,
-            address = "Pfarrhofgasse, 9020 Klagenfurt",
+            id = "club_speki",
+            name = "Speki",
+            latitude = 46.6235,
+            longitude = 14.3065,
+            address = "Speckbacherstraße 1, 9020 Klagenfurt",
             category = "Bar",
-            averageRating = 4.7,
-            geofenceRadiusMeters = 80.0,
+            averageRating = 4.6,
+            geofenceRadiusMeters = 100.0,
             weeklySchedule = mapOf(
-                "Montag" to "18:00 - 01:00",
-                "Dienstag" to "18:00 - 01:00",
-                "Mittwoch" to "18:00 - 01:00",
-                "Donnerstag" to "18:00 - 02:00",
-                "Freitag" to "18:00 - 03:00",
-                "Samstag" to "18:00 - 03:00",
+                "Montag" to "18:00 - 02:00",
+                "Dienstag" to "18:00 - 02:00",
+                "Mittwoch" to "18:00 - 02:00",
+                "Donnerstag" to "18:00 - 03:00",
+                "Freitag" to "18:00 - 04:00",
+                "Samstag" to "18:00 - 04:00",
                 "Sonntag" to "Geschlossen"
             ),
-            capacityPercent = 45,
-            liveVisitors = 62,
-            malePercentage = 47,
-            femalePercentage = 53,
-            searchTags = "Cocktails Bar Innenstadt Pfarrplatz Afterwork",
+            capacityPercent = 58,
+            liveVisitors = 65,
+            malePercentage = 50,
+            femalePercentage = 50,
+            searchTags = "Speki Speckbacher Bar Cocktails Szene Treffpunkt",
             phoneNumber = "+43 463 000003",
             nowMs = nowMs
         ),
         buildClub(
-            id = "club_molly_malone",
-            name = "Molly Malone",
+            id = "club_stereo",
+            name = "Stereo Club",
+            latitude = 46.6250,
+            longitude = 14.3120,
+            address = "Völkermarkter Ring 25, 9020 Klagenfurt",
+            category = "Club",
+            averageRating = 4.4,
+            geofenceRadiusMeters = 120.0,
+            weeklySchedule = mapOf(
+                "Montag" to "Geschlossen",
+                "Dienstag" to "Geschlossen",
+                "Mittwoch" to "20:00 - 02:00",
+                "Donnerstag" to "20:00 - 03:00",
+                "Freitag" to "21:00 - 04:00",
+                "Samstag" to "21:00 - 04:00",
+                "Sonntag" to "Geschlossen"
+            ),
+            capacityPercent = 67,
+            liveVisitors = 160,
+            malePercentage = 54,
+            femalePercentage = 46,
+            searchTags = "Stereo Club Live Alternative Indie Rock DJ Sets",
+            phoneNumber = "+43 463 000004",
+            nowMs = nowMs
+        ),
+        buildClub(
+            id = "club_gig",
+            name = "GIG Bar & Cafe",
             latitude = 46.6240,
-            longitude = 14.3110,
-            address = "Kardinalsplatz, 9020 Klagenfurt",
-            category = "Pub",
-            averageRating = 4.5,
-            geofenceRadiusMeters = 80.0,
+            longitude = 14.3070,
+            address = "Theatergasse 4, 9020 Klagenfurt",
+            category = "Bar",
+            averageRating = 4.8,
+            geofenceRadiusMeters = 90.0,
             weeklySchedule = mapOf(
                 "Montag" to "16:00 - 01:00",
                 "Dienstag" to "16:00 - 01:00",
@@ -159,172 +186,16 @@ object KlagenfurtSeedData {
                 "Donnerstag" to "16:00 - 02:00",
                 "Freitag" to "16:00 - 03:00",
                 "Samstag" to "16:00 - 03:00",
-                "Sonntag" to "16:00 - 00:00"
+                "Sonntag" to "17:00 - 00:00"
             ),
-            capacityPercent = 52,
-            liveVisitors = 74,
-            malePercentage = 58,
-            femalePercentage = 42,
-            searchTags = "Irish Pub Bier Sport Live Musik Guinness",
-            phoneNumber = "+43 463 000004",
-            nowMs = nowMs
-        ),
-        buildClub(
-            id = "club_kamot",
-            name = "Cafe Bar Kamot",
-            latitude = 46.6229,
-            longitude = 14.3067,
-            address = "Herrengasse, 9020 Klagenfurt",
-            category = "Bar",
-            averageRating = 4.3,
-            geofenceRadiusMeters = 70.0,
-            weeklySchedule = mapOf(
-                "Montag" to "17:00 - 00:00",
-                "Dienstag" to "17:00 - 00:00",
-                "Mittwoch" to "17:00 - 00:00",
-                "Donnerstag" to "17:00 - 01:00",
-                "Freitag" to "17:00 - 02:00",
-                "Samstag" to "17:00 - 02:00",
-                "Sonntag" to "Geschlossen"
-            ),
-            capacityPercent = 38,
-            liveVisitors = 41,
-            malePercentage = 49,
-            femalePercentage = 51,
-            searchTags = "Cafe Bar Studenten Altstadt Wein",
+            capacityPercent = 53,
+            liveVisitors = 85,
+            malePercentage = 47,
+            femalePercentage = 53,
+            searchTags = "GIG Bar Cafe Drinks Cocktails Theatergasse Afterwork",
+            websiteUrl = "https://www.gig-klagenfurt.at",
             phoneNumber = "+43 463 000005",
-            nowMs = nowMs
-        ),
-        buildClub(
-            id = "club_scotch",
-            name = "Scotch Club",
-            latitude = 46.6222,
-            longitude = 14.3103,
-            address = "Bahnhofstraße, 9020 Klagenfurt",
-            category = "Club",
-            averageRating = 4.1,
-            geofenceRadiusMeters = 120.0,
-            weeklySchedule = mapOf(
-                "Montag" to "Geschlossen",
-                "Dienstag" to "Geschlossen",
-                "Mittwoch" to "Geschlossen",
-                "Donnerstag" to "22:00 - 04:00",
-                "Freitag" to "22:00 - 05:00",
-                "Samstag" to "22:00 - 05:00",
-                "Sonntag" to "Geschlossen"
-            ),
-            capacityPercent = 57,
-            liveVisitors = 135,
-            malePercentage = 53,
-            femalePercentage = 47,
-            searchTags = "Charts Party Discofox Club Bahnhofstrasse",
-            phoneNumber = "+43 463 000006",
-            nowMs = nowMs
-        ),
-        buildClub(
-            id = "club_loretto",
-            name = "Strandbar Loretto",
-            latitude = 46.6162,
-            longitude = 14.2696,
-            address = "Lorettoweg, 9020 Klagenfurt",
-            category = "Bar",
-            averageRating = 4.8,
-            geofenceRadiusMeters = 200.0,
-            weeklySchedule = mapOf(
-                "Montag" to "14:00 - 23:00",
-                "Dienstag" to "14:00 - 23:00",
-                "Mittwoch" to "14:00 - 23:00",
-                "Donnerstag" to "14:00 - 00:00",
-                "Freitag" to "14:00 - 02:00",
-                "Samstag" to "12:00 - 02:00",
-                "Sonntag" to "12:00 - 23:00"
-            ),
-            capacityPercent = 61,
-            liveVisitors = 190,
-            malePercentage = 46,
-            femalePercentage = 54,
-            searchTags = "Strandbar Woerthersee Sundowner Sommer Loretto",
-            websiteUrl = "https://www.kliq-demo.at/loretto",
-            phoneNumber = "+43 463 000007",
             isPromoted = true,
-            nowMs = nowMs
-        ),
-        buildClub(
-            id = "club_villa_lido",
-            name = "Villa Lido",
-            latitude = 46.6155,
-            longitude = 14.2733,
-            address = "Friedelstrand, 9020 Klagenfurt",
-            category = "Restaurant",
-            averageRating = 4.5,
-            geofenceRadiusMeters = 150.0,
-            weeklySchedule = mapOf(
-                "Montag" to "11:30 - 23:00",
-                "Dienstag" to "11:30 - 23:00",
-                "Mittwoch" to "11:30 - 23:00",
-                "Donnerstag" to "11:30 - 23:00",
-                "Freitag" to "11:30 - 00:00",
-                "Samstag" to "11:30 - 00:00",
-                "Sonntag" to "11:30 - 22:00"
-            ),
-            capacityPercent = 43,
-            liveVisitors = 88,
-            malePercentage = 48,
-            femalePercentage = 52,
-            searchTags = "Restaurant Seeblick Dinner Woerthersee Terrasse",
-            phoneNumber = "+43 463 000008",
-            nowMs = nowMs
-        ),
-        buildClub(
-            id = "club_pumpe",
-            name = "Kulturhaus Pumpe",
-            latitude = 46.6205,
-            longitude = 14.3151,
-            address = "Radetzkystraße, 9020 Klagenfurt",
-            category = "Event",
-            averageRating = 4.2,
-            geofenceRadiusMeters = 130.0,
-            weeklySchedule = mapOf(
-                "Montag" to "Geschlossen",
-                "Dienstag" to "19:00 - 23:00",
-                "Mittwoch" to "19:00 - 23:00",
-                "Donnerstag" to "19:00 - 00:00",
-                "Freitag" to "19:00 - 02:00",
-                "Samstag" to "19:00 - 02:00",
-                "Sonntag" to "Geschlossen"
-            ),
-            capacityPercent = 34,
-            liveVisitors = 56,
-            malePercentage = 50,
-            femalePercentage = 50,
-            searchTags = "Kultur Lesung Konzert DJ Workshop Verein",
-            phoneNumber = "+43 463 000009",
-            nowMs = nowMs
-        ),
-        buildClub(
-            id = "club_augustin",
-            name = "Bierhaus zum Augustin",
-            latitude = 46.6249,
-            longitude = 14.3089,
-            address = "Pfarrhofgasse, 9020 Klagenfurt",
-            category = "Pub",
-            averageRating = 4.4,
-            geofenceRadiusMeters = 70.0,
-            weeklySchedule = mapOf(
-                "Montag" to "11:00 - 00:00",
-                "Dienstag" to "11:00 - 00:00",
-                "Mittwoch" to "11:00 - 00:00",
-                "Donnerstag" to "11:00 - 01:00",
-                "Freitag" to "11:00 - 02:00",
-                "Samstag" to "11:00 - 02:00",
-                "Sonntag" to "Geschlossen"
-            ),
-            capacityPercent = 47,
-            liveVisitors = 69,
-            malePercentage = 56,
-            femalePercentage = 44,
-            searchTags = "Bier Craft Beer Wirtshaus Altstadt Schnitzel",
-            phoneNumber = "+43 463 000010",
             nowMs = nowMs
         )
     )
@@ -340,101 +211,101 @@ object KlagenfurtSeedData {
      */
     fun events(nowMs: Long = System.currentTimeMillis()): List<EventEntity> = listOf(
         EventEntity(
-            id = "evt_volksgarten_technight",
-            clubId = "club_volksgarten",
-            title = "Wörthersee Techno Night",
-            description = "Drei Floors, internationale Gäste und ein Resident-Set bis in die Morgenstunden.",
+            id = "evt_eventstage_weekend",
+            clubId = "club_eventstage",
+            title = "Weekend Grand Opening",
+            description = "Großes Clubbing auf 2 Floors mit internationalen Resident-DJs und Lasershow.",
             startTime = nowMs + 6L * HOUR_MS,
             endTime = nowMs + 13L * HOUR_MS,
-            price = "18 EUR",
+            price = "15 EUR",
             time = "22:00 - 05:00",
-            searchKeywords = "Techno Rave Floor DJ Klagenfurt",
-            capacityLimit = 1200,
+            searchKeywords = "Eventstage Techno House Clubbing Klagenfurt",
+            capacityLimit = 1000,
             category = "Techno"
         ),
         EventEntity(
-            id = "evt_bollwerk_indie",
-            clubId = "club_bollwerk",
-            title = "Indie Live Session",
-            description = "Vier Bands aus Kärnten und Slowenien, danach DJ-Set im Untergeschoss.",
+            id = "evt_teatro_night",
+            clubId = "club_teatro",
+            title = "Teatro Saturday Clubbing",
+            description = "Charts, House & RnB Party im Herzen von Klagenfurt.",
             startTime = nowMs + 1L * DAY_MS + 4L * HOUR_MS,
             endTime = nowMs + 1L * DAY_MS + 10L * HOUR_MS,
-            price = "12 EUR",
-            time = "21:00 - 03:00",
-            searchKeywords = "Indie Live Band Konzert Alternative",
-            capacityLimit = 400,
-            category = "Live"
-        ),
-        EventEntity(
-            id = "evt_loretto_sundowner",
-            clubId = "club_loretto",
-            title = "Sundowner am Ostufer",
-            description = "Deep House zum Sonnenuntergang, Aperitif-Aktion bis 20:00 Uhr.",
-            startTime = nowMs + 2L * DAY_MS + 8L * HOUR_MS,
-            endTime = nowMs + 2L * DAY_MS + 14L * HOUR_MS,
-            price = "Eintritt frei",
-            time = "18:00 - 00:00",
-            searchKeywords = "Sundowner Deep House Strandbar Sommer",
-            capacityLimit = 600,
-            category = "House"
-        ),
-        EventEntity(
-            id = "evt_scotch_charts",
-            clubId = "club_scotch",
-            title = "Studentennacht",
-            description = "Charts und Partyklassiker, ermäßigter Eintritt mit Studierendenausweis.",
-            startTime = nowMs + 3L * DAY_MS + 5L * HOUR_MS,
-            endTime = nowMs + 3L * DAY_MS + 12L * HOUR_MS,
-            price = "8 EUR",
+            price = "10 EUR",
             time = "22:00 - 05:00",
-            searchKeywords = "Studenten Charts Party Uni Klagenfurt",
-            capacityLimit = 500,
+            searchKeywords = "Teatro Charts Clubbing House Party",
+            capacityLimit = 450,
             category = "Charts"
         ),
         EventEntity(
-            id = "evt_pumpe_slam",
-            clubId = "club_pumpe",
-            title = "Poetry Slam Kärnten",
-            description = "Offene Bühne mit Publikumsjury, im Anschluss Bar im Foyer.",
-            startTime = nowMs + 4L * DAY_MS + 3L * HOUR_MS,
+            id = "evt_stereo_live",
+            clubId = "club_stereo",
+            title = "Stereo Indie & Alternative Session",
+            description = "Live Band Auftritte und anschließendes DJ-Set bis 04:00 Uhr.",
+            startTime = nowMs + 2L * DAY_MS + 3L * HOUR_MS,
+            endTime = nowMs + 2L * DAY_MS + 9L * HOUR_MS,
+            price = "12 EUR",
+            time = "21:00 - 04:00",
+            searchKeywords = "Stereo Live Konzert Alternative Indie Rock",
+            capacityLimit = 350,
+            category = "Live"
+        ),
+        EventEntity(
+            id = "evt_gig_afterwork",
+            clubId = "club_gig",
+            title = "GIG Afterwork Lounge & Drinks",
+            description = "Entspannte Drinks und Lounge-Musik in der Theatergasse.",
+            startTime = nowMs + 3L * DAY_MS + 2L * HOUR_MS,
+            endTime = nowMs + 3L * DAY_MS + 7L * HOUR_MS,
+            price = "Eintritt frei",
+            time = "18:00 - 01:00",
+            searchKeywords = "GIG Bar Afterwork Drinks Cocktails",
+            capacityLimit = 150,
+            category = "Bar"
+        ),
+        EventEntity(
+            id = "evt_speki_social",
+            clubId = "club_speki",
+            title = "Speki Weekend Warm-Up",
+            description = "Der Szene-Treffpunkt für den Start ins Klagenfurter Nachtleben.",
+            startTime = nowMs + 4L * DAY_MS + 2L * HOUR_MS,
             endTime = nowMs + 4L * DAY_MS + 8L * HOUR_MS,
-            price = "9 EUR",
-            time = "19:00 - 00:00",
-            searchKeywords = "Poetry Slam Kultur Buehne Lesung",
-            capacityLimit = 200,
-            category = "Kultur"
+            price = "Eintritt frei",
+            time = "19:00 - 02:00",
+            searchKeywords = "Speki Bar Szene Drinks Weekend",
+            capacityLimit = 100,
+            category = "Bar"
         )
     )
 
     /** Liefert Club-Aktionen, die im Event-Info-Block angezeigt werden. */
     fun clubOffers(nowMs: Long = System.currentTimeMillis()): List<ClubOfferEntity> = listOf(
         ClubOfferEntity(
-            id = "offer_volksgarten_early",
-            clubId = "club_volksgarten",
-            title = "Early Bird bis 23:00",
-            description = "Reduzierter Eintritt für alle Gäste vor 23:00 Uhr.",
+            id = "offer_eventstage_early",
+            clubId = "club_eventstage",
+            title = "Early Bird Eintritt bis 23:00",
+            description = "Ermäßigter Eintritt für alle Gäste vor 23:00 Uhr.",
             offerType = "EINTRITT",
             discountPercentage = 30,
             validUntil = nowMs + 7L * DAY_MS,
             isExclusive = true
         ),
         ClubOfferEntity(
-            id = "offer_loretto_aperitif",
-            clubId = "club_loretto",
-            title = "Aperitif zum halben Preis",
-            description = "Gilt auf alle Aperitifs von 18:00 bis 20:00 Uhr.",
+            id = "offer_teatro_cocktail",
+            clubId = "club_teatro",
+            title = "Welcome Drink Special",
+            description = "Welcome Drink inklusive bei Vorlage der KLIQ App.",
             offerType = "GETRAENK",
             discountPercentage = 50,
             validUntil = nowMs + 14L * DAY_MS
         ),
         ClubOfferEntity(
-            id = "offer_augustin_beer",
-            clubId = "club_augustin",
-            title = "Craft-Beer-Verkostung",
-            description = "Drei regionale Sorten im Probierbrett zum Aktionspreis.",
+            id = "offer_gig_drinks",
+            clubId = "club_gig",
+            title = "2for1 Afterwork Cocktail",
+            description = "Zwei Cocktails zum Preis von einem von 18:00 bis 20:00 Uhr.",
             offerType = "GETRAENK",
-            discountCode = "KLIQ-BEER",
-            discountPercentage = 20,
+            discountCode = "KLIQ-GIG",
+            discountPercentage = 50,
             validUntil = nowMs + 21L * DAY_MS
         )
     )
@@ -664,9 +535,9 @@ object KlagenfurtSeedData {
             id = "post_kf_1",
             authorUserId = "usr_lena",
             authorName = "Lena P.",
-            contentText = "Sonnenuntergang an der Strandbar Loretto. Besser wird der Abend nicht mehr.",
-            clubId = "club_loretto",
-            clubName = "Strandbar Loretto",
+            contentText = "Entspannter Nachmittag und Drinks im GIG. Besser wird der Abend nicht mehr.",
+            clubId = "club_gig",
+            clubName = "GIG Bar & Cafe",
             createdAtMs = nowMs - 25L * MINUTE_MS,
             likeCount = 48,
             commentCount = 2
@@ -675,9 +546,9 @@ object KlagenfurtSeedData {
             id = "post_kf_2",
             authorUserId = "usr_david",
             authorName = "David M.",
-            contentText = "Floor 2 im Volksgarten war heute ein Statement. Wer war dabei?",
-            clubId = "club_volksgarten",
-            clubName = "Volksgarten Klagenfurt",
+            contentText = "Grand Opening in der Eventstage Klagenfurt war ein echtes Statement. Wer war dabei?",
+            clubId = "club_eventstage",
+            clubName = "Eventstage Klagenfurt",
             createdAtMs = nowMs - 2L * HOUR_MS,
             likeCount = 132,
             commentCount = 1
@@ -686,9 +557,9 @@ object KlagenfurtSeedData {
             id = "post_kf_3",
             authorUserId = "usr_tobias",
             authorName = "Tobias R.",
-            contentText = "Vier Bands, ein Abend, kein einziger Leerlauf. Bollwerk bleibt Pflichtprogramm.",
-            clubId = "club_bollwerk",
-            clubName = "Bollwerk",
+            contentText = "Live Session im Stereo Club war genial. Klagenfurt hat wieder richtig gute Clubkultur.",
+            clubId = "club_stereo",
+            clubName = "Stereo Club",
             createdAtMs = nowMs - 5L * HOUR_MS,
             likeCount = 61,
             commentCount = 0
@@ -697,9 +568,9 @@ object KlagenfurtSeedData {
             id = "post_kf_4",
             authorUserId = "usr_sarah",
             authorName = "Sarah H.",
-            contentText = "Neuer Cocktail in der Duchamp Bar. Absolute Empfehlung für alle Gin-Fans.",
-            clubId = "club_duchamp",
-            clubName = "Duchamp Bar",
+            contentText = "Samstagabend im Teatro Club! Tolle Musik und mega Stimmung.",
+            clubId = "club_teatro",
+            clubName = "Teatro Club",
             createdAtMs = nowMs - 9L * HOUR_MS,
             likeCount = 37,
             commentCount = 1
@@ -708,9 +579,9 @@ object KlagenfurtSeedData {
             id = "post_kf_5",
             authorUserId = "usr_nina",
             authorName = "Nina S.",
-            contentText = "Poetry Slam im Kulturhaus Pumpe war überraschend gut. Nächsten Monat wieder.",
-            clubId = "club_pumpe",
-            clubName = "Kulturhaus Pumpe",
+            contentText = "Gemütlicher Szene-Treff im Speki. Perfekter Start ins Wochenende.",
+            clubId = "club_speki",
+            clubName = "Speki",
             createdAtMs = nowMs - 1L * DAY_MS,
             likeCount = 24,
             commentCount = 0
@@ -732,7 +603,7 @@ object KlagenfurtSeedData {
             postId = "post_kf_1",
             authorUserId = "usr_david",
             authorName = "David M.",
-            text = "Ostufer bleibt ungeschlagen.",
+            text = "Theatergasse bleibt top.",
             createdAtMs = nowMs - 15L * MINUTE_MS
         ),
         FeedCommentEntity(
@@ -748,7 +619,7 @@ object KlagenfurtSeedData {
             postId = "post_kf_4",
             authorUserId = "usr_lena",
             authorName = "Lena P.",
-            text = "Wie heißt der Drink genau?",
+            text = "Teatro ist immer eine gute Wahl!",
             createdAtMs = nowMs - 8L * HOUR_MS
         )
     )
@@ -759,16 +630,16 @@ object KlagenfurtSeedData {
             id = "story_kf_1",
             authorUserId = "usr_lena",
             authorName = "Lena",
-            headline = "Sundowner am Ostufer",
-            clubName = "Strandbar Loretto",
+            headline = "Afterwork Drinks",
+            clubName = "GIG Bar & Cafe",
             createdAtMs = nowMs - 18L * MINUTE_MS
         ),
         StoryEntity(
             id = "story_kf_2",
             authorUserId = "usr_david",
             authorName = "David",
-            headline = "Floor 2 ist offen",
-            clubName = "Volksgarten Klagenfurt",
+            headline = "Eventstage ist voll",
+            clubName = "Eventstage Klagenfurt",
             createdAtMs = nowMs - 45L * MINUTE_MS
         ),
         StoryEntity(
@@ -776,31 +647,31 @@ object KlagenfurtSeedData {
             authorUserId = "usr_tobias",
             authorName = "Tobias",
             headline = "Soundcheck läuft",
-            clubName = "Bollwerk",
+            clubName = "Stereo Club",
             createdAtMs = nowMs - 90L * MINUTE_MS
         ),
         StoryEntity(
             id = "story_kf_4",
             authorUserId = "usr_sarah",
             authorName = "Sarah",
-            headline = "Gin Tasting",
-            clubName = "Duchamp Bar",
+            headline = "Party Night",
+            clubName = "Teatro Club",
             createdAtMs = nowMs - 3L * HOUR_MS
         ),
         StoryEntity(
             id = "story_kf_5",
             authorUserId = "usr_nina",
             authorName = "Nina",
-            headline = "Altstadt-Runde",
-            clubName = "Cafe Bar Kamot",
+            headline = "Warm-Up Runde",
+            clubName = "Speki",
             createdAtMs = nowMs - 6L * HOUR_MS
         ),
         StoryEntity(
             id = "story_kf_6",
             authorUserId = CURRENT_USER_ID,
             authorName = "Du",
-            headline = "Letztes Wochenende",
-            clubName = "Molly Malone",
+            headline = "Klagenfurt Nightlife",
+            clubName = "GIG Bar & Cafe",
             createdAtMs = nowMs - 2L * DAY_MS,
             isSeen = true
         )

@@ -113,10 +113,12 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
 
-    // Location Services (GPS) & Maps SDK
-    implementation("com.google.android.gms:play-services-location:21.1.0")
+    // Location Services (GPS) & Google Maps SDK
+    implementation("com.google.android.gms:play-services-location:21.2.0")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.maps.android:maps-compose:4.3.3")
+    implementation("com.google.maps.android:maps-compose-utils:4.3.3")
+    implementation("com.google.maps.android:maps-compose-widgets:4.3.3")
 
     // Image Loading & QR Generation
     implementation("io.coil-kt:coil-compose:2.5.0")
