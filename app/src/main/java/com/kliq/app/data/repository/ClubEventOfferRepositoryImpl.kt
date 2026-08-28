@@ -43,75 +43,7 @@ class ClubEventOfferRepositoryImpl @Inject constructor(
     }
 
     override suspend fun refreshClubEventsAndOffers(clubId: String) = withContext(Dispatchers.IO) {
-        val now = System.currentTimeMillis()
-        val mockEvents = listOf(
-            ClubEvent(
-                id = "evt_${clubId}_1",
-                clubId = clubId,
-                title = "Midnight Techno Rave & Visuals",
-                description = "Dark Beats, Immersive Light-Show und Headline DJ Sets.",
-                category = EventCategory.PARTY,
-                startTime = now + 86400000L,
-                endTime = now + 129600000L,
-                price = "20,00 €",
-                imageUrl = "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7",
-                isVipEvent = true
-            ),
-            ClubEvent(
-                id = "evt_${clubId}_2",
-                clubId = clubId,
-                title = "Deep House Sunset Session",
-                description = "Melodischer House und entspannte Atmosphere im Open-Air-Bereich.",
-                category = EventCategory.DJ_SET,
-                startTime = now + 172800000L,
-                endTime = now + 201600000L,
-                price = "15,00 €",
-                imageUrl = "https://images.unsplash.com/photo-1470225620780-dba8ba36b745",
-                isVipEvent = false
-            )
-        )
-
-        val mockOffers = listOf(
-            ClubOffer(
-                id = "off_${clubId}_1",
-                clubId = clubId,
-                title = "2-for-1 Cocktail Special",
-                description = "Erhalte zwei Signature Cocktails zum Preis von einem bis 01:00 Uhr.",
-                offerType = OfferType.DRINK_SPECIAL,
-                discountCode = "KLIQ2FOR1",
-                discountPercentage = 50,
-                validUntil = now + 259200000L,
-                termsAndConditions = "Gilt an der Hauptbar. Nur einmal pro Gast einlösbar.",
-                isExclusive = false
-            ),
-            ClubOffer(
-                id = "off_${clubId}_2",
-                clubId = clubId,
-                title = "VIP Fast-Track & Welcome Shot",
-                description = "Bevorzugter Einlass ohne Anstehen inklusive Premium Welcome Shot.",
-                offerType = OfferType.VIP_ACTION,
-                discountCode = "KLIQVIPGUEST",
-                discountPercentage = 25,
-                validUntil = now + 518400000L,
-                termsAndConditions = "Gültig für Kliq-VIP Member am Gästeeingang.",
-                isExclusive = true
-            ),
-            ClubOffer(
-                id = "off_${clubId}_3",
-                clubId = clubId,
-                title = "5€ Eintrittsrabatt vor Mitternacht",
-                description = "Zeige deinen Kliq QR-Code an der Kasse für ermäßigten Eintritt.",
-                offerType = OfferType.ENTRY_DISCOUNT,
-                discountCode = "EARLYBIRD5",
-                discountPercentage = 20,
-                validUntil = now + 172800000L,
-                termsAndConditions = "Nur gültig vor 00:00 Uhr.",
-                isExclusive = false
-            )
-        )
-
-        eventDao.insertEvents(mockEvents.map { it.toEntity() })
-        clubOfferDao.insertOffers(mockOffers.map { it.toEntity() })
+        // Keine erfundenen Dummy-Events oder Gutscheincodes einfügen
     }
 
     private fun ClubOfferEntity.toDomain(): ClubOffer {

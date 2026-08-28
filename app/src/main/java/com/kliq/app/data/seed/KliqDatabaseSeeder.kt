@@ -60,15 +60,8 @@ class KliqDatabaseSeeder @Inject constructor(
     private suspend fun seedVenues() {
         val nowMs = System.currentTimeMillis()
         val clubs = KlagenfurtSeedData.clubs(nowMs)
-        val existing = clubDao.getAllClubs().first()
-        if (existing.isEmpty() || existing.any { it.imageUrl.isBlank() || it.flameCount == 0 }) {
-            clubDao.insertClubs(clubs)
-        }
-        if (existing.isEmpty()) {
-            clubDao.insertEvents(KlagenfurtSeedData.events(nowMs))
-            clubOfferDao.insertOffers(KlagenfurtSeedData.clubOffers(nowMs))
-        }
-        Log.d(TAG, "Venues, Events und Aktionen initialisiert")
+        clubDao.insertClubs(clubs)
+        Log.d(TAG, "Venues initialisiert")
     }
 
     private suspend fun seedChats() {

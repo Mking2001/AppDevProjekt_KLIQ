@@ -81,15 +81,15 @@ object KlagenfurtSeedData {
                 "Samstag" to "22:00 - 05:00",
                 "Sonntag" to "Geschlossen"
             ),
-            capacityPercent = 82,
-            liveVisitors = 380,
-            malePercentage = 52,
-            femalePercentage = 48,
+            capacityPercent = 0,
+            liveVisitors = 0,
+            malePercentage = 50,
+            femalePercentage = 50,
             searchTags = "Eventstage Club Disco Techno Charts Großveranstaltung Klagenfurt",
             websiteUrl = "https://www.eventstage-klagenfurt.at",
             phoneNumber = "+43 463 000001",
             isPromoted = true,
-            flameCount = 48,
+            flameCount = 0,
             nowMs = nowMs
         ),
         buildClub(
@@ -111,15 +111,15 @@ object KlagenfurtSeedData {
                 "Samstag" to "22:00 - 05:00",
                 "Sonntag" to "Geschlossen"
             ),
-            capacityPercent = 74,
-            liveVisitors = 210,
-            malePercentage = 48,
-            femalePercentage = 52,
+            capacityPercent = 0,
+            liveVisitors = 0,
+            malePercentage = 50,
+            femalePercentage = 50,
             searchTags = "Teatro Club Nightlife Charts House Innenstadt",
             websiteUrl = "https://www.teatro-club.at",
             phoneNumber = "+43 463 000002",
             isPromoted = true,
-            flameCount = 35,
+            flameCount = 0,
             nowMs = nowMs
         ),
         buildClub(
@@ -141,13 +141,13 @@ object KlagenfurtSeedData {
                 "Samstag" to "18:00 - 04:00",
                 "Sonntag" to "Geschlossen"
             ),
-            capacityPercent = 58,
-            liveVisitors = 65,
+            capacityPercent = 0,
+            liveVisitors = 0,
             malePercentage = 50,
             femalePercentage = 50,
             searchTags = "Speki Speckbacher Bar Cocktails Szene Treffpunkt",
             phoneNumber = "+43 463 000003",
-            flameCount = 28,
+            flameCount = 0,
             nowMs = nowMs
         ),
         buildClub(
@@ -169,13 +169,13 @@ object KlagenfurtSeedData {
                 "Samstag" to "21:00 - 04:00",
                 "Sonntag" to "Geschlossen"
             ),
-            capacityPercent = 67,
-            liveVisitors = 160,
-            malePercentage = 54,
-            femalePercentage = 46,
+            capacityPercent = 0,
+            liveVisitors = 0,
+            malePercentage = 50,
+            femalePercentage = 50,
             searchTags = "Stereo Club Live Alternative Indie Rock DJ Sets",
             phoneNumber = "+43 463 000004",
-            flameCount = 22,
+            flameCount = 0,
             nowMs = nowMs
         ),
         buildClub(
@@ -197,15 +197,15 @@ object KlagenfurtSeedData {
                 "Samstag" to "16:00 - 03:00",
                 "Sonntag" to "17:00 - 00:00"
             ),
-            capacityPercent = 53,
-            liveVisitors = 85,
-            malePercentage = 47,
-            femalePercentage = 53,
+            capacityPercent = 0,
+            liveVisitors = 0,
+            malePercentage = 50,
+            femalePercentage = 50,
             searchTags = "GIG Bar Cafe Drinks Cocktails Theatergasse Afterwork",
             websiteUrl = "https://www.gig-klagenfurt.at",
             phoneNumber = "+43 463 000005",
             isPromoted = true,
-            flameCount = 19,
+            flameCount = 0,
             nowMs = nowMs
         )
     )
@@ -215,110 +215,14 @@ object KlagenfurtSeedData {
     // =====================================================================
 
     /**
-     * Liefert die Event-Agenda der kommenden Tage.
-     * Startzeiten sind relativ zur übergebenen Referenzzeit gesetzt,
-     * damit die Agenda unabhängig vom Installationsdatum in der Zukunft liegt.
+     * Liefert die Event-Agenda (standardmäßig leer, keine erfundenen Dummys).
      */
-    fun events(nowMs: Long = System.currentTimeMillis()): List<EventEntity> = listOf(
-        EventEntity(
-            id = "evt_eventstage_weekend",
-            clubId = "club_eventstage",
-            title = "Weekend Grand Opening",
-            description = "Großes Clubbing auf 2 Floors mit internationalen Resident-DJs und Lasershow.",
-            startTime = nowMs + 6L * HOUR_MS,
-            endTime = nowMs + 13L * HOUR_MS,
-            price = "15 EUR",
-            time = "22:00 - 05:00",
-            searchKeywords = "Eventstage Techno House Clubbing Klagenfurt",
-            capacityLimit = 1000,
-            category = "Techno"
-        ),
-        EventEntity(
-            id = "evt_teatro_night",
-            clubId = "club_teatro",
-            title = "Teatro Saturday Clubbing",
-            description = "Charts, House & RnB Party im Herzen von Klagenfurt.",
-            startTime = nowMs + 1L * DAY_MS + 4L * HOUR_MS,
-            endTime = nowMs + 1L * DAY_MS + 10L * HOUR_MS,
-            price = "10 EUR",
-            time = "22:00 - 05:00",
-            searchKeywords = "Teatro Charts Clubbing House Party",
-            capacityLimit = 450,
-            category = "Charts"
-        ),
-        EventEntity(
-            id = "evt_stereo_live",
-            clubId = "club_stereo",
-            title = "Stereo Indie & Alternative Session",
-            description = "Live Band Auftritte und anschließendes DJ-Set bis 04:00 Uhr.",
-            startTime = nowMs + 2L * DAY_MS + 3L * HOUR_MS,
-            endTime = nowMs + 2L * DAY_MS + 9L * HOUR_MS,
-            price = "12 EUR",
-            time = "21:00 - 04:00",
-            searchKeywords = "Stereo Live Konzert Alternative Indie Rock",
-            capacityLimit = 350,
-            category = "Live"
-        ),
-        EventEntity(
-            id = "evt_gig_afterwork",
-            clubId = "club_gig",
-            title = "GIG Afterwork Lounge & Drinks",
-            description = "Entspannte Drinks und Lounge-Musik in der Theatergasse.",
-            startTime = nowMs + 3L * DAY_MS + 2L * HOUR_MS,
-            endTime = nowMs + 3L * DAY_MS + 7L * HOUR_MS,
-            price = "Eintritt frei",
-            time = "18:00 - 01:00",
-            searchKeywords = "GIG Bar Afterwork Drinks Cocktails",
-            capacityLimit = 150,
-            category = "Bar"
-        ),
-        EventEntity(
-            id = "evt_speki_social",
-            clubId = "club_speki",
-            title = "Speki Weekend Warm-Up",
-            description = "Der Szene-Treffpunkt für den Start ins Klagenfurter Nachtleben.",
-            startTime = nowMs + 4L * DAY_MS + 2L * HOUR_MS,
-            endTime = nowMs + 4L * DAY_MS + 8L * HOUR_MS,
-            price = "Eintritt frei",
-            time = "19:00 - 02:00",
-            searchKeywords = "Speki Bar Szene Drinks Weekend",
-            capacityLimit = 100,
-            category = "Bar"
-        )
-    )
+    fun events(nowMs: Long = System.currentTimeMillis()): List<EventEntity> = emptyList()
 
-    /** Liefert Club-Aktionen, die im Event-Info-Block angezeigt werden. */
-    fun clubOffers(nowMs: Long = System.currentTimeMillis()): List<ClubOfferEntity> = listOf(
-        ClubOfferEntity(
-            id = "offer_eventstage_early",
-            clubId = "club_eventstage",
-            title = "Early Bird Eintritt bis 23:00",
-            description = "Ermäßigter Eintritt für alle Gäste vor 23:00 Uhr.",
-            offerType = "EINTRITT",
-            discountPercentage = 30,
-            validUntil = nowMs + 7L * DAY_MS,
-            isExclusive = true
-        ),
-        ClubOfferEntity(
-            id = "offer_teatro_cocktail",
-            clubId = "club_teatro",
-            title = "Welcome Drink Special",
-            description = "Welcome Drink inklusive bei Vorlage der KLIQ App.",
-            offerType = "GETRAENK",
-            discountPercentage = 50,
-            validUntil = nowMs + 14L * DAY_MS
-        ),
-        ClubOfferEntity(
-            id = "offer_gig_drinks",
-            clubId = "club_gig",
-            title = "2for1 Afterwork Cocktail",
-            description = "Zwei Cocktails zum Preis von einem von 18:00 bis 20:00 Uhr.",
-            offerType = "GETRAENK",
-            discountCode = "KLIQ-GIG",
-            discountPercentage = 50,
-            validUntil = nowMs + 21L * DAY_MS
-        )
-    )
+    /**
+     * Liefert Club-Aktionen (standardmäßig leer, keine erfundenen Gutscheincodes).
+     */
+    fun clubOffers(nowMs: Long = System.currentTimeMillis()): List<ClubOfferEntity> = emptyList()
 
     // =====================================================================
     // Nutzerprofile

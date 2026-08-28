@@ -158,11 +158,13 @@ fun ClubDetailScreen(
 
                     LiveVisitorStatsCard(state = analyticsState)
 
-                    ClubEventOfferInfoBlock(
-                        state = eventOfferState,
-                        onOfferSelected = { eventOfferViewModel.selectOffer(it) },
-                        onEventSelected = { eventOfferViewModel.selectEvent(it) }
-                    )
+                    if (eventOfferState.events.isNotEmpty() || eventOfferState.offers.isNotEmpty()) {
+                        ClubEventOfferInfoBlock(
+                            state = eventOfferState,
+                            onOfferSelected = { eventOfferViewModel.selectOffer(it) },
+                            onEventSelected = { eventOfferViewModel.selectEvent(it) }
+                        )
+                    }
 
                     club.activeEvent?.let { event ->
                         EventSection(

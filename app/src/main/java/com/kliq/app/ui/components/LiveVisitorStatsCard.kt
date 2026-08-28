@@ -111,19 +111,23 @@ fun LiveVisitorStatsCard(
                     Icon(
                         imageVector = Icons.Default.Speed,
                         contentDescription = null,
-                        tint = PurplePrimary,
+                        tint = if (state.isLive) PurplePrimary else Color.Gray,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Live-Auslastung",
+                        text = if (state.isLive) "Live-Auslastung" else "Auslastung",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
-                LiveBadgeIndicator(pulseAlpha = livePulseAlpha)
+                if (state.isLive) {
+                    LiveBadgeIndicator(pulseAlpha = livePulseAlpha)
+                } else {
+                    InactiveBadgeIndicator()
+                }
             }
 
             // Occupancy Highlight Block
@@ -309,6 +313,33 @@ private fun LiveBadgeIndicator(pulseAlpha: Float) {
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Black,
                 color = Color(0xFFEF4444)
+            )
+        }
+    }
+}
+
+@Composable
+private fun InactiveBadgeIndicator() {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = Color.Gray.copy(alpha = 0.15f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.Gray.copy(alpha = 0.4f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(Color.Gray, shape = CircleShape)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "GESCHLOSSEN",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
             )
         }
     }
