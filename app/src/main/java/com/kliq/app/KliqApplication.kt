@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
@@ -100,16 +101,16 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
             analytics.logEvent(com.google.firebase.analytics.FirebaseAnalytics.Event.APP_OPEN, bundle)
 
             // Anonyme Firebase Auth Anmeldung für Data Connect Auth Context
+            // WICHTIG: .await() stellt sicher, dass Auth FERTIG ist bevor irgendein
+            // Data Connect Aufruf passieren kann. Ohne Auth-Token lehnt SQL Connect
+            // alle Mutations/Queries ab.
             try {
-                com.google.firebase.auth.FirebaseAuth.getInstance().signInAnonymously().addOnCompleteListener { authTask ->
-                    if (authTask.isSuccessful) {
-                        Timber.d("Kliq Firebase Auth Anonymous User ID: %s", authTask.result?.user?.uid)
-                    } else {
-                        Timber.w(authTask.exception, "Firebase Auth Anonymous sign-in failed")
-                    }
-                }
+                val authResult = com.google.firebase.auth.FirebaseAuth.getInstance()
+                    .signInAnonymously()
+                    .await()
+                Timber.i("Firebase Auth Anonymous sign-in SUCCESS — UID: %s", authResult.user?.uid)
             } catch (e: Exception) {
-                Timber.w(e, "Fehler bei Firebase Auth Initialisierung")
+                Timber.e(e, "CRITICAL: Firebase Auth Anonymous sign-in FAILED — SQL Connect will not work!")
             }
 
             // Globales Topic "all" für Sofort-Pushs abonnieren
