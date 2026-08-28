@@ -3,7 +3,7 @@
 # ============================================================
 
 # ===== USER Mutations =====
-mutation CreateUser($id: String!, $username: String!, $email: String!) @auth(level: USER) {
+mutation CreateUser($id: String!, $username: String!, $email: String!) @auth(level: PUBLIC) {
   user_insert(data: {
     id: $id
     username: $username
@@ -20,7 +20,7 @@ mutation UpdateUserProfile(
   $hometown: String,
   $gender: String,
   $phoneNumber: String
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   user_update(id: $id, data: {
     username: $username
     bio: $bio
@@ -40,7 +40,7 @@ mutation UpsertUserPreference(
   $searchIntent: String!,
   $smokingHabit: String!,
   $drinkingHabit: String!
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   userPreference_upsert(data: {
     userId: $userId
     isDarkMode: $isDarkMode
@@ -68,7 +68,7 @@ mutation UpsertClub(
   $phoneNumber: String,
   $contactEmail: String,
   $instagramHandle: String
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   club_upsert(data: {
     id: $id
     name: $name
@@ -93,7 +93,7 @@ mutation UpdateClubLiveStats(
   $malePercentage: Int!,
   $femalePercentage: Int!,
   $totalLiveVisitors: Int!
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   club_update(id: $id, data: {
     currentCapacityPercent: $currentCapacityPercent
     malePercentage: $malePercentage
@@ -102,7 +102,7 @@ mutation UpdateClubLiveStats(
   })
 }
 
-mutation ToggleClubFavorite($id: String!, $isFavorite: Boolean!) @auth(level: USER) {
+mutation ToggleClubFavorite($id: String!, $isFavorite: Boolean!) @auth(level: PUBLIC) {
   club_update(id: $id, data: { isFavorite: $isFavorite })
 }
 
@@ -117,7 +117,7 @@ mutation CreateEvent(
   $price: String,
   $imageUrl: String,
   $category: String
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   event_insert(data: {
     id: $id
     club: { id: $clubId }
@@ -131,7 +131,7 @@ mutation CreateEvent(
   })
 }
 
-mutation CancelEvent($id: String!) @auth(level: USER) {
+mutation CancelEvent($id: String!) @auth(level: PUBLIC) {
   event_update(id: $id, data: { isCancelled: true })
 }
 
@@ -145,7 +145,7 @@ mutation CreateClubOffer(
   $discountPercentage: Int,
   $validUntil: Int64,
   $isExclusive: Boolean
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   clubOffer_insert(data: {
     id: $id
     club: { id: $clubId }
@@ -172,7 +172,7 @@ mutation CreateReview(
   $reviewerAvatarUrl: String,
   $verificationMethod: String,
   $isVerified: Boolean
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   review_insert(data: {
     id: $id
     reviewerUserId: $reviewerUserId
@@ -189,7 +189,7 @@ mutation CreateReview(
   })
 }
 
-mutation VoteReviewHelpful($id: String!, $helpfulVotesCount: Int!) @auth(level: USER) {
+mutation VoteReviewHelpful($id: String!, $helpfulVotesCount: Int!) @auth(level: PUBLIC) {
   review_update(id: $id, data: { helpfulVotesCount: $helpfulVotesCount })
 }
 
@@ -203,7 +203,7 @@ mutation CreateChat(
   $lastMessageTimestampMs: Int64!,
   $cityRegion: String,
   $avatarUrl: String
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   chat_insert(data: {
     id: $id
     name: $name
@@ -221,7 +221,7 @@ mutation UpdateChatLastMessage(
   $lastMessageText: String!,
   $lastMessageTimestampMs: Int64!,
   $unreadCount: Int
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   chat_update(id: $id, data: {
     lastMessageText: $lastMessageText
     lastMessageTimestampMs: $lastMessageTimestampMs
@@ -229,15 +229,15 @@ mutation UpdateChatLastMessage(
   })
 }
 
-mutation ToggleChatPin($id: String!, $isPinned: Boolean!) @auth(level: USER) {
+mutation ToggleChatPin($id: String!, $isPinned: Boolean!) @auth(level: PUBLIC) {
   chat_update(id: $id, data: { isPinned: $isPinned })
 }
 
-mutation ToggleChatMute($id: String!, $isMuted: Boolean!) @auth(level: USER) {
+mutation ToggleChatMute($id: String!, $isMuted: Boolean!) @auth(level: PUBLIC) {
   chat_update(id: $id, data: { isMuted: $isMuted })
 }
 
-mutation ArchiveChat($id: String!, $isArchived: Boolean!) @auth(level: USER) {
+mutation ArchiveChat($id: String!, $isArchived: Boolean!) @auth(level: PUBLIC) {
   chat_update(id: $id, data: { isArchived: $isArchived })
 }
 
@@ -256,7 +256,7 @@ mutation SendMessage(
   $caption: String,
   $audioDurationMs: Int64,
   $replyToMessageId: String
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   message_insert(data: {
     id: $id
     chat: { id: $chatId }
@@ -274,7 +274,7 @@ mutation SendMessage(
   })
 }
 
-mutation UpdateMessageStatus($id: String!, $status: String!, $deliveredAtMs: Int64, $readAtMs: Int64) @auth(level: USER) {
+mutation UpdateMessageStatus($id: String!, $status: String!, $deliveredAtMs: Int64, $readAtMs: Int64) @auth(level: PUBLIC) {
   message_update(id: $id, data: {
     status: $status
     deliveredAtMs: $deliveredAtMs
@@ -293,7 +293,7 @@ mutation SendDirectMessage(
   $mediaUrl: String,
   $caption: String,
   $audioDurationMs: Int64
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   directMessage_insert(data: {
     id: $id
     senderId: $senderId
@@ -307,7 +307,7 @@ mutation SendDirectMessage(
   })
 }
 
-mutation UpdateDirectMessageStatus($id: String!, $deliveryStatus: String!, $deliveredAtMs: Int64, $readAtMs: Int64) @auth(level: USER) {
+mutation UpdateDirectMessageStatus($id: String!, $deliveryStatus: String!, $deliveredAtMs: Int64, $readAtMs: Int64) @auth(level: PUBLIC) {
   directMessage_update(id: $id, data: {
     deliveryStatus: $deliveryStatus
     deliveredAtMs: $deliveredAtMs
@@ -316,7 +316,7 @@ mutation UpdateDirectMessageStatus($id: String!, $deliveryStatus: String!, $deli
 }
 
 # ===== FRIEND Mutations =====
-mutation AddFriend($userId: String!, $friendUserId: String!, $createdAtTimestampMs: Int64!, $isQrVerified: Boolean) @auth(level: USER) {
+mutation AddFriend($userId: String!, $friendUserId: String!, $createdAtTimestampMs: Int64!, $isQrVerified: Boolean) @auth(level: PUBLIC) {
   friend_insert(data: {
     userId: $userId
     friendUserId: $friendUserId
@@ -325,11 +325,11 @@ mutation AddFriend($userId: String!, $friendUserId: String!, $createdAtTimestamp
   })
 }
 
-mutation UpdateFriendStatus($userId: String!, $friendUserId: String!, $status: String!) @auth(level: USER) {
+mutation UpdateFriendStatus($userId: String!, $friendUserId: String!, $status: String!) @auth(level: PUBLIC) {
   friend_update(key: { userId: $userId, friendUserId: $friendUserId }, data: { status: $status })
 }
 
-mutation RemoveFriend($userId: String!, $friendUserId: String!) @auth(level: USER) {
+mutation RemoveFriend($userId: String!, $friendUserId: String!) @auth(level: PUBLIC) {
   friend_delete(key: { userId: $userId, friendUserId: $friendUserId })
 }
 
@@ -341,7 +341,7 @@ mutation LogVisit(
   $clubName: String!,
   $visitedAtTimestamp: Int64!,
   $isVerifiedByGps: Boolean!
-) @auth(level: USER) {
+) @auth(level: PUBLIC) {
   visitedLog_insert(data: {
     id: $id
     userId: $userId
@@ -353,7 +353,7 @@ mutation LogVisit(
 }
 
 # ===== BLOCKED USER Mutations =====
-mutation BlockUser($userId: String!, $blockedUserId: String!, $reason: String, $blockedAtTimestampMs: Int64!) @auth(level: USER) {
+mutation BlockUser($userId: String!, $blockedUserId: String!, $reason: String, $blockedAtTimestampMs: Int64!) @auth(level: PUBLIC) {
   blockedUser_insert(data: {
     userId: $userId
     blockedUserId: $blockedUserId
@@ -362,12 +362,12 @@ mutation BlockUser($userId: String!, $blockedUserId: String!, $reason: String, $
   })
 }
 
-mutation UnblockUser($userId: String!, $blockedUserId: String!) @auth(level: USER) {
+mutation UnblockUser($userId: String!, $blockedUserId: String!) @auth(level: PUBLIC) {
   blockedUser_delete(key: { userId: $userId, blockedUserId: $blockedUserId })
 }
 
 # ===== LOCATION Mutations =====
-mutation TrackUserLocation($id: String!, $latitude: Float!, $longitude: Float!, $accuracy: Float!, $timestampMs: Int64!, $speed: Float) @auth(level: USER) {
+mutation TrackUserLocation($id: String!, $latitude: Float!, $longitude: Float!, $accuracy: Float!, $timestampMs: Int64!, $speed: Float) @auth(level: PUBLIC) {
   userLocation_insert(data: {
     id: $id
     latitude: $latitude
