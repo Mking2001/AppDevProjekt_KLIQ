@@ -1,6 +1,5 @@
 # ============================================================
-# KLIQ Datenmodell — Firebase Data Connect Schema
-# Alle 13 Room-Entities übersetzt in GraphQL
+# KLIQ Datenmodell — Firebase Data Connect Schema (PostgreSQL)
 # ============================================================
 
 # ===== USER =====
@@ -8,16 +7,30 @@ type User @table {
   id: String! @col(name: "id")
   username: String!
   email: String!
+  firstName: String
+  lastName: String
+  birthDateMs: Int64
   age: Int
+  gender: String! @default(value: "UNSPECIFIED")
   hometown: String
+  countryCode: String! @default(value: "+43")
+  phoneNumber: String
   profilePictureUrl: String
   bio: String
-  phoneNumber: String
-  isVerified: Boolean! @default(value: false)
-  gender: String! @default(value: "UNSPECIFIED")
   updatedAt: Timestamp @default(expr: "request.time")
 }
 
+# ===== USER PHOTO (Galeriebilder) =====
+type UserPhoto @table {
+  id: String! @col(name: "id")
+  user: User! @ref(fields: ["userId"], references: ["id"])
+  userId: String!
+  imageUrl: String!
+  displayOrder: Int! @default(value: 0)
+  createdAt: Timestamp @default(expr: "request.time")
+}
+
+# ===== USER PREFERENCE =====
 type UserPreference @table(key: "userId") {
   userId: String! @col(name: "user_id")
   user: User! @ref(fields: ["userId"], references: ["id"])
@@ -27,6 +40,62 @@ type UserPreference @table(key: "userId") {
   searchIntent: String! @default(value: "BOTH")
   smokingHabit: String! @default(value: "NEVER")
   drinkingHabit: String! @default(value: "NEVER")
+}
+
+# ===== FEED POST =====
+type FeedPost @table {
+  id: String! @col(name: "id")
+  author: User! @ref(fields: ["authorUserId"], references: ["id"])
+  authorUserId: String!
+  authorName: String!
+  authorAvatarUrl: String
+  contentText: String!
+  imageUrl: String
+  club: Club @ref(fields: ["clubId"], references: ["id"])
+  clubId: String
+  clubName: String
+  locationName: String
+  isEventPinned: Boolean! @default(value: false)
+  likeCount: Int! @default(value: 0)
+  commentCount: Int! @default(value: 0)
+  createdAtMs: Int64!
+  createdAt: Timestamp @default(expr: "request.time")
+}
+
+# ===== FEED COMMENT =====
+type FeedComment @table {
+  id: String! @col(name: "id")
+  post: FeedPost! @ref(fields: ["postId"], references: ["id"])
+  postId: String!
+  author: User! @ref(fields: ["authorUserId"], references: ["id"])
+  authorUserId: String!
+  authorName: String!
+  text: String!
+  createdAtMs: Int64!
+  createdAt: Timestamp @default(expr: "request.time")
+}
+
+# ===== FEED POST LIKE =====
+type FeedPostLike @table(key: ["postId", "userId"]) {
+  post: FeedPost! @ref(fields: ["postId"], references: ["id"])
+  postId: String!
+  user: User! @ref(fields: ["userId"], references: ["id"])
+  userId: String!
+  createdAtMs: Int64!
+}
+
+# ===== STORY =====
+type Story @table {
+  id: String! @col(name: "id")
+  author: User! @ref(fields: ["authorUserId"], references: ["id"])
+  authorUserId: String!
+  authorName: String!
+  avatarUrl: String
+  imageUrl: String!
+  headline: String! @default(value: "")
+  clubName: String
+  createdAtMs: Int64!
+  createdAt: Timestamp @default(expr: "request.time")
 }
 
 # ===== CLUB =====
@@ -104,8 +173,6 @@ type Review @table {
   rating: Int!
   text: String!
   timestamp: Int64!
-  verificationMethod: String! @default(value: "UNVERIFIED")
-  isVerified: Boolean! @default(value: false)
   reviewerUsername: String! @default(value: "")
   reviewerAvatarUrl: String
   helpfulVotesCount: Int! @default(value: 0)
@@ -181,7 +248,7 @@ type DirectMessage @table {
   audioDurationMs: Int64! @default(value: 0)
 }
 
-# ===== FRIEND (Social/Follow) =====
+# ===== FRIEND =====
 type Friend @table(key: ["userId", "friendUserId"]) {
   userId: String!
   friendUserId: String!
@@ -210,7 +277,7 @@ type BlockedUser @table(key: ["userId", "blockedUserId"]) {
   blockedAtTimestampMs: Int64!
 }
 
-# ===== LOCATION (GPS Tracking) =====
+# ===== LOCATION =====
 type UserLocation @table {
   id: String! @col(name: "id")
   latitude: Float!
