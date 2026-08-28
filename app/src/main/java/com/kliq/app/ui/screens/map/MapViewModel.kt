@@ -15,6 +15,7 @@ import com.kliq.app.data.generated.*
 import com.kliq.app.domain.usecase.CalculateUserDistanceUseCase
 import com.kliq.app.util.HapticFeedbackManager
 import com.kliq.app.util.UserDistanceFormatter
+import timber.log.Timber
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -236,11 +237,14 @@ class MapViewModel @Inject constructor(
                             _uiState.value.cameraPosition.latitude,
                             _uiState.value.cameraPosition.longitude
                         )
+                        Timber.i("Loaded %d live users from Firebase SQL Connect for Map and Radar", remoteUsers.size)
+                    } else {
+                        Timber.d("No users returned from Firebase SQL Connect, using fallback list")
                     }
-                } catch (ignored: Exception) {
-                    // Keep fallback users
+                } catch (e: Exception) {
+                    Timber.w(e, "Could not load users from Firebase SQL Connect, keeping fallback users")
                 }
-            }
+            } ?: Timber.d("KliqConnector is null in MapViewModel, using fallback users")
         }
     }
 
@@ -260,8 +264,9 @@ class MapViewModel @Inject constructor(
                                         accuracy = loc.accuracy.toDouble(),
                                         timestampMs = System.currentTimeMillis()
                                     )
-                                } catch (ignored: Exception) {
-                                    // Graceful fallback for offline mode
+                                    Timber.d("Tracked user location in Firebase SQL Connect: %f, %f", loc.latitude, loc.longitude)
+                                } catch (e: Exception) {
+                                    Timber.d(e, "Could not track location in Firebase SQL Connect (offline mode)")
                                 }
                             }
                         }
