@@ -34,8 +34,13 @@ class FeedRepositoryImpl @Inject constructor(
     }
 
     override fun getStories(): Flow<List<Story>> {
+        val threeHoursAgoMs = System.currentTimeMillis() - 3 * 3600 * 1000L
         return feedDao.getStories()
-            .map { entities -> entities.map { it.toDomain() } }
+            .map { entities ->
+                entities
+                    .filter { it.createdAtMs >= threeHoursAgoMs }
+                    .map { it.toDomain() }
+            }
             .flowOn(ioDispatcher)
     }
 
@@ -161,6 +166,15 @@ class FeedRepositoryImpl @Inject constructor(
 
     override suspend fun markStoryAsSeen(storyId: String) = withContext(ioDispatcher) {
         feedDao.markStoryAsSeen(storyId)
+    }
+
+    override suspend fun deleteStory(storyId: String): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            feedDao.deleteStory(storyId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun deletePost(postId: String) = withContext(ioDispatcher) {

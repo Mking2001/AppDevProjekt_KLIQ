@@ -62,6 +62,9 @@ interface FeedRepository {
     /** Markiert eine Story als gesehen. */
     suspend fun markStoryAsSeen(storyId: String)
 
+    /** Löscht eine Story aus der Datenbank. */
+    suspend fun deleteStory(storyId: String): Result<Unit> = Result.success(Unit)
+
     /** Entfernt einen Beitrag samt Kommentaren. */
     suspend fun deletePost(postId: String)
 }

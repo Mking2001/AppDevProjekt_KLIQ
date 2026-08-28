@@ -1,9 +1,14 @@
 package com.kliq.app.ui.screens.home
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.model.formatRelativeTime
+import com.kliq.app.data.repository.ChatRepository
 import com.kliq.app.data.repository.FeedRepository
+import com.kliq.app.data.repository.UserRepository
+import com.kliq.app.data.util.ImageCompressor
 import com.kliq.app.domain.CurrentUserProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -11,26 +16,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 /**
  * Immutable UI State für den Home-Screen.
- *
- * @param isLoading Ob der Feed initial geladen wird.
- * @param isRefreshing Ob ein manuelles Neuladen aktiv ist.
- * @param feedItems Beiträge des Feeds in Darstellungsform.
- * @param storyItems Storys der horizontalen Story-Leiste.
- * @param activeStory Aktuell im Vollbild geöffnete Story, null wenn geschlossen.
- * @param isComposerVisible Ob der Editor für neue Beiträge geöffnet ist.
- * @param composerText Aktueller Text im Beitrags-Editor.
- * @param isPublishing Ob ein Beitrag gerade gespeichert wird.
- * @param activeCommentPostId ID des Beitrags, dessen Kommentare angezeigt werden.
- * @param comments Kommentare des aktiven Beitrags.
- * @param commentInput Aktueller Text im Kommentarfeld.
- * @param errorMessage Fehlermeldung für die Snackbar.
- * @param infoMessage Bestätigungsmeldung für die Snackbar.
  */
 data class HomeUiState(
     val isLoading: Boolean = true,
@@ -44,10 +39,16 @@ data class HomeUiState(
     val activeStory: StoryItemUi? = null,
     val isComposerVisible: Boolean = false,
     val composerText: String = "",
+    val composerImageUri: String? = null,
+    val composerLocation: String = "",
+    val composerIsEventPinned: Boolean = false,
     val isPublishing: Boolean = false,
     val activeCommentPostId: String? = null,
     val comments: List<CommentItemUi> = emptyList(),
     val commentInput: String = "",
+    val activeSharePost: FeedItemUi? = null,
+    val shareSearchQuery: String = "",
+    val shareContacts: List<ShareContactUi> = emptyList(),
     val errorMessage: String? = null,
     val infoMessage: String? = null
 )
@@ -64,7 +65,8 @@ data class FeedItemUi(
     val imageUrl: String? = null,
     val likeCount: Int = 0,
     val isLiked: Boolean = false,
-    val commentCount: Int = 0
+    val commentCount: Int = 0,
+    val isPinnedToMap: Boolean = false
 )
 
 /**
@@ -72,8 +74,10 @@ data class FeedItemUi(
  */
 data class StoryItemUi(
     val id: String,
+    val authorUserId: String = "",
     val userName: String,
     val headline: String = "",
+    val createdAtFormatted: String = "",
     val clubName: String? = null,
     val imageUrl: String? = null,
     val hasUnseenStory: Boolean = true
@@ -90,17 +94,24 @@ data class CommentItemUi(
 )
 
 /**
+ * Darstellungsmodell eines Kontakts im Teilen-Dialog.
+ */
+data class ShareContactUi(
+    val id: String,
+    val name: String,
+    val avatarInitial: String,
+    val lastMessage: String = ""
+)
+
+/**
  * ViewModel für den Home-Feed.
- *
- * Bezieht Beiträge und Storys reaktiv aus dem [FeedRepository] und schreibt
- * Likes, neue Beiträge, Kommentare und den Gesehen-Status von Storys zurück
- * in die lokale Datenbank. Der State überlebt damit einen Screen-Wechsel.
  */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val currentUserProvider: CurrentUserProvider,
-    private val userRepository: com.kliq.app.data.repository.UserRepository? = null
+    private val userRepository: UserRepository? = null,
+    private val chatRepository: ChatRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -161,6 +172,8 @@ class HomeViewModel @Inject constructor(
     private fun observeStories() {
         viewModelScope.launch {
             val currentUserId = currentUserProvider.userId()
+            val timeFormat = SimpleDateFormat("HH:mm 'Uhr'", Locale.GERMANY)
+
             feedRepository.getStories()
                 .catch { error ->
                     _uiState.update {
@@ -172,9 +185,11 @@ class HomeViewModel @Inject constructor(
                     val myStoryUi = myStoryEntity?.let {
                         StoryItemUi(
                             id = it.id,
+                            authorUserId = it.authorUserId,
                             userName = "Deine Story",
                             headline = it.headline,
-                            clubName = it.clubName,
+                            createdAtFormatted = timeFormat.format(Date(it.createdAtMs)),
+                            clubName = it.clubName ?: "Klagenfurt",
                             imageUrl = it.imageUrl,
                             hasUnseenStory = false
                         )
@@ -185,9 +200,11 @@ class HomeViewModel @Inject constructor(
                         .map { story ->
                             StoryItemUi(
                                 id = story.id,
+                                authorUserId = story.authorUserId,
                                 userName = story.authorName,
                                 headline = story.headline,
-                                clubName = story.clubName,
+                                createdAtFormatted = timeFormat.format(Date(story.createdAtMs)),
+                                clubName = story.clubName ?: "Klagenfurt",
                                 imageUrl = story.imageUrl,
                                 hasUnseenStory = !story.isSeen
                             )
@@ -207,15 +224,16 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    fun onPostStory(context: android.content.Context, uri: android.net.Uri) {
+    fun onPostStory(context: Context, uri: Uri, location: String = "Klagenfurt") {
         viewModelScope.launch {
             _uiState.update { it.copy(isPostingStory = true) }
-            val compressor = com.kliq.app.data.util.ImageCompressor(context)
+            val compressor = ImageCompressor(context)
             val compressResult = compressor.compressAndSaveImage(uri)
 
             val currentUserId = currentUserProvider.userId()
             val currentUserName = currentUserProvider.displayName()
             val avatarUrl = _uiState.value.myProfilePictureUrl
+            val timeString = SimpleDateFormat("HH:mm 'Uhr'", Locale.GERMANY).format(Date())
 
             compressResult.onSuccess { imagePath ->
                 feedRepository.createStory(
@@ -223,7 +241,8 @@ class HomeViewModel @Inject constructor(
                     authorName = currentUserName,
                     imageUrl = imagePath,
                     avatarUrl = avatarUrl,
-                    headline = "Neue Story"
+                    headline = timeString,
+                    clubName = location
                 ).onSuccess {
                     _uiState.update { it.copy(isPostingStory = false, infoMessage = "Story veröffentlicht!") }
                 }.onFailure { error ->
@@ -245,10 +264,25 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Lädt den Feed neu. Da Room die Daten reaktiv liefert, dient der Aufruf
-     * primär der Rückmeldung an den Nutzer bei Pull-to-Refresh.
-     */
+    fun onDeleteStory(storyId: String) {
+        viewModelScope.launch {
+            feedRepository.deleteStory(storyId).onSuccess {
+                _uiState.update { state ->
+                    state.copy(
+                        activeStory = null,
+                        myStory = if (state.myStory?.id == storyId) null else state.myStory,
+                        storyItems = state.storyItems.filter { it.id != storyId },
+                        infoMessage = "Story gelöscht."
+                    )
+                }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(errorMessage = "Story konnte nicht gelöscht werden: ${error.localizedMessage}")
+                }
+            }
+        }
+    }
+
     fun refreshFeed() {
         _uiState.update { it.copy(isRefreshing = true) }
         _uiState.update { it.copy(isRefreshing = false) }
@@ -258,9 +292,6 @@ class HomeViewModel @Inject constructor(
     // Storys
     // =====================================================================
 
-    /**
-     * Öffnet eine Story im Vollbild und markiert sie dauerhaft als gesehen.
-     */
     fun onStoryOpened(storyId: String) {
         val state = _uiState.value
         val story = if (state.myStory?.id == storyId) {
@@ -281,7 +312,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Schließt die Vollbild-Story. */
     fun onStoryDismissed() {
         _uiState.update { it.copy(activeStory = null) }
     }
@@ -290,29 +320,63 @@ class HomeViewModel @Inject constructor(
     // Beitrags-Editor
     // =====================================================================
 
-    /** Öffnet den Editor für einen neuen Beitrag. */
     fun onCreatePost() {
-        _uiState.update { it.copy(isComposerVisible = true, composerText = "") }
+        _uiState.update {
+            it.copy(
+                isComposerVisible = true,
+                composerText = "",
+                composerImageUri = null,
+                composerLocation = "",
+                composerIsEventPinned = false
+            )
+        }
     }
 
-    /** Schließt den Editor und verwirft den Entwurf. */
     fun onComposerDismissed() {
-        _uiState.update { it.copy(isComposerVisible = false, composerText = "") }
+        _uiState.update {
+            it.copy(
+                isComposerVisible = false,
+                composerText = "",
+                composerImageUri = null,
+                composerLocation = "",
+                composerIsEventPinned = false
+            )
+        }
     }
 
-    /** Übernimmt Texteingaben aus dem Editor. */
     fun onComposerTextChanged(text: String) {
         _uiState.update { it.copy(composerText = text) }
     }
 
-    /**
-     * Veröffentlicht den Entwurf. Der Beitrag wird persistiert und erscheint
-     * über den reaktiven Room-Flow unmittelbar an der Spitze des Feeds.
-     */
+    fun onComposerImageSelected(context: Context, uri: Uri) {
+        viewModelScope.launch {
+            val compressor = ImageCompressor(context)
+            compressor.compressAndSaveImage(uri).onSuccess { path ->
+                _uiState.update { it.copy(composerImageUri = path) }
+            }.onFailure { error ->
+                _uiState.update { it.copy(errorMessage = "Bild konnte nicht geladen werden: ${error.localizedMessage}") }
+            }
+        }
+    }
+
+    fun onComposerImageRemoved() {
+        _uiState.update { it.copy(composerImageUri = null) }
+    }
+
+    fun onComposerLocationChanged(location: String) {
+        _uiState.update { it.copy(composerLocation = location) }
+    }
+
+    fun onToggleComposerEventPinned() {
+        _uiState.update { it.copy(composerIsEventPinned = !it.composerIsEventPinned) }
+    }
+
     fun onPublishPost() {
         val text = _uiState.value.composerText.trim()
-        if (text.isEmpty()) {
-            _uiState.update { it.copy(errorMessage = "Bitte gib einen Text für den Beitrag ein.") }
+        val image = _uiState.value.composerImageUri
+        val location = _uiState.value.composerLocation.trim().ifBlank { null }
+        if (text.isEmpty() && image == null) {
+            _uiState.update { it.copy(errorMessage = "Bitte gib einen Text oder ein Bild für den Beitrag ein.") }
             return
         }
 
@@ -325,14 +389,19 @@ class HomeViewModel @Inject constructor(
             feedRepository.createPost(
                 authorUserId = userId,
                 authorName = userName,
-                contentText = text
+                contentText = text,
+                imageUrl = image,
+                clubName = location
             ).onSuccess {
                 _uiState.update {
                     it.copy(
                         isPublishing = false,
                         isComposerVisible = false,
                         composerText = "",
-                        infoMessage = "Beitrag veröffentlicht."
+                        composerImageUri = null,
+                        composerLocation = "",
+                        composerIsEventPinned = false,
+                        infoMessage = "Beitrag veröffentlicht!"
                     )
                 }
             }.onFailure { error ->
@@ -350,11 +419,6 @@ class HomeViewModel @Inject constructor(
     // Likes und Kommentare
     // =====================================================================
 
-    /**
-     * Schaltet den Like-Zustand eines Beitrags um.
-     *
-     * @param postId ID des betroffenen Beitrags.
-     */
     fun onLikePost(postId: String) {
         viewModelScope.launch {
             feedRepository.toggleLike(postId).onFailure { error ->
@@ -365,7 +429,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Öffnet das Kommentar-Sheet für einen Beitrag. */
     fun onCommentsOpened(postId: String) {
         _uiState.update { it.copy(activeCommentPostId = postId, commentInput = "", comments = emptyList()) }
 
@@ -391,19 +454,16 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Schließt das Kommentar-Sheet. */
     fun onCommentsDismissed() {
         commentObserverJob?.cancel()
         commentObserverJob = null
         _uiState.update { it.copy(activeCommentPostId = null, comments = emptyList(), commentInput = "") }
     }
 
-    /** Übernimmt Texteingaben aus dem Kommentarfeld. */
     fun onCommentInputChanged(text: String) {
         _uiState.update { it.copy(commentInput = text) }
     }
 
-    /** Speichert den eingegebenen Kommentar am aktiven Beitrag. */
     fun onSubmitComment() {
         val postId = _uiState.value.activeCommentPostId ?: return
         val text = _uiState.value.commentInput.trim()
@@ -428,7 +488,60 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /** Setzt Fehler- und Bestätigungsmeldungen zurück. */
+    // =====================================================================
+    // Teilen von Beiträgen
+    // =====================================================================
+
+    fun onSharePostOpened(post: FeedItemUi) {
+        _uiState.update {
+            it.copy(
+                activeSharePost = post,
+                shareSearchQuery = ""
+            )
+        }
+        viewModelScope.launch {
+            chatRepository?.getActiveChats()?.collect { chats ->
+                val contacts = chats.map { chat ->
+                    ShareContactUi(
+                        id = chat.id,
+                        name = chat.name,
+                        avatarInitial = chat.avatarInitial ?: chat.name.take(1).uppercase(),
+                        lastMessage = chat.lastMessageText ?: ""
+                    )
+                }
+                _uiState.update { it.copy(shareContacts = contacts) }
+            }
+        }
+    }
+
+    fun onShareSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(shareSearchQuery = query) }
+    }
+
+    fun onSharePostToChat(chatId: String) {
+        val post = _uiState.value.activeSharePost ?: return
+        viewModelScope.launch {
+            val userId = currentUserProvider.userId()
+            val userName = currentUserProvider.displayName()
+            val shareText = "📰 ${post.userName} hat geteilt:\n\"${post.contentText}\""
+
+            chatRepository?.sendTextMessage(
+                chatId = chatId,
+                senderUserId = userId,
+                senderName = userName,
+                text = shareText
+            )?.onSuccess {
+                _uiState.update { it.copy(activeSharePost = null, infoMessage = "Beitrag im Chat geteilt!") }
+            }?.onFailure { error ->
+                _uiState.update { it.copy(errorMessage = "Konnte nicht geteilt werden: ${error.localizedMessage}") }
+            }
+        }
+    }
+
+    fun onSharePostDismissed() {
+        _uiState.update { it.copy(activeSharePost = null, shareSearchQuery = "") }
+    }
+
     fun onMessageShown() {
         _uiState.update { it.copy(errorMessage = null, infoMessage = null) }
     }
