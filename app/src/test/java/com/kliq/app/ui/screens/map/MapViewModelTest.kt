@@ -6,6 +6,7 @@ import com.kliq.app.data.model.Event
 import com.kliq.app.data.model.GpsLocation
 import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.repository.ClubRepository
+import com.kliq.app.data.seed.KlagenfurtSeedData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -199,14 +200,16 @@ class MapViewModelTest {
 
     @Test
     fun testLocationRequestedUpdatesCameraPositionAndLocationState() {
+        // Ohne LocationRepository faellt onLocationRequested() auf das
+        // Klagenfurt-Stadtzentrum aus KlagenfurtSeedData zurueck.
         viewModel.onLocationRequested()
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertTrue(state.isLocationEnabled)
         assertFalse(state.isLoadingLocation)
-        assertEquals(52.5112, state.cameraPosition.latitude, 0.0001)
-        assertEquals(13.4430, state.cameraPosition.longitude, 0.0001)
+        assertEquals(KlagenfurtSeedData.CITY_LATITUDE, state.cameraPosition.latitude, 0.0001)
+        assertEquals(KlagenfurtSeedData.CITY_LONGITUDE, state.cameraPosition.longitude, 0.0001)
         assertEquals(15.0f, state.cameraPosition.zoom)
     }
 
@@ -270,15 +273,21 @@ class MapViewModelTest {
 
     @Test
     fun testEdgeCase_emptyRepositoryFlow_usesFallbackVenuesSafely() {
+        // Bleibt die Room-Datenbank leer, faellt das ViewModel auf den
+        // Klagenfurt-Demonstrationsdatensatz zurueck (KlagenfurtSeedData.clubs()).
         `when`(clubRepository.getAllClubs()).thenReturn(flowOf(emptyList()))
         val fallbackVm = MapViewModel(clubRepository)
         testDispatcher.scheduler.advanceUntilIdle()
 
+        val expectedClubs = KlagenfurtSeedData.clubs()
         val state = fallbackVm.uiState.value
         assertTrue(state.nearbyVenues.isNotEmpty())
-        assertEquals(4, state.nearbyVenues.size)
-        assertEquals(4, state.clubMarkers.size)
-        assertEquals(380, state.nearbyVenues[0].totalLiveVisitors)
-        assertEquals(52, state.nearbyVenues[0].malePercentage)
+        assertEquals(expectedClubs.size, state.nearbyVenues.size)
+        assertEquals(expectedClubs.size, state.clubMarkers.size)
+
+        val firstExpected = expectedClubs.first()
+        val firstActual = state.nearbyVenues.first { it.id == firstExpected.id }
+        assertEquals(firstExpected.totalLiveVisitors, firstActual.totalLiveVisitors)
+        assertEquals(firstExpected.malePercentage, firstActual.malePercentage)
     }
 }

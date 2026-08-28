@@ -7,6 +7,7 @@ import com.kliq.app.data.model.LatLngBoundsData
 import com.kliq.app.data.model.MapCameraAnimationEvent
 import com.kliq.app.data.model.OperatingHours
 import com.kliq.app.data.repository.ClubRepository
+import com.kliq.app.data.seed.KlagenfurtSeedData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -77,13 +78,15 @@ class MapCameraAnimationTest {
             viewModel.cameraEventFlow.collect { events.add(it) }
         }
 
+        // Ohne LocationRepository faellt onLocationRequested() auf das
+        // Klagenfurt-Stadtzentrum aus KlagenfurtSeedData zurueck.
         viewModel.onLocationRequested()
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(events.isNotEmpty())
         val lastEvent = events.last() as MapCameraAnimationEvent.AnimateToLocation
-        assertEquals(52.5112, lastEvent.latitude, 0.0001)
-        assertEquals(13.4430, lastEvent.longitude, 0.0001)
+        assertEquals(KlagenfurtSeedData.CITY_LATITUDE, lastEvent.latitude, 0.0001)
+        assertEquals(KlagenfurtSeedData.CITY_LONGITUDE, lastEvent.longitude, 0.0001)
         assertEquals(15.0f, lastEvent.zoom)
         assertEquals(0.0f, lastEvent.tilt)
         assertEquals(1000, lastEvent.durationMs)
