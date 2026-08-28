@@ -143,13 +143,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-configurations.all {
-    resolutionStrategy {
-        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
-        force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-    }
-}
-
     // Coroutines Play Services (for .await() on Tasks)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
 
@@ -171,4 +164,14 @@ configurations.all {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+// Das Firebase Data Connect SDK und Retrofit ziehen unterschiedliche
+// kotlinx-serialization-Versionen. Die Version wird projektweit fixiert,
+// damit zur Laufzeit keine NoSuchMethodError im generierten Connector auftreten.
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    }
 }

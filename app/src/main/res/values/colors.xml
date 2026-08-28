@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Entspricht DarkBackground aus ui/theme/Color.kt und dient als Fensterhintergrund,
+         damit beim App-Start kein weißes Aufblitzen vor dem ersten Compose-Frame entsteht. -->
+    <color name="kliq_window_background">#FF0C0914</color>
+</resources>
