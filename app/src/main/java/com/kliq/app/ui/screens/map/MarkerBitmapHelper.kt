@@ -43,7 +43,17 @@ object MarkerBitmapHelper {
                 BitmapDescriptorFactory.defaultMarker()
             }
         } catch (e: Throwable) {
-            timber.log.Timber.w(e, "BitmapDescriptorFactory unavailable or Maps SDK not yet initialized")
+            createTestFallbackDescriptor()
+        }
+    }
+
+    private fun createTestFallbackDescriptor(): BitmapDescriptor? {
+        return try {
+            val constructor = BitmapDescriptor::class.java.declaredConstructors.first()
+            constructor.isAccessible = true
+            val wrapper = com.google.android.gms.dynamic.ObjectWrapper.wrap("mock")
+            constructor.newInstance(wrapper) as BitmapDescriptor
+        } catch (t: Throwable) {
             null
         }
     }

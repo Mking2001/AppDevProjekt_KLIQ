@@ -164,6 +164,7 @@ class MapViewModel @Inject constructor(
     private var blockedUserIds: Set<String> = emptySet()
 
     init {
+        MarkerBitmapHelper.prewarmCache()
         setupFilters()
         loadUserMarkers()
         observeClubRepository()
@@ -489,6 +490,46 @@ class MapViewModel @Inject constructor(
         triggerAutoFitCameraAnimation()
     }
 
+    fun onLocationLoadingStarted() {
+        _uiState.update { it.copy(isLoadingLocation = true) }
+    }
+
+    /**
+     * Verarbeitet empfangene GPS-Koordinaten vom FusedLocationProviderClient
+     * und zentriert die Karte direkt auf den Standort des Nutzers.
+     */
+    fun onLocationReceived(lat: Double, lng: Double) {
+        _uiState.update { state ->
+            state.copy(
+                isLocationEnabled = true,
+                isLoadingLocation = false,
+                cameraPosition = CameraPositionStateData(
+                    latitude = lat,
+                    longitude = lng,
+                    zoom = 15.0f,
+                    tilt = 0.0f,
+                    bearing = 0.0f
+                )
+            )
+        }
+        updateFilteredAndClusteredVenues()
+        updateUserDistances(lat, lng)
+
+        viewModelScope.launch {
+            _cameraEventFlow.emit(
+                MapCameraAnimationEvent.AnimateToLocation(
+                    latitude = lat,
+                    longitude = lng,
+                    zoom = 15.0f,
+                    tilt = 0.0f,
+                    bearing = 0.0f,
+                    durationMs = 1000,
+                    easing = CameraEasing.EASE_IN_OUT
+                )
+            )
+        }
+    }
+
     /**
      * Zentriert die Karte auf die letzte bekannte GPS-Position.
      * Liegt noch kein Fix vor, wird auf das Stadtzentrum Klagenfurt zurueckgefallen,
@@ -498,37 +539,7 @@ class MapViewModel @Inject constructor(
         val lastKnown = locationRepository?.locationUpdates?.value
         val targetLat = lastKnown?.latitude ?: KlagenfurtSeedData.CITY_LATITUDE
         val targetLng = lastKnown?.longitude ?: KlagenfurtSeedData.CITY_LONGITUDE
-
-        _uiState.update { state ->
-            state.copy(
-                isLocationEnabled = true,
-                isLoadingLocation = true,
-                cameraPosition = CameraPositionStateData(
-                    latitude = targetLat,
-                    longitude = targetLng,
-                    zoom = 15.0f,
-                    tilt = 0.0f,
-                    bearing = 0.0f
-                )
-            )
-        }
-        updateFilteredAndClusteredVenues()
-        updateUserDistances(targetLat, targetLng)
-        _uiState.update { it.copy(isLoadingLocation = false) }
-
-        viewModelScope.launch {
-            _cameraEventFlow.emit(
-                MapCameraAnimationEvent.AnimateToLocation(
-                    latitude = targetLat,
-                    longitude = targetLng,
-                    zoom = 15.0f,
-                    tilt = 0.0f,
-                    bearing = 0.0f,
-                    durationMs = 1000,
-                    easing = CameraEasing.EASE_IN_OUT
-                )
-            )
-        }
+        onLocationReceived(targetLat, targetLng)
     }
 
     fun toggleFavorite(clubId: String, currentFavoriteState: Boolean) {

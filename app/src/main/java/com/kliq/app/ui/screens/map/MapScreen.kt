@@ -1,6 +1,7 @@
 package com.kliq.app.ui.screens.map
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -70,6 +71,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.OnMapsSdkInitializedCallback
@@ -83,6 +86,7 @@ import com.google.maps.android.compose.MapUiSettings
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.kliq.app.R
 import com.kliq.app.data.model.LocationPermissionState
 import com.kliq.app.data.model.MapCameraAnimationEvent
 import com.kliq.app.ui.components.LocationPermanentlyDeniedDialog
@@ -269,19 +273,19 @@ fun MapScreen(
         }
     }
 
-    val mapProperties = remember(uiState.styleConfig, uiState.isLocationEnabled, hasLocationPermission) {
-        val styleOptions = try {
-            if (uiState.styleConfig.isCustomStyleEnabled) {
-                MapStyleOptions.loadRawResourceStyle(context, uiState.styleConfig.styleRawResId)
-            } else {
-                null
-            }
+    // Caching des Map Styles zur Vermeidung von Design-Resets bei Tab-Wechseln
+    val darkMapStyle = remember {
+        try {
+            MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark_purple)
         } catch (e: Exception) {
             Timber.w(e, "MapStyle konnte nicht aus Raw-Resource geladen werden")
             null
         }
+    }
+
+    val mapProperties = remember(darkMapStyle, uiState.styleConfig.isCustomStyleEnabled, uiState.styleConfig.isBuildingEnabled, uiState.styleConfig.isIndoorEnabled, uiState.isLocationEnabled, hasLocationPermission) {
         MapProperties(
-            mapStyleOptions = styleOptions,
+            mapStyleOptions = if (uiState.styleConfig.isCustomStyleEnabled) darkMapStyle else null,
             isBuildingEnabled = uiState.styleConfig.isBuildingEnabled,
             isIndoorEnabled = uiState.styleConfig.isIndoorEnabled,
             // isMyLocationEnabled darf NIEMALS true sein, wenn keine Permission vorliegt
@@ -313,7 +317,22 @@ fun MapScreen(
 
         permissionViewModel.onPermissionResult(isGranted, shouldShowRationale)
         if (isGranted) {
-            viewModel.onLocationRequested()
+            viewModel.onLocationLoadingStarted()
+            requestDeviceLocation(context) { lat, lng ->
+                viewModel.onLocationReceived(lat, lng)
+            }
+        }
+    }
+
+    // Beim Betreten der Map sofort nach Standortfreigabe fragen bzw. echte Position zentrieren
+    LaunchedEffect(hasLocationPermission) {
+        if (!hasLocationPermission) {
+            permissionViewModel.onRequestPermissionClicked(context)
+        } else {
+            viewModel.onLocationLoadingStarted()
+            requestDeviceLocation(context) { lat, lng ->
+                viewModel.onLocationReceived(lat, lng)
+            }
         }
     }
 
@@ -486,7 +505,10 @@ fun MapScreen(
         FloatingActionButton(
             onClick = {
                 if (hasLocationPermission) {
-                    viewModel.onLocationRequested()
+                    viewModel.onLocationLoadingStarted()
+                    requestDeviceLocation(context) { lat, lng ->
+                        viewModel.onLocationReceived(lat, lng)
+                    }
                 } else {
                     permissionViewModel.onRequestPermissionClicked(context)
                 }
@@ -769,5 +791,55 @@ private fun launchExternalRoute(context: Context, venue: VenueItemUi) {
             "Routenführung konnte nicht gestartet werden.",
             Toast.LENGTH_SHORT
         ).show()
+    }
+}
+
+/**
+ * Fragt die exakte aktuelle GPS-Position des Nutzers über den FusedLocationProviderClient ab.
+ */
+@SuppressLint("MissingPermission")
+private fun requestDeviceLocation(context: Context, onLocationResult: (Double, Double) -> Unit) {
+    try {
+        val fineGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!fineGranted && !coarseGranted) {
+            Timber.w("Keine Standortberechtigung vorhanden, GPS-Abfrage übersprungen")
+            return
+        }
+
+        val fusedClient = LocationServices.getFusedLocationProviderClient(context)
+        fusedClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+            .addOnSuccessListener { location ->
+                if (location != null) {
+                    Timber.d("Aktuelle GPS-Position erfolgreich ermittelt: %f, %f", location.latitude, location.longitude)
+                    onLocationResult(location.latitude, location.longitude)
+                } else {
+                    fusedClient.lastLocation.addOnSuccessListener { lastLoc ->
+                        if (lastLoc != null) {
+                            Timber.d("LastKnown GPS-Position ermittelt: %f, %f", lastLoc.latitude, lastLoc.longitude)
+                            onLocationResult(lastLoc.latitude, lastLoc.longitude)
+                        } else {
+                            Timber.w("GPS-Fix null, verwende Stadtzentrum")
+                        }
+                    }
+                }
+            }
+            .addOnFailureListener { e ->
+                Timber.w(e, "getCurrentLocation fehlgeschlagen, versuche lastLocation")
+                fusedClient.lastLocation.addOnSuccessListener { lastLoc ->
+                    if (lastLoc != null) {
+                        onLocationResult(lastLoc.latitude, lastLoc.longitude)
+                    }
+                }
+            }
+    } catch (e: Exception) {
+        Timber.e(e, "Fehler bei der GPS-Standortabfrage")
     }
 }
