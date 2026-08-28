@@ -30,7 +30,7 @@ class ChatRepositoryImpl @Inject constructor(
     private val chatDao: ChatDao,
     private val directMessageDao: DirectMessageDao,
     private val apiService: KliqApiService? = null,
-    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
 ) : ChatRepository {
 
     override fun getAllChats(): Flow<List<ChatConversation>> {

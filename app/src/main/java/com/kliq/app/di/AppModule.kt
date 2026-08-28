@@ -144,7 +144,7 @@ object AppModule {
     // =========================================================================
     @Provides
     @Singleton
-    fun provideKliqConnector(): KliqConnectorConnector {
+    fun provideKliqConnector(): KliqConnectorConnector? {
         return try {
             val connector = KliqConnectorConnector.instance
             timber.log.Timber.i("KliqConnectorConnector initialized successfully — serviceId=%s, location=%s",
@@ -153,7 +153,7 @@ object AppModule {
             connector
         } catch (e: Throwable) {
             timber.log.Timber.e(e, "CRITICAL: Failed to initialize KliqConnectorConnector — all Cloud SQL sync will fail!")
-            throw e
+            null
         }
     }
 }

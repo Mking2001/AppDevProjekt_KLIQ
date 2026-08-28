@@ -17,7 +17,7 @@ import javax.inject.Singleton
 class SocialRepositoryImpl @Inject constructor(
     private val socialDao: SocialDao,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
 ) : SocialRepository {
 
     override fun getFriendsForUser(userId: String): Flow<List<FriendEntity>> {

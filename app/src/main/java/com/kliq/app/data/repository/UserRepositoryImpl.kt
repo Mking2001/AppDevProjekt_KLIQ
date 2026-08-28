@@ -34,7 +34,7 @@ class UserRepositoryImpl @Inject constructor(
     private val reviewDao: ReviewDao? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val blockedUserDao: BlockedUserDao? = null,
-    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector,
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null,
     private val sessionRepository: SessionRepository? = null
 ) : UserRepository {
 
