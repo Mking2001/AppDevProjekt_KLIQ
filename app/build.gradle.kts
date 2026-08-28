@@ -6,6 +6,7 @@ plugins {
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
     id("com.google.gms.google-services")
+    id("com.google.firebase.crashlytics")
     kotlin("plugin.serialization")
 }
 
@@ -133,8 +134,10 @@ dependencies {
     // Firebase BoM (manages all Firebase SDK versions)
     implementation(platform("com.google.firebase:firebase-bom:34.18.0"))
 
-    // Firebase Cloud Messaging (FCM)
+    // Firebase Cloud Messaging (FCM), Crashlytics & Analytics
+    implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-crashlytics")
 
     // Firebase Data Connect (SQL Connect)
     implementation("com.google.firebase:firebase-dataconnect")
@@ -142,6 +145,9 @@ dependencies {
     // Kotlin Serialization (required by Firebase Data Connect generated SDK)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+    // Timber Logging Abstraction
+    implementation("com.jakewharton.timber:timber:5.0.1")
 
     // Coroutines Play Services (for .await() on Tasks)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
@@ -164,6 +170,9 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // LeakCanary Memory Leak Detection for Debug builds
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.13")
 }
 
 // Das Firebase Data Connect SDK und Retrofit ziehen unterschiedliche

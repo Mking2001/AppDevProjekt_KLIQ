@@ -276,7 +276,7 @@ class MapViewModelTest {
         // Bleibt die Room-Datenbank leer, faellt das ViewModel auf den
         // Klagenfurt-Demonstrationsdatensatz zurueck (KlagenfurtSeedData.clubs()).
         `when`(clubRepository.getAllClubs()).thenReturn(flowOf(emptyList()))
-        val fallbackVm = MapViewModel(clubRepository)
+        val fallbackVm = MapViewModel(clubRepository = clubRepository, defaultDispatcher = testDispatcher)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val expectedClubs = KlagenfurtSeedData.clubs()

@@ -3,17 +3,23 @@ package com.kliq.app.service
 import com.kliq.app.data.model.AntiSpamVerificationResult
 import com.kliq.app.data.model.ReviewVerificationMethod
 import com.kliq.app.data.repository.GeofenceRepository
+import com.kliq.app.data.repository.LocationRepository
 import com.kliq.app.data.util.AntiSpamReviewValidator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * Service implementation verifying proximity, geofence matches, and QR scan tokens
+ * while activating high-accuracy GPS bursts during active verification workflows.
+ */
 @Singleton
 class VerificationServiceImpl @Inject constructor(
     private val geofenceRepository: GeofenceRepository,
     private val antiSpamValidator: AntiSpamReviewValidator,
-    private val hapticFeedbackManager: com.kliq.app.util.HapticFeedbackManager? = null
+    private val hapticFeedbackManager: com.kliq.app.util.HapticFeedbackManager? = null,
+    private val locationRepository: LocationRepository? = null
 ) : VerificationService {
 
     override suspend fun verifyUserProximityOrQr(
@@ -21,6 +27,8 @@ class VerificationServiceImpl @Inject constructor(
         targetUserId: String,
         qrScanToken: String?
     ): AntiSpamVerificationResult {
+        // Boost GPS precision temporarily for proximity evaluation
+        locationRepository?.requestHighAccuracyBurst(20_000L)
         if (!qrScanToken.isNullOfBlankToken()) {
             val qrResult = verifyQrScanToken(reviewerUserId, targetUserId, qrScanToken!!)
             if (qrResult.isVerified) {

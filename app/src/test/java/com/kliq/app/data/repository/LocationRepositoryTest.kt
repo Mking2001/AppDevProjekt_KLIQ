@@ -4,6 +4,9 @@ import android.content.Context
 import com.kliq.app.data.local.dao.LocationDao
 import com.kliq.app.data.local.entities.LocationEntity
 import com.kliq.app.data.model.LocationData
+import com.kliq.app.data.model.LocationPowerPolicy
+import com.kliq.app.data.model.LocationTrackingMode
+import com.kliq.app.util.AdaptiveLocationController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -12,6 +15,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -53,13 +57,16 @@ class LocationRepositoryTest {
     private val testDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testDispatcher)
 
+    private lateinit var adaptiveController: AdaptiveLocationController
     private lateinit var repository: LocationRepositoryImpl
 
     @Before
     fun setUp() {
+        adaptiveController = AdaptiveLocationController(testDispatcher)
         repository = LocationRepositoryImpl(
             context = context,
             locationDao = fakeLocationDao,
+            adaptiveController = adaptiveController,
             ioDispatcher = testDispatcher
         )
     }
@@ -111,5 +118,40 @@ class LocationRepositoryTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertTrue(fakeLocationDao.clearCalled)
+    }
+
+    @Test
+    fun setTrackingMode_updatesModeAndPowerPolicy() {
+        repository.setTrackingMode(LocationTrackingMode.HIGH_ACCURACY)
+        assertEquals(LocationTrackingMode.HIGH_ACCURACY, repository.trackingMode.value)
+        assertEquals(LocationPowerPolicy.HighAccuracy, repository.powerPolicy.value)
+
+        repository.setTrackingMode(LocationTrackingMode.IDLE_PASSIVE)
+        assertEquals(LocationTrackingMode.IDLE_PASSIVE, repository.trackingMode.value)
+        assertEquals(LocationPowerPolicy.IdlePassive, repository.powerPolicy.value)
+    }
+
+    @Test
+    fun requestHighAccuracyBurst_activatesBurstAndTimer() = testScope.runTest {
+        repository.requestHighAccuracyBurst(durationMs = 10_000L)
+        assertTrue(repository.isBurstActive.value)
+        assertEquals(LocationTrackingMode.HIGH_ACCURACY, repository.trackingMode.value)
+        assertEquals(10, repository.burstRemainingSeconds.value)
+
+        repository.cancelBurstSession()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertFalse(repository.isBurstActive.value)
+        assertEquals(0, repository.burstRemainingSeconds.value)
+        assertEquals(LocationTrackingMode.BALANCED_AMBIENT, repository.trackingMode.value)
+    }
+
+    @Test
+    fun setAppForegroundState_throttlesModeWhenBackgrounded() {
+        repository.setAppForegroundState(false)
+        assertEquals(LocationTrackingMode.IDLE_PASSIVE, repository.trackingMode.value)
+
+        repository.setAppForegroundState(true)
+        assertEquals(LocationTrackingMode.BALANCED_AMBIENT, repository.trackingMode.value)
     }
 }

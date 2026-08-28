@@ -3,6 +3,8 @@ package com.kliq.app.viewmodel
 import android.content.Context
 import com.kliq.app.data.model.LocationData
 import com.kliq.app.data.model.LocationPermissionState
+import com.kliq.app.data.model.LocationPowerPolicy
+import com.kliq.app.data.model.LocationTrackingMode
 import com.kliq.app.data.repository.LocationRepository
 import com.kliq.app.util.PermissionManager
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +17,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -31,6 +35,11 @@ class LocationTrackingViewModelTest {
 
     private val isTrackingFlow = MutableStateFlow(false)
     private val locationUpdatesFlow = MutableStateFlow<LocationData?>(null)
+    private val trackingModeFlow = MutableStateFlow(LocationTrackingMode.BALANCED_AMBIENT)
+    private val powerPolicyFlow = MutableStateFlow(LocationPowerPolicy.BalancedAmbient)
+    private val isStationaryFlow = MutableStateFlow(false)
+    private val isBurstActiveFlow = MutableStateFlow(false)
+    private val burstRemainingSecondsFlow = MutableStateFlow(0)
     private val locationCountFlow = flowOf(12)
 
     private val testDispatcher = StandardTestDispatcher()
@@ -41,6 +50,11 @@ class LocationTrackingViewModelTest {
 
         `when`(repository.isTrackingActive).thenReturn(isTrackingFlow)
         `when`(repository.locationUpdates).thenReturn(locationUpdatesFlow)
+        `when`(repository.trackingMode).thenReturn(trackingModeFlow)
+        `when`(repository.powerPolicy).thenReturn(powerPolicyFlow)
+        `when`(repository.isStationary).thenReturn(isStationaryFlow)
+        `when`(repository.isBurstActive).thenReturn(isBurstActiveFlow)
+        `when`(repository.burstRemainingSeconds).thenReturn(burstRemainingSecondsFlow)
         `when`(repository.getLocationCount()).thenReturn(locationCountFlow)
     }
 
@@ -99,5 +113,60 @@ class LocationTrackingViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         verify(repository).clearLocationHistory()
+    }
+
+    @Test
+    fun setTrackingMode_delegatesToRepository() = runTest {
+        val viewModel = createViewModel(LocationPermissionState.Granted)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setTrackingMode(LocationTrackingMode.HIGH_ACCURACY)
+        verify(repository).setTrackingMode(LocationTrackingMode.HIGH_ACCURACY)
+    }
+
+    @Test
+    fun triggerHighAccuracyBurst_delegatesToRepository() = runTest {
+        val viewModel = createViewModel(LocationPermissionState.Granted)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.triggerHighAccuracyBurst(15_000L)
+        verify(repository).requestHighAccuracyBurst(15_000L)
+    }
+
+    @Test
+    fun cancelBurstSession_delegatesToRepository() = runTest {
+        val viewModel = createViewModel(LocationPermissionState.Granted)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.cancelBurstSession()
+        verify(repository).cancelBurstSession()
+    }
+
+    @Test
+    fun setLifecycleForeground_delegatesToRepository() = runTest {
+        val viewModel = createViewModel(LocationPermissionState.Granted)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.setLifecycleForeground(false)
+        verify(repository).setAppForegroundState(false)
+    }
+
+    @Test
+    fun uiState_reflectsAdaptiveModeAndStationaryTelemetry() = runTest {
+        trackingModeFlow.value = LocationTrackingMode.IDLE_PASSIVE
+        powerPolicyFlow.value = LocationPowerPolicy.IdlePassive
+        isStationaryFlow.value = true
+        isBurstActiveFlow.value = false
+
+        val viewModel = createViewModel(LocationPermissionState.Granted)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(LocationTrackingMode.IDLE_PASSIVE, state.trackingMode)
+        assertTrue(state.isStationary)
+        assertFalse(state.isBurstActive)
+        assertEquals(300_000L, state.samplingIntervalMs)
+        assertEquals(100.0f, state.minDisplacementMeters)
+        assertTrue(state.isBatterySaverEnabled)
     }
 }
