@@ -317,6 +317,7 @@ fun ChatBubble(
     voicePlaybackDurationMs: Long = 0L,
     onPlayPauseVoice: (() -> Unit)? = null,
     onSeekVoice: ((Long) -> Unit)? = null,
+    onSenderClick: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var isFullscreenVisible by remember { mutableStateOf(false) }
@@ -345,10 +346,14 @@ fun ChatBubble(
                 style = MaterialTheme.typography.labelSmall,
                 color = PurplePrimaryLight,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(
-                    start = 12.dp,
-                    bottom = 4.dp
-                )
+                modifier = Modifier
+                    .padding(
+                        start = 12.dp,
+                        bottom = 4.dp
+                    )
+                    .clickable(enabled = onSenderClick != null && message.senderUserId.isNotBlank()) {
+                        onSenderClick?.invoke(message.senderUserId)
+                    }
             )
         }
 
@@ -1225,6 +1230,132 @@ fun CityChatSwitcherSheet(
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f),
                     thickness = 0.5.dp
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun ImagePreviewSendDialog(
+    imageUri: String,
+    caption: String,
+    onCaptionChange: (String) -> Unit,
+    isCompressing: Boolean,
+    onSend: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = { if (!isCompressing) onDismiss() },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.92f))
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Top Bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = onDismiss,
+                        enabled = !isCompressing
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Abbrechen",
+                            tint = Color.White
+                        )
+                    }
+                    Text(
+                        text = "Vorschau",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.size(48.dp))
+                }
+
+                // Image Preview
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = imageUri,
+                        contentDescription = "Ausgewähltes Bild",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(16.dp))
+                    )
+
+                    if (isCompressing) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.5f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = PurplePrimaryLight)
+                        }
+                    }
+                }
+
+                // Caption and Send Controls
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = caption,
+                        onValueChange = onCaptionChange,
+                        placeholder = { Text("Bildunterschrift hinzufügen...", color = Color.Gray) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = PurplePrimary,
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+                            focusedContainerColor = DarkSurface,
+                            unfocusedContainerColor = DarkSurface
+                        ),
+                        shape = RoundedCornerShape(24.dp),
+                        enabled = !isCompressing
+                    )
+
+                    IconButton(
+                        onClick = onSend,
+                        enabled = !isCompressing,
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(CircleShape)
+                            .background(PurplePrimary)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Send,
+                            contentDescription = "Senden",
+                            tint = Color.White
+                        )
+                    }
+                }
             }
         }
     }

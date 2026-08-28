@@ -37,6 +37,9 @@ interface UserDao {
     @Query("DELETE FROM users WHERE id = :userId")
     suspend fun deleteUserById(userId: String)
 
+    @Query("DELETE FROM users")
+    suspend fun clearUsers()
+
     @Query("SELECT * FROM users WHERE LOWER(username) LIKE '%' || LOWER(:query) || '%' OR LOWER(hometown) LIKE '%' || LOWER(:query) || '%' ORDER BY username ASC LIMIT 25")
     suspend fun searchUsers(query: String): List<UserEntity>
 

@@ -514,7 +514,10 @@ private fun KliqNavHost(
             val chatId = backStackEntry.arguments?.getString(ChatRoutes.ARG_CHAT_ID) ?: ""
             ChatDetailScreen(
                 chatId = chatId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(userId))
+                }
             )
         }
 

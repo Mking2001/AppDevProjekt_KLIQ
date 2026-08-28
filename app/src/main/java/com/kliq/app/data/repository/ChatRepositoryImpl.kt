@@ -26,6 +26,7 @@ import javax.inject.Singleton
 class ChatRepositoryImpl @Inject constructor(
     private val chatDao: ChatDao,
     private val directMessageDao: DirectMessageDao,
+    private val currentUserProvider: com.kliq.app.domain.CurrentUserProvider? = null,
     private val apiService: KliqApiService? = null,
     private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
 ) : ChatRepository {
@@ -577,11 +578,17 @@ class ChatRepositoryImpl @Inject constructor(
     }
 
     private fun MessageEntity.toDomain(): ChatMessage {
+        val currentUserId = currentUserProvider?.userId() ?: "usr_current_user"
+        val isSenderMe = if (senderUserId.isNotBlank()) {
+            senderUserId == currentUserId
+        } else {
+            isMine
+        }
         return ChatMessage(
             id = id,
             chatId = chatId,
             senderUserId = senderUserId,
-            senderName = senderName,
+            senderName = if (isSenderMe) "Du" else senderName,
             text = text,
             timestampMs = timestampMs,
             timestampIso = timestampIso.ifBlank { formatMsToIso(timestampMs) },
@@ -596,11 +603,17 @@ class ChatRepositoryImpl @Inject constructor(
             status = status,
             deliveredAtMs = deliveredAtMs,
             readAtMs = readAtMs,
-            isMine = isMine
+            isMine = isSenderMe
         )
     }
 
-    private fun DirectMessageEntity.toDomain(isMine: Boolean): DirectMessage {
+    private fun DirectMessageEntity.toDomain(isMine: Boolean = false): DirectMessage {
+        val currentUserId = currentUserProvider?.userId() ?: "usr_current_user"
+        val isSenderMe = if (senderId.isNotBlank()) {
+            senderId == currentUserId
+        } else {
+            isMine
+        }
         return DirectMessage(
             messageId = messageId,
             senderId = senderId,
@@ -621,7 +634,7 @@ class ChatRepositoryImpl @Inject constructor(
             mediaHeight = mediaHeight,
             captionText = caption,
             audioDurationMs = audioDurationMs,
-            isMine = isMine
+            isMine = isSenderMe
         )
     }
 }

@@ -117,5 +117,9 @@ class ClubAnalyticsViewModelTest {
         override suspend fun calculateClubGenderRatio(clubId: String, timeWindowMs: Long): GenderRatio {
             return genderRatioToReturn
         }
+
+        override suspend fun toggleClubHype(clubId: String, userId: String): Result<Boolean> = Result.success(true)
+        override fun isClubHypedToday(clubId: String, userId: String): Flow<Boolean> = flowOf(false)
+        override fun getHypedClubIdsToday(userId: String): Flow<List<String>> = flowOf(emptyList())
     }
 }

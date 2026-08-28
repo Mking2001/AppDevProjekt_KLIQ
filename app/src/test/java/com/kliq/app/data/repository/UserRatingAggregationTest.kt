@@ -141,6 +141,10 @@ class UserRatingAggregationTest {
         override suspend fun insertUserPreferences(preferences: UserPreferencesEntity) {}
         override fun getVerifiedUsers(): Flow<List<UserEntity>> = flowOf(emptyList())
         override suspend fun updateUserVerificationStatus(userId: String, isVerified: Boolean) {}
+        override suspend fun deleteUserById(userId: String) { users.remove(userId) }
+        override suspend fun searchUsers(query: String): List<UserEntity> = emptyList()
+        override suspend fun getAllUsers(): List<UserEntity> = users.values.toList()
+        override suspend fun deleteUserPreferencesByUserId(userId: String) {}
         override suspend fun clearUsers() { users.clear() }
     }
 

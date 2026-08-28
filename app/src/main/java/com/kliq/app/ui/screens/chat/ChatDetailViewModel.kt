@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -91,20 +92,44 @@ class ChatDetailViewModel @Inject constructor(
         if (chatId.isBlank()) return
 
         val chatType = resolveChatType(chatId)
-        val fallbackTitle = resolveFallbackTitle(chatId, chatType)
+        val targetUserId = resolveTargetUserId(chatId)
 
         currentChatId = chatId
         _uiState.update {
             it.copy(
-                targetUserId = resolveTargetUserId(chatId),
+                targetUserId = targetUserId,
                 chatType = chatType
             )
         }
 
         viewModelScope.launch {
+            var chatTitle = resolveFallbackTitle(chatId, chatType)
+            var avatarUrl: String? = null
+            var avatarInitial = chatTitle.take(1).uppercase()
+
+            if (chatType == ChatType.PRIVATE && targetUserId.isNotBlank()) {
+                val targetUser = try {
+                    userRepository.getUserById(targetUserId).first()
+                } catch (e: Exception) {
+                    null
+                }
+                if (targetUser != null) {
+                    chatTitle = targetUser.username.ifBlank { "Nutzer" }
+                    avatarUrl = targetUser.profilePictureUrl
+                    avatarInitial = chatTitle.take(1).uppercase()
+                }
+            }
+
+            _uiState.update {
+                it.copy(
+                    conversationName = chatTitle,
+                    conversationInitial = avatarInitial
+                )
+            }
+
             chatRepository.createChatIfMissing(
                 chatId = chatId,
-                name = fallbackTitle,
+                name = chatTitle,
                 chatType = chatType
             ).onFailure { error ->
                 _uiState.update {
@@ -246,6 +271,15 @@ class ChatDetailViewModel @Inject constructor(
         _uiState.update { it.copy(currentInput = input) }
     }
 
+    private suspend fun resolveCurrentUserName(senderId: String): String {
+        return try {
+            val user = userRepository.getUserById(senderId).first()
+            user?.username?.ifBlank { "User" } ?: "User"
+        } catch (e: Exception) {
+            "User"
+        }
+    }
+
     /**
      * Persistiert die eingegebene Textnachricht und leert das Eingabefeld.
      * Die Liste wird über den Room-Flow aktualisiert, nicht lokal fortgeschrieben.
@@ -259,11 +293,12 @@ class ChatDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             val senderId = currentUserProvider.userId()
+            val senderName = resolveCurrentUserName(senderId)
 
             chatRepository.sendTextMessage(
                 chatId = currentChatId,
                 senderUserId = senderId,
-                senderName = "Du",
+                senderName = senderName,
                 text = text
             ).onSuccess { message ->
                 advanceMessageStatus(message.id)
@@ -337,11 +372,12 @@ class ChatDetailViewModel @Inject constructor(
                 val compressedResult = imageCompressor.compressAndSaveImage(context, uri)
                 val caption = _uiState.value.imageCaption
                 val senderId = currentUserProvider.userId()
+                val senderName = resolveCurrentUserName(senderId)
 
                 chatRepository.sendMediaMessage(
                     chatId = currentChatId,
                     senderUserId = senderId,
-                    senderName = "Du",
+                    senderName = senderName,
                     text = caption.ifBlank { "Foto" },
                     mediaUrl = compressedResult.mediaUrl,
                     messageType = MessageType.IMAGE,
@@ -501,11 +537,12 @@ class ChatDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             val senderId = currentUserProvider.userId()
+            val senderName = resolveCurrentUserName(senderId)
 
             chatRepository.sendVoiceMessage(
                 chatId = currentChatId,
                 senderUserId = senderId,
-                senderName = "Du",
+                senderName = senderName,
                 audioUrl = result.filePath,
                 audioDurationMs = result.durationMs
             ).onSuccess { message ->
