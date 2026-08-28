@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Schedule
@@ -106,6 +107,7 @@ fun HomeScreen(
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
     onNavigateToActivities: () -> Unit = {},
+    onNavigateToUserProfile: (String) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -251,6 +253,10 @@ fun HomeScreen(
         StoryViewerDialog(
             story = story,
             onDeleteClick = { viewModel.onDeleteStory(story.id) },
+            onAuthorClick = {
+                viewModel.onStoryDismissed()
+                onNavigateToUserProfile(story.authorUserId)
+            },
             onDismiss = viewModel::onStoryDismissed
         )
     }
@@ -703,6 +709,7 @@ private fun PostComposerDialog(
 private fun StoryViewerDialog(
     story: StoryItemUi,
     onDeleteClick: () -> Unit,
+    onAuthorClick: () -> Unit,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -763,13 +770,27 @@ private fun StoryViewerDialog(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = story.userName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                // Klick auf Ersteller-Info öffnet dessen Profil
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onAuthorClick)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = story.userName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.Filled.Person,
+                            contentDescription = "Profil ansehen",
+                            tint = PurplePrimaryLight,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -815,23 +836,24 @@ private fun StoryViewerDialog(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Story löschen Knopf
-                    IconButton(
-                        onClick = onDeleteClick,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.55f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = "Story löschen",
-                            tint = Color(0xFFFF5252),
-                            modifier = Modifier.size(18.dp)
-                        )
+                    // Story löschen Knopf - NUR für die eigene Story sichtbar!
+                    if (story.isOwnStory) {
+                        IconButton(
+                            onClick = onDeleteClick,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.55f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "Story löschen",
+                                tint = Color(0xFFFF5252),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
-
-                    Spacer(modifier = Modifier.width(8.dp))
 
                     // Schließen Knopf
                     IconButton(

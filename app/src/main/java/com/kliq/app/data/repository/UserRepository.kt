@@ -38,6 +38,7 @@ interface UserRepository {
     suspend fun checkUsernameAvailability(username: String): Boolean = true
     suspend fun checkEmailAvailability(email: String): Boolean = true
     suspend fun checkPhoneAvailability(phoneNumber: String): Boolean = true
+    suspend fun loginUser(identifier: String, password: String): Result<UserEntity> = Result.failure(NotImplementedError())
     suspend fun registerUser(
         username: String,
         email: String,
@@ -55,7 +56,7 @@ interface UserRepository {
         drinkingHabit: DrinkingHabit = DrinkingHabit.NEVER,
         bio: String,
         password: String
-    ): Result<UserEntity>
+    ): Result<UserEntity> = Result.failure(NotImplementedError())
     fun isUserBlocked(currentUserId: String, targetUserId: String): Flow<Boolean> = flowOf(false)
     fun getBlockedUserIds(currentUserId: String): Flow<List<String>> = flowOf(emptyList())
     suspend fun blockUser(currentUserId: String, targetUserId: String, reason: String? = null): Result<Unit> = Result.success(Unit)

@@ -305,6 +305,12 @@ private fun KliqNavHost(
                     navController.navigate(NavigationRoute.Home.route) {
                         popUpTo(CoreRoutes.AUTH_SELECTION) { inclusive = true }
                     }
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToRegister = {
+                    navController.navigate(CoreRoutes.REGISTER)
                 }
             )
         }
@@ -332,7 +338,10 @@ private fun KliqNavHost(
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
                 onMenuAction = onMenuAction,
-                onNavigateToActivities = onNavigateToActivities
+                onNavigateToActivities = onNavigateToActivities,
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(userId))
+                }
             )
         }
         composable(NavigationRoute.Explore.route) {

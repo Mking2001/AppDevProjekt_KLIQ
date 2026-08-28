@@ -7,16 +7,21 @@ import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.model.formatRelativeTime
 import com.kliq.app.data.repository.ChatRepository
 import com.kliq.app.data.repository.FeedRepository
+import com.kliq.app.data.repository.SocialRepository
 import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.data.util.ImageCompressor
 import com.kliq.app.domain.CurrentUserProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -33,16 +38,14 @@ data class HomeUiState(
     val feedItems: List<FeedItemUi> = emptyList(),
     val storyItems: List<StoryItemUi> = emptyList(),
     val myStory: StoryItemUi? = null,
-    val myProfilePictureUrl: String? = null,
-    val myUserName: String = "Du",
-    val isPostingStory: Boolean = false,
-    val activeStory: StoryItemUi? = null,
     val isComposerVisible: Boolean = false,
     val composerText: String = "",
     val composerImageUri: String? = null,
     val composerLocation: String = "",
     val composerIsEventPinned: Boolean = false,
     val isPublishing: Boolean = false,
+    val activeStory: StoryItemUi? = null,
+    val isPostingStory: Boolean = false,
     val activeCommentPostId: String? = null,
     val comments: List<CommentItemUi> = emptyList(),
     val commentInput: String = "",
@@ -50,7 +53,9 @@ data class HomeUiState(
     val shareSearchQuery: String = "",
     val shareContacts: List<ShareContactUi> = emptyList(),
     val errorMessage: String? = null,
-    val infoMessage: String? = null
+    val infoMessage: String? = null,
+    val myProfilePictureUrl: String? = null,
+    val myUserName: String = "Du"
 )
 
 /**
@@ -80,7 +85,8 @@ data class StoryItemUi(
     val createdAtFormatted: String = "",
     val clubName: String? = null,
     val imageUrl: String? = null,
-    val hasUnseenStory: Boolean = true
+    val hasUnseenStory: Boolean = true,
+    val isOwnStory: Boolean = false
 )
 
 /**
@@ -111,7 +117,8 @@ class HomeViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val currentUserProvider: CurrentUserProvider,
     private val userRepository: UserRepository? = null,
-    private val chatRepository: ChatRepository? = null
+    private val chatRepository: ChatRepository? = null,
+    private val socialRepository: SocialRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -174,53 +181,63 @@ class HomeViewModel @Inject constructor(
             val currentUserId = currentUserProvider.userId()
             val timeFormat = SimpleDateFormat("HH:mm 'Uhr'", Locale.GERMANY)
 
-            feedRepository.getStories()
-                .catch { error ->
-                    _uiState.update {
-                        it.copy(errorMessage = "Storys konnten nicht geladen werden: ${error.localizedMessage}")
-                    }
+            val friendsFlow: Flow<Set<String>> = socialRepository?.getFriendsForUser(currentUserId)
+                ?.map { friends ->
+                    friends.filter { it.status == "ACCEPTED" }.map { it.friendUserId }.toSet()
+                } ?: flowOf(emptySet())
+
+            combine(feedRepository.getStories(), friendsFlow) { stories, friendIds ->
+                Pair(stories, friendIds)
+            }
+            .catch { error ->
+                _uiState.update {
+                    it.copy(errorMessage = "Storys konnten nicht geladen werden: ${error.localizedMessage}")
                 }
-                .collect { stories ->
-                    val myStoryEntity = stories.find { it.authorUserId == currentUserId }
-                    val myStoryUi = myStoryEntity?.let {
+            }
+            .collect { (stories, friendIds) ->
+                val myStoryEntity = stories.find { it.authorUserId == currentUserId }
+                val myStoryUi = myStoryEntity?.let {
+                    StoryItemUi(
+                        id = it.id,
+                        authorUserId = it.authorUserId,
+                        userName = "Deine Story",
+                        headline = it.headline,
+                        createdAtFormatted = timeFormat.format(Date(it.createdAtMs)),
+                        clubName = it.clubName ?: "Klagenfurt",
+                        imageUrl = it.imageUrl,
+                        hasUnseenStory = false,
+                        isOwnStory = true
+                    )
+                }
+
+                // Nur Storys von bestätigten Freunden oder Clubs anzeigen
+                val otherStories = stories
+                    .filter { it.authorUserId != currentUserId && (friendIds.contains(it.authorUserId) || it.authorUserId.startsWith("club_")) }
+                    .map { story ->
                         StoryItemUi(
-                            id = it.id,
-                            authorUserId = it.authorUserId,
-                            userName = "Deine Story",
-                            headline = it.headline,
-                            createdAtFormatted = timeFormat.format(Date(it.createdAtMs)),
-                            clubName = it.clubName ?: "Klagenfurt",
-                            imageUrl = it.imageUrl,
-                            hasUnseenStory = false
+                            id = story.id,
+                            authorUserId = story.authorUserId,
+                            userName = story.authorName,
+                            headline = story.headline,
+                            createdAtFormatted = timeFormat.format(Date(story.createdAtMs)),
+                            clubName = story.clubName ?: "Klagenfurt",
+                            imageUrl = story.imageUrl,
+                            hasUnseenStory = !story.isSeen,
+                            isOwnStory = false
                         )
                     }
 
-                    val otherStories = stories
-                        .filter { it.authorUserId != currentUserId }
-                        .map { story ->
-                            StoryItemUi(
-                                id = story.id,
-                                authorUserId = story.authorUserId,
-                                userName = story.authorName,
-                                headline = story.headline,
-                                createdAtFormatted = timeFormat.format(Date(story.createdAtMs)),
-                                clubName = story.clubName ?: "Klagenfurt",
-                                imageUrl = story.imageUrl,
-                                hasUnseenStory = !story.isSeen
-                            )
+                _uiState.update { state ->
+                    state.copy(
+                        myStory = myStoryUi,
+                        storyItems = otherStories,
+                        activeStory = state.activeStory?.let { active ->
+                            if (active.id == myStoryUi?.id) myStoryUi
+                            else otherStories.find { it.id == active.id } ?: active
                         }
-
-                    _uiState.update { state ->
-                        state.copy(
-                            myStory = myStoryUi,
-                            storyItems = otherStories,
-                            activeStory = state.activeStory?.let { active ->
-                                if (active.id == myStoryUi?.id) myStoryUi
-                                else otherStories.find { it.id == active.id } ?: active
-                            }
-                        )
-                    }
+                    )
                 }
+            }
         }
     }
 

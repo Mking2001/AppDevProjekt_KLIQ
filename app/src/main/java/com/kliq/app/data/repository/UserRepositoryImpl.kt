@@ -60,11 +60,64 @@ class UserRepositoryImpl @Inject constructor(
         true
     }
 
-    override suspend fun checkPhoneAvailability(phoneNumber: String): Boolean = withContext(ioDispatcher) {
-        val trimmed = phoneNumber.trim()
-        if (trimmed.isBlank()) return@withContext false
-        if (userDao.getUserByPhone(trimmed) != null) return@withContext false
-        true
+    override suspend fun loginUser(identifier: String, password: String): Result<UserEntity> = withContext(ioDispatcher) {
+        val trimmed = identifier.trim()
+        if (trimmed.isBlank()) {
+            return@withContext Result.failure(IllegalArgumentException("Bitte gib deinen Benutzernamen, deine E-Mail oder Telefonnummer ein."))
+        }
+        if (password.length < 6) {
+            return@withContext Result.failure(IllegalArgumentException("Das Passwort muss mindestens 6 Zeichen lang sein."))
+        }
+
+        // 1. Suche in lokaler Room-Datenbank
+        var foundUser = userDao.getUserByUsername(trimmed)
+            ?: userDao.getUserByEmail(trimmed)
+            ?: userDao.getUserByPhone(trimmed)
+
+        // 2. Falls lokal nicht gefunden, in Cloud SQL suchen
+        if (foundUser == null && kliqConnector != null) {
+            try {
+                val usernameResult = kliqConnector.checkUsername.execute(username = trimmed)
+                val cloudUserSummary = usernameResult.data.users.firstOrNull()
+
+                val cloudUserId = cloudUserSummary?.id ?: run {
+                    val allUsers = kliqConnector.listUsers.execute().data.users
+                    allUsers.find {
+                        it.username.equals(trimmed, ignoreCase = true)
+                    }?.id
+                }
+
+                if (cloudUserId != null) {
+                    val fullCloudUser = kliqConnector.getUserById.execute(id = cloudUserId).data.user
+                    if (fullCloudUser != null) {
+                        val importedUser = UserEntity(
+                            id = fullCloudUser.id,
+                            username = fullCloudUser.username,
+                            email = fullCloudUser.email,
+                            age = fullCloudUser.age,
+                            hometown = fullCloudUser.hometown,
+                            profilePictureUrl = fullCloudUser.profilePictureUrl,
+                            bio = fullCloudUser.bio,
+                            phoneNumber = fullCloudUser.phoneNumber,
+                            isVerified = true,
+                            gender = fullCloudUser.gender ?: "UNSPECIFIED",
+                            updatedAtTimestampMs = System.currentTimeMillis()
+                        )
+                        userDao.insertUser(importedUser)
+                        foundUser = importedUser
+                    }
+                }
+            } catch (e: Exception) {
+                timber.log.Timber.e(e, "DataConnect: Cloud SQL login lookup failed")
+            }
+        }
+
+        if (foundUser != null) {
+            sessionRepository?.saveSession(token = "jwt_${foundUser.id}", userId = foundUser.id)
+            Result.success(foundUser)
+        } else {
+            Result.failure(IllegalArgumentException("Kein Konto mit diesen Anmeldedaten gefunden. Bitte registriere dich zuerst."))
+        }
     }
 
     override suspend fun registerUser(
