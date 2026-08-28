@@ -81,8 +81,8 @@ val connector: KliqConnectorConnector = KliqConnectorConnector.getInstance(
 
 The `kliq-connector` Data Connect connector defines
 18 queries and
-27 mutations,
-a total of 45 operations.
+28 mutations,
+a total of 46 operations.
 Each of these operations is exposed
 as a property of [KliqConnectorConnector].
 

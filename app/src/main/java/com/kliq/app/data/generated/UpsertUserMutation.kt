@@ -14,11 +14,11 @@ package com.kliq.app.data.generated
 
 
 
-public interface CreateUserMutation :
+public interface UpsertUserMutation :
     com.google.firebase.dataconnect.generated.GeneratedMutation<
       KliqConnectorConnector,
-      CreateUserMutation.Data,
-      CreateUserMutation.Variables
+      UpsertUserMutation.Data,
+      UpsertUserMutation.Variables
     >
 {
   
@@ -151,7 +151,7 @@ public interface CreateUserMutation :
     @kotlinx.serialization.Serializable
   public data class Data(
   
-    val user_insert: UserKey,
+    val user_upsert: UserKey,
   
   ) {
     
@@ -160,7 +160,7 @@ public interface CreateUserMutation :
   
 
   public companion object {
-    public val operationName: String = "CreateUser"
+    public val operationName: String = "UpsertUser"
 
     public val dataDeserializer: kotlinx.serialization.DeserializationStrategy<Data> =
       kotlinx.serialization.serializer()
@@ -170,20 +170,20 @@ public interface CreateUserMutation :
   }
 }
 
-public fun CreateUserMutation.ref(
+public fun UpsertUserMutation.ref(
   
     id: String,username: String,email: String,
 
   
-    block_: CreateUserMutation.Variables.Builder.() -> Unit = {}
+    block_: UpsertUserMutation.Variables.Builder.() -> Unit = {}
   
 ): com.google.firebase.dataconnect.MutationRef<
-    CreateUserMutation.Data,
-    CreateUserMutation.Variables
+    UpsertUserMutation.Data,
+    UpsertUserMutation.Variables
   > =
   ref(
     
-      CreateUserMutation.Variables.build(
+      UpsertUserMutation.Variables.build(
         id=id,username=username,email=email,
   
     block_
@@ -191,18 +191,18 @@ public fun CreateUserMutation.ref(
     
   )
 
-public suspend fun CreateUserMutation.execute(
+public suspend fun UpsertUserMutation.execute(
 
   
     
       id: String,username: String,email: String,
 
   
-    block_: CreateUserMutation.Variables.Builder.() -> Unit = {}
+    block_: UpsertUserMutation.Variables.Builder.() -> Unit = {}
 
   ): com.google.firebase.dataconnect.MutationResult<
-    CreateUserMutation.Data,
-    CreateUserMutation.Variables
+    UpsertUserMutation.Data,
+    UpsertUserMutation.Variables
   > =
   ref(
     

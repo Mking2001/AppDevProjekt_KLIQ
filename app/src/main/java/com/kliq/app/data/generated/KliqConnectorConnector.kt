@@ -105,6 +105,8 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
   
     public val upsertClub: UpsertClubMutation
   
+    public val upsertUser: UpsertUserMutation
+  
     public val upsertUserPreference: UpsertUserPreferenceMutation
   
     public val voteReviewHelpful: VoteReviewHelpfulMutation
@@ -324,6 +326,10 @@ private class KliqConnectorConnectorImpl(
       UpsertClubMutationImpl(this)
     }
   
+    override val upsertUser by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      UpsertUserMutationImpl(this)
+    }
+  
     override val upsertUserPreference by lazy(LazyThreadSafetyMode.PUBLICATION) {
       UpsertUserPreferenceMutationImpl(this)
     }
@@ -365,6 +371,7 @@ private class KliqConnectorConnectorImpl(
         updateMessageStatus,
         updateUserProfile,
         upsertClub,
+        upsertUser,
         upsertUserPreference,
         voteReviewHelpful,
         
@@ -1168,6 +1175,21 @@ private class UpsertClubMutationImpl(
     UpsertClubMutation.Companion.operationName,
     UpsertClubMutation.Companion.dataDeserializer,
     UpsertClubMutation.Companion.variablesSerializer,
+  )
+
+
+private class UpsertUserMutationImpl(
+  connector: KliqConnectorConnector
+):
+  UpsertUserMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      UpsertUserMutation.Data,
+      UpsertUserMutation.Variables
+  >(
+    connector,
+    UpsertUserMutation.Companion.operationName,
+    UpsertUserMutation.Companion.dataDeserializer,
+    UpsertUserMutation.Companion.variablesSerializer,
   )
 
 

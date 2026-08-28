@@ -3,11 +3,55 @@
 # ============================================================
 
 # ===== USER Mutations =====
-mutation CreateUser($id: String!, $username: String!, $email: String!) @auth(level: PUBLIC) {
+mutation CreateUser(
+  $id: String!,
+  $username: String!,
+  $email: String!,
+  $isVerified: Boolean = false,
+  $gender: String = "UNSPECIFIED",
+  $age: Int,
+  $hometown: String,
+  $profilePictureUrl: String,
+  $bio: String,
+  $phoneNumber: String
+) @auth(level: PUBLIC) {
   user_insert(data: {
     id: $id
     username: $username
     email: $email
+    isVerified: $isVerified
+    gender: $gender
+    age: $age
+    hometown: $hometown
+    profilePictureUrl: $profilePictureUrl
+    bio: $bio
+    phoneNumber: $phoneNumber
+  })
+}
+
+mutation UpsertUser(
+  $id: String!,
+  $username: String!,
+  $email: String!,
+  $isVerified: Boolean = false,
+  $gender: String = "UNSPECIFIED",
+  $age: Int,
+  $hometown: String,
+  $profilePictureUrl: String,
+  $bio: String,
+  $phoneNumber: String
+) @auth(level: PUBLIC) {
+  user_upsert(data: {
+    id: $id
+    username: $username
+    email: $email
+    isVerified: $isVerified
+    gender: $gender
+    age: $age
+    hometown: $hometown
+    profilePictureUrl: $profilePictureUrl
+    bio: $bio
+    phoneNumber: $phoneNumber
   })
 }
 
