@@ -49,6 +49,16 @@ interface FeedRepository {
         text: String
     ): Result<FeedComment>
 
+    /** Erstellt eine neue Story des Nutzers. */
+    suspend fun createStory(
+        authorUserId: String,
+        authorName: String,
+        imageUrl: String,
+        avatarUrl: String? = null,
+        headline: String = "",
+        clubName: String? = null
+    ): Result<Story> = Result.failure(NotImplementedError())
+
     /** Markiert eine Story als gesehen. */
     suspend fun markStoryAsSeen(storyId: String)
 

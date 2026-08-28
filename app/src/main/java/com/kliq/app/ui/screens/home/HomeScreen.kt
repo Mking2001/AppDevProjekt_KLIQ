@@ -1,5 +1,8 @@
 package com.kliq.app.ui.screens.home
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -50,6 +53,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.kliq.app.ui.components.KliqFeedCard
 import com.kliq.app.ui.components.KliqScreenScaffold
 import com.kliq.app.ui.navigation.TopBarMenuAction
@@ -92,6 +99,13 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    val storyMediaLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.onPostStory(context, it) }
+    }
 
     LaunchedEffect(uiState.errorMessage, uiState.infoMessage) {
         val message = uiState.errorMessage ?: uiState.infoMessage
@@ -143,7 +157,18 @@ fun HomeScreen(
             ) {
                 item {
                     StoryRow(
+                        myStory = uiState.myStory,
+                        myProfilePictureUrl = uiState.myProfilePictureUrl,
+                        myUserName = uiState.myUserName,
+                        isPostingStory = uiState.isPostingStory,
                         stories = uiState.storyItems,
+                        onMyStoryClick = {
+                            uiState.myStory?.let { viewModel.onStoryOpened(it.id) }
+                                ?: storyMediaLauncher.launch("image/*")
+                        },
+                        onAddStoryClick = {
+                            storyMediaLauncher.launch("image/*")
+                        },
                         onStoryClick = { storyId -> viewModel.onStoryOpened(storyId) }
                     )
                 }
@@ -217,21 +242,130 @@ fun HomeScreen(
 }
 
 /**
- * Horizontale Story-Leiste. Ungesehene Storys erhalten einen Gradient-Rahmen,
- * der nach dem Öffnen verschwindet.
- *
- * @param stories Anzuzeigende Storys.
- * @param onStoryClick Callback mit der Story-ID beim Antippen.
+ * Horizontale Story-Leiste. Erstes Element ist die eigene Story (Instagram-Style).
  */
 @Composable
 private fun StoryRow(
+    myStory: StoryItemUi?,
+    myProfilePictureUrl: String?,
+    myUserName: String,
+    isPostingStory: Boolean,
     stories: List<StoryItemUi>,
+    onMyStoryClick: () -> Unit,
+    onAddStoryClick: () -> Unit,
     onStoryClick: (String) -> Unit
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // 1. Deine Story (Instagram-Style)
+        item(key = "my_own_story_item") {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .width(72.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .ensureMinTouchTarget(48.dp)
+            ) {
+                Box(
+                    modifier = Modifier.size(64.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Profilbild-Kreis
+                    Box(
+                        modifier = Modifier
+                            .size(64.dp)
+                            .then(
+                                if (myStory != null) {
+                                    Modifier.border(
+                                        width = 2.5.dp,
+                                        brush = Brush.linearGradient(
+                                            colors = listOf(
+                                                PurplePrimaryLight,
+                                                FuchsiaTertiary,
+                                                PurplePrimary
+                                            )
+                                        ),
+                                        shape = CircleShape
+                                    )
+                                } else {
+                                    Modifier.border(
+                                        width = 1.2.dp,
+                                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                                        shape = CircleShape
+                                    )
+                                }
+                            )
+                            .padding(3.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .clickable {
+                                if (myStory != null) onMyStoryClick() else onAddStoryClick()
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (!myProfilePictureUrl.isNullOrBlank()) {
+                            AsyncImage(
+                                model = myProfilePictureUrl,
+                                contentDescription = "Deine Story",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Text(
+                                text = myUserName.take(1).uppercase(),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Plus-Badge (+)
+                    Box(
+                        modifier = Modifier
+                            .size(22.dp)
+                            .align(Alignment.BottomEnd)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.background)
+                            .padding(2.dp)
+                            .clip(CircleShape)
+                            .background(PurplePrimary)
+                            .clickable { onAddStoryClick() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (isPostingStory) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(12.dp),
+                                color = Color.White,
+                                strokeWidth = 1.5.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Add,
+                                contentDescription = "Story hinzufügen",
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Deine Story",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = if (myStory != null) FontWeight.SemiBold else FontWeight.Normal,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        // 2. Storys von anderen Nutzern
         items(stories, key = { it.id }) { story ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -274,12 +408,21 @@ private fun StoryRow(
                         .background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = story.userName.take(1).uppercase(),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = FontWeight.Bold
-                    )
+                    if (!story.imageUrl.isNullOrBlank()) {
+                        AsyncImage(
+                            model = story.imageUrl,
+                            contentDescription = story.userName,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Text(
+                            text = story.userName.take(1).uppercase(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -393,7 +536,7 @@ private fun StoryViewerDialog(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(520.dp)
+                .height(540.dp)
                 .clip(RoundedCornerShape(20.dp))
                 .background(
                     brush = Brush.verticalGradient(
@@ -405,6 +548,39 @@ private fun StoryViewerDialog(
                     )
                 )
         ) {
+            if (!story.imageUrl.isNullOrBlank()) {
+                AsyncImage(
+                    model = story.imageUrl,
+                    contentDescription = story.headline,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+                // Top gradient scrim for readability
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .align(Alignment.TopCenter)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Black.copy(alpha = 0.75f), Color.Transparent)
+                            )
+                        )
+                )
+                // Bottom gradient scrim for readability
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(140.dp)
+                        .align(Alignment.BottomCenter)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))
+                            )
+                        )
+                )
+            }
+
             IconButton(
                 onClick = onDismiss,
                 modifier = Modifier
@@ -415,7 +591,7 @@ private fun StoryViewerDialog(
                 Icon(
                     imageVector = Icons.Filled.Close,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimary
+                    tint = Color.White
                 )
             }
 
@@ -428,7 +604,7 @@ private fun StoryViewerDialog(
                     text = story.userName,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    color = Color.White
                 )
                 if (!story.clubName.isNullOrBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -436,29 +612,31 @@ private fun StoryViewerDialog(
                         Icon(
                             imageVector = Icons.Filled.LocationOn,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
+                            tint = Color.White.copy(alpha = 0.85f),
                             modifier = Modifier.size(14.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = story.clubName,
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
+                            color = Color.White.copy(alpha = 0.85f)
                         )
                     }
                 }
             }
 
-            Text(
-                text = story.headline.ifBlank { "Story von ${story.userName}" },
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(horizontal = 24.dp)
-            )
+            if (story.headline.isNotBlank() && story.headline != "Neue Story") {
+                Text(
+                    text = story.headline,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 24.dp, vertical = 32.dp)
+                )
+            }
         }
     }
 }

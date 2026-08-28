@@ -55,6 +55,9 @@ interface FeedDao {
     suspend fun countStories(): Int
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertStory(story: StoryEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertStories(stories: List<StoryEntity>)
 
     @Query("UPDATE stories SET isSeen = 1 WHERE id = :storyId")

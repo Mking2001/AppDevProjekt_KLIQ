@@ -37,6 +37,10 @@ data class HomeUiState(
     val isRefreshing: Boolean = false,
     val feedItems: List<FeedItemUi> = emptyList(),
     val storyItems: List<StoryItemUi> = emptyList(),
+    val myStory: StoryItemUi? = null,
+    val myProfilePictureUrl: String? = null,
+    val myUserName: String = "Du",
+    val isPostingStory: Boolean = false,
     val activeStory: StoryItemUi? = null,
     val isComposerVisible: Boolean = false,
     val composerText: String = "",
@@ -95,7 +99,8 @@ data class CommentItemUi(
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
-    private val currentUserProvider: CurrentUserProvider
+    private val currentUserProvider: CurrentUserProvider,
+    private val userRepository: com.kliq.app.data.repository.UserRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -106,6 +111,21 @@ class HomeViewModel @Inject constructor(
     init {
         observeFeed()
         observeStories()
+        observeCurrentUser()
+    }
+
+    private fun observeCurrentUser() {
+        viewModelScope.launch {
+            val currentUserId = currentUserProvider.userId()
+            userRepository?.getUserById(currentUserId)?.collect { user ->
+                _uiState.update {
+                    it.copy(
+                        myProfilePictureUrl = user?.profilePictureUrl,
+                        myUserName = user?.username ?: "Du"
+                    )
+                }
+            }
+        }
     }
 
     private fun observeFeed() {
@@ -140,6 +160,7 @@ class HomeViewModel @Inject constructor(
 
     private fun observeStories() {
         viewModelScope.launch {
+            val currentUserId = currentUserProvider.userId()
             feedRepository.getStories()
                 .catch { error ->
                     _uiState.update {
@@ -147,25 +168,80 @@ class HomeViewModel @Inject constructor(
                     }
                 }
                 .collect { stories ->
-                    val items = stories.map { story ->
+                    val myStoryEntity = stories.find { it.authorUserId == currentUserId }
+                    val myStoryUi = myStoryEntity?.let {
                         StoryItemUi(
-                            id = story.id,
-                            userName = story.authorName,
-                            headline = story.headline,
-                            clubName = story.clubName,
-                            imageUrl = story.imageUrl,
-                            hasUnseenStory = !story.isSeen
+                            id = it.id,
+                            userName = "Deine Story",
+                            headline = it.headline,
+                            clubName = it.clubName,
+                            imageUrl = it.imageUrl,
+                            hasUnseenStory = false
                         )
                     }
+
+                    val otherStories = stories
+                        .filter { it.authorUserId != currentUserId }
+                        .map { story ->
+                            StoryItemUi(
+                                id = story.id,
+                                userName = story.authorName,
+                                headline = story.headline,
+                                clubName = story.clubName,
+                                imageUrl = story.imageUrl,
+                                hasUnseenStory = !story.isSeen
+                            )
+                        }
+
                     _uiState.update { state ->
                         state.copy(
-                            storyItems = items,
+                            myStory = myStoryUi,
+                            storyItems = otherStories,
                             activeStory = state.activeStory?.let { active ->
-                                items.find { it.id == active.id } ?: active
+                                if (active.id == myStoryUi?.id) myStoryUi
+                                else otherStories.find { it.id == active.id } ?: active
                             }
                         )
                     }
                 }
+        }
+    }
+
+    fun onPostStory(context: android.content.Context, uri: android.net.Uri) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isPostingStory = true) }
+            val compressor = com.kliq.app.data.util.ImageCompressor(context)
+            val compressResult = compressor.compressAndSaveImage(uri)
+
+            val currentUserId = currentUserProvider.userId()
+            val currentUserName = currentUserProvider.displayName()
+            val avatarUrl = _uiState.value.myProfilePictureUrl
+
+            compressResult.onSuccess { imagePath ->
+                feedRepository.createStory(
+                    authorUserId = currentUserId,
+                    authorName = currentUserName,
+                    imageUrl = imagePath,
+                    avatarUrl = avatarUrl,
+                    headline = "Neue Story"
+                ).onSuccess {
+                    _uiState.update { it.copy(isPostingStory = false, infoMessage = "Story veröffentlicht!") }
+                }.onFailure { error ->
+                    _uiState.update {
+                        it.copy(
+                            isPostingStory = false,
+                            errorMessage = "Story konnte nicht gespeichert werden: ${error.localizedMessage}"
+                        )
+                    }
+                }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isPostingStory = false,
+                        errorMessage = "Bild konnte nicht verarbeitet werden: ${error.localizedMessage}"
+                    )
+                }
+            }
         }
     }
 
