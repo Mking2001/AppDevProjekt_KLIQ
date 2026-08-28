@@ -12,6 +12,8 @@ import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.MockSmsVerificationService
 import com.kliq.app.data.remote.SmsVerificationService
+import com.kliq.app.data.generated.KliqConnectorConnector
+import com.kliq.app.data.generated.instance
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -131,6 +133,15 @@ object AppModule {
     @Singleton
     fun provideHapticFeedbackManager(impl: com.kliq.app.util.HapticFeedbackManagerImpl): com.kliq.app.util.HapticFeedbackManager {
         return impl
+    }
+
+    // =========================================================================
+    // Firebase Data Connect (SQL Connect)
+    // =========================================================================
+    @Provides
+    @Singleton
+    fun provideKliqConnector(): KliqConnectorConnector {
+        return KliqConnectorConnector.instance
     }
 }
 

@@ -5,6 +5,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -15,8 +17,8 @@ android {
         applicationId = "com.kliq.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "com.kliq.app.HiltTestRunner"
         vectorDrawables {
@@ -126,9 +128,27 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
     implementation("androidx.camera:camera-view:$cameraxVersion")
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    implementation("com.google.guava:guava:32.1.3-android") // Provides ListenableFuture for CameraX
+
+    // Firebase BoM (manages all Firebase SDK versions)
+    implementation(platform("com.google.firebase:firebase-bom:34.18.0"))
 
     // Firebase Cloud Messaging (FCM)
-    implementation("com.google.firebase:firebase-messaging-ktx:23.4.1")
+    implementation("com.google.firebase:firebase-messaging")
+
+    // Firebase Data Connect (SQL Connect)
+    implementation("com.google.firebase:firebase-dataconnect")
+
+    // Kotlin Serialization (required by Firebase Data Connect generated SDK)
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
+        force("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+    }
+}
 
     // Coroutines Play Services (for .await() on Tasks)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")

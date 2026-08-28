@@ -1,0 +1,379 @@
+# ============================================================
+# KLIQ Mutations — Firebase Data Connect
+# ============================================================
+
+# ===== USER Mutations =====
+mutation CreateUser($id: String!, $username: String!, $email: String!) @auth(level: USER) {
+  user_insert(data: {
+    id: $id
+    username: $username
+    email: $email
+  })
+}
+
+mutation UpdateUserProfile(
+  $id: String!,
+  $username: String,
+  $bio: String,
+  $profilePictureUrl: String,
+  $age: Int,
+  $hometown: String,
+  $gender: String,
+  $phoneNumber: String
+) @auth(level: USER) {
+  user_update(id: $id, data: {
+    username: $username
+    bio: $bio
+    profilePictureUrl: $profilePictureUrl
+    age: $age
+    hometown: $hometown
+    gender: $gender
+    phoneNumber: $phoneNumber
+  })
+}
+
+mutation UpsertUserPreference(
+  $userId: String!,
+  $isDarkMode: Boolean!,
+  $searchRadiusKm: Int!,
+  $pushNotificationsEnabled: Boolean!,
+  $searchIntent: String!,
+  $smokingHabit: String!,
+  $drinkingHabit: String!
+) @auth(level: USER) {
+  userPreference_upsert(data: {
+    userId: $userId
+    isDarkMode: $isDarkMode
+    searchRadiusKm: $searchRadiusKm
+    pushNotificationsEnabled: $pushNotificationsEnabled
+    searchIntent: $searchIntent
+    smokingHabit: $smokingHabit
+    drinkingHabit: $drinkingHabit
+  })
+}
+
+# ===== CLUB Mutations =====
+mutation UpsertClub(
+  $id: String!,
+  $name: String!,
+  $latitude: Float!,
+  $longitude: Float!,
+  $address: String!,
+  $category: String!,
+  $region: String!,
+  $city: String!,
+  $imageUrl: String,
+  $postalCode: String,
+  $websiteUrl: String,
+  $phoneNumber: String,
+  $contactEmail: String,
+  $instagramHandle: String
+) @auth(level: USER) {
+  club_upsert(data: {
+    id: $id
+    name: $name
+    latitude: $latitude
+    longitude: $longitude
+    address: $address
+    category: $category
+    region: $region
+    city: $city
+    imageUrl: $imageUrl
+    postalCode: $postalCode
+    websiteUrl: $websiteUrl
+    phoneNumber: $phoneNumber
+    contactEmail: $contactEmail
+    instagramHandle: $instagramHandle
+  })
+}
+
+mutation UpdateClubLiveStats(
+  $id: String!,
+  $currentCapacityPercent: Int!,
+  $malePercentage: Int!,
+  $femalePercentage: Int!,
+  $totalLiveVisitors: Int!
+) @auth(level: USER) {
+  club_update(id: $id, data: {
+    currentCapacityPercent: $currentCapacityPercent
+    malePercentage: $malePercentage
+    femalePercentage: $femalePercentage
+    totalLiveVisitors: $totalLiveVisitors
+  })
+}
+
+mutation ToggleClubFavorite($id: String!, $isFavorite: Boolean!) @auth(level: USER) {
+  club_update(id: $id, data: { isFavorite: $isFavorite })
+}
+
+# ===== EVENT Mutations =====
+mutation CreateEvent(
+  $id: String!,
+  $clubId: String!,
+  $title: String!,
+  $description: String!,
+  $startTime: Int64!,
+  $endTime: Int64!,
+  $price: String,
+  $imageUrl: String,
+  $category: String
+) @auth(level: USER) {
+  event_insert(data: {
+    id: $id
+    club: { id: $clubId }
+    title: $title
+    description: $description
+    startTime: $startTime
+    endTime: $endTime
+    price: $price
+    imageUrl: $imageUrl
+    category: $category
+  })
+}
+
+mutation CancelEvent($id: String!) @auth(level: USER) {
+  event_update(id: $id, data: { isCancelled: true })
+}
+
+# ===== CLUB OFFER Mutations =====
+mutation CreateClubOffer(
+  $id: String!,
+  $clubId: String!,
+  $title: String!,
+  $description: String!,
+  $offerType: String!,
+  $discountPercentage: Int,
+  $validUntil: Int64,
+  $isExclusive: Boolean
+) @auth(level: USER) {
+  clubOffer_insert(data: {
+    id: $id
+    club: { id: $clubId }
+    title: $title
+    description: $description
+    offerType: $offerType
+    discountPercentage: $discountPercentage
+    validUntil: $validUntil
+    isExclusive: $isExclusive
+  })
+}
+
+# ===== REVIEW Mutations =====
+mutation CreateReview(
+  $id: String!,
+  $reviewerUserId: String!,
+  $targetUserId: String,
+  $clubId: String,
+  $eventId: String,
+  $rating: Int!,
+  $text: String!,
+  $timestamp: Int64!,
+  $reviewerUsername: String!,
+  $reviewerAvatarUrl: String,
+  $verificationMethod: String,
+  $isVerified: Boolean
+) @auth(level: USER) {
+  review_insert(data: {
+    id: $id
+    reviewerUserId: $reviewerUserId
+    targetUserId: $targetUserId
+    clubId: $clubId
+    eventId: $eventId
+    rating: $rating
+    text: $text
+    timestamp: $timestamp
+    reviewerUsername: $reviewerUsername
+    reviewerAvatarUrl: $reviewerAvatarUrl
+    verificationMethod: $verificationMethod
+    isVerified: $isVerified
+  })
+}
+
+mutation VoteReviewHelpful($id: String!, $helpfulVotesCount: Int!) @auth(level: USER) {
+  review_update(id: $id, data: { helpfulVotesCount: $helpfulVotesCount })
+}
+
+# ===== CHAT Mutations =====
+mutation CreateChat(
+  $id: String!,
+  $name: String!,
+  $chatType: String!,
+  $avatarInitial: String!,
+  $lastMessageText: String!,
+  $lastMessageTimestampMs: Int64!,
+  $cityRegion: String,
+  $avatarUrl: String
+) @auth(level: USER) {
+  chat_insert(data: {
+    id: $id
+    name: $name
+    chatType: $chatType
+    avatarInitial: $avatarInitial
+    lastMessageText: $lastMessageText
+    lastMessageTimestampMs: $lastMessageTimestampMs
+    cityRegion: $cityRegion
+    avatarUrl: $avatarUrl
+  })
+}
+
+mutation UpdateChatLastMessage(
+  $id: String!,
+  $lastMessageText: String!,
+  $lastMessageTimestampMs: Int64!,
+  $unreadCount: Int
+) @auth(level: USER) {
+  chat_update(id: $id, data: {
+    lastMessageText: $lastMessageText
+    lastMessageTimestampMs: $lastMessageTimestampMs
+    unreadCount: $unreadCount
+  })
+}
+
+mutation ToggleChatPin($id: String!, $isPinned: Boolean!) @auth(level: USER) {
+  chat_update(id: $id, data: { isPinned: $isPinned })
+}
+
+mutation ToggleChatMute($id: String!, $isMuted: Boolean!) @auth(level: USER) {
+  chat_update(id: $id, data: { isMuted: $isMuted })
+}
+
+mutation ArchiveChat($id: String!, $isArchived: Boolean!) @auth(level: USER) {
+  chat_update(id: $id, data: { isArchived: $isArchived })
+}
+
+# ===== MESSAGE Mutations =====
+mutation SendMessage(
+  $id: String!,
+  $chatId: String!,
+  $senderUserId: String!,
+  $senderName: String!,
+  $text: String!,
+  $timestampMs: Int64!,
+  $isMine: Boolean!,
+  $messageType: String,
+  $mediaUrl: String,
+  $thumbnailUrl: String,
+  $caption: String,
+  $audioDurationMs: Int64,
+  $replyToMessageId: String
+) @auth(level: USER) {
+  message_insert(data: {
+    id: $id
+    chat: { id: $chatId }
+    senderUserId: $senderUserId
+    senderName: $senderName
+    text: $text
+    timestampMs: $timestampMs
+    isMine: $isMine
+    messageType: $messageType
+    mediaUrl: $mediaUrl
+    thumbnailUrl: $thumbnailUrl
+    caption: $caption
+    audioDurationMs: $audioDurationMs
+    replyToMessageId: $replyToMessageId
+  })
+}
+
+mutation UpdateMessageStatus($id: String!, $status: String!, $deliveredAtMs: Int64, $readAtMs: Int64) @auth(level: USER) {
+  message_update(id: $id, data: {
+    status: $status
+    deliveredAtMs: $deliveredAtMs
+    readAtMs: $readAtMs
+  })
+}
+
+# ===== DIRECT MESSAGE Mutations =====
+mutation SendDirectMessage(
+  $id: String!,
+  $senderId: String!,
+  $receiverId: String!,
+  $text: String!,
+  $timestamp: Int64!,
+  $messageType: String,
+  $mediaUrl: String,
+  $caption: String,
+  $audioDurationMs: Int64
+) @auth(level: USER) {
+  directMessage_insert(data: {
+    id: $id
+    senderId: $senderId
+    receiverId: $receiverId
+    text: $text
+    timestamp: $timestamp
+    messageType: $messageType
+    mediaUrl: $mediaUrl
+    caption: $caption
+    audioDurationMs: $audioDurationMs
+  })
+}
+
+mutation UpdateDirectMessageStatus($id: String!, $deliveryStatus: String!, $deliveredAtMs: Int64, $readAtMs: Int64) @auth(level: USER) {
+  directMessage_update(id: $id, data: {
+    deliveryStatus: $deliveryStatus
+    deliveredAtMs: $deliveredAtMs
+    readAtMs: $readAtMs
+  })
+}
+
+# ===== FRIEND Mutations =====
+mutation AddFriend($userId: String!, $friendUserId: String!, $createdAtTimestampMs: Int64!, $isQrVerified: Boolean) @auth(level: USER) {
+  friend_insert(data: {
+    userId: $userId
+    friendUserId: $friendUserId
+    createdAtTimestampMs: $createdAtTimestampMs
+    isQrVerified: $isQrVerified
+  })
+}
+
+mutation UpdateFriendStatus($userId: String!, $friendUserId: String!, $status: String!) @auth(level: USER) {
+  friend_update(key: { userId: $userId, friendUserId: $friendUserId }, data: { status: $status })
+}
+
+mutation RemoveFriend($userId: String!, $friendUserId: String!) @auth(level: USER) {
+  friend_delete(key: { userId: $userId, friendUserId: $friendUserId })
+}
+
+# ===== VISITED LOG Mutations =====
+mutation LogVisit(
+  $id: String!,
+  $userId: String!,
+  $clubId: String!,
+  $clubName: String!,
+  $visitedAtTimestamp: Int64!,
+  $isVerifiedByGps: Boolean!
+) @auth(level: USER) {
+  visitedLog_insert(data: {
+    id: $id
+    userId: $userId
+    clubId: $clubId
+    clubName: $clubName
+    visitedAtTimestamp: $visitedAtTimestamp
+    isVerifiedByGps: $isVerifiedByGps
+  })
+}
+
+# ===== BLOCKED USER Mutations =====
+mutation BlockUser($userId: String!, $blockedUserId: String!, $reason: String, $blockedAtTimestampMs: Int64!) @auth(level: USER) {
+  blockedUser_insert(data: {
+    userId: $userId
+    blockedUserId: $blockedUserId
+    reason: $reason
+    blockedAtTimestampMs: $blockedAtTimestampMs
+  })
+}
+
+mutation UnblockUser($userId: String!, $blockedUserId: String!) @auth(level: USER) {
+  blockedUser_delete(key: { userId: $userId, blockedUserId: $blockedUserId })
+}
+
+# ===== LOCATION Mutations =====
+mutation TrackUserLocation($id: String!, $latitude: Float!, $longitude: Float!, $accuracy: Float!, $timestampMs: Int64!, $speed: Float) @auth(level: USER) {
+  userLocation_insert(data: {
+    id: $id
+    latitude: $latitude
+    longitude: $longitude
+    accuracy: $accuracy
+    timestampMs: $timestampMs
+    speed: $speed
+  })
+}
