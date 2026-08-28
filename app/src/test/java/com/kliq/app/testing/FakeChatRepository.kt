@@ -1,4 +1,10 @@
-package com.kliq.app.testing
+This branch has conflicts that must be resolved
+Use the web editor or the command line to resolve conflicts before continuing.
+
+app/build.gradle.kts
+app/src/main/java/com/kliq/app/KliqApplication.kt
+app/src/main/java/com/kliq/app/ui/screens/map/MapViewModel.kt
+build.gradle.ktspackage com.kliq.app.testing
 
 import com.kliq.app.data.model.ChatConversation
 import com.kliq.app.data.model.ChatListItem

@@ -131,8 +131,8 @@ dependencies {
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
     implementation("com.google.guava:guava:32.1.3-android") // Provides ListenableFuture for CameraX
 
-    // Firebase BoM (manages all Firebase SDK versions)
-    implementation(platform("com.google.firebase:firebase-bom:34.18.0"))
+    // Firebase BoM (manages all Firebase SDK versions, Kotlin 1.9 compatible)
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
 
     // Firebase Cloud Messaging (FCM), Crashlytics & Analytics
     implementation("com.google.firebase:firebase-analytics")
@@ -140,7 +140,7 @@ dependencies {
     implementation("com.google.firebase:firebase-crashlytics")
 
     // Firebase Data Connect (SQL Connect)
-    implementation("com.google.firebase:firebase-dataconnect")
+    implementation("com.google.firebase:firebase-dataconnect:16.0.0-beta03")
 
     // Kotlin Serialization (required by Firebase Data Connect generated SDK)
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
