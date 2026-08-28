@@ -62,4 +62,5 @@ interface UserRepository {
     suspend fun blockUser(currentUserId: String, targetUserId: String, reason: String? = null): Result<Unit> = Result.success(Unit)
     suspend fun unblockUser(currentUserId: String, targetUserId: String): Result<Unit> = Result.success(Unit)
     suspend fun reportUser(reporterUserId: String, targetUserId: String, reason: String, details: String? = null): Result<Unit> = Result.success(Unit)
+    suspend fun deleteAccount(userId: String): Result<Unit> = Result.success(Unit)
 }

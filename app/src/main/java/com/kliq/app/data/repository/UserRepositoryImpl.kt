@@ -113,6 +113,9 @@ class UserRepositoryImpl @Inject constructor(
         }
 
         if (foundUser != null) {
+            if (!foundUser.password.isNullOrBlank() && foundUser.password != password) {
+                return@withContext Result.failure(IllegalArgumentException("Das eingegebene Passwort ist falsch."))
+            }
             sessionRepository?.saveSession(token = "jwt_${foundUser.id}", userId = foundUser.id)
             Result.success(foundUser)
         } else {
@@ -160,7 +163,8 @@ class UserRepositoryImpl @Inject constructor(
                 phoneNumber = phoneNumber.trim().ifBlank { null },
                 isVerified = true,
                 gender = gender,
-                updatedAtTimestampMs = System.currentTimeMillis()
+                updatedAtTimestampMs = System.currentTimeMillis(),
+                password = password
             )
 
             // 1. Save User in Room
@@ -506,6 +510,19 @@ class UserRepositoryImpl @Inject constructor(
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteAccount(userId: String): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            userDao.deleteUserById(userId)
+            userDao.deleteUserPreferencesByUserId(userId)
+            sessionRepository?.clearSession()
+            timber.log.Timber.d("Account %s successfully deleted", userId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            timber.log.Timber.e(e, "UserRepository.deleteAccount failed")
             Result.failure(e)
         }
     }

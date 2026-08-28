@@ -3,6 +3,7 @@ package com.kliq.app.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.repository.SessionRepository
+import com.kliq.app.data.repository.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,7 +26,8 @@ sealed class AuthUiState {
  */
 @HiltViewModel
 class AuthViewModel @Inject constructor(
-    private val sessionRepository: SessionRepository
+    private val sessionRepository: SessionRepository,
+    private val userRepository: UserRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Loading)
@@ -61,6 +63,19 @@ class AuthViewModel @Inject constructor(
             _uiState.value = AuthUiState.Loading
             sessionRepository.clearSession()
             _uiState.value = AuthUiState.Unauthenticated
+        }
+    }
+
+    fun deleteAccount(onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            val currentUserId = sessionRepository.getUserId() ?: ""
+            if (currentUserId.isNotBlank()) {
+                userRepository?.deleteAccount(currentUserId)
+            }
+            sessionRepository.clearSession()
+            _uiState.value = AuthUiState.Unauthenticated
+            onComplete()
         }
     }
 }

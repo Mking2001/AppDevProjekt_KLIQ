@@ -97,6 +97,7 @@ fun KliqMainScaffold(
     val themeState by themeViewModel.themeState.collectAsStateWithLifecycle()
     var isSettingsDialogVisible by remember { mutableStateOf(false) }
     var isAboutDialogVisible by remember { mutableStateOf(false) }
+    var isDeleteAccountDialogVisible by remember { mutableStateOf(false) }
     val navigationState by navigationViewModel.navigationState.collectAsStateWithLifecycle()
     val topBarState by topBarViewModel.uiState.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -190,6 +191,9 @@ fun KliqMainScaffold(
                                 popUpTo(0) { inclusive = true }
                             }
                         }
+                        TopBarMenuAction.DeleteAccount -> {
+                            isDeleteAccountDialogVisible = true
+                        }
                     }
                 },
                 onNavigateToActivities = {
@@ -231,6 +235,50 @@ fun KliqMainScaffold(
         isVisible = isAboutDialogVisible,
         onDismiss = { isAboutDialogVisible = false }
     )
+
+    if (isDeleteAccountDialogVisible) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { isDeleteAccountDialogVisible = false },
+            title = {
+                androidx.compose.material3.Text(
+                    text = "Profil löschen?",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                androidx.compose.material3.Text(
+                    text = "Bist du dir sicher, dass du dein Profil unwiderruflich löschen möchtest? Alle deine Beiträge, Storys und Profildaten werden gelöscht.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.Button(
+                    onClick = {
+                        isDeleteAccountDialogVisible = false
+                        authViewModel.deleteAccount {
+                            navController.navigate(CoreRoutes.AUTH_SELECTION) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    androidx.compose.material3.Text("Profil löschen", color = MaterialTheme.colorScheme.onError)
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = { isDeleteAccountDialogVisible = false }
+                ) {
+                    androidx.compose.material3.Text("Abbrechen")
+                }
+            }
+        )
+    }
 }
 
 @Composable

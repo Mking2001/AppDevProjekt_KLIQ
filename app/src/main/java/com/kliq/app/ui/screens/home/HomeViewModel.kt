@@ -63,6 +63,7 @@ data class HomeUiState(
  */
 data class FeedItemUi(
     val id: String,
+    val authorUserId: String = "",
     val userName: String,
     val timeAgo: String,
     val contentText: String,
@@ -71,7 +72,8 @@ data class FeedItemUi(
     val likeCount: Int = 0,
     val isLiked: Boolean = false,
     val commentCount: Int = 0,
-    val isPinnedToMap: Boolean = false
+    val isPinnedToMap: Boolean = false,
+    val isOwnPost: Boolean = false
 )
 
 /**
@@ -148,6 +150,7 @@ class HomeViewModel @Inject constructor(
 
     private fun observeFeed() {
         viewModelScope.launch {
+            val currentUserId = currentUserProvider.userId()
             feedRepository.getFeedPosts()
                 .catch { error ->
                     _uiState.update {
@@ -161,6 +164,7 @@ class HomeViewModel @Inject constructor(
                     val items = posts.map { post ->
                         FeedItemUi(
                             id = post.id,
+                            authorUserId = post.authorUserId,
                             userName = post.authorName,
                             timeAgo = formatRelativeTime(post.createdAtMs),
                             contentText = post.contentText,
@@ -168,11 +172,24 @@ class HomeViewModel @Inject constructor(
                             imageUrl = post.imageUrl,
                             likeCount = post.likeCount,
                             isLiked = post.isLikedByMe,
-                            commentCount = post.commentCount
+                            commentCount = post.commentCount,
+                            isOwnPost = (post.authorUserId == currentUserId)
                         )
                     }
                     _uiState.update { it.copy(feedItems = items, isLoading = false) }
                 }
+        }
+    }
+
+    fun onDeletePost(postId: String) {
+        viewModelScope.launch {
+            feedRepository.deletePost(postId)
+            _uiState.update { state ->
+                state.copy(
+                    feedItems = state.feedItems.filter { it.id != postId },
+                    infoMessage = "Beitrag wurde gelöscht."
+                )
+            }
         }
     }
 

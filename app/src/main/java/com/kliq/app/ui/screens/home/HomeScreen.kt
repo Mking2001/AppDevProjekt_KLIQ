@@ -217,9 +217,11 @@ fun HomeScreen(
                         commentCount = feedItem.commentCount,
                         clubName = feedItem.clubName,
                         imageUrl = feedItem.imageUrl,
+                        isOwnPost = feedItem.isOwnPost,
                         onLikeClick = { viewModel.onLikePost(feedItem.id) },
                         onCommentClick = { viewModel.onCommentsOpened(feedItem.id) },
                         onShareClick = { viewModel.onSharePostOpened(feedItem) },
+                        onDeletePostClick = { viewModel.onDeletePost(feedItem.id) },
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }

@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.NightsStay
 import androidx.compose.material.icons.outlined.Share
@@ -40,30 +41,31 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.kliq.app.ui.theme.ErrorRed
 import com.kliq.app.ui.theme.FuchsiaTertiary
 import com.kliq.app.ui.theme.PurplePrimary
+import com.kliq.app.ui.theme.PurplePrimaryLight
+import com.kliq.app.ui.theme.TealSecondary
 import com.kliq.app.util.ensureMinTouchTarget
 import com.kliq.app.util.talkBackDescription
 
 /**
- * Feed-Karte für den Home-Feed.
- *
- * Zeigt Verfasser, Zeitangabe, Motiv, Text und die Interaktionsleiste.
- * Liegt keine Bild-URL vor, wird eine Fallback-Grafik aus Kliq-Farbverlauf,
- * Nachtsymbol und optionalem Location-Namen gerendert, statt eine leere
- * Fläche anzuzeigen.
+ * Feed-Karte für die Beitragsanzeige im Hauptfeed.
  *
  * @param userName Anzeigename des Verfassers.
- * @param timeAgo Relative Zeitangabe, zum Beispiel "Vor 15 Min.".
- * @param contentText Textinhalt des Beitrags.
+ * @param timeAgo Formatierte relative Zeitangabe (z.B. "vor 2 Std.").
+ * @param contentText Haupttext des Beitrags.
+ * @param modifier Optionaler Modifier für Layout-Anpassungen.
  * @param likeCount Anzahl der Likes.
  * @param isLiked Ob der aktuelle Nutzer den Beitrag geliked hat.
  * @param commentCount Anzahl der Kommentare.
  * @param clubName Optionaler Name der verknüpften Location.
  * @param imageUrl Optionale Bild-URL des Beitrags.
+ * @param isOwnPost Ob der Beitrag vom aktuell angemeldeten Nutzer stammt.
  * @param onLikeClick Callback für den Like-Button.
  * @param onCommentClick Callback für den Kommentar-Button.
  * @param onShareClick Callback für den Teilen-Button.
+ * @param onDeletePostClick Callback zum Löschen des Beitrags (nur für Ersteller).
  */
 @Composable
 fun KliqFeedCard(
@@ -76,9 +78,11 @@ fun KliqFeedCard(
     commentCount: Int = 0,
     clubName: String? = null,
     imageUrl: String? = null,
+    isOwnPost: Boolean = false,
     onLikeClick: () -> Unit = {},
     onCommentClick: () -> Unit = {},
-    onShareClick: () -> Unit = {}
+    onShareClick: () -> Unit = {},
+    onDeletePostClick: (() -> Unit)? = null
 ) {
     val likeScale by animateFloatAsState(
         targetValue = if (isLiked) 1.15f else 1.0f,
@@ -95,7 +99,10 @@ fun KliqFeedCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 KliqAvatarCircle(size = 40.dp)
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -110,6 +117,21 @@ fun KliqFeedCard(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+
+                // Beitrag löschen (NUR wenn der aktuelle User der Ersteller ist!)
+                if (isOwnPost && onDeletePostClick != null) {
+                    IconButton(
+                        onClick = onDeletePostClick,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.DeleteOutline,
+                            contentDescription = "Beitrag löschen",
+                            tint = ErrorRed.copy(alpha = 0.85f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 

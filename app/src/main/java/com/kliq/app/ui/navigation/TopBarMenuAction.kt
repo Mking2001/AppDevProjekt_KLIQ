@@ -2,6 +2,7 @@ package com.kliq.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Logout
@@ -45,10 +46,15 @@ sealed class TopBarMenuAction(
         icon = Icons.Outlined.Logout
     )
 
+    data object DeleteAccount : TopBarMenuAction(
+        label = "Profil löschen",
+        icon = Icons.Outlined.DeleteForever
+    )
+
     companion object {
         /** Geordnete Liste aller Menü-Einträge */
         val allActions: List<TopBarMenuAction> = listOf(
-            Settings, EditProfile, ToggleTheme, About, Logout
+            Settings, EditProfile, ToggleTheme, About, Logout, DeleteAccount
         )
     }
 }

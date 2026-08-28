@@ -185,7 +185,7 @@ private fun OverflowMenuButton(
                     .background(MaterialTheme.colorScheme.surface)
             ) {
                 TopBarMenuAction.allActions.forEachIndexed { index, action ->
-                    val isLogout = action is TopBarMenuAction.Logout
+                    val isDestructive = action is TopBarMenuAction.Logout || action is TopBarMenuAction.DeleteAccount
 
                     DropdownMenuItem(
                         text = {
@@ -193,7 +193,7 @@ private fun OverflowMenuButton(
                                 text = action.label,
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium,
-                                color = if (isLogout) {
+                                color = if (isDestructive) {
                                     MaterialTheme.colorScheme.error
                                 } else {
                                     MaterialTheme.colorScheme.onSurface
@@ -210,7 +210,7 @@ private fun OverflowMenuButton(
                                 contentDescription = action.label,
                                 size = KliqIconSize.SMALL,
                                 category = KliqIconCategory.ACTION,
-                                tint = if (isLogout) {
+                                tint = if (isDestructive) {
                                     MaterialTheme.colorScheme.error
                                 } else {
                                     MaterialTheme.colorScheme.onSurfaceVariant

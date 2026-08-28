@@ -37,6 +37,9 @@ interface UserDao {
     @Query("DELETE FROM users")
     suspend fun clearUsers()
 
+    @Query("DELETE FROM users WHERE id = :userId")
+    suspend fun deleteUserById(userId: String)
+
     // Preferences
     @Query("SELECT * FROM user_preferences WHERE userId = :userId")
     fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?>
@@ -46,4 +49,7 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUserPreferences(preferences: UserPreferencesEntity)
+
+    @Query("DELETE FROM user_preferences WHERE userId = :userId")
+    suspend fun deleteUserPreferencesByUserId(userId: String)
 }
