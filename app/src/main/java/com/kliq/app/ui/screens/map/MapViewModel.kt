@@ -11,6 +11,7 @@ import com.kliq.app.data.repository.ClubRepository
 import com.kliq.app.data.repository.LocationRepository
 import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.data.seed.KlagenfurtSeedData
+import com.kliq.app.data.generated.*
 import com.kliq.app.domain.usecase.CalculateUserDistanceUseCase
 import com.kliq.app.util.HapticFeedbackManager
 import com.kliq.app.util.UserDistanceFormatter
@@ -134,7 +135,8 @@ class MapViewModel @Inject constructor(
     private val locationRepository: LocationRepository? = null,
     private val userRepository: UserRepository? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
-    private val hapticFeedbackManager: HapticFeedbackManager? = null
+    private val hapticFeedbackManager: HapticFeedbackManager? = null,
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
 ) : ViewModel() {
 
     companion object {
@@ -212,6 +214,34 @@ class MapViewModel @Inject constructor(
             _uiState.value.cameraPosition.latitude,
             _uiState.value.cameraPosition.longitude
         )
+        viewModelScope.launch(defaultDispatcher) {
+            kliqConnector?.let { connector ->
+                try {
+                    val response = connector.listUsers.execute()
+                    val remoteUsers = response.data.users.map { u ->
+                        UserMarkerUiState(
+                            userId = u.id,
+                            username = u.username,
+                            avatarUrl = u.profilePictureUrl,
+                            latitude = KlagenfurtSeedData.CITY_LATITUDE + (Math.random() - 0.5) * 0.01,
+                            longitude = KlagenfurtSeedData.CITY_LONGITUDE + (Math.random() - 0.5) * 0.01,
+                            isOnline = true,
+                            statusMessage = "Live via Firebase",
+                            isLocationSharingEnabled = true
+                        )
+                    }
+                    if (remoteUsers.isNotEmpty()) {
+                        allUsers = remoteUsers
+                        updateUserDistances(
+                            _uiState.value.cameraPosition.latitude,
+                            _uiState.value.cameraPosition.longitude
+                        )
+                    }
+                } catch (ignored: Exception) {
+                    // Keep fallback users
+                }
+            }
+        }
     }
 
     private fun observeLocationUpdates() {
@@ -220,6 +250,21 @@ class MapViewModel @Inject constructor(
                 repo.locationUpdates.collect { locationData ->
                     locationData?.let { loc ->
                         updateUserDistances(loc.latitude, loc.longitude)
+                        kliqConnector?.let { connector ->
+                            viewModelScope.launch(defaultDispatcher) {
+                                try {
+                                    connector.trackUserLocation.execute(
+                                        id = java.util.UUID.randomUUID().toString(),
+                                        latitude = loc.latitude,
+                                        longitude = loc.longitude,
+                                        accuracy = loc.accuracy.toDouble(),
+                                        timestampMs = System.currentTimeMillis()
+                                    )
+                                } catch (ignored: Exception) {
+                                    // Graceful fallback for offline mode
+                                }
+                            }
+                        }
                     }
                 }
             }
