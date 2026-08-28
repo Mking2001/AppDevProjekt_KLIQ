@@ -132,6 +132,7 @@ class UserRatingAggregationTest {
         val users = mutableMapOf<String, UserEntity>()
         override fun getUserById(userId: String): Flow<UserEntity?> = flowOf(users[userId])
         override suspend fun getUserByIdOneShot(userId: String): UserEntity? = users[userId]
+        override suspend fun getUserByUsername(username: String): UserEntity? = users.values.firstOrNull { it.username.equals(username, ignoreCase = true) }
         override fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?> = flowOf(null)
         override suspend fun getUserPreferencesOneShot(userId: String): UserPreferencesEntity? = null
         override suspend fun insertUser(user: UserEntity) { users[user.id] = user }

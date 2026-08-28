@@ -48,7 +48,7 @@ interface UserRepository {
         searchIntent: SearchIntent,
         bio: String,
         password: String
-    ): Result<UserEntity>
+    ): Result<UserEntity> = Result.success(UserEntity(id = "usr_default", username = username, email = "$username@kliq.app"))
     fun isUserBlocked(currentUserId: String, targetUserId: String): Flow<Boolean> = flowOf(false)
     fun getBlockedUserIds(currentUserId: String): Flow<List<String>> = flowOf(emptyList())
     suspend fun blockUser(currentUserId: String, targetUserId: String, reason: String? = null): Result<Unit> = Result.success(Unit)
