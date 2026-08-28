@@ -3,7 +3,7 @@
 # ============================================================
 
 # ===== USER Queries =====
-query GetUserById($id: String!) @auth(level: USER) {
+query GetUserById($id: String!) @auth(level: PUBLIC) {
   user(id: $id) {
     id
     username
@@ -19,7 +19,7 @@ query GetUserById($id: String!) @auth(level: USER) {
   }
 }
 
-query ListUsers @auth(level: USER) {
+query ListUsers @auth(level: PUBLIC) {
   users {
     id
     username
@@ -29,7 +29,7 @@ query ListUsers @auth(level: USER) {
   }
 }
 
-query GetUserPreferences($userId: String!) @auth(level: USER) {
+query GetUserPreferences($userId: String!) @auth(level: PUBLIC) {
   userPreferences(where: { userId: { eq: $userId } }) {
     userId
     isDarkMode
@@ -169,7 +169,7 @@ query GetReviewsByClub($clubId: String!) @auth(level: PUBLIC) {
   }
 }
 
-query GetReviewsByUser($userId: String!) @auth(level: USER) {
+query GetReviewsByUser($userId: String!) @auth(level: PUBLIC) {
   reviews(where: { reviewerUserId: { eq: $userId } }) {
     id
     clubId
@@ -180,7 +180,7 @@ query GetReviewsByUser($userId: String!) @auth(level: USER) {
   }
 }
 
-query GetReviewsForTargetUser($targetUserId: String!) @auth(level: USER) {
+query GetReviewsForTargetUser($targetUserId: String!) @auth(level: PUBLIC) {
   reviews(where: { targetUserId: { eq: $targetUserId } }) {
     id
     reviewerUserId
@@ -194,7 +194,7 @@ query GetReviewsForTargetUser($targetUserId: String!) @auth(level: USER) {
 }
 
 # ===== CHAT Queries =====
-query GetAllChats @auth(level: USER) {
+query GetAllChats @auth(level: PUBLIC) {
   chats {
     id
     name
@@ -213,7 +213,7 @@ query GetAllChats @auth(level: USER) {
   }
 }
 
-query GetMessagesByChat($chatId: String!) @auth(level: USER) {
+query GetMessagesByChat($chatId: String!) @auth(level: PUBLIC) {
   messages(
     where: { chat: { id: { eq: $chatId } } }
     orderBy: [{ timestampMs: ASC }]
@@ -239,7 +239,7 @@ query GetMessagesByChat($chatId: String!) @auth(level: USER) {
 }
 
 # ===== DIRECT MESSAGE Queries =====
-query GetDirectMessages($senderId: String!, $receiverId: String!) @auth(level: USER) {
+query GetDirectMessages($senderId: String!, $receiverId: String!) @auth(level: PUBLIC) {
   directMessages(
     where: {
       _or: [
@@ -263,7 +263,7 @@ query GetDirectMessages($senderId: String!, $receiverId: String!) @auth(level: U
 }
 
 # ===== FRIEND (Social) Queries =====
-query GetFriendsByUser($userId: String!) @auth(level: USER) {
+query GetFriendsByUser($userId: String!) @auth(level: PUBLIC) {
   friends(where: { userId: { eq: $userId }, status: { eq: "ACCEPTED" } }) {
     userId
     friendUserId
@@ -274,7 +274,7 @@ query GetFriendsByUser($userId: String!) @auth(level: USER) {
 }
 
 # ===== VISITED LOG Queries =====
-query GetVisitedLogsByUser($userId: String!) @auth(level: USER) {
+query GetVisitedLogsByUser($userId: String!) @auth(level: PUBLIC) {
   visitedLogs(
     where: { userId: { eq: $userId } }
     orderBy: [{ visitedAtTimestamp: DESC }]
@@ -288,7 +288,7 @@ query GetVisitedLogsByUser($userId: String!) @auth(level: USER) {
 }
 
 # ===== BLOCKED USER Queries =====
-query GetBlockedUsers($userId: String!) @auth(level: USER) {
+query GetBlockedUsers($userId: String!) @auth(level: PUBLIC) {
   blockedUsers(where: { userId: { eq: $userId } }) {
     userId
     blockedUserId

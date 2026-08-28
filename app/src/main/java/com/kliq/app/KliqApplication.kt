@@ -79,6 +79,19 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
             }
             analytics.logEvent(com.google.firebase.analytics.FirebaseAnalytics.Event.APP_OPEN, bundle)
 
+            // Anonyme Firebase Auth Anmeldung für Data Connect Auth Context
+            try {
+                com.google.firebase.auth.FirebaseAuth.getInstance().signInAnonymously().addOnCompleteListener { authTask ->
+                    if (authTask.isSuccessful) {
+                        Timber.d("Kliq Firebase Auth Anonymous User ID: %s", authTask.result?.user?.uid)
+                    } else {
+                        Timber.w(authTask.exception, "Firebase Auth Anonymous sign-in failed")
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.w(e, "Fehler bei Firebase Auth Initialisierung")
+            }
+
             // Globales Topic "all" für Sofort-Pushs abonnieren
             try {
                 com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("all")

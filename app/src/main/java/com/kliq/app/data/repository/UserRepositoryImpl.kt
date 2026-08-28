@@ -114,13 +114,25 @@ class UserRepositoryImpl @Inject constructor(
                     email = updatedUser.email
                 )
             } catch (ignored: Exception) {
+                // Graceful fallback if user already exists
+            }
+            try {
+                connector.updateUserProfile.execute(id = updatedUser.id) {
+                    this.username = updatedUser.username
+                    this.bio = updatedUser.bio
+                    this.profilePictureUrl = updatedUser.profilePictureUrl
+                    this.age = updatedUser.age
+                    this.hometown = updatedUser.hometown
+                    this.phoneNumber = updatedUser.phoneNumber
+                }
+            } catch (ignored: Exception) {
                 // Graceful fallback for offline mode
             }
         }
         Unit
     }
 
-    override suspend fun updateProfilePicture(userId: String, pictureUrl: String) = withContext(ioDispatcher) {
+    override suspend fun updateProfilePicture(userId: String, pictureUrl: String): Unit = withContext(ioDispatcher) {
         val existingUser = userDao.getUserByIdOneShot(userId)
         val updatedUser = (existingUser ?: UserEntity(
             id = userId,
@@ -131,6 +143,14 @@ class UserRepositoryImpl @Inject constructor(
             updatedAtTimestampMs = System.currentTimeMillis()
         )
         userDao.insertUser(updatedUser)
+        kliqConnector?.let { connector ->
+            try {
+                connector.updateUserProfile.execute(id = userId) {
+                    this.profilePictureUrl = pictureUrl
+                }
+            } catch (ignored: Exception) { }
+        }
+        Unit
     }
 
     override suspend fun saveUserPreferences(preferences: UserPreferencesEntity) = withContext(ioDispatcher) {
@@ -185,6 +205,15 @@ class UserRepositoryImpl @Inject constructor(
                     updatedAtTimestampMs = System.currentTimeMillis()
                 )
                 userDao.insertUser(newUser)
+                kliqConnector?.let { connector ->
+                    try {
+                        connector.createUser.execute(
+                            id = newUser.id,
+                            username = newUser.username,
+                            email = newUser.email
+                        )
+                    } catch (ignored: Exception) { }
+                }
                 Result.success(newUser)
             } else {
                 Result.failure(IllegalArgumentException("Der eingegebene Code muss genau 6 Ziffern enthalten."))

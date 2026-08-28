@@ -134,10 +134,11 @@ dependencies {
     // Firebase BoM (manages all Firebase SDK versions, Kotlin 1.9 compatible)
     implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
 
-    // Firebase Cloud Messaging (FCM), Crashlytics & Analytics
+    // Firebase Cloud Messaging (FCM), Crashlytics, Auth & Analytics
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.firebase:firebase-crashlytics")
+    implementation("com.google.firebase:firebase-auth")
 
     // Firebase Data Connect (SQL Connect)
     implementation("com.google.firebase:firebase-dataconnect:16.0.0-beta03")
