@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -39,16 +40,20 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,12 +61,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.MapsInitializer
+import com.google.android.gms.maps.OnMapsSdkInitializedCallback
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
@@ -74,8 +85,6 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.kliq.app.data.model.LocationPermissionState
 import com.kliq.app.data.model.MapCameraAnimationEvent
-import kotlinx.coroutines.flow.collectLatest
-import com.kliq.app.ui.components.KliqCategoryChip
 import com.kliq.app.ui.components.LocationPermanentlyDeniedDialog
 import com.kliq.app.ui.components.LocationRationaleDialog
 import com.kliq.app.ui.components.MapFilterSegmentedControl
@@ -87,11 +96,16 @@ import com.kliq.app.util.accessibilityHeading
 import com.kliq.app.util.ensureMinTouchTarget
 import com.kliq.app.util.talkBackDescription
 import com.kliq.app.viewmodel.PermissionViewModel
+import kotlinx.coroutines.flow.collectLatest
+import timber.log.Timber
 
 /**
  * Native Map Screen integrating Google Maps Compose SDK with custom dark-purple JSON styling,
  * custom Kliq purple club pins, circular user profile markers, performance marker clustering,
  * interactive quick view cards, and location filter mode switching (Public Events vs Private Locations).
+ *
+ * Behebt Abstürze auf physischen Geräten durch defensive MapsInitializer-Initialisierung,
+ * Lifecycle-Management, SecurityException-geschützte Standortermittlung und overflow-sichere Filter.
  *
  * @param topBarState Top bar UI state.
  * @param onToggleMenu Callback for menu toggle.
@@ -117,62 +131,118 @@ fun MapScreen(
     val permissionUiState by permissionViewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(
-            LatLng(uiState.cameraPosition.latitude, uiState.cameraPosition.longitude),
-            uiState.cameraPosition.zoom
-        )
-    }
+    // 1. Defensive Initialisierung des Maps SDK Renderers vor dem Rendern
+    var isMapsRendererReady by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        viewModel.cameraEventFlow.collectLatest { event ->
-            when (event) {
-                is MapCameraAnimationEvent.AnimateToLocation -> {
-                    val cameraPosition = CameraPosition.Builder()
-                        .target(LatLng(event.latitude, event.longitude))
-                        .zoom(event.zoom)
-                        .tilt(event.tilt)
-                        .bearing(event.bearing)
-                        .build()
-                    cameraPositionState.animate(
-                        update = CameraUpdateFactory.newCameraPosition(cameraPosition),
-                        durationMs = event.durationMs
-                    )
+        try {
+            MapsInitializer.initialize(context.applicationContext, MapsInitializer.Renderer.LATEST, object : OnMapsSdkInitializedCallback {
+                override fun onMapsSdkInitialized(renderer: MapsInitializer.Renderer) {
+                    Timber.d("Google Maps SDK Renderer erfolgreich initialisiert: %s", renderer)
+                    isMapsRendererReady = true
                 }
-                is MapCameraAnimationEvent.AnimateToBounds -> {
-                    val bounds = LatLngBounds(
-                        LatLng(event.bounds.southWestLat, event.bounds.southWestLng),
-                        LatLng(event.bounds.northEastLat, event.bounds.northEastLng)
-                    )
-                    cameraPositionState.animate(
-                        update = CameraUpdateFactory.newLatLngBounds(bounds, event.paddingPx),
-                        durationMs = event.durationMs
-                    )
-                }
-                is MapCameraAnimationEvent.AnimateTiltRotation -> {
-                    val currentPos = cameraPositionState.position
-                    val cameraPosition = CameraPosition.Builder()
-                        .target(currentPos.target)
-                        .zoom(currentPos.zoom)
-                        .tilt(event.tilt)
-                        .bearing(event.bearing)
-                        .build()
-                    cameraPositionState.animate(
-                        update = CameraUpdateFactory.newCameraPosition(cameraPosition),
-                        durationMs = event.durationMs
-                    )
-                }
-                is MapCameraAnimationEvent.SnapToPosition -> {
-                    cameraPositionState.position = CameraPosition.fromLatLngZoom(
-                        LatLng(event.latitude, event.longitude),
-                        event.zoom
-                    )
-                }
+            })
+        } catch (e: Exception) {
+            Timber.e(e, "MapsInitializer.initialize mit Renderer.LATEST fehlgeschlagen, versuche Standard-Renderer")
+            try {
+                MapsInitializer.initialize(context.applicationContext)
+                isMapsRendererReady = true
+            } catch (eFallback: Exception) {
+                Timber.e(eFallback, "Kritischer Fehler bei Fallback MapsInitializer.initialize")
+                isMapsRendererReady = true
             }
         }
     }
 
+    // 2. Saubere Anbindung an den Android-Lifecycle zur Vermeidung von Renderer-Deadlocks
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> Timber.d("MapScreen Lifecycle ON_START")
+                Lifecycle.Event.ON_RESUME -> {
+                    Timber.d("MapScreen Lifecycle ON_RESUME")
+                    try {
+                        permissionViewModel.checkPermissionStatus(context)
+                    } catch (e: Exception) {
+                        Timber.w(e, "Fehler beim Prüfen der Permissions im ON_RESUME")
+                    }
+                }
+                Lifecycle.Event.ON_PAUSE -> Timber.d("MapScreen Lifecycle ON_PAUSE")
+                Lifecycle.Event.ON_STOP -> Timber.d("MapScreen Lifecycle ON_STOP")
+                Lifecycle.Event.ON_DESTROY -> Timber.d("MapScreen Lifecycle ON_DESTROY")
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // 3. Defensive Initialisierung von CameraPositionState (Klagenfurt 46.6247, 14.3053, Zoom 13.5f)
+    val cameraPositionState = rememberCameraPositionState {
+        val initLat = if (uiState.cameraPosition.latitude != 0.0) uiState.cameraPosition.latitude else 46.6247
+        val initLng = if (uiState.cameraPosition.longitude != 0.0) uiState.cameraPosition.longitude else 14.3053
+        val initZoom = if (uiState.cameraPosition.zoom > 0f) uiState.cameraPosition.zoom else 13.5f
+        position = CameraPosition.fromLatLngZoom(LatLng(initLat, initLng), initZoom)
+    }
+
+    // Kamera-Animation Events aus dem ViewModel verarbeiten
+    LaunchedEffect(Unit) {
+        viewModel.cameraEventFlow.collectLatest { event ->
+            try {
+                when (event) {
+                    is MapCameraAnimationEvent.AnimateToLocation -> {
+                        val cameraPosition = CameraPosition.Builder()
+                            .target(LatLng(event.latitude, event.longitude))
+                            .zoom(event.zoom)
+                            .tilt(event.tilt)
+                            .bearing(event.bearing)
+                            .build()
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newCameraPosition(cameraPosition),
+                            durationMs = event.durationMs
+                        )
+                    }
+                    is MapCameraAnimationEvent.AnimateToBounds -> {
+                        val bounds = LatLngBounds(
+                            LatLng(event.bounds.southWestLat, event.bounds.southWestLng),
+                            LatLng(event.bounds.northEastLat, event.bounds.northEastLng)
+                        )
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newLatLngBounds(bounds, event.paddingPx),
+                            durationMs = event.durationMs
+                        )
+                    }
+                    is MapCameraAnimationEvent.AnimateTiltRotation -> {
+                        val currentPos = cameraPositionState.position
+                        val cameraPosition = CameraPosition.Builder()
+                            .target(currentPos.target)
+                            .zoom(currentPos.zoom)
+                            .tilt(event.tilt)
+                            .bearing(event.bearing)
+                            .build()
+                        cameraPositionState.animate(
+                            update = CameraUpdateFactory.newCameraPosition(cameraPosition),
+                            durationMs = event.durationMs
+                        )
+                    }
+                    is MapCameraAnimationEvent.SnapToPosition -> {
+                        cameraPositionState.position = CameraPosition.fromLatLngZoom(
+                            LatLng(event.latitude, event.longitude),
+                            event.zoom
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.e(e, "Fehler bei MapCameraAnimationEvent Ausführung")
+            }
+        }
+    }
+
+    // Debounced Viewport-Updates bei Kamerabewegung
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             val target = cameraPositionState.position.target
@@ -181,17 +251,37 @@ fun MapScreen(
         }
     }
 
-    val mapProperties = remember(uiState.styleConfig) {
+    // 4. Runtime Permission Check vor Aktivierung der Standortermittlung (SecurityException-Schutz)
+    val hasLocationPermission = remember(permissionUiState.permissionState) {
+        try {
+            val fineGranted = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            val coarseGranted = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+            fineGranted || coarseGranted
+        } catch (e: Exception) {
+            Timber.e(e, "Fehler bei Berechtigungsprüfung")
+            false
+        }
+    }
+
+    val mapProperties = remember(uiState.styleConfig, uiState.isLocationEnabled, hasLocationPermission) {
         val styleOptions = try {
             MapStyleOptions.loadRawResourceStyle(context, uiState.styleConfig.styleRawResId)
         } catch (e: Exception) {
+            Timber.w(e, "MapStyle konnte nicht aus Raw-Resource geladen werden")
             null
         }
         MapProperties(
             mapStyleOptions = styleOptions,
             isBuildingEnabled = uiState.styleConfig.isBuildingEnabled,
             isIndoorEnabled = uiState.styleConfig.isIndoorEnabled,
-            isMyLocationEnabled = uiState.isLocationEnabled
+            // isMyLocationEnabled darf NIEMALS true sein, wenn keine Permission vorliegt
+            isMyLocationEnabled = uiState.isLocationEnabled && hasLocationPermission
         )
     }
 
@@ -233,15 +323,20 @@ fun MapScreen(
             onMapLoaded = { viewModel.onMapLoaded() },
             onMapClick = { viewModel.onQuickViewDismissed() }
         ) {
-            // Render Custom Kliq User Profile Markers (Only if showPrivateLocations is enabled)
+            // Rendere Custom Kliq User Profile Markers (nur wenn showPrivateLocations aktiv ist)
             if (uiState.showPrivateLocations) {
                 uiState.userMarkers.forEach { userMarker ->
                     androidx.compose.runtime.key(userMarker.userId) {
                         val userIcon = remember(userMarker.username, userMarker.isOnline) {
-                            MarkerBitmapHelper.getUserMarkerBitmap(
-                                username = userMarker.username,
-                                isOnline = userMarker.isOnline
-                            )
+                            try {
+                                MarkerBitmapHelper.getUserMarkerBitmap(
+                                    username = userMarker.username,
+                                    isOnline = userMarker.isOnline
+                                )
+                            } catch (e: Exception) {
+                                Timber.e(e, "Fehler beim Erstellen des User-Marker-Bitmaps")
+                                null
+                            }
                         }
                         Marker(
                             state = MarkerState(position = LatLng(userMarker.latitude, userMarker.longitude)),
@@ -257,7 +352,7 @@ fun MapScreen(
                 }
             }
 
-            // Render Clustered & Single Kliq Club Markers (Only if showPublicEvents is enabled)
+            // Rendere Clustered & Single Kliq Club Markers (nur wenn showPublicEvents aktiv ist)
             if (uiState.showPublicEvents) {
                 uiState.clusteredMarkers.forEach { markerItem ->
                     androidx.compose.runtime.key(markerItem.id) {
@@ -265,10 +360,15 @@ fun MapScreen(
                             is ClusterMarkerUiState.SingleNode -> {
                                 val venue = markerItem.venue
                                 val clubIcon = remember(venue.category, venue.activeEventTitle) {
-                                    MarkerBitmapHelper.getClubMarkerBitmap(
-                                        category = venue.category,
-                                        hasActiveEvent = venue.activeEventTitle != null
-                                    )
+                                    try {
+                                        MarkerBitmapHelper.getClubMarkerBitmap(
+                                            category = venue.category,
+                                            hasActiveEvent = venue.activeEventTitle != null
+                                        )
+                                    } catch (e: Exception) {
+                                        Timber.e(e, "Fehler beim Erstellen des Club-Marker-Bitmaps")
+                                        null
+                                    }
                                 }
                                 Marker(
                                     state = MarkerState(position = markerItem.position),
@@ -288,10 +388,15 @@ fun MapScreen(
                             }
                             is ClusterMarkerUiState.ClusterNode -> {
                                 val clusterIcon = remember(markerItem.count, markerItem.primaryCategory) {
-                                    MarkerBitmapHelper.getClusterMarkerBitmap(
-                                        count = markerItem.count,
-                                        primaryCategory = markerItem.primaryCategory
-                                    )
+                                    try {
+                                        MarkerBitmapHelper.getClusterMarkerBitmap(
+                                            count = markerItem.count,
+                                            primaryCategory = markerItem.primaryCategory
+                                        )
+                                    } catch (e: Exception) {
+                                        Timber.e(e, "Fehler beim Erstellen des Cluster-Marker-Bitmaps")
+                                        null
+                                    }
                                 }
                                 Marker(
                                     state = MarkerState(position = markerItem.position),
@@ -322,17 +427,36 @@ fun MapScreen(
                 onModeSelected = { viewModel.onLocationFilterModeSelected(it) }
             )
 
-            if (uiState.showPublicEvents) {
+            if (uiState.showPublicEvents && uiState.filters.isNotEmpty()) {
                 LazyRow(
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     itemsIndexed(uiState.filters) { index, filter ->
-                        KliqCategoryChip(
-                            label = filter,
+                        FilterChip(
                             selected = uiState.selectedFilter == index,
-                            onClick = { viewModel.onFilterSelected(index) }
+                            onClick = { viewModel.onFilterSelected(index) },
+                            label = {
+                                Text(
+                                    text = filter,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (uiState.selectedFilter == index) FontWeight.Bold else FontWeight.Medium
+                                )
+                            },
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f),
+                                labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                            ),
+                            border = FilterChipDefaults.filterChipBorder(
+                                enabled = true,
+                                selected = uiState.selectedFilter == index,
+                                borderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                selectedBorderColor = MaterialTheme.colorScheme.primary
+                            ),
+                            shape = RoundedCornerShape(12.dp)
                         )
                     }
                 }
@@ -342,7 +466,7 @@ fun MapScreen(
         // Location FAB
         FloatingActionButton(
             onClick = {
-                if (permissionUiState.permissionState is LocationPermissionState.Granted) {
+                if (hasLocationPermission) {
                     viewModel.onLocationRequested()
                 } else {
                     permissionViewModel.onRequestPermissionClicked(context)
@@ -573,37 +697,58 @@ private fun VenueCard(
 }
 
 /**
- * Startet die Routenführung in einer externen Karten-App.
+ * Startet die Routenführung in einer externen Karten-App (Google Maps Navigation).
  *
- * Es wird zunächst der Google-Maps-Navigationsintent versucht. Ist die App nicht
- * installiert, wird auf einen generischen `geo:`-Intent ausgewichen. Steht keine
- * Karten-App zur Verfügung, erhält der Nutzer eine Rückmeldung statt eines Absturzes.
+ * Es wird zunächst der Google-Maps-Navigationsintent versucht (`google.navigation:q=Lat,Lng`).
+ * Ist die Google Maps App nicht installiert oder schlägt fehl, wird auf einen generischen `geo:`-Intent
+ * bzw. auf den Webbrowser ausgewichen.
  *
- * Voraussetzung unter Android 11 und höher ist die `<queries>`-Deklaration im Manifest.
+ * Alle Intent-Aufrufe sind defensiv in Try-Catch-Blöcken gekapselt.
  *
  * @param context Kontext zum Starten der Activity.
  * @param venue Ziel-Venue mit Koordinaten und Namen.
  */
 private fun launchExternalRoute(context: Context, venue: VenueItemUi) {
-    val label = Uri.encode(venue.name)
-    val navigationUri = Uri.parse("google.navigation:q=${venue.latitude},${venue.longitude}")
-    val fallbackUri = Uri.parse("geo:${venue.latitude},${venue.longitude}?q=${venue.latitude},${venue.longitude}($label)")
-
-    val navigationIntent = Intent(Intent.ACTION_VIEW, navigationUri).apply {
-        setPackage("com.google.android.apps.maps")
-    }
-
     try {
-        context.startActivity(navigationIntent)
-    } catch (e: ActivityNotFoundException) {
-        try {
-            context.startActivity(Intent(Intent.ACTION_VIEW, fallbackUri))
-        } catch (e2: ActivityNotFoundException) {
-            Toast.makeText(
-                context,
-                "Es ist keine Karten-App für die Routenführung installiert.",
-                Toast.LENGTH_LONG
-            ).show()
+        val label = Uri.encode(venue.name)
+        val navigationUri = Uri.parse("google.navigation:q=${venue.latitude},${venue.longitude}")
+        val fallbackGeoUri = Uri.parse("geo:${venue.latitude},${venue.longitude}?q=${venue.latitude},${venue.longitude}($label)")
+        val webMapsUri = Uri.parse("https://www.google.com/maps/dir/?api=1&destination=${venue.latitude},${venue.longitude}")
+
+        val navigationIntent = Intent(Intent.ACTION_VIEW, navigationUri).apply {
+            setPackage("com.google.android.apps.maps")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
+
+        try {
+            context.startActivity(navigationIntent)
+        } catch (eMapsApp: Exception) {
+            try {
+                val fallbackIntent = Intent(Intent.ACTION_VIEW, fallbackGeoUri).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                }
+                context.startActivity(fallbackIntent)
+            } catch (eGeo: Exception) {
+                try {
+                    val webIntent = Intent(Intent.ACTION_VIEW, webMapsUri).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    }
+                    context.startActivity(webIntent)
+                } catch (eWeb: Exception) {
+                    Toast.makeText(
+                        context,
+                        "Es ist keine Karten-App für die Routenführung installiert.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    } catch (eAll: Exception) {
+        Timber.e(eAll, "Fehler beim Vorbereiten der Routenführung")
+        Toast.makeText(
+            context,
+            "Routenführung konnte nicht gestartet werden.",
+            Toast.LENGTH_SHORT
+        ).show()
     }
 }
