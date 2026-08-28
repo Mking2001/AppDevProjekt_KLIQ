@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 object DatabaseMigrationManager {
@@ -11,12 +12,23 @@ object DatabaseMigrationManager {
     private const val TAG = "DatabaseMigration"
     const val DATABASE_NAME = "kliq_db"
 
+    val MIGRATION_20_21 = object : Migration(20, 21) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            try {
+                db.execSQL("ALTER TABLE users ADD COLUMN password TEXT DEFAULT NULL")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_20_21: column may already exist: ${e.message}")
+            }
+        }
+    }
+
     fun buildDatabase(context: Context): KliqDatabase {
         return Room.databaseBuilder(
             context,
             KliqDatabase::class.java,
             DATABASE_NAME
         )
+        .addMigrations(MIGRATION_20_21)
         .fallbackToDestructiveMigration()
         .fallbackToDestructiveMigrationOnDowngrade()
         .addCallback(object : RoomDatabase.Callback() {
