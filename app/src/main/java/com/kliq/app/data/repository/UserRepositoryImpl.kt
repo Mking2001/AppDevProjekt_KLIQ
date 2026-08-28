@@ -14,12 +14,15 @@ import com.kliq.app.data.remote.BlockUserRequestDto
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.ReportUserRequestDto
 import com.kliq.app.data.generated.*
+import timber.log.Timber
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -42,6 +45,7 @@ class UserRepositoryImpl @Inject constructor(
         // 1. Check local Room DB
         val localUser = userDao.getUserByUsername(trimmed)
         if (localUser != null) {
+            Timber.d("Username '%s' exists locally in Room DB", trimmed)
             return@withContext false
         }
 
@@ -51,10 +55,11 @@ class UserRepositoryImpl @Inject constructor(
                 val cloudUsers = connector.listUsers.execute().data.users
                 val existsInCloud = cloudUsers.any { it.username.equals(trimmed, ignoreCase = true) }
                 if (existsInCloud) {
+                    Timber.i("Username '%s' already taken in Firebase SQL Connect", trimmed)
                     return@withContext false
                 }
-            } catch (ignored: Exception) {
-                // If offline, rely on local DB check
+            } catch (e: Exception) {
+                Timber.w(e, "Could not check username in Firebase SQL Connect, relying on local DB")
             }
         }
 
@@ -99,6 +104,7 @@ class UserRepositoryImpl @Inject constructor(
 
             // 1. Save User in Room
             userDao.insertUser(newUser)
+            Timber.i("Saved user locally in Room DB: %s (%s)", newUser.id, newUser.username)
 
             // 2. Save Preferences in Room
             val preferences = UserPreferencesEntity(
@@ -118,7 +124,10 @@ class UserRepositoryImpl @Inject constructor(
                         username = newUser.username,
                         email = newUser.email
                     )
-                } catch (ignored: Exception) { }
+                    Timber.i("Successfully created user '%s' in Firebase SQL Connect", newUser.id)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to create user in Firebase SQL Connect (createUser)")
+                }
 
                 try {
                     connector.updateUserProfile.execute(id = newUser.id) {
@@ -130,7 +139,10 @@ class UserRepositoryImpl @Inject constructor(
                         this.gender = newUser.gender
                         this.phoneNumber = newUser.phoneNumber
                     }
-                } catch (ignored: Exception) { }
+                    Timber.i("Successfully updated profile for '%s' in Firebase SQL Connect", newUser.id)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to update user profile in Firebase SQL Connect")
+                }
 
                 try {
                     connector.upsertUserPreference.execute(
@@ -142,16 +154,50 @@ class UserRepositoryImpl @Inject constructor(
                         smokingHabit = SmokingHabit.NEVER.name,
                         drinkingHabit = DrinkingHabit.NEVER.name
                     )
-                } catch (ignored: Exception) { }
-            }
+                    Timber.i("Successfully saved user preferences for '%s' in Firebase SQL Connect", newUser.id)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to upsert user preference in Firebase SQL Connect")
+                }
+            } ?: Timber.w("KliqConnectorConnector is null during registerUser - skipping Cloud SQL sync")
 
             Result.success(newUser)
         } catch (e: Exception) {
+            Timber.e(e, "Error registering user in UserRepositoryImpl")
             Result.failure(e)
         }
     }
 
     override fun getUserById(userId: String): Flow<UserEntity?> {
+        kliqConnector?.let { connector ->
+            kotlinx.coroutines.CoroutineScope(ioDispatcher).launch {
+                try {
+                    val local = userDao.getUserByIdOneShot(userId)
+                    if (local == null) {
+                        val response = connector.getUserById.execute(id = userId)
+                        val remote = response.data.user
+                        if (remote != null) {
+                            val entity = UserEntity(
+                                id = remote.id,
+                                username = remote.username,
+                                email = remote.email,
+                                age = remote.age,
+                                hometown = remote.hometown,
+                                profilePictureUrl = remote.profilePictureUrl,
+                                bio = remote.bio,
+                                phoneNumber = remote.phoneNumber,
+                                isVerified = remote.isVerified,
+                                gender = remote.gender,
+                                updatedAtTimestampMs = System.currentTimeMillis()
+                            )
+                            userDao.insertUser(entity)
+                            Timber.i("Fetched remote user '%s' from SQL Connect and cached locally", userId)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.d(e, "Could not fetch user '%s' from Firebase SQL Connect (offline or not found)", userId)
+                }
+            }
+        }
         return userDao.getUserById(userId).flowOn(ioDispatcher)
     }
 
@@ -177,10 +223,38 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun syncUserProfile(userId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
+            kliqConnector?.let { connector ->
+                try {
+                    val response = connector.getUserById.execute(id = userId)
+                    val remote = response.data.user
+                    if (remote != null) {
+                        val entity = UserEntity(
+                            id = remote.id,
+                            username = remote.username,
+                            email = remote.email,
+                            age = remote.age,
+                            hometown = remote.hometown,
+                            profilePictureUrl = remote.profilePictureUrl,
+                            bio = remote.bio,
+                            phoneNumber = remote.phoneNumber,
+                            isVerified = remote.isVerified,
+                            gender = remote.gender,
+                            updatedAtTimestampMs = System.currentTimeMillis()
+                        )
+                        userDao.insertUser(entity)
+                        Timber.i("Successfully synced user profile for '%s' from SQL Connect", userId)
+                        return@withContext Result.success(Unit)
+                    }
+                } catch (e: Exception) {
+                    Timber.w(e, "Failed to sync user from SQL Connect, trying REST API fallback")
+                }
+            }
+
             val remoteUser = apiService.getUserProfile(userId)
             userDao.insertUser(remoteUser)
             Result.success(Unit)
         } catch (e: Exception) {
+            Timber.e(e, "Error syncing user profile for '%s'", userId)
             Result.failure(e)
         }
     }
@@ -194,8 +268,9 @@ class UserRepositoryImpl @Inject constructor(
                     username = user.username,
                     email = user.email
                 )
-            } catch (ignored: Exception) {
-                // Graceful fallback for offline mode
+                Timber.i("Saved user '%s' in Firebase SQL Connect", user.id)
+            } catch (e: Exception) {
+                Timber.w(e, "Failed to save user in Firebase SQL Connect (createUser)")
             }
         }
         Unit
@@ -231,7 +306,7 @@ class UserRepositoryImpl @Inject constructor(
                     email = updatedUser.email
                 )
             } catch (ignored: Exception) {
-                // Graceful fallback if user already exists
+                // User may already exist in Cloud SQL
             }
             try {
                 connector.updateUserProfile.execute(id = updatedUser.id) {
@@ -242,8 +317,9 @@ class UserRepositoryImpl @Inject constructor(
                     this.hometown = updatedUser.hometown
                     this.phoneNumber = updatedUser.phoneNumber
                 }
-            } catch (ignored: Exception) {
-                // Graceful fallback for offline mode
+                Timber.i("Successfully updated profile for '%s' in Firebase SQL Connect", userId)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to update profile in Firebase SQL Connect for '%s'", userId)
             }
         }
         Unit
@@ -265,7 +341,10 @@ class UserRepositoryImpl @Inject constructor(
                 connector.updateUserProfile.execute(id = userId) {
                     this.profilePictureUrl = pictureUrl
                 }
-            } catch (ignored: Exception) { }
+                Timber.i("Updated profile picture in Firebase SQL Connect for user '%s'", userId)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to update profile picture in Firebase SQL Connect for user '%s'", userId)
+            }
         }
         Unit
     }
@@ -329,7 +408,10 @@ class UserRepositoryImpl @Inject constructor(
                             username = newUser.username,
                             email = newUser.email
                         )
-                    } catch (ignored: Exception) { }
+                        Timber.i("OTP User created in Firebase SQL Connect: %s", newUser.id)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to create OTP user in Firebase SQL Connect: %s", newUser.id)
+                    }
                 }
                 Result.success(newUser)
             } else {
