@@ -1,5 +1,6 @@
 package com.kliq.app.ui.screens.profile
 
+import com.kliq.app.testing.createTestProfileViewModel
 import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.local.entities.ReviewEntity
@@ -42,7 +43,7 @@ class ProfileAverageRatingUnitTest {
         fakeApiService = FakeKliqApiService()
         val qrCodeService = com.kliq.app.service.QrCodeServiceImpl(testDispatcher)
         userRepository = UserRepositoryImpl(fakeUserDao, fakeApiService, fakeReviewDao, testDispatcher)
-        viewModel = ProfileViewModel(userRepository, qrCodeService)
+        viewModel = createTestProfileViewModel(userRepository, qrCodeService)
     }
 
     @After
