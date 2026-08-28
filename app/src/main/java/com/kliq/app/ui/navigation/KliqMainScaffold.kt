@@ -329,7 +329,8 @@ private fun KliqNavHost(
                     navController.navigate(ProfileRoutes.QR_SCANNER) {
                         launchSingleTop = true
                     }
-                }
+                },
+                onNavigateToClub = onNavigateToClub
             )
         }
         composable(NavigationRoute.ProfileCreation.route) {

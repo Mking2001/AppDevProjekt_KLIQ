@@ -6,6 +6,8 @@ import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.model.formatRelativeTime
+import com.kliq.app.data.repository.ClubRepository
+import com.kliq.app.data.repository.EventRepository
 import com.kliq.app.data.repository.FeedRepository
 import com.kliq.app.data.repository.SocialRepository
 import com.kliq.app.data.repository.UserRepository
@@ -18,9 +20,28 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
+
+/**
+ * Darstellungsmodell eines Events im Profil-Tab "Events".
+ *
+ * @param clubId Ziel der Detailnavigation.
+ * @param dateLabel Vorformatierte Datums- und Zeitangabe.
+ */
+data class ProfileEventUi(
+    val id: String,
+    val clubId: String,
+    val title: String,
+    val dateLabel: String,
+    val clubName: String,
+    val price: String
+)
 
 /**
  * Darstellungsmodell eines eigenen Beitrags im Profil-Tab "Beiträge".
@@ -47,6 +68,7 @@ data class ProfileUiState(
     val followersCount: Int = 0,
     val followingCount: Int = 0,
     val ownPosts: List<ProfilePostUi> = emptyList(),
+    val upcomingEvents: List<ProfileEventUi> = emptyList(),
     val averageRating: Double = 0.0,
     val formattedAverageRating: String = "0.0",
     val totalReviewsCount: Int = 0,
@@ -84,6 +106,8 @@ data class ProfileUiState(
 class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
     private val feedRepository: FeedRepository,
+    private val eventRepository: EventRepository,
+    private val clubRepository: ClubRepository,
     private val socialRepository: SocialRepository,
     private val currentUserProvider: CurrentUserProvider,
     private val qrCodeService: QrCodeService
@@ -94,6 +118,9 @@ class ProfileViewModel @Inject constructor(
 
     /** Alter des Nutzers, wird beim Speichern unverändert übernommen. */
     private var currentUserAge: Int = 0
+
+    /** Formatierung der Event-Termine im Profil-Tab. */
+    private val eventDateFormat = SimpleDateFormat("EEE, dd. MMM, HH:mm", Locale.GERMAN)
 
     init {
         loadProfileData(currentUserProvider.userId())
@@ -109,6 +136,36 @@ class ProfileViewModel @Inject constructor(
         observeOwnPosts(targetUserId)
         observeFriends(targetUserId)
         observeReputation(targetUserId)
+        observeUpcomingEvents()
+    }
+
+    /**
+     * Lädt die kommende Event-Agenda für den Profil-Tab "Events".
+     * Die Einträge sind über die Club-ID mit der Detailansicht verknüpft.
+     */
+    private fun observeUpcomingEvents() {
+        viewModelScope.launch {
+            combine(
+                eventRepository.getUpcomingEvents(System.currentTimeMillis()),
+                clubRepository.getAllClubs()
+            ) { events, clubs ->
+                val clubNamesById = clubs.associate { it.id to it.name }
+                events.sortedBy { it.startTime }.map { event ->
+                    ProfileEventUi(
+                        id = event.id,
+                        clubId = event.clubId,
+                        title = event.title,
+                        dateLabel = eventDateFormat.format(Date(event.startTime)),
+                        clubName = clubNamesById[event.clubId].orEmpty(),
+                        price = event.price
+                    )
+                }
+            }
+                .catch { }
+                .collect { events ->
+                    _uiState.update { it.copy(upcomingEvents = events) }
+                }
+        }
     }
 
     private fun observeUserProfile(targetUserId: String) {
