@@ -137,7 +137,7 @@ class MapViewModel @Inject constructor(
     private val userRepository: UserRepository? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val hapticFeedbackManager: HapticFeedbackManager? = null,
-    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector
 ) : ViewModel() {
 
     companion object {
