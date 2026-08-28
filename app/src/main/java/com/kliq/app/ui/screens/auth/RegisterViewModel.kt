@@ -140,6 +140,21 @@ class RegisterViewModel @Inject constructor(
         }
     }
 
+    fun onGenderSelected(gender: String) {
+        _uiState.update { current ->
+            val updated = current.copy(gender = gender)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onHometownChanged(input: String) {
+        val error = if (input.trim().length < 2) "Heimatstadt muss mindestens 2 Zeichen lang sein." else null
+        _uiState.update { current ->
+            val updated = current.copy(hometown = input, hometownError = error)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
     fun onSearchIntentSelected(intent: SearchIntent) {
         _uiState.update { current ->
             val updated = current.copy(searchIntent = intent)
@@ -221,6 +236,8 @@ class RegisterViewModel @Inject constructor(
                 firstName = current.firstName.trim(),
                 lastName = current.lastName.trim(),
                 birthDateMs = current.birthDateMs ?: 0L,
+                gender = current.gender,
+                hometown = current.hometown.trim(),
                 profilePictureUrl = current.profilePictureUrl ?: "",
                 searchIntent = current.searchIntent,
                 bio = current.bio.trim(),
@@ -247,12 +264,13 @@ class RegisterViewModel @Inject constructor(
         val firstNameValid = state.firstName.isNotBlank() && state.firstNameError == null
         val lastNameValid = state.lastName.isNotBlank() && state.lastNameError == null
         val birthDateValid = state.birthDateMs != null && state.birthDateError == null
+        val hometownValid = state.hometown.trim().length >= 2 && state.hometownError == null
         val profilePicValid = !state.profilePictureUrl.isNullOrBlank()
         val passwordValid = state.password.length >= 6 &&
                 state.passwordError == null &&
                 state.confirmPassword == state.password &&
                 state.confirmPasswordError == null
 
-        return usernameValid && firstNameValid && lastNameValid && birthDateValid && profilePicValid && passwordValid
+        return usernameValid && firstNameValid && lastNameValid && birthDateValid && hometownValid && profilePicValid && passwordValid
     }
 }

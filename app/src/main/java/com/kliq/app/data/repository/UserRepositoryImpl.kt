@@ -66,6 +66,8 @@ class UserRepositoryImpl @Inject constructor(
         firstName: String,
         lastName: String,
         birthDateMs: Long,
+        gender: String,
+        hometown: String,
         profilePictureUrl: String,
         searchIntent: SearchIntent,
         bio: String,
@@ -74,7 +76,7 @@ class UserRepositoryImpl @Inject constructor(
         try {
             val trimmedUsername = username.trim()
             val userId = "usr_${System.currentTimeMillis()}"
-            val fullName = "${firstName.trim()} ${lastName.trim()}".trim()
+            val finalHometown = hometown.trim().ifBlank { "${firstName.trim()} ${lastName.trim()}".trim() }
 
             // Calculate approximate age from birthDateMs
             val nowMs = System.currentTimeMillis()
@@ -85,11 +87,12 @@ class UserRepositoryImpl @Inject constructor(
                 username = trimmedUsername,
                 email = "${trimmedUsername.lowercase()}@kliq.app",
                 age = ageYears,
-                hometown = fullName,
+                hometown = finalHometown,
                 profilePictureUrl = profilePictureUrl.ifBlank { null },
                 bio = bio.trim().ifBlank { "Hey, ich bin neu bei KLIQ!" },
                 phoneNumber = null,
                 isVerified = true,
+                gender = gender,
                 updatedAtTimestampMs = System.currentTimeMillis()
             )
 
@@ -123,6 +126,7 @@ class UserRepositoryImpl @Inject constructor(
                         this.profilePictureUrl = newUser.profilePictureUrl
                         this.age = newUser.age
                         this.hometown = newUser.hometown
+                        this.gender = newUser.gender
                     }
                 } catch (ignored: Exception) { }
 

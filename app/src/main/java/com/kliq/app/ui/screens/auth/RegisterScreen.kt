@@ -35,9 +35,13 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Female
+import androidx.compose.material.icons.filled.LocationCity
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Male
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Transgender
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Button
@@ -300,10 +304,59 @@ fun RegisterScreen(
                         colors = customTextFieldColors()
                     )
                 }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedTextField(
+                    value = uiState.hometown,
+                    onValueChange = viewModel::onHometownChanged,
+                    label = { Text("Heimatstadt*") },
+                    placeholder = { Text("z.B. Klagenfurt am Wörthersee") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.LocationCity, contentDescription = null, tint = PurplePrimaryLight)
+                    },
+                    isError = uiState.hometownError != null,
+                    supportingText = {
+                        uiState.hometownError?.let { Text(it, color = ErrorRed, style = MaterialTheme.typography.labelSmall) }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = customTextFieldColors()
+                )
             }
 
-            // 3. Geburtsdatum (18+ Validierung)
-            SectionCard(title = "Geburtsdatum (Mindestalter 18 Jahre)") {
+            // 3. Geschlecht (Pflicht)
+            SectionCard(title = "Geschlecht*") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    SearchIntentOption(
+                        title = "Männlich",
+                        icon = Icons.Filled.Male,
+                        isSelected = uiState.gender == "MALE",
+                        onClick = { viewModel.onGenderSelected("MALE") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    SearchIntentOption(
+                        title = "Weiblich",
+                        icon = Icons.Filled.Female,
+                        isSelected = uiState.gender == "FEMALE",
+                        onClick = { viewModel.onGenderSelected("FEMALE") },
+                        modifier = Modifier.weight(1f)
+                    )
+                    SearchIntentOption(
+                        title = "Divers",
+                        icon = Icons.Filled.Transgender,
+                        isSelected = uiState.gender == "DIVERSE",
+                        onClick = { viewModel.onGenderSelected("DIVERSE") },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // 4. Geburtsdatum (18+ Validierung)
+            SectionCard(title = "Geburtsdatum (Mindestalter 18 Jahre)*") {
                 val calendar = Calendar.getInstance()
                 // Default to 20 years ago
                 val initialYear = calendar.get(Calendar.YEAR) - 20

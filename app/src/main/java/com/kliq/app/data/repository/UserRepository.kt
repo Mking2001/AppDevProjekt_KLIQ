@@ -41,6 +41,8 @@ interface UserRepository {
         firstName: String,
         lastName: String,
         birthDateMs: Long,
+        gender: String = "MALE",
+        hometown: String = "",
         profilePictureUrl: String,
         searchIntent: SearchIntent,
         bio: String,
