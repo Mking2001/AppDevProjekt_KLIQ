@@ -15,6 +15,12 @@ interface ChatDao {
     @Query("SELECT * FROM chats ORDER BY lastMessageTimestampMs DESC")
     fun getAllChats(): Flow<List<ChatEntity>>
 
+    @Query("SELECT * FROM chats WHERE isArchived = 0 ORDER BY isPinned DESC, lastMessageTimestampMs DESC")
+    fun getActiveChats(): Flow<List<ChatEntity>>
+
+    @Query("SELECT * FROM chats WHERE isArchived = 1 ORDER BY lastMessageTimestampMs DESC")
+    fun getArchivedChats(): Flow<List<ChatEntity>>
+
     @Query("SELECT * FROM chats WHERE chatType = 'PRIVATE' ORDER BY lastMessageTimestampMs DESC")
     fun getPrivateChats(): Flow<List<ChatEntity>>
 

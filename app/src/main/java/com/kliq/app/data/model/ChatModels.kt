@@ -62,7 +62,9 @@ data class ChatConversation(
     val avatarUrl: String? = null,
     val unreadCount: Int = 0,
     val chatType: ChatType,
-    val isOnline: Boolean = false
+    val isOnline: Boolean = false,
+    val isArchived: Boolean = false,
+    val isPinned: Boolean = false
 )
 
 fun ChatConversation.toChatListItem(): ChatListItem {

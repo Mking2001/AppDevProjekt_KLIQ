@@ -13,6 +13,7 @@ import com.kliq.app.data.model.formatMsToIso
 import com.kliq.app.data.remote.KliqApiService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -33,6 +34,18 @@ class ChatRepositoryImpl @Inject constructor(
         }.flowOn(Dispatchers.IO)
     }
 
+    override fun getActiveChats(): Flow<List<ChatConversation>> {
+        return chatDao.getActiveChats().map { entities ->
+            entities.map { it.toDomain() }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override fun getArchivedChats(): Flow<List<ChatConversation>> {
+        return chatDao.getArchivedChats().map { entities ->
+            entities.map { it.toDomain() }
+        }.flowOn(Dispatchers.IO)
+    }
+
     override fun getPrivateChats(): Flow<List<ChatConversation>> {
         return chatDao.getPrivateChats().map { entities ->
             entities.map { it.toDomain() }
@@ -43,6 +56,44 @@ class ChatRepositoryImpl @Inject constructor(
         return chatDao.getPublicCityChats(cityRegion).map { entities ->
             entities.map { it.toDomain() }
         }.flowOn(Dispatchers.IO)
+    }
+
+    override fun getChatById(chatId: String): Flow<ChatConversation?> {
+        return chatDao.getChatById(chatId).map { entity ->
+            entity?.toDomain()
+        }.flowOn(Dispatchers.IO)
+    }
+
+    override suspend fun createChatIfMissing(
+        chatId: String,
+        name: String,
+        chatType: com.kliq.app.data.model.ChatType,
+        cityRegion: String?,
+        avatarInitial: String?
+    ): Result<ChatConversation> = withContext(Dispatchers.IO) {
+        try {
+            val existing = chatDao.getChatById(chatId).first()
+            if (existing != null) {
+                return@withContext Result.success(existing.toDomain())
+            }
+
+            val nowMs = System.currentTimeMillis()
+            val entity = ChatEntity(
+                id = chatId,
+                name = name,
+                cityRegion = cityRegion,
+                lastMessageText = "",
+                lastMessageTimestampMs = nowMs,
+                lastMessageTimestampIso = formatMsToIso(nowMs),
+                avatarInitial = avatarInitial?.takeIf { it.isNotBlank() }
+                    ?: name.trim().take(1).uppercase().ifBlank { "K" },
+                chatType = chatType
+            )
+            chatDao.insertChat(entity)
+            Result.success(entity.toDomain())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override fun getMessagesForChat(chatId: String): Flow<List<ChatMessage>> {
@@ -428,7 +479,9 @@ class ChatRepositoryImpl @Inject constructor(
             avatarUrl = avatarUrl,
             unreadCount = unreadCount,
             chatType = chatType,
-            isOnline = isOnline
+            isOnline = isOnline,
+            isArchived = isArchived,
+            isPinned = isPinned
         )
     }
 

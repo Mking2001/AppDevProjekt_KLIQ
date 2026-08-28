@@ -8,8 +8,32 @@ import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
     fun getAllChats(): Flow<List<ChatConversation>>
+
+    /** Liefert alle nicht archivierten Chats, angepinnte zuerst. */
+    fun getActiveChats(): Flow<List<ChatConversation>>
+
+    /** Liefert alle archivierten Chats. */
+    fun getArchivedChats(): Flow<List<ChatConversation>>
     fun getPrivateChats(): Flow<List<ChatConversation>>
     fun getPublicCityChats(cityRegion: String? = null): Flow<List<ChatConversation>>
+
+    /** Liefert die Metadaten eines einzelnen Chats oder null, wenn er nicht existiert. */
+    fun getChatById(chatId: String): Flow<ChatConversation?>
+
+    /**
+     * Legt einen Chat an, falls unter der ID noch keiner existiert.
+     * Wird beim Einstieg in einen Chat aus einem Nutzerprofil oder Deep Link benoetigt.
+     *
+     * @return Der bestehende oder neu angelegte Chat.
+     */
+    suspend fun createChatIfMissing(
+        chatId: String,
+        name: String,
+        chatType: com.kliq.app.data.model.ChatType,
+        cityRegion: String? = null,
+        avatarInitial: String? = null
+    ): Result<ChatConversation>
+
     fun getMessagesForChat(chatId: String): Flow<List<ChatMessage>>
     fun searchMessagesInChat(chatId: String, query: String): Flow<List<ChatMessage>>
     suspend fun syncChatMessages(chatId: String): Result<Unit>
