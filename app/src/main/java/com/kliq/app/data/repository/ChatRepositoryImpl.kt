@@ -7,11 +7,13 @@ import com.kliq.app.data.local.entities.DirectMessageEntity
 import com.kliq.app.data.local.entities.MessageEntity
 import com.kliq.app.data.model.ChatConversation
 import com.kliq.app.data.model.ChatMessage
+import com.kliq.app.data.model.ChatType
 import com.kliq.app.data.model.DirectMessage
 import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.model.formatMsToIso
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.generated.*
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -28,43 +30,44 @@ class ChatRepositoryImpl @Inject constructor(
     private val directMessageDao: DirectMessageDao,
     private val currentUserProvider: com.kliq.app.domain.CurrentUserProvider? = null,
     private val apiService: KliqApiService? = null,
-    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ChatRepository {
 
     override fun getAllChats(): Flow<List<ChatConversation>> {
         return chatDao.getAllChats().map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getActiveChats(): Flow<List<ChatConversation>> {
         return chatDao.getActiveChats().map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getArchivedChats(): Flow<List<ChatConversation>> {
         return chatDao.getArchivedChats().map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getPrivateChats(): Flow<List<ChatConversation>> {
         return chatDao.getPrivateChats().map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getPublicCityChats(cityRegion: String?): Flow<List<ChatConversation>> {
         return chatDao.getPublicCityChats(cityRegion).map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getChatById(chatId: String): Flow<ChatConversation?> {
         return chatDao.getChatById(chatId).map { entity ->
             entity?.toDomain()
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override suspend fun createChatIfMissing(
@@ -73,10 +76,15 @@ class ChatRepositoryImpl @Inject constructor(
         chatType: com.kliq.app.data.model.ChatType,
         cityRegion: String?,
         avatarInitial: String?
-    ): Result<ChatConversation> = withContext(Dispatchers.IO) {
+    ): Result<ChatConversation> = withContext(ioDispatcher) {
         try {
             val existing = chatDao.getChatById(chatId).first()
             if (existing != null) {
+                if ((existing.name == "Direktnachricht" || existing.name == "Kliq Chat" || existing.name.isBlank()) && name.isNotBlank() && name != "Direktnachricht" && name != "Kliq Chat") {
+                    val newInitial = avatarInitial?.takeIf { it.isNotBlank() } ?: name.trim().take(1).uppercase().ifBlank { "K" }
+                    chatDao.updateChatName(chatId, name, newInitial)
+                    return@withContext Result.success(existing.copy(name = name, avatarInitial = newInitial).toDomain())
+                }
                 return@withContext Result.success(existing.toDomain())
             }
 
@@ -102,16 +110,16 @@ class ChatRepositoryImpl @Inject constructor(
     override fun getMessagesForChat(chatId: String): Flow<List<ChatMessage>> {
         return chatDao.getMessagesForChat(chatId).map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun searchMessagesInChat(chatId: String, query: String): Flow<List<ChatMessage>> {
         return chatDao.searchMessagesInChat(chatId, query).map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
-    override suspend fun syncChatMessages(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun syncChatMessages(chatId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
             kliqConnector?.let { connector ->
                 val response = connector.getMessagesByChat.execute(chatId = chatId)
@@ -148,7 +156,7 @@ class ChatRepositoryImpl @Inject constructor(
         senderUserId: String,
         senderName: String,
         text: String
-    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+    ): Result<ChatMessage> = withContext(ioDispatcher) {
         sendInternalMessage(
             chatId = chatId,
             senderUserId = senderUserId,
@@ -170,7 +178,7 @@ class ChatRepositoryImpl @Inject constructor(
         mediaWidth: Int,
         mediaHeight: Int,
         captionText: String?
-    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+    ): Result<ChatMessage> = withContext(ioDispatcher) {
         sendInternalMessage(
             chatId = chatId,
             senderUserId = senderUserId,
@@ -192,7 +200,7 @@ class ChatRepositoryImpl @Inject constructor(
         senderName: String,
         audioUrl: String,
         audioDurationMs: Long
-    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+    ): Result<ChatMessage> = withContext(ioDispatcher) {
         sendInternalMessage(
             chatId = chatId,
             senderUserId = senderUserId,
@@ -217,7 +225,7 @@ class ChatRepositoryImpl @Inject constructor(
         mediaHeight: Int = 0,
         captionText: String? = null,
         audioDurationMs: Long = 0L
-    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+    ): Result<ChatMessage> = withContext(ioDispatcher) {
         try {
             val nowMs = System.currentTimeMillis()
             val nowIso = formatMsToIso(nowMs)
@@ -286,23 +294,23 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateMessageStatus(messageId: String, status: MessageStatus) = withContext(Dispatchers.IO) {
+    override suspend fun updateMessageStatus(messageId: String, status: MessageStatus) = withContext(ioDispatcher) {
         chatDao.updateMessageStatus(messageId, status)
     }
 
-    override suspend fun markMessageAsDelivered(messageId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markMessageAsDelivered(messageId: String) = withContext(ioDispatcher) {
         chatDao.markMessageAsDelivered(messageId = messageId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markMessageAsRead(messageId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markMessageAsRead(messageId: String) = withContext(ioDispatcher) {
         chatDao.markMessageAsRead(messageId = messageId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markAllSentMessagesAsDelivered(chatId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markAllSentMessagesAsDelivered(chatId: String) = withContext(ioDispatcher) {
         chatDao.markAllSentMessagesAsDelivered(chatId = chatId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markChatAsRead(chatId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markChatAsRead(chatId: String) = withContext(ioDispatcher) {
         chatDao.markChatAsRead(chatId)
     }
 
@@ -311,17 +319,17 @@ class ChatRepositoryImpl @Inject constructor(
             entities.map { entity ->
                 entity.toDomain(isMine = entity.senderId == currentUserId)
             }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getUnreadDirectMessages(userId: String): Flow<List<DirectMessage>> {
         return directMessageDao.getUnreadDirectMessages(userId).map { entities ->
             entities.map { it.toDomain(isMine = false) }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getUnreadCountForUser(userId: String): Flow<Int> {
-        return directMessageDao.getUnreadCountForUser(userId).flowOn(Dispatchers.IO)
+        return directMessageDao.getUnreadCountForUser(userId).flowOn(ioDispatcher)
     }
 
     override suspend fun sendDirectMessage(
@@ -330,7 +338,7 @@ class ChatRepositoryImpl @Inject constructor(
         text: String,
         isEncrypted: Boolean,
         mediaUrl: String?
-    ): Result<DirectMessage> = withContext(Dispatchers.IO) {
+    ): Result<DirectMessage> = withContext(ioDispatcher) {
         try {
             val nowMs = System.currentTimeMillis()
             val nowIso = formatMsToIso(nowMs)
@@ -374,7 +382,7 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun receiveDirectMessage(message: DirectMessage): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun receiveDirectMessage(message: DirectMessage): Result<Unit> = withContext(ioDispatcher) {
         try {
             val entity = DirectMessageEntity(
                 messageId = message.messageId,
@@ -395,7 +403,7 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun syncDirectMessages(userId: String, targetUserId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun syncDirectMessages(userId: String, targetUserId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
             kliqConnector?.let { connector ->
                 val response = connector.getDirectMessages.execute(senderId = userId, receiverId = targetUserId)
@@ -437,10 +445,10 @@ class ChatRepositoryImpl @Inject constructor(
             distanceKm = distance,
             isGpsAssigned = true
         )
-        return kotlinx.coroutines.flow.flowOf(item).flowOn(Dispatchers.IO)
+        return kotlinx.coroutines.flow.flowOf(item).flowOn(ioDispatcher)
     }
 
-    override suspend fun syncPublicCityMessages(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun syncPublicCityMessages(chatId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
             Result.success(Unit)
         } catch (e: Exception) {
@@ -448,27 +456,27 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateDirectMessageStatus(messageId: String, status: MessageStatus) = withContext(Dispatchers.IO) {
+    override suspend fun updateDirectMessageStatus(messageId: String, status: MessageStatus) = withContext(ioDispatcher) {
         directMessageDao.updateDeliveryStatus(messageId, status)
     }
 
-    override suspend fun markDirectMessageAsDelivered(messageId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markDirectMessageAsDelivered(messageId: String) = withContext(ioDispatcher) {
         directMessageDao.markDirectMessageAsDelivered(messageId = messageId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markDirectMessageAsRead(messageId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markDirectMessageAsRead(messageId: String) = withContext(ioDispatcher) {
         directMessageDao.markDirectMessageAsRead(messageId = messageId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markDirectConversationAsDelivered(senderId: String, receiverId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markDirectConversationAsDelivered(senderId: String, receiverId: String) = withContext(ioDispatcher) {
         directMessageDao.markConversationAsDelivered(senderId = senderId, receiverId = receiverId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markDirectConversationAsRead(senderId: String, receiverId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markDirectConversationAsRead(senderId: String, receiverId: String) = withContext(ioDispatcher) {
         directMessageDao.markConversationAsRead(senderId = senderId, receiverId = receiverId)
     }
 
-    override suspend fun joinPublicCityChat(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun joinPublicCityChat(chatId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
             Result.success(Unit)
         } catch (e: Exception) {
@@ -486,7 +494,7 @@ class ChatRepositoryImpl @Inject constructor(
         mediaWidth: Int,
         mediaHeight: Int,
         captionText: String?
-    ): Result<DirectMessage> = withContext(Dispatchers.IO) {
+    ): Result<DirectMessage> = withContext(ioDispatcher) {
         try {
             val nowMs = System.currentTimeMillis()
             val nowIso = formatMsToIso(nowMs)
@@ -523,7 +531,7 @@ class ChatRepositoryImpl @Inject constructor(
         receiverId: String,
         audioUrl: String,
         audioDurationMs: Long
-    ): Result<DirectMessage> = withContext(Dispatchers.IO) {
+    ): Result<DirectMessage> = withContext(ioDispatcher) {
         try {
             val nowMs = System.currentTimeMillis()
             val nowIso = formatMsToIso(nowMs)
@@ -551,12 +559,60 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun archiveChat(chatId: String, isArchived: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun archiveChat(chatId: String, isArchived: Boolean) = withContext(ioDispatcher) {
         chatDao.updateArchiveStatus(chatId, isArchived)
     }
 
-    override suspend fun deleteChat(chatId: String) = withContext(Dispatchers.IO) {
+    override suspend fun deleteChat(chatId: String) = withContext(ioDispatcher) {
         chatDao.deleteChatById(chatId)
+        chatDao.deleteMessagesForChat(chatId)
+        val targetId = if (chatId.startsWith("chat_")) chatId.removePrefix("chat_") else chatId
+        directMessageDao.deleteAllMessagesForUser(targetId)
+    }
+
+    override suspend fun updateChatName(chatId: String, name: String) = withContext(ioDispatcher) {
+        val initial = name.trim().take(1).uppercase().ifBlank { "G" }
+        chatDao.updateChatName(chatId, name, initial)
+    }
+
+    override suspend fun createGroupChat(
+        name: String,
+        description: String,
+        imageUrl: String?,
+        memberUserIds: List<String>
+    ): Result<String> = withContext(ioDispatcher) {
+        try {
+            val groupId = "group_${System.currentTimeMillis()}"
+            val nowMs = System.currentTimeMillis()
+            val initial = name.trim().take(1).uppercase().ifBlank { "G" }
+            val entity = ChatEntity(
+                id = groupId,
+                name = name,
+                cityRegion = description.ifBlank { null },
+                lastMessageText = "Gruppe erstellt",
+                lastMessageTimestampMs = nowMs,
+                lastMessageTimestampIso = formatMsToIso(nowMs),
+                avatarInitial = initial,
+                avatarUrl = imageUrl,
+                chatType = ChatType.PUBLIC_CITY
+            )
+            chatDao.insertChat(entity)
+            kliqConnector?.let { connector ->
+                try {
+                    connector.createChat.execute(
+                        id = groupId,
+                        name = name,
+                        chatType = "GROUP",
+                        avatarInitial = initial,
+                        lastMessageText = "Gruppe erstellt",
+                        lastMessageTimestampMs = nowMs
+                    )
+                } catch (ignored: Exception) {}
+            }
+            Result.success(groupId)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     private fun ChatEntity.toDomain(): ChatConversation {
@@ -578,8 +634,8 @@ class ChatRepositoryImpl @Inject constructor(
     }
 
     private fun MessageEntity.toDomain(): ChatMessage {
-        val currentUserId = currentUserProvider?.userId() ?: "usr_current_user"
-        val isSenderMe = if (senderUserId.isNotBlank()) {
+        val currentUserId = currentUserProvider?.userId()
+        val isSenderMe = if (!currentUserId.isNullOrBlank() && senderUserId.isNotBlank()) {
             senderUserId == currentUserId
         } else {
             isMine
@@ -608,8 +664,8 @@ class ChatRepositoryImpl @Inject constructor(
     }
 
     private fun DirectMessageEntity.toDomain(isMine: Boolean = false): DirectMessage {
-        val currentUserId = currentUserProvider?.userId() ?: "usr_current_user"
-        val isSenderMe = if (senderId.isNotBlank()) {
+        val currentUserId = currentUserProvider?.userId()
+        val isSenderMe = if (!currentUserId.isNullOrBlank() && senderId.isNotBlank()) {
             senderId == currentUserId
         } else {
             isMine

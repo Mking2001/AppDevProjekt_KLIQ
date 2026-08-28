@@ -310,134 +310,85 @@ object KlagenfurtSeedData {
     fun chats(nowMs: Long = System.currentTimeMillis()): List<ChatEntity> = listOf(
         ChatEntity(
             id = CITY_CHAT_ID,
-            name = "Klagenfurt - Tonight",
+            name = "Klagenfurt",
             cityRegion = CITY_NAME,
-            lastMessageText = "Volksgarten oder Bollwerk? Muss mich noch entscheiden.",
-            lastMessageTimestampMs = nowMs - 12L * MINUTE_MS,
-            lastMessageTimestampIso = formatMsToIso(nowMs - 12L * MINUTE_MS),
+            lastMessageText = "",
+            lastMessageTimestampMs = nowMs,
+            lastMessageTimestampIso = formatMsToIso(nowMs),
             avatarInitial = "K",
-            unreadCount = 3,
+            unreadCount = 0,
             chatType = ChatType.PUBLIC_CITY
         ),
         ChatEntity(
-            id = "priv_lena",
-            name = "Lena P.",
-            lastMessageText = "Treffen wir uns vorher auf einen Spritzer?",
-            lastMessageTimestampMs = nowMs - 40L * MINUTE_MS,
-            lastMessageTimestampIso = formatMsToIso(nowMs - 40L * MINUTE_MS),
-            avatarInitial = "L",
-            unreadCount = 2,
-            chatType = ChatType.PRIVATE,
-            isOnline = true
+            id = "pub_villach",
+            name = "Villach",
+            cityRegion = "Villach",
+            lastMessageText = "",
+            lastMessageTimestampMs = nowMs,
+            lastMessageTimestampIso = formatMsToIso(nowMs),
+            avatarInitial = "V",
+            unreadCount = 0,
+            chatType = ChatType.PUBLIC_CITY
         ),
         ChatEntity(
-            id = "priv_david",
-            name = "David M.",
-            lastMessageText = "Line-up ist online, schau dir Floor 2 an.",
-            lastMessageTimestampMs = nowMs - 5L * HOUR_MS,
-            lastMessageTimestampIso = formatMsToIso(nowMs - 5L * HOUR_MS),
-            avatarInitial = "D",
+            id = "pub_graz",
+            name = "Graz",
+            cityRegion = "Graz",
+            lastMessageText = "",
+            lastMessageTimestampMs = nowMs,
+            lastMessageTimestampIso = formatMsToIso(nowMs),
+            avatarInitial = "G",
             unreadCount = 0,
-            chatType = ChatType.PRIVATE
+            chatType = ChatType.PUBLIC_CITY
+        ),
+        ChatEntity(
+            id = "pub_wien",
+            name = "Wien",
+            cityRegion = "Wien",
+            lastMessageText = "",
+            lastMessageTimestampMs = nowMs,
+            lastMessageTimestampIso = formatMsToIso(nowMs),
+            avatarInitial = "W",
+            unreadCount = 0,
+            chatType = ChatType.PUBLIC_CITY
+        ),
+        ChatEntity(
+            id = "pub_salzburg",
+            name = "Salzburg",
+            cityRegion = "Salzburg",
+            lastMessageText = "",
+            lastMessageTimestampMs = nowMs,
+            lastMessageTimestampIso = formatMsToIso(nowMs),
+            avatarInitial = "S",
+            unreadCount = 0,
+            chatType = ChatType.PUBLIC_CITY
+        ),
+        ChatEntity(
+            id = "pub_innsbruck",
+            name = "Innsbruck",
+            cityRegion = "Innsbruck",
+            lastMessageText = "",
+            lastMessageTimestampMs = nowMs,
+            lastMessageTimestampIso = formatMsToIso(nowMs),
+            avatarInitial = "I",
+            unreadCount = 0,
+            chatType = ChatType.PUBLIC_CITY
+        ),
+        ChatEntity(
+            id = "pub_linz",
+            name = "Linz",
+            cityRegion = "Linz",
+            lastMessageText = "",
+            lastMessageTimestampMs = nowMs,
+            lastMessageTimestampIso = formatMsToIso(nowMs),
+            avatarInitial = "L",
+            unreadCount = 0,
+            chatType = ChatType.PUBLIC_CITY
         )
     )
 
-    /** Liefert den Nachrichtenverlauf zu allen Chats aus [chats]. */
-    fun messages(nowMs: Long = System.currentTimeMillis()): List<MessageEntity> = listOf(
-        buildMessage(
-            id = "msg_kf_1",
-            chatId = CITY_CHAT_ID,
-            senderUserId = "usr_david",
-            senderName = "David M.",
-            text = "Servus, wer ist heute im Volksgarten?",
-            timestampMs = nowMs - 95L * MINUTE_MS,
-            isMine = false
-        ),
-        buildMessage(
-            id = "msg_kf_2",
-            chatId = CITY_CHAT_ID,
-            senderUserId = "usr_lena",
-            senderName = "Lena P.",
-            text = "Ich komme, aber erst nach Mitternacht.",
-            timestampMs = nowMs - 78L * MINUTE_MS,
-            isMine = false
-        ),
-        buildMessage(
-            id = "msg_kf_3",
-            chatId = CITY_CHAT_ID,
-            senderUserId = CURRENT_USER_ID,
-            senderName = "Du",
-            text = "Bin dabei. Vorher noch kurz auf einen Drink in die Altstadt.",
-            timestampMs = nowMs - 61L * MINUTE_MS,
-            isMine = true,
-            status = MessageStatus.READ
-        ),
-        buildMessage(
-            id = "msg_kf_4",
-            chatId = CITY_CHAT_ID,
-            senderUserId = "usr_tobias",
-            senderName = "Tobias R.",
-            text = "Im Bollwerk spielen heute vier Bands, falls jemand Live hören will.",
-            timestampMs = nowMs - 34L * MINUTE_MS,
-            isMine = false
-        ),
-        buildMessage(
-            id = "msg_kf_5",
-            chatId = CITY_CHAT_ID,
-            senderUserId = "usr_nina",
-            senderName = "Nina S.",
-            text = "Volksgarten oder Bollwerk? Muss mich noch entscheiden.",
-            timestampMs = nowMs - 12L * MINUTE_MS,
-            isMine = false
-        ),
-        buildMessage(
-            id = "msg_lena_1",
-            chatId = "priv_lena",
-            senderUserId = CURRENT_USER_ID,
-            senderName = "Du",
-            text = "Hey Lena, kommst du heute mit in den Volksgarten?",
-            timestampMs = nowMs - 3L * HOUR_MS,
-            isMine = true,
-            status = MessageStatus.READ
-        ),
-        buildMessage(
-            id = "msg_lena_2",
-            chatId = "priv_lena",
-            senderUserId = "usr_lena",
-            senderName = "Lena P.",
-            text = "Ja gerne. Ich muss nur vorher noch bei meinen Eltern vorbei.",
-            timestampMs = nowMs - 2L * HOUR_MS,
-            isMine = false
-        ),
-        buildMessage(
-            id = "msg_lena_3",
-            chatId = "priv_lena",
-            senderUserId = "usr_lena",
-            senderName = "Lena P.",
-            text = "Treffen wir uns vorher auf einen Spritzer?",
-            timestampMs = nowMs - 40L * MINUTE_MS,
-            isMine = false
-        ),
-        buildMessage(
-            id = "msg_david_1",
-            chatId = "priv_david",
-            senderUserId = "usr_david",
-            senderName = "David M.",
-            text = "Line-up ist online, schau dir Floor 2 an.",
-            timestampMs = nowMs - 5L * HOUR_MS,
-            isMine = false
-        ),
-        buildMessage(
-            id = "msg_david_2",
-            chatId = "priv_david",
-            senderUserId = CURRENT_USER_ID,
-            senderName = "Du",
-            text = "Sieht stark aus. Ich hole die Tickets im Vorverkauf.",
-            timestampMs = nowMs - 4L * HOUR_MS,
-            isMine = true,
-            status = MessageStatus.READ
-        )
-    )
+    /** Liefert den Nachrichtenverlauf (keine Phantom-Nachrichten mehr). */
+    fun messages(nowMs: Long = System.currentTimeMillis()): List<MessageEntity> = emptyList()
 
     // =====================================================================
     // Home-Feed

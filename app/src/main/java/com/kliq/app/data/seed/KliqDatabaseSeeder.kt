@@ -65,12 +65,17 @@ class KliqDatabaseSeeder @Inject constructor(
     }
 
     private suspend fun seedChats() {
-        if (chatDao.getAllChats().first().isNotEmpty()) return
-
         val nowMs = System.currentTimeMillis()
-        chatDao.insertChats(KlagenfurtSeedData.chats(nowMs))
-        KlagenfurtSeedData.messages(nowMs).forEach { chatDao.insertMessage(it) }
-        Log.d(TAG, "Chats und Nachrichtenverlauf eingefügt")
+        val cityChats = KlagenfurtSeedData.chats(nowMs)
+        chatDao.insertChats(cityChats)
+
+        // Delete legacy phantom/mock chats and messages
+        chatDao.deleteChatById("priv_lena")
+        chatDao.deleteChatById("priv_david")
+        chatDao.deleteMessagesForChat("priv_lena")
+        chatDao.deleteMessagesForChat("priv_david")
+        chatDao.deleteMessagesForChat(KlagenfurtSeedData.CITY_CHAT_ID)
+        Log.d(TAG, "Stadt-Chats initialisiert und Phantom-Daten bereinigt")
     }
 
     private suspend fun seedFeed() {

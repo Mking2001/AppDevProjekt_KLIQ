@@ -113,4 +113,6 @@ interface ChatRepository {
     suspend fun joinPublicCityChat(chatId: String): Result<Unit>
     suspend fun archiveChat(chatId: String, isArchived: Boolean = true)
     suspend fun deleteChat(chatId: String)
+    suspend fun updateChatName(chatId: String, name: String)
+    suspend fun createGroupChat(name: String, description: String, imageUrl: String?, memberUserIds: List<String>): Result<String>
 }

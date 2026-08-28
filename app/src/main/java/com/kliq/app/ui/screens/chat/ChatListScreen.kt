@@ -1,5 +1,10 @@
 package com.kliq.app.ui.screens.chat
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -47,6 +52,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -54,11 +60,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.kliq.app.data.model.ChatType
 import com.kliq.app.ui.components.ChatListItem
+import com.kliq.app.ui.components.CreateGroupDialog
 import com.kliq.app.ui.components.SwipeableActionRow
 import com.kliq.app.ui.navigation.LocalSnackbarHostState
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,11 +75,28 @@ fun ChatListScreen(
     onChatSelected: (String) -> Unit,
     viewModel: ChatListViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = LocalSnackbarHostState.current
     val coroutineScope = rememberCoroutineScope()
     val tabs = listOf("Öffentliche Stadt-Chats", "Private Nachrichten")
     val selectedTabIndex = if (uiState.selectedTab == ChatType.PUBLIC_CITY) 0 else 1
+
+    // Group Image Pickers
+    val groupGalleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let { viewModel.setGroupImageUri(it.toString()) }
+    }
+
+    val groupCameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicturePreview()
+    ) { bitmap: Bitmap? ->
+        bitmap?.let {
+            val tempUri = saveBitmapToTempUri(context, it)
+            tempUri?.let { uri -> viewModel.setGroupImageUri(uri.toString()) }
+        }
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -161,13 +186,13 @@ fun ChatListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Neuer Chat Callback */ },
+                onClick = { viewModel.openCreateGroupDialog() },
                 containerColor = PurplePrimary,
                 contentColor = Color.White
             ) {
                 Icon(
                     imageVector = Icons.Filled.Add,
-                    contentDescription = "Neuer Chat"
+                    contentDescription = "Neue Gruppe erstellen"
                 )
             }
         }
@@ -303,7 +328,7 @@ fun ChatListScreen(
                             text = if (uiState.searchQuery.isNotEmpty()) {
                                 "Keine Chats für „${uiState.searchQuery}“ gefunden"
                             } else if (uiState.selectedTab == ChatType.PUBLIC_CITY) {
-                                "Keine öffentlichen Stadt-Chats verfügbar"
+                                "Keine Gruppen-Chats verfügbar"
                             } else {
                                 "Keine privaten Nachrichten vorhanden"
                             },
@@ -344,6 +369,9 @@ fun ChatListScreen(
                                     onClick = {
                                         viewModel.onChatOpened(chat.id)
                                         onChatSelected(chat.id)
+                                    },
+                                    onLongClick = {
+                                        viewModel.onRequestDeleteChat(chat)
                                     }
                                 )
                                 Divider(
@@ -356,7 +384,34 @@ fun ChatListScreen(
                     }
                 }
             }
+
+            // Create Group Dialog
+            if (uiState.isCreateGroupDialogOpen) {
+                CreateGroupDialog(
+                    availableUsers = uiState.availableUsers,
+                    onPickImageGallery = { groupGalleryLauncher.launch("image/*") },
+                    onPickImageCamera = { groupCameraLauncher.launch(null) },
+                    groupImageUri = uiState.groupImageUri,
+                    onCreateGroup = { name, description, selectedUserIds ->
+                        viewModel.createGroup(name, description, selectedUserIds) { newGroupId ->
+                            onChatSelected(newGroupId)
+                        }
+                    },
+                    onDismiss = viewModel::closeCreateGroupDialog
+                )
+            }
         }
     }
 }
 
+private fun saveBitmapToTempUri(context: Context, bitmap: Bitmap): Uri? {
+    return try {
+        val file = File(context.cacheDir, "group_img_${System.currentTimeMillis()}.jpg")
+        file.outputStream().use { out ->
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out)
+        }
+        Uri.fromFile(file)
+    } catch (e: Exception) {
+        null
+    }
+}

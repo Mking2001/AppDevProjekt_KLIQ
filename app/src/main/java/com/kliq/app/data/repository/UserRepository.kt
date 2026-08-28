@@ -64,4 +64,5 @@ interface UserRepository {
     suspend fun reportUser(reporterUserId: String, targetUserId: String, reason: String, details: String? = null): Result<Unit> = Result.success(Unit)
     suspend fun deleteAccount(userId: String): Result<Unit> = Result.success(Unit)
     suspend fun searchUsers(query: String): List<UserEntity> = emptyList()
+    suspend fun getAllUsers(): List<UserEntity> = emptyList()
 }

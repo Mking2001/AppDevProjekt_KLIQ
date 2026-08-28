@@ -291,4 +291,21 @@ class FakeChatRepository(
     override suspend fun syncPublicCityMessages(chatId: String): Result<Unit> = Result.success(Unit)
 
     override suspend fun joinPublicCityChat(chatId: String): Result<Unit> = Result.success(Unit)
+
+    override suspend fun updateChatName(chatId: String, name: String) {
+        chats.value = chats.value.map {
+            if (it.id == chatId) it.copy(name = name) else it
+        }
+    }
+
+    override suspend fun createGroupChat(
+        name: String,
+        description: String,
+        imageUrl: String?,
+        memberUserIds: List<String>
+    ): Result<String> {
+        val id = "group_${System.currentTimeMillis()}"
+        createChatIfMissing(id, name, ChatType.PUBLIC_CITY, description, name.take(1).uppercase())
+        return Result.success(id)
+    }
 }

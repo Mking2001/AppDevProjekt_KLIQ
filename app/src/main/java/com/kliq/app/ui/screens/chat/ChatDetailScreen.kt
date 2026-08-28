@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
@@ -68,6 +69,7 @@ import com.kliq.app.data.model.ChatType
 import com.kliq.app.ui.components.AttachmentOptionsSheet
 import com.kliq.app.ui.components.ChatBubble
 import com.kliq.app.ui.components.ChatInputBar
+import com.kliq.app.ui.components.GroupInfoSheet
 import com.kliq.app.ui.components.GroupPresenceHeader
 import com.kliq.app.ui.components.GroupPresenceParticipantSheet
 import com.kliq.app.ui.components.ImagePreviewSendDialog
@@ -79,8 +81,8 @@ import com.kliq.app.viewmodel.GroupPresenceViewModel
 import java.io.File
 
 /**
- * ChatDetailScreen - Unterstützt sowohl Stadt-Gruppenchats mit Who's Online Präsenz-Modul (Kapitel 6.8)
- * als auch Direktnachrichten, Sprachnachrichten, Kamera-/Galerie-Versand und Profil-Navigation.
+ * ChatDetailScreen - Unterstützt Stadt-Gruppenchats, WhatsApp-ähnliche Gruppenverwaltung,
+ * Direktnachrichten, Sprachnachrichten, Kamera-/Galerie-Versand und Profil-Navigation.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,6 +100,7 @@ fun ChatDetailScreen(
     val listState = rememberLazyListState()
 
     var showOverflowMenu by remember { mutableStateOf(false) }
+    var showGroupInfo by remember { mutableStateOf(false) }
     var reportReason by remember { mutableStateOf("Belästigung") }
     var reportDetails by remember { mutableStateOf("") }
 
@@ -167,7 +170,7 @@ fun ChatDetailScreen(
                         GroupPresenceHeader(
                             title = if (presenceUiState.chatTitle.isNotBlank()) presenceUiState.chatTitle else chatTitle,
                             onlineCount = presenceUiState.totalOnlineCount,
-                            onHeaderClick = { presenceViewModel.toggleParticipantSheet() }
+                            onHeaderClick = { showGroupInfo = true }
                         )
                     } else {
                         Row(
@@ -224,11 +227,18 @@ fun ChatDetailScreen(
                 },
                 actions = {
                     if (chatType == ChatType.PUBLIC_CITY) {
+                        IconButton(onClick = { showGroupInfo = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = "Gruppeninfo",
+                                tint = PurplePrimaryLight
+                            )
+                        }
                         IconButton(onClick = { presenceViewModel.toggleParticipantSheet() }) {
                             Icon(
                                 imageVector = Icons.Default.People,
                                 contentDescription = "Teilnehmer anzeigen",
-                                tint = PurplePrimaryLight
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     } else {
@@ -352,6 +362,25 @@ fun ChatDetailScreen(
                     isCompressing = chatUiState.isCompressingImage,
                     onSend = { chatViewModel.sendSelectedImage(context) },
                     onDismiss = chatViewModel::clearSelectedImage
+                )
+            }
+
+            // Group Info Sheet (WhatsApp Style)
+            if (showGroupInfo) {
+                GroupInfoSheet(
+                    title = chatTitle,
+                    description = if (chatUiState.chatType == ChatType.PUBLIC_CITY) "Öffentlicher Stadt- und Gruppenchat" else "Gruppe",
+                    avatarUrl = null,
+                    memberCount = presenceUiState.totalMembersCount.coerceAtLeast(presenceUiState.totalOnlineCount).coerceAtLeast(1),
+                    onAddMemberClick = {
+                        showGroupInfo = false
+                        presenceViewModel.toggleParticipantSheet()
+                    },
+                    onLeaveGroupClick = {
+                        showGroupInfo = false
+                        chatViewModel.deleteCurrentChat(onNavigateBack)
+                    },
+                    onDismiss = { showGroupInfo = false }
                 )
             }
 

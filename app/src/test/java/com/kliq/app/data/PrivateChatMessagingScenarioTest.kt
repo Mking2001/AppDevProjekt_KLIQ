@@ -10,10 +10,12 @@ import com.kliq.app.data.model.DirectMessage
 import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.repository.ChatRepositoryImpl
 import com.kliq.app.viewmodel.PrivateChatViewModel
+import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -56,12 +58,15 @@ class PrivateChatMessagingScenarioTest {
         db = Room.inMemoryDatabaseBuilder(context, KliqDatabase::class.java)
             .fallbackToDestructiveMigration()
             .allowMainThreadQueries()
+            .setQueryExecutor(testDispatcher.asExecutor())
+            .setTransactionExecutor(testDispatcher.asExecutor())
             .build()
 
         directMessageDao = db.directMessageDao()
         chatRepository = ChatRepositoryImpl(
             chatDao = db.chatDao(),
-            directMessageDao = directMessageDao
+            directMessageDao = directMessageDao,
+            ioDispatcher = testDispatcher
         )
 
         viewModel = PrivateChatViewModel(chatRepository)
@@ -90,7 +95,7 @@ class PrivateChatMessagingScenarioTest {
             receiverName = userBName,
             isOnline = true
         )
-        runCurrent()
+        advanceUntilIdle()
 
         var uiState = viewModel.uiState.value
         assertEquals(userAId, uiState.currentUserId)
@@ -106,7 +111,7 @@ class PrivateChatMessagingScenarioTest {
 
         viewModel.onInputChanged(textMessageFromA)
         viewModel.sendMessage(receiverId = userBId)
-        runCurrent()
+        advanceUntilIdle()
 
         uiState = viewModel.uiState.value
         assertEquals(1, uiState.messages.size)
@@ -142,7 +147,7 @@ class PrivateChatMessagingScenarioTest {
 
         Log.d(TAG, "Schritt 3: Empfang einer Antwortnachricht von User B simulieren: '$responseTextFromB'")
         viewModel.handleIncomingMessage(incomingMessageFromB)
-        runCurrent()
+        advanceUntilIdle()
 
         uiState = viewModel.uiState.value
         assertEquals(2, uiState.messages.size)
@@ -167,7 +172,7 @@ class PrivateChatMessagingScenarioTest {
             receiverId = userBId,
             receiverName = userBName
         )
-        runCurrent()
+        advanceUntilIdle()
 
         val restoredState = newViewModel.uiState.value
         assertEquals(2, restoredState.messages.size)

@@ -83,4 +83,10 @@ interface DirectMessageDao {
         ORDER BY timestamp DESC LIMIT 1
     """)
     suspend fun getLatestMessageBetweenUsers(userA: String, userB: String): DirectMessageEntity?
+
+    @Query("""
+        DELETE FROM direct_messages 
+        WHERE senderId = :userId OR receiverId = :userId
+    """)
+    suspend fun deleteAllMessagesForUser(userId: String)
 }

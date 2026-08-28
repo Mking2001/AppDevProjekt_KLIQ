@@ -108,13 +108,14 @@ class ChatDetailViewModel @Inject constructor(
             var avatarInitial = chatTitle.take(1).uppercase()
 
             if (chatType == ChatType.PRIVATE && targetUserId.isNotBlank()) {
+                userRepository.syncUserProfile(targetUserId)
                 val targetUser = try {
                     userRepository.getUserById(targetUserId).first()
                 } catch (e: Exception) {
                     null
                 }
-                if (targetUser != null) {
-                    chatTitle = targetUser.username.ifBlank { "Nutzer" }
+                if (targetUser != null && targetUser.username.isNotBlank()) {
+                    chatTitle = targetUser.username
                     avatarUrl = targetUser.profilePictureUrl
                     avatarInitial = chatTitle.take(1).uppercase()
                 }
@@ -135,6 +136,10 @@ class ChatDetailViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(errorMessage = "Chat konnte nicht geöffnet werden: ${error.localizedMessage}")
                 }
+            }
+
+            if (chatTitle.isNotBlank() && chatTitle != "Direktnachricht" && chatTitle != "Chat") {
+                chatRepository.updateChatName(chatId, chatTitle)
             }
 
             chatRepository.markChatAsRead(chatId)
@@ -169,10 +174,23 @@ class ChatDetailViewModel @Inject constructor(
                 }
                 .collect { conversation ->
                     if (conversation == null) return@collect
+                    val currentTitle = _uiState.value.conversationName
+                    val displayTitle = if (conversation.chatType == ChatType.PRIVATE) {
+                        if (conversation.name.isNotBlank() && conversation.name != "Direktnachricht" && conversation.name != "Kliq Chat" && conversation.name != "Chat") {
+                            conversation.name
+                        } else if (currentTitle.isNotBlank() && currentTitle != "Direktnachricht" && currentTitle != "Kliq Chat" && currentTitle != "Chat") {
+                            currentTitle
+                        } else {
+                            conversation.name
+                        }
+                    } else {
+                        conversation.name
+                    }
+                    val displayInitial = displayTitle.take(1).uppercase().ifBlank { "K" }
                     _uiState.update { state ->
                         state.copy(
-                            conversationName = conversation.name,
-                            conversationInitial = conversation.avatarInitial,
+                            conversationName = displayTitle,
+                            conversationInitial = displayInitial,
                             chatType = conversation.chatType,
                             isOnline = conversation.isOnline
                         )
@@ -224,8 +242,8 @@ class ChatDetailViewModel @Inject constructor(
      */
     private fun resolveFallbackTitle(chatId: String, chatType: ChatType): String = when {
         chatType == ChatType.PUBLIC_CITY -> "Kliq Stadt-Chat"
-        chatId.startsWith("chat_") -> "Direktnachricht"
-        else -> "Kliq Chat"
+        chatId.startsWith("chat_") -> "Chat"
+        else -> "Chat"
     }
 
     /**
@@ -411,6 +429,14 @@ class ChatDetailViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    fun deleteCurrentChat(onDeleted: () -> Unit) {
+        if (currentChatId.isBlank()) return
+        viewModelScope.launch {
+            chatRepository.deleteChat(currentChatId)
+            onDeleted()
         }
     }
 

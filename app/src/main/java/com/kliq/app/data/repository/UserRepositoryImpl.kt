@@ -277,6 +277,28 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun syncUserProfile(userId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
+            if (kliqConnector != null) {
+                try {
+                    val cloudUser = kliqConnector.getUserById.execute(id = userId).data.user
+                    if (cloudUser != null) {
+                        val userEntity = UserEntity(
+                            id = cloudUser.id,
+                            username = cloudUser.username,
+                            email = cloudUser.email,
+                            age = cloudUser.age,
+                            hometown = cloudUser.hometown,
+                            profilePictureUrl = cloudUser.profilePictureUrl,
+                            bio = cloudUser.bio,
+                            isVerified = true,
+                            gender = cloudUser.gender ?: "UNSPECIFIED"
+                        )
+                        userDao.insertUser(userEntity)
+                        return@withContext Result.success(Unit)
+                    }
+                } catch (e: Exception) {
+                    timber.log.Timber.d("DataConnect: syncUserProfile: %s", e.message)
+                }
+            }
             val remoteUser = apiService.getUserProfile(userId)
             userDao.insertUser(remoteUser)
             Result.success(Unit)
@@ -577,5 +599,34 @@ class UserRepositoryImpl @Inject constructor(
         }
 
         localResults.distinctBy { it.id }
+    }
+
+    override suspend fun getAllUsers(): List<UserEntity> = withContext(ioDispatcher) {
+        val local = userDao.getAllUsers().toMutableList()
+        if (kliqConnector != null) {
+            try {
+                val cloudUsers = kliqConnector.listUsers.execute().data.users
+                for (cloudUser in cloudUsers) {
+                    if (local.none { it.id == cloudUser.id }) {
+                        val imported = UserEntity(
+                            id = cloudUser.id,
+                            username = cloudUser.username,
+                            email = cloudUser.email ?: "${cloudUser.username}@kliq.app",
+                            hometown = cloudUser.hometown ?: "${cloudUser.firstName.orEmpty()} ${cloudUser.lastName.orEmpty()}".trim().ifBlank { null },
+                            profilePictureUrl = cloudUser.profilePictureUrl,
+                            phoneNumber = cloudUser.phoneNumber,
+                            gender = cloudUser.gender ?: "UNSPECIFIED",
+                            isVerified = true,
+                            updatedAtTimestampMs = System.currentTimeMillis()
+                        )
+                        userDao.insertUser(imported)
+                        local.add(imported)
+                    }
+                }
+            } catch (e: Exception) {
+                timber.log.Timber.d("DataConnect: getAllUsers fetch: %s", e.message)
+            }
+        }
+        local.distinctBy { it.id }
     }
 }

@@ -33,6 +33,9 @@ data class ChatListUiState(
     val isSearchActive: Boolean = false,
     val activeGpsCityChat: ChatListItem? = null,
     val isCitySwitcherOpen: Boolean = false,
+    val isCreateGroupDialogOpen: Boolean = false,
+    val groupImageUri: String? = null,
+    val availableUsers: List<com.kliq.app.data.local.entities.UserEntity> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
 )
@@ -298,6 +301,48 @@ class ChatListViewModel @Inject constructor(
                 activeGpsCityChat = newItem,
                 isCitySwitcherOpen = false
             )
+        }
+    }
+
+    fun openCreateGroupDialog() {
+        viewModelScope.launch {
+            val users = try {
+                userRepository.getAllUsers()
+            } catch (e: Exception) {
+                emptyList()
+            }
+            val currentUserId = currentUserProvider.userId()
+            _uiState.update {
+                it.copy(
+                    isCreateGroupDialogOpen = true,
+                    groupImageUri = null,
+                    availableUsers = users.filter { u -> u.id != currentUserId }
+                )
+            }
+        }
+    }
+
+    fun closeCreateGroupDialog() {
+        _uiState.update { it.copy(isCreateGroupDialogOpen = false, groupImageUri = null) }
+    }
+
+    fun setGroupImageUri(uri: String?) {
+        _uiState.update { it.copy(groupImageUri = uri) }
+    }
+
+    fun createGroup(name: String, description: String, selectedUserIds: List<String>, onCreated: (String) -> Unit) {
+        viewModelScope.launch {
+            val imageUri = _uiState.value.groupImageUri
+            val res = chatRepository.createGroupChat(
+                name = name,
+                description = description,
+                imageUrl = imageUri,
+                memberUserIds = selectedUserIds
+            )
+            closeCreateGroupDialog()
+            res.onSuccess { newGroupId ->
+                onCreated(newGroupId)
+            }
         }
     }
 }
