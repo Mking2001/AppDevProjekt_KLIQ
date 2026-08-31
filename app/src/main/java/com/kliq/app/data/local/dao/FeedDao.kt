@@ -15,8 +15,14 @@ interface FeedDao {
     @Query("SELECT * FROM feed_posts ORDER BY createdAtMs DESC")
     fun getFeedPosts(): Flow<List<FeedPostEntity>>
 
+    @Query("SELECT * FROM feed_posts WHERE isEventPinned = 1 ORDER BY createdAtMs DESC")
+    fun getPinnedEvents(): Flow<List<FeedPostEntity>>
+
     @Query("SELECT * FROM feed_posts WHERE authorUserId = :userId ORDER BY createdAtMs DESC")
     fun getFeedPostsByAuthor(userId: String): Flow<List<FeedPostEntity>>
+
+    @Query("UPDATE feed_posts SET flameCount = :flameCount, flameDate = :flameDate WHERE id = :postId")
+    suspend fun updateFlameCount(postId: String, flameCount: Int, flameDate: String)
 
     @Query("SELECT COUNT(*) FROM feed_posts WHERE authorUserId = :userId")
     fun getFeedPostCountByAuthor(userId: String): Flow<Int>

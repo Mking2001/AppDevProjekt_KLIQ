@@ -4585,6 +4585,26 @@ input FeedPost_Data {
   """
   createdAtMs_update: [Int64_Update!] @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `FeedPost`.`flameCount` of type `Int!`
+  """
+  flameCount: Int
+  """
+  ✨ `_expr` server value variant of `flameCount` (✨ Generated from Field `FeedPost`.`flameCount` of type `Int!`)
+  """
+  flameCount_expr: Int_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `flameCount` (✨ Generated from Field `FeedPost`.`flameCount` of type `Int!`)
+  """
+  flameCount_update: [Int_Update!] @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `FeedPost`.`flameDate` of type `String`
+  """
+  flameDate: String
+  """
+  ✨ `_expr` server value variant of `flameDate` (✨ Generated from Field `FeedPost`.`flameDate` of type `String`)
+  """
+  flameDate_expr: String_Expr @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `FeedPost`.`imageUrl` of type `String`
   """
   imageUrl: String
@@ -4601,6 +4621,26 @@ input FeedPost_Data {
   """
   isEventPinned_expr: Boolean_Expr @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `FeedPost`.`isFollowersOnly` of type `Boolean!`
+  """
+  isFollowersOnly: Boolean
+  """
+  ✨ `_expr` server value variant of `isFollowersOnly` (✨ Generated from Field `FeedPost`.`isFollowersOnly` of type `Boolean!`)
+  """
+  isFollowersOnly_expr: Boolean_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `FeedPost`.`latitude` of type `Float`
+  """
+  latitude: Float
+  """
+  ✨ `_expr` server value variant of `latitude` (✨ Generated from Field `FeedPost`.`latitude` of type `Float`)
+  """
+  latitude_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `latitude` (✨ Generated from Field `FeedPost`.`latitude` of type `Float`)
+  """
+  latitude_update: [Float_Update!] @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `FeedPost`.`likeCount` of type `Int!`
   """
   likeCount: Int
@@ -4613,6 +4653,14 @@ input FeedPost_Data {
   """
   likeCount_update: [Int_Update!] @fdc_forbiddenInVariables
   """
+  ✨ Generated from Field `FeedPost`.`locationAddress` of type `String`
+  """
+  locationAddress: String
+  """
+  ✨ `_expr` server value variant of `locationAddress` (✨ Generated from Field `FeedPost`.`locationAddress` of type `String`)
+  """
+  locationAddress_expr: String_Expr @fdc_forbiddenInVariables
+  """
   ✨ Generated from Field `FeedPost`.`locationName` of type `String`
   """
   locationName: String
@@ -4620,6 +4668,18 @@ input FeedPost_Data {
   ✨ `_expr` server value variant of `locationName` (✨ Generated from Field `FeedPost`.`locationName` of type `String`)
   """
   locationName_expr: String_Expr @fdc_forbiddenInVariables
+  """
+  ✨ Generated from Field `FeedPost`.`longitude` of type `Float`
+  """
+  longitude: Float
+  """
+  ✨ `_expr` server value variant of `longitude` (✨ Generated from Field `FeedPost`.`longitude` of type `Float`)
+  """
+  longitude_expr: Float_Expr @fdc_forbiddenInVariables
+  """
+  ✨ `_update` server value variant of `longitude` (✨ Generated from Field `FeedPost`.`longitude` of type `Float`)
+  """
+  longitude_update: [Float_Update!] @fdc_forbiddenInVariables
   """
   ✨ Generated from Field `FeedPost`.`feedComments_on_post` of type `[FeedComment!]!`
   """
@@ -4694,6 +4754,14 @@ input FeedPost_Filter {
   """
   createdAtMs: Int64_Filter
   """
+  ✨ Generated from Field `FeedPost`.`flameCount` of type `Int!`
+  """
+  flameCount: Int_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`flameDate` of type `String`
+  """
+  flameDate: String_Filter
+  """
   ✨ Generated from Field `FeedPost`.`imageUrl` of type `String`
   """
   imageUrl: String_Filter
@@ -4702,13 +4770,29 @@ input FeedPost_Filter {
   """
   isEventPinned: Boolean_Filter
   """
+  ✨ Generated from Field `FeedPost`.`isFollowersOnly` of type `Boolean!`
+  """
+  isFollowersOnly: Boolean_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`latitude` of type `Float`
+  """
+  latitude: Float_Filter
+  """
   ✨ Generated from Field `FeedPost`.`likeCount` of type `Int!`
   """
   likeCount: Int_Filter
   """
+  ✨ Generated from Field `FeedPost`.`locationAddress` of type `String`
+  """
+  locationAddress: String_Filter
+  """
   ✨ Generated from Field `FeedPost`.`locationName` of type `String`
   """
   locationName: String_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`longitude` of type `Float`
+  """
+  longitude: Float_Filter
   """
   ✨ Generated from Field `FeedPost`.`feedComments_on_post` of type `[FeedComment!]!`
   """
@@ -4796,6 +4880,14 @@ input FeedPost_Having {
   """
   createdAt_count: Int_Filter
   """
+  ✨ Generated from Field `FeedPost`.`flameCount_count` of type `Int!`
+  """
+  flameCount_count: Int_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`flameDate_count` of type `Int!`
+  """
+  flameDate_count: Int_Filter
+  """
   ✨ Generated from Field `FeedPost`.`id_count` of type `Int!`
   """
   id_count: Int_Filter
@@ -4808,13 +4900,29 @@ input FeedPost_Having {
   """
   isEventPinned_count: Int_Filter
   """
+  ✨ Generated from Field `FeedPost`.`isFollowersOnly_count` of type `Int!`
+  """
+  isFollowersOnly_count: Int_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`latitude_count` of type `Int!`
+  """
+  latitude_count: Int_Filter
+  """
   ✨ Generated from Field `FeedPost`.`likeCount_count` of type `Int!`
   """
   likeCount_count: Int_Filter
   """
+  ✨ Generated from Field `FeedPost`.`locationAddress_count` of type `Int!`
+  """
+  locationAddress_count: Int_Filter
+  """
   ✨ Generated from Field `FeedPost`.`locationName_count` of type `Int!`
   """
   locationName_count: Int_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`longitude_count` of type `Int!`
+  """
+  longitude_count: Int_Filter
   """
   ✨ Generated from Field `FeedPost`.`commentCount_sum` of type `Int`
   """
@@ -4824,9 +4932,21 @@ input FeedPost_Having {
   """
   createdAtMs_sum: Int64_Filter
   """
+  ✨ Generated from Field `FeedPost`.`flameCount_sum` of type `Int`
+  """
+  flameCount_sum: Int_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`latitude_sum` of type `Float`
+  """
+  latitude_sum: Float_Filter
+  """
   ✨ Generated from Field `FeedPost`.`likeCount_sum` of type `Int`
   """
   likeCount_sum: Int_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`longitude_sum` of type `Float`
+  """
+  longitude_sum: Float_Filter
   """
   ✨ Generated from Field `FeedPost`.`commentCount_avg` of type `Float`
   """
@@ -4836,9 +4956,21 @@ input FeedPost_Having {
   """
   createdAtMs_avg: Float_Filter
   """
+  ✨ Generated from Field `FeedPost`.`flameCount_avg` of type `Float`
+  """
+  flameCount_avg: Float_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`latitude_avg` of type `Float`
+  """
+  latitude_avg: Float_Filter
+  """
   ✨ Generated from Field `FeedPost`.`likeCount_avg` of type `Float`
   """
   likeCount_avg: Float_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`longitude_avg` of type `Float`
+  """
+  longitude_avg: Float_Filter
   """
   ✨ Generated from Field `FeedPost`.`commentCount_min` of type `Int`
   """
@@ -4852,9 +4984,21 @@ input FeedPost_Having {
   """
   createdAt_min: Timestamp_Filter
   """
+  ✨ Generated from Field `FeedPost`.`flameCount_min` of type `Int`
+  """
+  flameCount_min: Int_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`latitude_min` of type `Float`
+  """
+  latitude_min: Float_Filter
+  """
   ✨ Generated from Field `FeedPost`.`likeCount_min` of type `Int`
   """
   likeCount_min: Int_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`longitude_min` of type `Float`
+  """
+  longitude_min: Float_Filter
   """
   ✨ Generated from Field `FeedPost`.`commentCount_max` of type `Int`
   """
@@ -4868,9 +5012,21 @@ input FeedPost_Having {
   """
   createdAt_max: Timestamp_Filter
   """
+  ✨ Generated from Field `FeedPost`.`flameCount_max` of type `Int`
+  """
+  flameCount_max: Int_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`latitude_max` of type `Float`
+  """
+  latitude_max: Float_Filter
+  """
   ✨ Generated from Field `FeedPost`.`likeCount_max` of type `Int`
   """
   likeCount_max: Int_Filter
+  """
+  ✨ Generated from Field `FeedPost`.`longitude_max` of type `Float`
+  """
+  longitude_max: Float_Filter
 }
 """
 ✨ Generated key input type for table 'FeedPost'. It represents the primary key fields used to uniquely identify a row in the table.
@@ -4951,6 +5107,14 @@ input FeedPost_Order {
   """
   createdAtMs: OrderDirection
   """
+  ✨ Generated from Field `FeedPost`.`flameCount` of type `Int!`
+  """
+  flameCount: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`flameDate` of type `String`
+  """
+  flameDate: OrderDirection
+  """
   ✨ Generated from Field `FeedPost`.`imageUrl` of type `String`
   """
   imageUrl: OrderDirection
@@ -4959,13 +5123,29 @@ input FeedPost_Order {
   """
   isEventPinned: OrderDirection
   """
+  ✨ Generated from Field `FeedPost`.`isFollowersOnly` of type `Boolean!`
+  """
+  isFollowersOnly: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`latitude` of type `Float`
+  """
+  latitude: OrderDirection
+  """
   ✨ Generated from Field `FeedPost`.`likeCount` of type `Int!`
   """
   likeCount: OrderDirection
   """
+  ✨ Generated from Field `FeedPost`.`locationAddress` of type `String`
+  """
+  locationAddress: OrderDirection
+  """
   ✨ Generated from Field `FeedPost`.`locationName` of type `String`
   """
   locationName: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`longitude` of type `Float`
+  """
+  longitude: OrderDirection
   """
   ✨ Generated from Field `FeedPost`.`_count` of type `Int!`
   """
@@ -5007,6 +5187,14 @@ input FeedPost_Order {
   """
   createdAt_count: OrderDirection
   """
+  ✨ Generated from Field `FeedPost`.`flameCount_count` of type `Int!`
+  """
+  flameCount_count: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`flameDate_count` of type `Int!`
+  """
+  flameDate_count: OrderDirection
+  """
   ✨ Generated from Field `FeedPost`.`id_count` of type `Int!`
   """
   id_count: OrderDirection
@@ -5019,13 +5207,29 @@ input FeedPost_Order {
   """
   isEventPinned_count: OrderDirection
   """
+  ✨ Generated from Field `FeedPost`.`isFollowersOnly_count` of type `Int!`
+  """
+  isFollowersOnly_count: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`latitude_count` of type `Int!`
+  """
+  latitude_count: OrderDirection
+  """
   ✨ Generated from Field `FeedPost`.`likeCount_count` of type `Int!`
   """
   likeCount_count: OrderDirection
   """
+  ✨ Generated from Field `FeedPost`.`locationAddress_count` of type `Int!`
+  """
+  locationAddress_count: OrderDirection
+  """
   ✨ Generated from Field `FeedPost`.`locationName_count` of type `Int!`
   """
   locationName_count: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`longitude_count` of type `Int!`
+  """
+  longitude_count: OrderDirection
   """
   ✨ Generated from Field `FeedPost`.`commentCount_sum` of type `Int`
   """
@@ -5035,9 +5239,21 @@ input FeedPost_Order {
   """
   createdAtMs_sum: OrderDirection
   """
+  ✨ Generated from Field `FeedPost`.`flameCount_sum` of type `Int`
+  """
+  flameCount_sum: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`latitude_sum` of type `Float`
+  """
+  latitude_sum: OrderDirection
+  """
   ✨ Generated from Field `FeedPost`.`likeCount_sum` of type `Int`
   """
   likeCount_sum: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`longitude_sum` of type `Float`
+  """
+  longitude_sum: OrderDirection
   """
   ✨ Generated from Field `FeedPost`.`commentCount_avg` of type `Float`
   """
@@ -5047,9 +5263,21 @@ input FeedPost_Order {
   """
   createdAtMs_avg: OrderDirection
   """
+  ✨ Generated from Field `FeedPost`.`flameCount_avg` of type `Float`
+  """
+  flameCount_avg: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`latitude_avg` of type `Float`
+  """
+  latitude_avg: OrderDirection
+  """
   ✨ Generated from Field `FeedPost`.`likeCount_avg` of type `Float`
   """
   likeCount_avg: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`longitude_avg` of type `Float`
+  """
+  longitude_avg: OrderDirection
   """
   ✨ Generated from Field `FeedPost`.`commentCount_min` of type `Int`
   """
@@ -5063,9 +5291,21 @@ input FeedPost_Order {
   """
   createdAt_min: OrderDirection
   """
+  ✨ Generated from Field `FeedPost`.`flameCount_min` of type `Int`
+  """
+  flameCount_min: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`latitude_min` of type `Float`
+  """
+  latitude_min: OrderDirection
+  """
   ✨ Generated from Field `FeedPost`.`likeCount_min` of type `Int`
   """
   likeCount_min: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`longitude_min` of type `Float`
+  """
+  longitude_min: OrderDirection
   """
   ✨ Generated from Field `FeedPost`.`commentCount_max` of type `Int`
   """
@@ -5079,9 +5319,21 @@ input FeedPost_Order {
   """
   createdAt_max: OrderDirection
   """
+  ✨ Generated from Field `FeedPost`.`flameCount_max` of type `Int`
+  """
+  flameCount_max: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`latitude_max` of type `Float`
+  """
+  latitude_max: OrderDirection
+  """
   ✨ Generated from Field `FeedPost`.`likeCount_max` of type `Int`
   """
   likeCount_max: OrderDirection
+  """
+  ✨ Generated from Field `FeedPost`.`longitude_max` of type `Float`
+  """
+  longitude_max: OrderDirection
 }
 """
 ✨ Generated data input type for table 'FeedPostLike'. It includes all necessary fields for creating or upserting rows into table.

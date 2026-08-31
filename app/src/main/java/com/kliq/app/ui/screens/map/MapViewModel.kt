@@ -114,6 +114,7 @@ class MapViewModel @Inject constructor(
     private val userDistanceFormatter: UserDistanceFormatter = UserDistanceFormatter.default,
     private val locationRepository: LocationRepository? = null,
     private val userRepository: UserRepository? = null,
+    private val feedRepository: com.kliq.app.data.repository.FeedRepository? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val hapticFeedbackManager: HapticFeedbackManager? = null,
     private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
@@ -253,8 +254,35 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             val currentLat = _uiState.value.cameraPosition.latitude
             val currentLng = _uiState.value.cameraPosition.longitude
-            getClubsWithDistanceUseCase(currentLat, currentLng).collect { venues ->
-                allVenues = if (venues.isNotEmpty()) venues else getFallbackVenues()
+            val venuesFlow = getClubsWithDistanceUseCase(currentLat, currentLng)
+            val pinnedEventsFlow = feedRepository?.getPinnedEvents() ?: kotlinx.coroutines.flow.flowOf(emptyList())
+
+            kotlinx.coroutines.flow.combine(venuesFlow, pinnedEventsFlow) { venues, pinnedPosts ->
+                val baseVenues = if (venues.isNotEmpty()) venues else getFallbackVenues()
+                val eventVenues = pinnedPosts.filter { post ->
+                    post.latitude != null && post.longitude != null && baseVenues.none { it.id == post.id }
+                }.map { post ->
+                    VenueItemUi(
+                        id = post.id,
+                        name = post.clubName ?: "Event",
+                        category = "Event",
+                        distance = "",
+                        rating = 5.0f,
+                        latitude = post.latitude ?: 46.6240,
+                        longitude = post.longitude ?: 14.3078,
+                        address = post.locationAddress ?: "",
+                        activeEventTitle = post.contentText,
+                        isFavorite = false,
+                        currentCapacityPercent = 50,
+                        isOpenNow = true,
+                        totalLiveVisitors = post.flameCount,
+                        malePercentage = 50,
+                        femalePercentage = 50
+                    )
+                }
+                baseVenues + eventVenues
+            }.collect { mergedVenues ->
+                allVenues = mergedVenues
                 updateFilteredAndClusteredVenues()
             }
         }

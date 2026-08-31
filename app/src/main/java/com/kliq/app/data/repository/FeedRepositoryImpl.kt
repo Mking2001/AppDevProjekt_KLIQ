@@ -22,13 +22,51 @@ import javax.inject.Singleton
 @Singleton
 class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,
+    private val clubDao: com.kliq.app.data.local.dao.ClubDao? = null,
+    private val socialDao: com.kliq.app.data.local.dao.SocialDao? = null,
     private val kliqConnector: KliqConnectorConnector? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : FeedRepository {
 
-    override fun getFeedPosts(): Flow<List<FeedPost>> {
+    private fun getTodayDateString(): String {
+        return java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())
+    }
+
+    override fun getFeedPosts(currentUserId: String): Flow<List<FeedPost>> {
         return feedDao.getFeedPosts()
-            .map { entities -> entities.map { it.toDomain() } }
+            .map { entities ->
+                val today = getTodayDateString()
+                val mapped = entities.map { entity ->
+                    val domain = entity.toDomain()
+                    val effectiveFlames = if (entity.flameDate == today) entity.flameCount else 0
+                    domain.copy(flameCount = effectiveFlames)
+                }
+
+                if (currentUserId.isBlank()) {
+                    mapped
+                } else {
+                    mapped.filter { post ->
+                        if (!post.isFollowersOnly) {
+                            true
+                        } else {
+                            post.authorUserId == currentUserId || (socialDao?.isFriendFlow(currentUserId, post.authorUserId) != null)
+                        }
+                    }
+                }
+            }
+            .flowOn(ioDispatcher)
+    }
+
+    override fun getPinnedEvents(): Flow<List<FeedPost>> {
+        val today = getTodayDateString()
+        return feedDao.getPinnedEvents()
+            .map { entities ->
+                entities.map { entity ->
+                    val domain = entity.toDomain()
+                    val effectiveFlames = if (entity.flameDate == today) entity.flameCount else 0
+                    domain.copy(flameCount = effectiveFlames)
+                }
+            }
             .flowOn(ioDispatcher)
     }
 
@@ -52,6 +90,11 @@ class FeedRepositoryImpl @Inject constructor(
                         imageUrl = p.imageUrl,
                         clubId = p.clubId,
                         clubName = p.clubName,
+                        locationAddress = p.locationName,
+                        latitude = null,
+                        longitude = null,
+                        isEventPinned = p.isEventPinned ?: false,
+                        isFollowersOnly = false,
                         createdAtMs = p.createdAtMs,
                         likeCount = p.likeCount,
                         commentCount = p.commentCount
@@ -90,28 +133,93 @@ class FeedRepositoryImpl @Inject constructor(
         contentText: String,
         clubId: String?,
         clubName: String?,
-        imageUrl: String?
+        imageUrl: String?,
+        locationAddress: String?,
+        latitude: Double?,
+        longitude: Double?,
+        isEventPinned: Boolean,
+        isFollowersOnly: Boolean
     ): Result<FeedPost> = withContext(ioDispatcher) {
         val trimmedText = contentText.trim()
-        if (trimmedText.isEmpty()) {
+        if (trimmedText.isEmpty() && imageUrl.isNullOrBlank()) {
             return@withContext Result.failure(
                 IllegalArgumentException("Ein Beitrag darf nicht leer sein.")
             )
         }
 
         try {
+            val postId = "post_${UUID.randomUUID()}"
             val entity = FeedPostEntity(
-                id = "post_${UUID.randomUUID()}",
+                id = postId,
                 authorUserId = authorUserId,
                 authorName = authorName,
                 contentText = trimmedText,
                 imageUrl = imageUrl,
                 clubId = clubId,
                 clubName = clubName,
+                locationAddress = locationAddress,
+                latitude = latitude,
+                longitude = longitude,
+                isEventPinned = isEventPinned,
+                isFollowersOnly = isFollowersOnly,
                 createdAtMs = System.currentTimeMillis()
             )
             feedDao.insertFeedPost(entity)
+
+            if (isEventPinned && latitude != null && longitude != null && clubDao != null) {
+                val eventClubEntity = com.kliq.app.data.local.entities.ClubEntity(
+                    id = postId,
+                    name = clubName ?: trimmedText.take(40),
+                    latitude = latitude,
+                    longitude = longitude,
+                    address = locationAddress ?: "Klagenfurt",
+                    category = "Event",
+                    averageRating = 5.0,
+                    rating = 5.0f,
+                    imageUrl = imageUrl ?: "",
+                    region = "Klagenfurt",
+                    city = "Klagenfurt",
+                    externalSearchTags = trimmedText,
+                    flameCount = 0
+                )
+                clubDao.insertClub(eventClubEntity)
+            }
+
+            kliqConnector?.let { connector ->
+                try {
+                    connector.createFeedPost.execute(
+                        id = postId,
+                        authorUserId = authorUserId,
+                        authorName = authorName,
+                        contentText = trimmedText,
+                        createdAtMs = entity.createdAtMs
+                    ) {
+                        this.imageUrl = imageUrl
+                        this.clubId = clubId
+                        this.clubName = clubName
+                        this.locationName = locationAddress ?: clubName
+                        this.isEventPinned = isEventPinned
+                    }
+                } catch (e: Exception) {
+                    timber.log.Timber.d("DataConnect createFeedPost error: %s", e.message)
+                }
+            }
+
             Result.success(entity.toDomain())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun togglePostHype(postId: String, userId: String): Result<Boolean> = withContext(ioDispatcher) {
+        try {
+            val today = getTodayDateString()
+            val current = feedDao.getFeedPostById(postId) ?: return@withContext Result.failure(NoSuchElementException("Post not found"))
+            val currentFlames = if (current.flameDate == today) current.flameCount else 0
+            val newFlames = currentFlames + 1
+            feedDao.updateFlameCount(postId, newFlames, today)
+            clubDao?.updateFlameCount(postId, newFlames, today)
+            Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -224,10 +332,17 @@ class FeedRepositoryImpl @Inject constructor(
         imageUrl = imageUrl,
         clubId = clubId,
         clubName = clubName,
+        locationAddress = locationAddress,
+        latitude = latitude,
+        longitude = longitude,
+        isEventPinned = isEventPinned,
+        isFollowersOnly = isFollowersOnly,
         createdAtMs = createdAtMs,
         likeCount = likeCount,
         isLikedByMe = isLikedByMe,
-        commentCount = commentCount
+        commentCount = commentCount,
+        flameCount = flameCount,
+        flameDate = flameDate
     )
 
     private fun FeedCommentEntity.toDomain(): FeedComment = FeedComment(

@@ -37,12 +37,16 @@ class AuthViewModel @Inject constructor(
     fun checkAutoLogin() {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
-            val isValid = sessionRepository.checkAndValidateSession()
-            if (isValid) {
-                val userId = sessionRepository.getUserId() ?: "user_default"
-                syncFromCloud(userId)
-                _uiState.value = AuthUiState.Authenticated(userId)
-            } else {
+            try {
+                val isValid = sessionRepository.checkAndValidateSession()
+                if (isValid) {
+                    val userId = sessionRepository.getUserId() ?: "user_default"
+                    syncFromCloud(userId)
+                    _uiState.value = AuthUiState.Authenticated(userId)
+                } else {
+                    _uiState.value = AuthUiState.Unauthenticated
+                }
+            } catch (e: Exception) {
                 _uiState.value = AuthUiState.Unauthenticated
             }
         }

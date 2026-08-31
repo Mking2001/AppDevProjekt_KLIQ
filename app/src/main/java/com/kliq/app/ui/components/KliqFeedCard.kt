@@ -59,7 +59,10 @@ fun KliqFeedCard(
     isLiked: Boolean = false,
     commentCount: Int = 0,
     clubName: String? = null,
+    locationAddress: String? = null,
     imageUrl: String? = null,
+    isPinnedToMap: Boolean = false,
+    isFollowersOnly: Boolean = false,
     isOwnPost: Boolean = false,
     onLikeClick: () -> Unit = {},
     onCommentClick: () -> Unit = {},
@@ -94,11 +97,31 @@ fun KliqFeedCard(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = timeAgo,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = timeAgo,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (isPinnedToMap) {
+                            Text(
+                                text = "• 📍 Event auf Karte",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = PurplePrimary
+                            )
+                        }
+                        if (isFollowersOnly) {
+                            Text(
+                                text = "• 🔒 Nur Follower",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = FuchsiaTertiary
+                            )
+                        }
+                    }
                 }
 
                 if (isOwnPost && onDeletePostClick != null) {

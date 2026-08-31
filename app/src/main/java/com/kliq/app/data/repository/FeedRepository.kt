@@ -7,7 +7,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface FeedRepository {
 
-    fun getFeedPosts(): Flow<List<FeedPost>>
+    fun getFeedPosts(currentUserId: String = ""): Flow<List<FeedPost>>
+
+    fun getPinnedEvents(): Flow<List<FeedPost>>
 
     fun getFeedPostsByAuthor(authorUserId: String): Flow<List<FeedPost>>
 
@@ -23,10 +25,17 @@ interface FeedRepository {
         contentText: String,
         clubId: String? = null,
         clubName: String? = null,
-        imageUrl: String? = null
+        imageUrl: String? = null,
+        locationAddress: String? = null,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        isEventPinned: Boolean = false,
+        isFollowersOnly: Boolean = false
     ): Result<FeedPost>
 
     suspend fun toggleLike(postId: String): Result<Boolean>
+
+    suspend fun togglePostHype(postId: String, userId: String): Result<Boolean>
 
     suspend fun addComment(
         postId: String,

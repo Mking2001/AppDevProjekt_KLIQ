@@ -56,9 +56,15 @@ type FeedPost @table {
   clubId: String
   clubName: String
   locationName: String
+  locationAddress: String
+  latitude: Float
+  longitude: Float
   isEventPinned: Boolean! @default(value: false)
+  isFollowersOnly: Boolean! @default(value: false)
   likeCount: Int! @default(value: 0)
   commentCount: Int! @default(value: 0)
+  flameCount: Int! @default(value: 0)
+  flameDate: String
   createdAtMs: Int64!
   createdAt: Timestamp @default(expr: "request.time")
 }

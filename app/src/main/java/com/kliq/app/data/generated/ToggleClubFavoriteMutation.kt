@@ -1,3 +1,4 @@
+
 @file:Suppress(
   "KotlinRedundantDiagnosticSuppress",
   "PropertyName",
@@ -11,6 +12,8 @@
 
 package com.kliq.app.data.generated
 
+
+
 public interface ToggleClubFavoriteMutation :
     com.google.firebase.dataconnect.generated.GeneratedMutation<
       KliqConnectorConnector,
@@ -18,26 +21,31 @@ public interface ToggleClubFavoriteMutation :
       ToggleClubFavoriteMutation.Variables
     >
 {
-
+  
     @kotlinx.serialization.Serializable
   public data class Variables(
-
+  
     val id: String,
-
+  
     val isFavorite: Boolean,
-
+  
   ) {
-
+    
+    
   }
+  
 
+  
     @kotlinx.serialization.Serializable
   public data class Data(
-
+  
     val club_update: ClubKey?,
-
+  
   ) {
-
+    
+    
   }
+  
 
   public companion object {
     public val operationName: String = "ToggleClubFavorite"
@@ -51,32 +59,41 @@ public interface ToggleClubFavoriteMutation :
 }
 
 public fun ToggleClubFavoriteMutation.ref(
-
+  
     id: String,isFavorite: Boolean,
 
+  
+  
 ): com.google.firebase.dataconnect.MutationRef<
     ToggleClubFavoriteMutation.Data,
     ToggleClubFavoriteMutation.Variables
   > =
   ref(
-
+    
       ToggleClubFavoriteMutation.Variables(
         id=id,isFavorite=isFavorite,
-
+  
       )
-
+    
   )
 
 public suspend fun ToggleClubFavoriteMutation.execute(
 
+  
+    
       id: String,isFavorite: Boolean,
+
+  
 
   ): com.google.firebase.dataconnect.MutationResult<
     ToggleClubFavoriteMutation.Data,
     ToggleClubFavoriteMutation.Variables
   > =
   ref(
-
+    
       id=id,isFavorite=isFavorite,
-
+  
+    
   ).execute()
+
+

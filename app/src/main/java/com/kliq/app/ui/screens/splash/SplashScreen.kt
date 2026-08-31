@@ -28,6 +28,8 @@ import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.viewmodel.AuthUiState
 import com.kliq.app.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
 fun SplashScreen(
@@ -39,9 +41,9 @@ fun SplashScreen(
 ) {
     val authState by authViewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(authState) {
-        delay(1200)
-        when (authState) {
+    LaunchedEffect(Unit) {
+        delay(1000)
+        when (val current = authViewModel.uiState.value) {
             is AuthUiState.Authenticated -> {
                 onNavigateToHome()
                 onSplashFinished?.invoke()
@@ -51,7 +53,15 @@ fun SplashScreen(
                 onSplashFinished?.invoke()
             }
             is AuthUiState.Loading -> {
-
+                val state = withTimeoutOrNull(1500) {
+                    authViewModel.uiState.first { it !is AuthUiState.Loading }
+                }
+                if (state is AuthUiState.Authenticated) {
+                    onNavigateToHome()
+                } else {
+                    onNavigateToAuthSelection()
+                }
+                onSplashFinished?.invoke()
             }
         }
     }

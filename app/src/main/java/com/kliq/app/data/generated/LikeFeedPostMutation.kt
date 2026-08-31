@@ -1,3 +1,4 @@
+
 @file:Suppress(
   "KotlinRedundantDiagnosticSuppress",
   "PropertyName",
@@ -11,6 +12,8 @@
 
 package com.kliq.app.data.generated
 
+
+
 public interface LikeFeedPostMutation :
     com.google.firebase.dataconnect.generated.GeneratedMutation<
       KliqConnectorConnector,
@@ -18,28 +21,33 @@ public interface LikeFeedPostMutation :
       LikeFeedPostMutation.Variables
     >
 {
-
+  
     @kotlinx.serialization.Serializable
   public data class Variables(
-
+  
     val postId: String,
-
+  
     val userId: String,
-
+  
     val createdAtMs: Long,
-
+  
   ) {
-
+    
+    
   }
+  
 
+  
     @kotlinx.serialization.Serializable
   public data class Data(
-
+  
     val feedPostLike_insert: FeedPostLikeKey,
-
+  
   ) {
-
+    
+    
   }
+  
 
   public companion object {
     public val operationName: String = "LikeFeedPost"
@@ -53,32 +61,41 @@ public interface LikeFeedPostMutation :
 }
 
 public fun LikeFeedPostMutation.ref(
-
+  
     postId: String,userId: String,createdAtMs: Long,
 
+  
+  
 ): com.google.firebase.dataconnect.MutationRef<
     LikeFeedPostMutation.Data,
     LikeFeedPostMutation.Variables
   > =
   ref(
-
+    
       LikeFeedPostMutation.Variables(
         postId=postId,userId=userId,createdAtMs=createdAtMs,
-
+  
       )
-
+    
   )
 
 public suspend fun LikeFeedPostMutation.execute(
 
+  
+    
       postId: String,userId: String,createdAtMs: Long,
+
+  
 
   ): com.google.firebase.dataconnect.MutationResult<
     LikeFeedPostMutation.Data,
     LikeFeedPostMutation.Variables
   > =
   ref(
-
+    
       postId=postId,userId=userId,createdAtMs=createdAtMs,
-
+  
+    
   ).execute()
+
+

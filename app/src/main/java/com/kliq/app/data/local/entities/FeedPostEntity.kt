@@ -17,8 +17,15 @@ data class FeedPostEntity(
     val imageUrl: String? = null,
     val clubId: String? = null,
     val clubName: String? = null,
+    val locationAddress: String? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val isEventPinned: Boolean = false,
+    val isFollowersOnly: Boolean = false,
     val createdAtMs: Long,
     val likeCount: Int = 0,
     val isLikedByMe: Boolean = false,
-    val commentCount: Int = 0
+    val commentCount: Int = 0,
+    val flameCount: Int = 0,
+    val flameDate: String = ""
 )

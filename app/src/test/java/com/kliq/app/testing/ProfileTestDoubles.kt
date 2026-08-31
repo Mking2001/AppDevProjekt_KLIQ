@@ -36,7 +36,9 @@ class FakeFeedRepository(
         posts.value = newPosts
     }
 
-    override fun getFeedPosts(): Flow<List<FeedPost>> = posts
+    override fun getFeedPosts(currentUserId: String): Flow<List<FeedPost>> = posts
+
+    override fun getPinnedEvents(): Flow<List<FeedPost>> = posts.map { list -> list.filter { it.isEventPinned } }
 
     override fun getFeedPostsByAuthor(authorUserId: String): Flow<List<FeedPost>> {
         return posts.map { list -> list.filter { it.authorUserId == authorUserId } }
@@ -54,7 +56,12 @@ class FakeFeedRepository(
         contentText: String,
         clubId: String?,
         clubName: String?,
-        imageUrl: String?
+        imageUrl: String?,
+        locationAddress: String?,
+        latitude: Double?,
+        longitude: Double?,
+        isEventPinned: Boolean,
+        isFollowersOnly: Boolean
     ): Result<FeedPost> {
         val post = FeedPost(
             id = "fake_post_${posts.value.size}",
@@ -63,11 +70,18 @@ class FakeFeedRepository(
             contentText = contentText,
             clubId = clubId,
             clubName = clubName,
+            locationAddress = locationAddress,
+            latitude = latitude,
+            longitude = longitude,
+            isEventPinned = isEventPinned,
+            isFollowersOnly = isFollowersOnly,
             imageUrl = imageUrl
         )
         posts.value = listOf(post) + posts.value
         return Result.success(post)
     }
+
+    override suspend fun togglePostHype(postId: String, userId: String): Result<Boolean> = Result.success(true)
 
     override suspend fun toggleLike(postId: String): Result<Boolean> {
         val target = posts.value.find { it.id == postId }

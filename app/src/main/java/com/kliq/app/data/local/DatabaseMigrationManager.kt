@@ -52,13 +52,53 @@ object DatabaseMigrationManager {
         }
     }
 
+    val MIGRATION_23_24 = object : Migration(23, 24) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            try {
+                db.execSQL("ALTER TABLE feed_posts ADD COLUMN locationAddress TEXT DEFAULT NULL")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_23_24 locationAddress: ${e.message}")
+            }
+            try {
+                db.execSQL("ALTER TABLE feed_posts ADD COLUMN latitude REAL DEFAULT NULL")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_23_24 latitude: ${e.message}")
+            }
+            try {
+                db.execSQL("ALTER TABLE feed_posts ADD COLUMN longitude REAL DEFAULT NULL")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_23_24 longitude: ${e.message}")
+            }
+            try {
+                db.execSQL("ALTER TABLE feed_posts ADD COLUMN isEventPinned INTEGER NOT NULL DEFAULT 0")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_23_24 isEventPinned: ${e.message}")
+            }
+            try {
+                db.execSQL("ALTER TABLE feed_posts ADD COLUMN isFollowersOnly INTEGER NOT NULL DEFAULT 0")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_23_24 isFollowersOnly: ${e.message}")
+            }
+            try {
+                db.execSQL("ALTER TABLE feed_posts ADD COLUMN flameCount INTEGER NOT NULL DEFAULT 0")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_23_24 flameCount: ${e.message}")
+            }
+            try {
+                db.execSQL("ALTER TABLE feed_posts ADD COLUMN flameDate TEXT NOT NULL DEFAULT ''")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_23_24 flameDate: ${e.message}")
+            }
+        }
+    }
+
     fun buildDatabase(context: Context): KliqDatabase {
         return Room.databaseBuilder(
             context,
             KliqDatabase::class.java,
             DATABASE_NAME
         )
-        .addMigrations(MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23)
+        .addMigrations(MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23, MIGRATION_23_24)
         .fallbackToDestructiveMigration()
         .fallbackToDestructiveMigrationOnDowngrade()
         .addCallback(object : RoomDatabase.Callback() {

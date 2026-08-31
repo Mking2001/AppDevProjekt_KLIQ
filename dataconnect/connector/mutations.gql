@@ -121,7 +121,11 @@ mutation CreateFeedPost(
   $clubId: String,
   $clubName: String,
   $locationName: String,
+  $locationAddress: String,
+  $latitude: Float,
+  $longitude: Float,
   $isEventPinned: Boolean,
+  $isFollowersOnly: Boolean,
   $createdAtMs: Int64!
 ) @auth(level: PUBLIC) {
   feedPost_insert(data: {
@@ -134,7 +138,11 @@ mutation CreateFeedPost(
     clubId: $clubId
     clubName: $clubName
     locationName: $locationName
+    locationAddress: $locationAddress
+    latitude: $latitude
+    longitude: $longitude
     isEventPinned: $isEventPinned
+    isFollowersOnly: $isFollowersOnly
     createdAtMs: $createdAtMs
   })
 }

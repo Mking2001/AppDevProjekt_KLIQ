@@ -39,7 +39,13 @@ data class HomeUiState(
     val composerText: String = "",
     val composerImageUri: String? = null,
     val composerLocation: String = "",
+    val composerLocationAddress: String? = null,
+    val composerLatitude: Double? = null,
+    val composerLongitude: Double? = null,
     val composerIsEventPinned: Boolean = false,
+    val composerIsFollowersOnly: Boolean = false,
+    val composerAddressSuggestions: List<com.kliq.app.util.AddressSuggestion> = emptyList(),
+    val isSearchingAddresses: Boolean = false,
     val isPublishing: Boolean = false,
     val activeStory: StoryItemUi? = null,
     val isPostingStory: Boolean = false,
@@ -75,11 +81,13 @@ data class FeedItemUi(
     val timeAgo: String,
     val contentText: String,
     val clubName: String? = null,
+    val locationAddress: String? = null,
     val imageUrl: String? = null,
     val likeCount: Int = 0,
     val isLiked: Boolean = false,
     val commentCount: Int = 0,
     val isPinnedToMap: Boolean = false,
+    val isFollowersOnly: Boolean = false,
     val isOwnPost: Boolean = false
 )
 
@@ -146,7 +154,7 @@ class HomeViewModel @Inject constructor(
     private fun observeFeed() {
         viewModelScope.launch {
             val currentUserId = currentUserProvider.userId()
-            feedRepository.getFeedPosts()
+            feedRepository.getFeedPosts(currentUserId)
                 .catch { error ->
                     _uiState.update {
                         it.copy(
@@ -164,10 +172,13 @@ class HomeViewModel @Inject constructor(
                             timeAgo = formatRelativeTime(post.createdAtMs),
                             contentText = post.contentText,
                             clubName = post.clubName,
+                            locationAddress = post.locationAddress,
                             imageUrl = post.imageUrl,
                             likeCount = post.likeCount,
                             isLiked = post.isLikedByMe,
                             commentCount = post.commentCount,
+                            isPinnedToMap = post.isEventPinned,
+                            isFollowersOnly = post.isFollowersOnly,
                             isOwnPost = (post.authorUserId == currentUserId)
                         )
                     }
@@ -347,7 +358,12 @@ class HomeViewModel @Inject constructor(
                 composerText = "",
                 composerImageUri = null,
                 composerLocation = "",
-                composerIsEventPinned = false
+                composerLocationAddress = null,
+                composerLatitude = null,
+                composerLongitude = null,
+                composerIsEventPinned = false,
+                composerIsFollowersOnly = false,
+                composerAddressSuggestions = emptyList()
             )
         }
     }
@@ -359,13 +375,56 @@ class HomeViewModel @Inject constructor(
                 composerText = "",
                 composerImageUri = null,
                 composerLocation = "",
-                composerIsEventPinned = false
+                composerLocationAddress = null,
+                composerLatitude = null,
+                composerLongitude = null,
+                composerIsEventPinned = false,
+                composerIsFollowersOnly = false,
+                composerAddressSuggestions = emptyList()
             )
         }
     }
 
     fun onComposerTextChanged(text: String) {
         _uiState.update { it.copy(composerText = text) }
+    }
+
+    fun onComposerVisibilityChanged(isFollowersOnly: Boolean) {
+        _uiState.update { it.copy(composerIsFollowersOnly = isFollowersOnly) }
+    }
+
+    fun onComposerLocationQueryChanged(context: Context, query: String) {
+        _uiState.update { it.copy(composerLocation = query, isSearchingAddresses = true) }
+        viewModelScope.launch {
+            val suggestions = com.kliq.app.util.AddressSearchManager.search(context, query)
+            _uiState.update { it.copy(composerAddressSuggestions = suggestions, isSearchingAddresses = false) }
+        }
+    }
+
+    fun onSelectAddress(suggestion: com.kliq.app.util.AddressSuggestion) {
+        _uiState.update {
+            it.copy(
+                composerLocation = suggestion.name,
+                composerLocationAddress = suggestion.fullAddress,
+                composerLatitude = suggestion.latitude,
+                composerLongitude = suggestion.longitude,
+                composerAddressSuggestions = emptyList(),
+                isSearchingAddresses = false
+            )
+        }
+    }
+
+    fun onClearAddress() {
+        _uiState.update {
+            it.copy(
+                composerLocation = "",
+                composerLocationAddress = null,
+                composerLatitude = null,
+                composerLongitude = null,
+                composerIsEventPinned = false,
+                composerAddressSuggestions = emptyList()
+            )
+        }
     }
 
     fun onComposerImageSelected(context: Context, uri: Uri) {
@@ -383,11 +442,14 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(composerImageUri = null) }
     }
 
-    fun onComposerLocationChanged(location: String) {
-        _uiState.update { it.copy(composerLocation = location) }
-    }
-
     fun onToggleComposerEventPinned() {
+        val state = _uiState.value
+        if (state.composerLatitude == null || state.composerLongitude == null) {
+            _uiState.update {
+                it.copy(errorMessage = "Bitte wähle zuerst eine echte Adresse aus der Liste aus, um das Event auf der Karte zu fixieren.")
+            }
+            return
+        }
         _uiState.update { it.copy(composerIsEventPinned = !it.composerIsEventPinned) }
     }
 
@@ -395,8 +457,19 @@ class HomeViewModel @Inject constructor(
         val text = _uiState.value.composerText.trim()
         val image = _uiState.value.composerImageUri
         val location = _uiState.value.composerLocation.trim().ifBlank { null }
+        val locationAddress = _uiState.value.composerLocationAddress
+        val latitude = _uiState.value.composerLatitude
+        val longitude = _uiState.value.composerLongitude
+        val isEventPinned = _uiState.value.composerIsEventPinned
+        val isFollowersOnly = _uiState.value.composerIsFollowersOnly
+
         if (text.isEmpty() && image == null) {
             _uiState.update { it.copy(errorMessage = "Bitte gib einen Text oder ein Bild für den Beitrag ein.") }
+            return
+        }
+
+        if (isEventPinned && (latitude == null || longitude == null)) {
+            _uiState.update { it.copy(errorMessage = "Ohne ausgewählte Adresse kann das Event nicht auf der Karte fixiert werden.") }
             return
         }
 
@@ -411,7 +484,12 @@ class HomeViewModel @Inject constructor(
                 authorName = userName,
                 contentText = text,
                 imageUrl = image,
-                clubName = location
+                clubName = location,
+                locationAddress = locationAddress,
+                latitude = latitude,
+                longitude = longitude,
+                isEventPinned = isEventPinned,
+                isFollowersOnly = isFollowersOnly
             ).onSuccess {
                 _uiState.update {
                     it.copy(
@@ -420,8 +498,13 @@ class HomeViewModel @Inject constructor(
                         composerText = "",
                         composerImageUri = null,
                         composerLocation = "",
+                        composerLocationAddress = null,
+                        composerLatitude = null,
+                        composerLongitude = null,
                         composerIsEventPinned = false,
-                        infoMessage = "Beitrag veröffentlicht!"
+                        composerIsFollowersOnly = false,
+                        composerAddressSuggestions = emptyList(),
+                        infoMessage = if (isEventPinned) "Event erfolgreich veröffentlicht und auf der Karte fixiert!" else "Beitrag veröffentlicht!"
                     )
                 }
             }.onFailure { error ->

@@ -2194,6 +2194,24 @@ extend type FeedPost {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "FeedPost.createdAt", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `FeedPost` table where the `flameCount` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  flameCount_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "FeedPost.flameCount", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `FeedPost` table where the `flameDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  flameDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "FeedPost.flameDate", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `FeedPost` table where the `id` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   id_count(
@@ -2221,6 +2239,24 @@ extend type FeedPost {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "FeedPost.isEventPinned", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `FeedPost` table where the `isFollowersOnly` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  isFollowersOnly_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "FeedPost.isFollowersOnly", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `FeedPost` table where the `latitude` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  latitude_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "FeedPost.latitude", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `FeedPost` table where the `likeCount` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   likeCount_count(
@@ -2230,6 +2266,15 @@ extend type FeedPost {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "FeedPost.likeCount", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `FeedPost` table where the `locationAddress` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  locationAddress_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "FeedPost.locationAddress", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `FeedPost` table where the `locationName` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   locationName_count(
@@ -2238,6 +2283,15 @@ extend type FeedPost {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "FeedPost.locationName", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `FeedPost` table where the `longitude` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  longitude_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "FeedPost.longitude", purpose: QUERY_COUNT)
   """
   ✨ Sum the `commentCount` field in the `FeedPost` table.
   """
@@ -2257,6 +2311,24 @@ extend type FeedPost {
     distinct: Boolean = false
   ): Int64 @fdc_generated(from: "FeedPost.createdAtMs", purpose: QUERY_SUM)
   """
+  ✨ Sum the `flameCount` field in the `FeedPost` table.
+  """
+  flameCount_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "FeedPost.flameCount", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `latitude` field in the `FeedPost` table.
+  """
+  latitude_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "FeedPost.latitude", purpose: QUERY_SUM)
+  """
   ✨ Sum the `likeCount` field in the `FeedPost` table.
   """
   likeCount_sum(
@@ -2265,6 +2337,15 @@ extend type FeedPost {
     """
     distinct: Boolean = false
   ): Int @fdc_generated(from: "FeedPost.likeCount", purpose: QUERY_SUM)
+  """
+  ✨ Sum the `longitude` field in the `FeedPost` table.
+  """
+  longitude_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "FeedPost.longitude", purpose: QUERY_SUM)
   """
   ✨ Average the `commentCount` field in the `FeedPost` table.
   """
@@ -2284,6 +2365,24 @@ extend type FeedPost {
     distinct: Boolean = false
   ): Float @fdc_generated(from: "FeedPost.createdAtMs", purpose: QUERY_AVG)
   """
+  ✨ Average the `flameCount` field in the `FeedPost` table.
+  """
+  flameCount_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "FeedPost.flameCount", purpose: QUERY_AVG)
+  """
+  ✨ Average the `latitude` field in the `FeedPost` table.
+  """
+  latitude_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "FeedPost.latitude", purpose: QUERY_AVG)
+  """
   ✨ Average the `likeCount` field in the `FeedPost` table.
   """
   likeCount_avg(
@@ -2292,6 +2391,15 @@ extend type FeedPost {
     """
     distinct: Boolean = false
   ): Float @fdc_generated(from: "FeedPost.likeCount", purpose: QUERY_AVG)
+  """
+  ✨ Average the `longitude` field in the `FeedPost` table.
+  """
+  longitude_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "FeedPost.longitude", purpose: QUERY_AVG)
   """
   ✨ Minimum of the `commentCount` field in the `FeedPost` table.
   """
@@ -2305,9 +2413,21 @@ extend type FeedPost {
   """
   createdAt_min: Timestamp @fdc_generated(from: "FeedPost.createdAt", purpose: QUERY_MIN)
   """
+  ✨ Minimum of the `flameCount` field in the `FeedPost` table.
+  """
+  flameCount_min: Int @fdc_generated(from: "FeedPost.flameCount", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `latitude` field in the `FeedPost` table.
+  """
+  latitude_min: Float @fdc_generated(from: "FeedPost.latitude", purpose: QUERY_MIN)
+  """
   ✨ Minimum of the `likeCount` field in the `FeedPost` table.
   """
   likeCount_min: Int @fdc_generated(from: "FeedPost.likeCount", purpose: QUERY_MIN)
+  """
+  ✨ Minimum of the `longitude` field in the `FeedPost` table.
+  """
+  longitude_min: Float @fdc_generated(from: "FeedPost.longitude", purpose: QUERY_MIN)
   """
   ✨ Maximum of the `commentCount` field in the `FeedPost` table.
   """
@@ -2321,9 +2441,21 @@ extend type FeedPost {
   """
   createdAt_max: Timestamp @fdc_generated(from: "FeedPost.createdAt", purpose: QUERY_MAX)
   """
+  ✨ Maximum of the `flameCount` field in the `FeedPost` table.
+  """
+  flameCount_max: Int @fdc_generated(from: "FeedPost.flameCount", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `latitude` field in the `FeedPost` table.
+  """
+  latitude_max: Float @fdc_generated(from: "FeedPost.latitude", purpose: QUERY_MAX)
+  """
   ✨ Maximum of the `likeCount` field in the `FeedPost` table.
   """
   likeCount_max: Int @fdc_generated(from: "FeedPost.likeCount", purpose: QUERY_MAX)
+  """
+  ✨ Maximum of the `longitude` field in the `FeedPost` table.
+  """
+  longitude_max: Float @fdc_generated(from: "FeedPost.longitude", purpose: QUERY_MAX)
   """
   A generated field that is used for caching results in SDKs.
   """

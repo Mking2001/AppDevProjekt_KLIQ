@@ -28,7 +28,7 @@ data class ExploreUiState(
     val errorMessage: String? = null
 ) {
     companion object {
-        val CATEGORIES = listOf("Trending", "Clubs", "Bars", "Pubs", "Lounges")
+        val CATEGORIES = listOf("Trending", "Events", "Clubs", "Bars", "Pubs", "Lounges")
     }
 }
 
@@ -51,6 +51,7 @@ data class DiscoverItemUi(
 @HiltViewModel
 class ExploreViewModel @Inject constructor(
     private val clubRepository: ClubRepository,
+    private val feedRepository: com.kliq.app.data.repository.FeedRepository,
     private val eventRepository: EventRepository? = null,
     private val userRepository: UserRepository,
     private val currentUserProvider: CurrentUserProvider
@@ -72,10 +73,12 @@ class ExploreViewModel @Inject constructor(
             val currentUserId = currentUserProvider.userId()
             combine(
                 clubRepository.getAllClubs(),
-                clubRepository.getHypedClubIdsToday(currentUserId)
-            ) { clubs, hypedIds ->
+                clubRepository.getHypedClubIdsToday(currentUserId),
+                feedRepository.getPinnedEvents()
+            ) { clubs, hypedIds, pinnedEvents ->
                 val hypedSet = hypedIds.toSet()
-                clubs.map { club ->
+
+                val clubItems = clubs.map { club ->
                     DiscoverItemUi(
                         id = club.id,
                         title = club.name,
@@ -88,15 +91,35 @@ class ExploreViewModel @Inject constructor(
                         isOpenNow = club.operatingHours.isOpenNow,
                         flameCount = club.flameCount,
                         isHypedToday = hypedSet.contains(club.id),
-                        isEvent = false
+                        isEvent = club.category.contains("Event", ignoreCase = true)
                     )
                 }
+
+                val eventItems = pinnedEvents.filter { event -> clubs.none { it.id == event.id } }.map { post ->
+                    DiscoverItemUi(
+                        id = post.id,
+                        title = post.clubName ?: "Community Event",
+                        subtitle = post.contentText,
+                        category = "Events",
+                        rating = 5.0f,
+                        region = post.locationAddress ?: "Klagenfurt",
+                        imageUrl = post.imageUrl?.ifBlank { null },
+                        creatorUserId = post.authorUserId,
+                        isFavorite = false,
+                        isOpenNow = true,
+                        flameCount = post.flameCount,
+                        isHypedToday = hypedSet.contains(post.id),
+                        isEvent = true
+                    )
+                }
+
+                clubItems + eventItems
             }
                 .catch { error ->
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = "Clubs & Bars konnten nicht geladen werden: ${error.localizedMessage}"
+                            errorMessage = "Clubs & Events konnten nicht geladen werden: ${error.localizedMessage}"
                         )
                     }
                 }
@@ -167,15 +190,11 @@ class ExploreViewModel @Inject constructor(
         }
     }
 
-    fun onToggleHype(clubId: String) {
+    fun onToggleHype(itemId: String) {
         viewModelScope.launch {
             val userId = currentUserProvider.userId()
-            clubRepository.toggleClubHype(clubId, userId)
-                .onFailure { error ->
-                    _uiState.update {
-                        it.copy(errorMessage = "Flamme konnte nicht vergeben werden: ${error.localizedMessage}")
-                    }
-                }
+            clubRepository.toggleClubHype(itemId, userId)
+            feedRepository.togglePostHype(itemId, userId)
         }
     }
 

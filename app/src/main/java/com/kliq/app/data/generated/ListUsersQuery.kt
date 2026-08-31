@@ -1,3 +1,4 @@
+
 @file:Suppress(
   "KotlinRedundantDiagnosticSuppress",
   "PropertyName",
@@ -11,8 +12,10 @@
 
 package com.kliq.app.data.generated
 
+
 import kotlinx.coroutines.flow.filterNotNull as _flow_filterNotNull
 import kotlinx.coroutines.flow.map as _flow_map
+
 
 public interface ListUsersQuery :
     com.google.firebase.dataconnect.generated.GeneratedQuery<
@@ -21,42 +24,49 @@ public interface ListUsersQuery :
       Unit
     >
 {
+  
 
+  
     @kotlinx.serialization.Serializable
   public data class Data(
-
+  
     val users: List<UsersItem>,
-
+  
   ) {
-
+    
+      
         @kotlinx.serialization.Serializable
   public data class UsersItem(
-
+  
     val id: String,
-
+  
     val username: String,
-
+  
     val email: String,
-
+  
     val phoneNumber: String?,
-
+  
     val firstName: String?,
-
+  
     val lastName: String?,
-
+  
     val profilePictureUrl: String?,
-
+  
     val gender: String,
-
+  
     val hometown: String?,
-
+  
     val password: String?,
-
+  
   ) {
-
+    
+    
   }
-
+      
+    
+    
   }
+  
 
   public companion object {
     public val operationName: String = "ListUsers"
@@ -70,34 +80,38 @@ public interface ListUsersQuery :
 }
 
 public fun ListUsersQuery.ref(
-
+  
 ): com.google.firebase.dataconnect.QueryRef<
     ListUsersQuery.Data,
     Unit
   > =
   ref(
-
+    
       Unit
-
+    
   )
 
 public suspend fun ListUsersQuery.execute(
+
+  
 
   ): com.google.firebase.dataconnect.QueryResult<
     ListUsersQuery.Data,
     Unit
   > =
   ref(
-
+    
   ).execute()
 
-  public fun ListUsersQuery.flow(
 
+  public fun ListUsersQuery.flow(
+    
     ): kotlinx.coroutines.flow.Flow<ListUsersQuery.Data> =
     ref(
-
+        
       ).subscribe()
       .flow
       ._flow_map { querySubscriptionResult -> querySubscriptionResult.result.getOrNull() }
       ._flow_filterNotNull()
       ._flow_map { it.data }
+

@@ -53,7 +53,7 @@ import com.kliq.app.data.local.entities.VisitedLogEntity
         FeedCommentEntity::class,
         StoryEntity::class
     ],
-    version = 23,
+    version = 24,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)

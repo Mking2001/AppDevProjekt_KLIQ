@@ -1,3 +1,4 @@
+
 @file:Suppress(
   "KotlinRedundantDiagnosticSuppress",
   "PropertyName",
@@ -11,6 +12,8 @@
 
 package com.kliq.app.data.generated
 
+
+
 public interface UpdateClubFlamesMutation :
     com.google.firebase.dataconnect.generated.GeneratedMutation<
       KliqConnectorConnector,
@@ -18,30 +21,33 @@ public interface UpdateClubFlamesMutation :
       UpdateClubFlamesMutation.Variables
     >
 {
-
+  
     @kotlinx.serialization.Serializable
   public data class Variables(
-
+  
     val id: String,
-
+  
     val flameCount: Int,
-
+  
     val flameDate: com.google.firebase.dataconnect.OptionalVariable<String?>,
-
+  
   ) {
-
+    
+    
+      
       @kotlin.DslMarker public annotation class BuilderDsl
 
+      
       @BuilderDsl
       public interface Builder {
         public var id: String
         public var flameCount: Int
         public var flameDate: String?
-
+        
       }
 
       public companion object {
-
+        
         @Suppress("NAME_SHADOWING")
         public fun build(
           id: String,flameCount: Int,
@@ -51,20 +57,22 @@ public interface UpdateClubFlamesMutation :
             var flameCount= flameCount
             var flameDate: com.google.firebase.dataconnect.OptionalVariable<String?> =
                 com.google.firebase.dataconnect.OptionalVariable.Undefined
+            
 
           return object : Builder {
             override var id: String
               get() = throw UnsupportedOperationException("getting builder values is not supported")
               set(value_) { id = value_ }
-
+              
             override var flameCount: Int
               get() = throw UnsupportedOperationException("getting builder values is not supported")
               set(value_) { flameCount = value_ }
-
+              
             override var flameDate: String?
               get() = throw UnsupportedOperationException("getting builder values is not supported")
               set(value_) { flameDate = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
-
+              
+            
           }.apply(block_)
           .let {
             Variables(
@@ -73,17 +81,21 @@ public interface UpdateClubFlamesMutation :
           }
         }
       }
-
+    
   }
+  
 
+  
     @kotlinx.serialization.Serializable
   public data class Data(
-
+  
     val club_update: ClubKey?,
-
+  
   ) {
-
+    
+    
   }
+  
 
   public companion object {
     public val operationName: String = "UpdateClubFlames"
@@ -97,29 +109,33 @@ public interface UpdateClubFlamesMutation :
 }
 
 public fun UpdateClubFlamesMutation.ref(
-
+  
     id: String,flameCount: Int,
 
+  
     block_: UpdateClubFlamesMutation.Variables.Builder.() -> Unit = {}
-
+  
 ): com.google.firebase.dataconnect.MutationRef<
     UpdateClubFlamesMutation.Data,
     UpdateClubFlamesMutation.Variables
   > =
   ref(
-
+    
       UpdateClubFlamesMutation.Variables.build(
         id=id,flameCount=flameCount,
-
+  
     block_
       )
-
+    
   )
 
 public suspend fun UpdateClubFlamesMutation.execute(
 
+  
+    
       id: String,flameCount: Int,
 
+  
     block_: UpdateClubFlamesMutation.Variables.Builder.() -> Unit = {}
 
   ): com.google.firebase.dataconnect.MutationResult<
@@ -127,9 +143,11 @@ public suspend fun UpdateClubFlamesMutation.execute(
     UpdateClubFlamesMutation.Variables
   > =
   ref(
-
+    
       id=id,flameCount=flameCount,
-
+  
     block_
-
+    
   ).execute()
+
+
