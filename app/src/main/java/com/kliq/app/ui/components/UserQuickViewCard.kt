@@ -49,6 +49,7 @@ fun UserQuickViewCard(
     isVisible: Boolean,
     onDismiss: () -> Unit,
     onSendMessage: (String) -> Unit = {},
+    onViewProfile: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
@@ -202,7 +203,7 @@ fun UserQuickViewCard(
                             Text("Nachricht")
                         }
                         FilledTonalButton(
-                            onClick = {  },
+                            onClick = { onViewProfile(currentUser.userId) },
                             modifier = Modifier
                                 .weight(1f)
                                 .ensureMinTouchTarget(),
