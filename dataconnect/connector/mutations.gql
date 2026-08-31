@@ -3,33 +3,91 @@
 # ============================================================
 
 # ===== USER Mutations =====
-mutation CreateUser($id: String!, $username: String!, $email: String!) @auth(level: PUBLIC) {
+mutation CreateUser(
+  $id: String!,
+  $username: String!,
+  $email: String!,
+  $firstName: String,
+  $lastName: String,
+  $birthDateMs: Int64,
+  $age: Int,
+  $gender: String,
+  $hometown: String,
+  $countryCode: String,
+  $phoneNumber: String,
+  $profilePictureUrl: String,
+  $bio: String,
+  $password: String
+) @auth(level: PUBLIC) {
   user_insert(data: {
     id: $id
     username: $username
     email: $email
+    firstName: $firstName
+    lastName: $lastName
+    birthDateMs: $birthDateMs
+    age: $age
+    gender: $gender
+    hometown: $hometown
+    countryCode: $countryCode
+    phoneNumber: $phoneNumber
+    profilePictureUrl: $profilePictureUrl
+    bio: $bio
+    password: $password
   })
 }
 
 mutation UpdateUserProfile(
   $id: String!,
   $username: String,
-  $bio: String,
-  $profilePictureUrl: String,
+  $firstName: String,
+  $lastName: String,
+  $birthDateMs: Int64,
   $age: Int,
-  $hometown: String,
   $gender: String,
-  $phoneNumber: String
+  $hometown: String,
+  $countryCode: String,
+  $phoneNumber: String,
+  $profilePictureUrl: String,
+  $bio: String,
+  $password: String
 ) @auth(level: PUBLIC) {
   user_update(id: $id, data: {
     username: $username
-    bio: $bio
-    profilePictureUrl: $profilePictureUrl
+    firstName: $firstName
+    lastName: $lastName
+    birthDateMs: $birthDateMs
     age: $age
-    hometown: $hometown
     gender: $gender
+    hometown: $hometown
+    countryCode: $countryCode
     phoneNumber: $phoneNumber
+    profilePictureUrl: $profilePictureUrl
+    bio: $bio
+    password: $password
   })
+}
+
+mutation DeleteUser($id: String!) @auth(level: PUBLIC) {
+  user_delete(id: $id)
+}
+
+mutation AddUserPhoto(
+  $id: String!,
+  $userId: String!,
+  $imageUrl: String!,
+  $displayOrder: Int
+) @auth(level: PUBLIC) {
+  userPhoto_insert(data: {
+    id: $id
+    userId: $userId
+    imageUrl: $imageUrl
+    displayOrder: $displayOrder
+  })
+}
+
+mutation DeleteUserPhoto($id: String!) @auth(level: PUBLIC) {
+  userPhoto_delete(id: $id)
 }
 
 mutation UpsertUserPreference(
@@ -50,6 +108,125 @@ mutation UpsertUserPreference(
     smokingHabit: $smokingHabit
     drinkingHabit: $drinkingHabit
   })
+}
+
+# ===== FEED POST Mutations =====
+mutation CreateFeedPost(
+  $id: String!,
+  $authorUserId: String!,
+  $authorName: String!,
+  $authorAvatarUrl: String,
+  $contentText: String!,
+  $imageUrl: String,
+  $clubId: String,
+  $clubName: String,
+  $locationName: String,
+  $locationAddress: String,
+  $latitude: Float,
+  $longitude: Float,
+  $isEventPinned: Boolean,
+  $isFollowersOnly: Boolean,
+  $createdAtMs: Int64!
+) @auth(level: PUBLIC) {
+  feedPost_insert(data: {
+    id: $id
+    authorUserId: $authorUserId
+    authorName: $authorName
+    authorAvatarUrl: $authorAvatarUrl
+    contentText: $contentText
+    imageUrl: $imageUrl
+    clubId: $clubId
+    clubName: $clubName
+    locationName: $locationName
+    locationAddress: $locationAddress
+    latitude: $latitude
+    longitude: $longitude
+    isEventPinned: $isEventPinned
+    isFollowersOnly: $isFollowersOnly
+    createdAtMs: $createdAtMs
+  })
+}
+
+mutation UpdateFeedPost(
+  $id: String!,
+  $contentText: String,
+  $imageUrl: String,
+  $likeCount: Int,
+  $commentCount: Int
+) @auth(level: PUBLIC) {
+  feedPost_update(id: $id, data: {
+    contentText: $contentText
+    imageUrl: $imageUrl
+    likeCount: $likeCount
+    commentCount: $commentCount
+  })
+}
+
+mutation DeleteFeedPost($id: String!) @auth(level: PUBLIC) {
+  feedPost_delete(id: $id)
+}
+
+# ===== FEED COMMENT Mutations =====
+mutation CreateFeedComment(
+  $id: String!,
+  $postId: String!,
+  $authorUserId: String!,
+  $authorName: String!,
+  $text: String!,
+  $createdAtMs: Int64!
+) @auth(level: PUBLIC) {
+  feedComment_insert(data: {
+    id: $id
+    postId: $postId
+    authorUserId: $authorUserId
+    authorName: $authorName
+    text: $text
+    createdAtMs: $createdAtMs
+  })
+}
+
+mutation DeleteFeedComment($id: String!) @auth(level: PUBLIC) {
+  feedComment_delete(id: $id)
+}
+
+# ===== FEED POST LIKE Mutations =====
+mutation LikeFeedPost($postId: String!, $userId: String!, $createdAtMs: Int64!) @auth(level: PUBLIC) {
+  feedPostLike_insert(data: {
+    postId: $postId
+    userId: $userId
+    createdAtMs: $createdAtMs
+  })
+}
+
+mutation UnlikeFeedPost($postId: String!, $userId: String!) @auth(level: PUBLIC) {
+  feedPostLike_delete(key: { postId: $postId, userId: $userId })
+}
+
+# ===== STORY Mutations =====
+mutation CreateStory(
+  $id: String!,
+  $authorUserId: String!,
+  $authorName: String!,
+  $avatarUrl: String,
+  $imageUrl: String!,
+  $headline: String,
+  $clubName: String,
+  $createdAtMs: Int64!
+) @auth(level: PUBLIC) {
+  story_insert(data: {
+    id: $id
+    authorUserId: $authorUserId
+    authorName: $authorName
+    avatarUrl: $avatarUrl
+    imageUrl: $imageUrl
+    headline: $headline
+    clubName: $clubName
+    createdAtMs: $createdAtMs
+  })
+}
+
+mutation DeleteStory($id: String!) @auth(level: PUBLIC) {
+  story_delete(id: $id)
 }
 
 # ===== CLUB Mutations =====
@@ -104,6 +281,43 @@ mutation UpdateClubLiveStats(
 
 mutation ToggleClubFavorite($id: String!, $isFavorite: Boolean!) @auth(level: PUBLIC) {
   club_update(id: $id, data: { isFavorite: $isFavorite })
+}
+
+mutation UpdateClubFlames(
+  $id: String!,
+  $flameCount: Int!,
+  $flameDate: String
+) @auth(level: PUBLIC) {
+  club_update(id: $id, data: {
+    flameCount: $flameCount
+    flameDate: $flameDate
+  })
+}
+
+mutation AddClubHype(
+  $clubId: String!,
+  $userId: String!,
+  $dateString: String!,
+  $createdAtMs: Int64!
+) @auth(level: PUBLIC) {
+  clubHype_insert(data: {
+    clubId: $clubId
+    userId: $userId
+    dateString: $dateString
+    createdAtMs: $createdAtMs
+  })
+}
+
+mutation RemoveClubHype(
+  $clubId: String!,
+  $userId: String!,
+  $dateString: String!
+) @auth(level: PUBLIC) {
+  clubHype_delete(key: {
+    clubId: $clubId
+    userId: $userId
+    dateString: $dateString
+  })
 }
 
 # ===== EVENT Mutations =====
@@ -169,9 +383,7 @@ mutation CreateReview(
   $text: String!,
   $timestamp: Int64!,
   $reviewerUsername: String!,
-  $reviewerAvatarUrl: String,
-  $verificationMethod: String,
-  $isVerified: Boolean
+  $reviewerAvatarUrl: String
 ) @auth(level: PUBLIC) {
   review_insert(data: {
     id: $id
@@ -184,8 +396,6 @@ mutation CreateReview(
     timestamp: $timestamp
     reviewerUsername: $reviewerUsername
     reviewerAvatarUrl: $reviewerAvatarUrl
-    verificationMethod: $verificationMethod
-    isVerified: $isVerified
   })
 }
 
@@ -376,4 +586,55 @@ mutation TrackUserLocation($id: String!, $latitude: Float!, $longitude: Float!, 
     timestampMs: $timestampMs
     speed: $speed
   })
+}
+
+# ===== ACCOUNT CASCADE DELETE Mutations =====
+# These mutations delete all data associated with a user account.
+
+mutation DeleteUserPhotos($userId: String!) @auth(level: PUBLIC) {
+  userPhoto_deleteMany(where: { userId: { eq: $userId } })
+}
+
+mutation DeleteUserPosts($authorUserId: String!) @auth(level: PUBLIC) {
+  feedPost_deleteMany(where: { authorUserId: { eq: $authorUserId } })
+}
+
+mutation DeleteUserComments($authorUserId: String!) @auth(level: PUBLIC) {
+  feedComment_deleteMany(where: { authorUserId: { eq: $authorUserId } })
+}
+
+mutation DeleteUserStories($authorUserId: String!) @auth(level: PUBLIC) {
+  story_deleteMany(where: { authorUserId: { eq: $authorUserId } })
+}
+
+mutation DeleteUserReviews($reviewerUserId: String!) @auth(level: PUBLIC) {
+  review_deleteMany(where: { reviewerUserId: { eq: $reviewerUserId } })
+}
+
+mutation DeleteUserFriendships($userId: String!) @auth(level: PUBLIC) {
+  friend_deleteMany(where: { userId: { eq: $userId } })
+}
+
+mutation DeleteUserFriendshipsReverse($friendUserId: String!) @auth(level: PUBLIC) {
+  friend_deleteMany(where: { friendUserId: { eq: $friendUserId } })
+}
+
+mutation DeleteUserVisitedLogs($userId: String!) @auth(level: PUBLIC) {
+  visitedLog_deleteMany(where: { userId: { eq: $userId } })
+}
+
+mutation DeleteUserBlockedEntries($userId: String!) @auth(level: PUBLIC) {
+  blockedUser_deleteMany(where: { userId: { eq: $userId } })
+}
+
+mutation DeleteUserBlockedEntriesReverse($blockedUserId: String!) @auth(level: PUBLIC) {
+  blockedUser_deleteMany(where: { blockedUserId: { eq: $blockedUserId } })
+}
+
+mutation DeleteUserPostLikes($userId: String!) @auth(level: PUBLIC) {
+  feedPostLike_deleteMany(where: { userId: { eq: $userId } })
+}
+
+mutation DeleteUserPreference($userId: String!) @auth(level: PUBLIC) {
+  userPreference_delete(key: { userId: $userId })
 }

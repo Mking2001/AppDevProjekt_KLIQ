@@ -53,10 +53,6 @@ import com.kliq.app.ui.theme.FuchsiaTertiary
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-/**
- * Bottom Sheet zum Weiterleiten und Teilen eines Feed-Beitrags an bestehende
- * Chat-Kontakte oder externe Apps.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SharePostSheet(
@@ -88,7 +84,7 @@ fun SharePostSheet(
                 .navigationBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
-            // Header
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -110,7 +106,6 @@ fun SharePostSheet(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Beitrags-Vorschau
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(14.dp),
@@ -153,7 +148,6 @@ fun SharePostSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Suchfeld
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchQueryChanged,
@@ -184,7 +178,6 @@ fun SharePostSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Kontakt-Liste
             if (filteredContacts.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -276,7 +269,6 @@ fun SharePostSheet(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // System Share Button
             Button(
                 onClick = {
                     val sendIntent = Intent().apply {

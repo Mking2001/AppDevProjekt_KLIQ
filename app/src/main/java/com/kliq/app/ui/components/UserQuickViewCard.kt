@@ -43,16 +43,13 @@ import com.kliq.app.util.ensureMinTouchTarget
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 
-/**
- * High-contrast popup card displaying selected user profile marker details,
- * online status, status text, search intent badge, and quick chat trigger.
- */
 @Composable
 fun UserQuickViewCard(
     user: UserMarkerUiState?,
     isVisible: Boolean,
     onDismiss: () -> Unit,
     onSendMessage: (String) -> Unit = {},
+    onViewProfile: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     AnimatedVisibility(
@@ -206,7 +203,7 @@ fun UserQuickViewCard(
                             Text("Nachricht")
                         }
                         FilledTonalButton(
-                            onClick = { /* Open user profile */ },
+                            onClick = { onViewProfile(currentUser.userId) },
                             modifier = Modifier
                                 .weight(1f)
                                 .ensureMinTouchTarget(),
@@ -226,4 +223,3 @@ fun UserQuickViewCard(
         }
     }
 }
-

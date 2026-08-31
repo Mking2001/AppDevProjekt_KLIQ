@@ -19,9 +19,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/**
- * Standard icon sizes in the Kliq design system.
- */
 enum class KliqIconSize(val dp: Dp) {
     SMALL(16.dp),
     MEDIUM(24.dp),
@@ -29,9 +26,6 @@ enum class KliqIconSize(val dp: Dp) {
     DISPLAY(48.dp)
 }
 
-/**
- * Categories of icons in Kliq UI for systematic color tinting.
- */
 enum class KliqIconCategory {
     ACTION,
     NAVIGATION,
@@ -39,9 +33,6 @@ enum class KliqIconCategory {
     STANDARD
 }
 
-/**
- * Calculates the dynamic icon tint color according to Kliq theme state.
- */
 @Composable
 fun kliqIconTint(
     category: KliqIconCategory,
@@ -67,9 +58,6 @@ fun kliqIconTint(
     }
 }
 
-/**
- * Centralized Icon composable wrapper for ImageVector assets.
- */
 @Composable
 fun KliqIcon(
     imageVector: ImageVector,
@@ -89,9 +77,6 @@ fun KliqIcon(
     )
 }
 
-/**
- * Centralized Icon composable wrapper for Painter assets.
- */
 @Composable
 fun KliqIcon(
     painter: Painter,
@@ -111,9 +96,6 @@ fun KliqIcon(
     )
 }
 
-/**
- * Reusable Icon Button wrapper supporting Kliq sizing and consistent padding rules.
- */
 @Composable
 fun KliqIconButton(
     onClick: () -> Unit,

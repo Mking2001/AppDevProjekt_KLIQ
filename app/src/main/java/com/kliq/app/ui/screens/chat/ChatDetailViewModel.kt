@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -51,13 +52,6 @@ data class ChatDetailUiState(
     val errorMessage: String? = null
 )
 
-/**
- * ViewModel für den Chat-Detail-Screen.
- *
- * Nachrichten werden ausschließlich über das [ChatRepository] gelesen und geschrieben.
- * Der Nachrichtenverlauf liegt damit in der Room-Datenbank und überlebt das Verlassen
- * des Screens. Beim Öffnen eines Chats wird der Ungelesen-Zähler zurückgesetzt.
- */
 @HiltViewModel
 class ChatDetailViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
@@ -78,38 +72,58 @@ class ChatDetailViewModel @Inject constructor(
     private var blockObserverJob: Job? = null
     private var syncJob: Job? = null
 
-    /**
-     * Bindet den Screen an einen Chat. Legt den Chat an, falls er noch nicht existiert,
-     * beobachtet Metadaten und Nachrichtenverlauf und markiert den Chat als gelesen.
-     *
-     * Chat-Typ und Ersatztitel werden aus der ID abgeleitet, damit der Screen selbst
-     * keine Annahmen über den Chat treffen muss.
-     *
-     * @param chatId ID des Chats. Bei Einstieg aus einem Nutzerprofil hat sie die Form `chat_<userId>`.
-     */
     fun loadConversation(chatId: String) {
         if (chatId.isBlank()) return
 
         val chatType = resolveChatType(chatId)
-        val fallbackTitle = resolveFallbackTitle(chatId, chatType)
+        val targetUserId = resolveTargetUserId(chatId)
 
         currentChatId = chatId
         _uiState.update {
             it.copy(
-                targetUserId = resolveTargetUserId(chatId),
+                targetUserId = targetUserId,
                 chatType = chatType
             )
         }
 
         viewModelScope.launch {
+            var chatTitle = resolveFallbackTitle(chatId, chatType)
+            var avatarUrl: String? = null
+            var avatarInitial = chatTitle.take(1).uppercase()
+
+            if (chatType == ChatType.PRIVATE && targetUserId.isNotBlank()) {
+                userRepository.syncUserProfile(targetUserId)
+                val targetUser = try {
+                    userRepository.getUserById(targetUserId).first()
+                } catch (e: Exception) {
+                    null
+                }
+                if (targetUser != null && targetUser.username.isNotBlank()) {
+                    chatTitle = targetUser.username
+                    avatarUrl = targetUser.profilePictureUrl
+                    avatarInitial = chatTitle.take(1).uppercase()
+                }
+            }
+
+            _uiState.update {
+                it.copy(
+                    conversationName = chatTitle,
+                    conversationInitial = avatarInitial
+                )
+            }
+
             chatRepository.createChatIfMissing(
                 chatId = chatId,
-                name = fallbackTitle,
+                name = chatTitle,
                 chatType = chatType
             ).onFailure { error ->
                 _uiState.update {
                     it.copy(errorMessage = "Chat konnte nicht geöffnet werden: ${error.localizedMessage}")
                 }
+            }
+
+            if (chatTitle.isNotBlank() && chatTitle != "Direktnachricht" && chatTitle != "Chat") {
+                chatRepository.updateChatName(chatId, chatTitle)
             }
 
             chatRepository.markChatAsRead(chatId)
@@ -144,10 +158,23 @@ class ChatDetailViewModel @Inject constructor(
                 }
                 .collect { conversation ->
                     if (conversation == null) return@collect
+                    val currentTitle = _uiState.value.conversationName
+                    val displayTitle = if (conversation.chatType == ChatType.PRIVATE) {
+                        if (conversation.name.isNotBlank() && conversation.name != "Direktnachricht" && conversation.name != "Kliq Chat" && conversation.name != "Chat") {
+                            conversation.name
+                        } else if (currentTitle.isNotBlank() && currentTitle != "Direktnachricht" && currentTitle != "Kliq Chat" && currentTitle != "Chat") {
+                            currentTitle
+                        } else {
+                            conversation.name
+                        }
+                    } else {
+                        conversation.name
+                    }
+                    val displayInitial = displayTitle.take(1).uppercase().ifBlank { "K" }
                     _uiState.update { state ->
                         state.copy(
-                            conversationName = conversation.name,
-                            conversationInitial = conversation.avatarInitial,
+                            conversationName = displayTitle,
+                            conversationInitial = displayInitial,
                             chatType = conversation.chatType,
                             isOnline = conversation.isOnline
                         )
@@ -186,36 +213,21 @@ class ChatDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Leitet den Chat-Typ aus der ID-Konvention ab. Stadt-Gruppenchats
-     * verwenden das Praefix `pub_`, alles andere gilt als Direktnachricht.
-     */
     private fun resolveChatType(chatId: String): ChatType =
         if (chatId.startsWith("pub_")) ChatType.PUBLIC_CITY else ChatType.PRIVATE
 
-    /**
-     * Ersatztitel, falls der Chat erstmalig angelegt wird und noch kein
-     * Datensatz mit Anzeigename vorliegt.
-     */
     private fun resolveFallbackTitle(chatId: String, chatType: ChatType): String = when {
         chatType == ChatType.PUBLIC_CITY -> "Kliq Stadt-Chat"
-        chatId.startsWith("chat_") -> "Direktnachricht"
-        else -> "Kliq Chat"
+        chatId.startsWith("chat_") -> "Chat"
+        else -> "Chat"
     }
 
-    /**
-     * Leitet die Gegenstellen-ID aus der Chat-ID ab.
-     * Unterstützt die Konventionen `chat_<userId>` und `priv_<name>`.
-     */
     private fun resolveTargetUserId(chatId: String): String = when {
         chatId.startsWith("chat_") -> chatId.removePrefix("chat_")
         chatId.startsWith("priv_") -> "usr_${chatId.removePrefix("priv_")}"
         else -> chatId
     }
 
-    /**
-     * Setzt Datumstrenner auf die erste Nachricht jedes Kalendertags.
-     */
     private fun withDateHeaders(messages: List<ChatMessage>): List<ChatMessage> {
         var lastDay = ""
         return messages.map { message ->
@@ -246,10 +258,15 @@ class ChatDetailViewModel @Inject constructor(
         _uiState.update { it.copy(currentInput = input) }
     }
 
-    /**
-     * Persistiert die eingegebene Textnachricht und leert das Eingabefeld.
-     * Die Liste wird über den Room-Flow aktualisiert, nicht lokal fortgeschrieben.
-     */
+    private suspend fun resolveCurrentUserName(senderId: String): String {
+        return try {
+            val user = userRepository.getUserById(senderId).first()
+            user?.username?.ifBlank { "User" } ?: "User"
+        } catch (e: Exception) {
+            "User"
+        }
+    }
+
     fun onSendMessage() {
         if (_uiState.value.isBlocked) return
         val text = _uiState.value.currentInput.trim()
@@ -259,11 +276,12 @@ class ChatDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             val senderId = currentUserProvider.userId()
+            val senderName = resolveCurrentUserName(senderId)
 
             chatRepository.sendTextMessage(
                 chatId = currentChatId,
                 senderUserId = senderId,
-                senderName = "Du",
+                senderName = senderName,
                 text = text
             ).onSuccess { message ->
                 advanceMessageStatus(message.id)
@@ -278,10 +296,6 @@ class ChatDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Führt den Zustellungs- und Lesestatus einer gesendeten Nachricht nach.
-     * Die Statuswerte werden in der Datenbank aktualisiert und bleiben erhalten.
-     */
     private fun advanceMessageStatus(messageId: String) {
         viewModelScope.launch {
             delay(DELIVERY_DELAY_MS)
@@ -321,10 +335,6 @@ class ChatDetailViewModel @Inject constructor(
         _uiState.update { it.copy(selectedImageUri = null, imageCaption = "", isCompressingImage = false) }
     }
 
-    /**
-     * Komprimiert das ausgewählte Bild, speichert es lokal und persistiert
-     * die zugehörige Bildnachricht.
-     */
     fun sendSelectedImage(context: Context) {
         val imageUriString = _uiState.value.selectedImageUri ?: return
         if (_uiState.value.isBlocked || currentChatId.isBlank()) return
@@ -337,11 +347,12 @@ class ChatDetailViewModel @Inject constructor(
                 val compressedResult = imageCompressor.compressAndSaveImage(context, uri)
                 val caption = _uiState.value.imageCaption
                 val senderId = currentUserProvider.userId()
+                val senderName = resolveCurrentUserName(senderId)
 
                 chatRepository.sendMediaMessage(
                     chatId = currentChatId,
                     senderUserId = senderId,
-                    senderName = "Du",
+                    senderName = senderName,
                     text = caption.ifBlank { "Foto" },
                     mediaUrl = compressedResult.mediaUrl,
                     messageType = MessageType.IMAGE,
@@ -375,6 +386,14 @@ class ChatDetailViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    fun deleteCurrentChat(onDeleted: () -> Unit) {
+        if (currentChatId.isBlank()) return
+        viewModelScope.launch {
+            chatRepository.deleteChat(currentChatId)
+            onDeleted()
         }
     }
 
@@ -481,9 +500,6 @@ class ChatDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Beendet die Aufnahme und persistiert die Sprachnachricht.
-     */
     fun stopAndSendVoiceRecording() {
         recordingTickerJob?.cancel()
         recordingTickerJob = null
@@ -501,11 +517,12 @@ class ChatDetailViewModel @Inject constructor(
 
         viewModelScope.launch {
             val senderId = currentUserProvider.userId()
+            val senderName = resolveCurrentUserName(senderId)
 
             chatRepository.sendVoiceMessage(
                 chatId = currentChatId,
                 senderUserId = senderId,
-                senderName = "Du",
+                senderName = senderName,
                 audioUrl = result.filePath,
                 audioDurationMs = result.durationMs
             ).onSuccess { message ->

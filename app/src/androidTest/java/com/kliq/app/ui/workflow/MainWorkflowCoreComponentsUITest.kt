@@ -33,23 +33,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Automatisierte UI-Tests für Kern-Komponenten und UI-Interaktionen (Kapitel 9.2).
- *
- * Testet:
- *   1. Map-Overlay Steuerung und Filter-Interaktionen
- *   2. Chat-Listen Darstellung, ungelesene Nachrichten-Badges und Nachrichteneingabe
- *   3. High-Contrast Lila/Dark-Theme Buttons und interaktive Komponenten
- */
 @RunWith(AndroidJUnit4::class)
 class MainWorkflowCoreComponentsUITest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    /**
-     * Testfall 1: Map-Overlay Steuerung und Filter-Interaktionen (Techno, House, Ratings).
-     */
     @Test
     fun testMapOverlayControlsAndFilterInteractions() {
         var selectedFilter by mutableStateOf("Alle")
@@ -74,26 +63,20 @@ class MainWorkflowCoreComponentsUITest {
             }
         }
 
-        // Filter-Chips prüfen
         composeTestRule.onNodeWithText("Alle").assertIsDisplayed()
         composeTestRule.onNodeWithText("Techno").assertIsDisplayed()
         composeTestRule.onNodeWithText("House").assertIsDisplayed()
         composeTestRule.onNodeWithText("4.5+ Sterne").assertIsDisplayed()
 
-        // "Techno" auswählen
         composeTestRule.onNodeWithText("Techno").performClick()
         composeTestRule.waitForIdle()
         assertEquals("Techno", selectedFilter)
 
-        // "4.5+ Sterne" auswählen
         composeTestRule.onNodeWithText("4.5+ Sterne").performClick()
         composeTestRule.waitForIdle()
         assertEquals("4.5+ Sterne", selectedFilter)
     }
 
-    /**
-     * Testfall 2: Chat-Listen Öffnung, Unread Badges und Nachrichteneingabe im Direct Messaging.
-     */
     @Test
     fun testChatListOpeningAndMessageInteractions() {
         var isPublicChatClicked = false
@@ -116,17 +99,14 @@ class MainWorkflowCoreComponentsUITest {
             }
         }
 
-        // Public City Chat Item & Unread Badge verifizieren
         composeTestRule.onNodeWithText("Berlin Mitte Nightlife").assertIsDisplayed()
         composeTestRule.onNodeWithText("Treffen wir uns am Watergate Spree-Deck? 🍻").assertIsDisplayed()
         composeTestRule.onNodeWithText("3").assertIsDisplayed()
 
-        // Private Chat Item & Unread Badge verifizieren
         composeTestRule.onNodeWithText("Lisa W.").assertIsDisplayed()
         composeTestRule.onNodeWithText("Hey, bist du heute auch im Berghain?").assertIsDisplayed()
         composeTestRule.onNodeWithText("1").assertIsDisplayed()
 
-        // Click-Interaktionen testen
         composeTestRule.onNodeWithText("Berlin Mitte Nightlife").performClick()
         composeTestRule.waitForIdle()
         assertTrue(isPublicChatClicked)
@@ -136,9 +116,6 @@ class MainWorkflowCoreComponentsUITest {
         assertTrue(isPrivateChatClicked)
     }
 
-    /**
-     * Testfall 3: Prüft High-Contrast Lila/Dark-Theme Buttons und interaktive Komponenten.
-     */
     @Test
     fun testHighContrastThemeButtonsAndInteractiveComponents() {
         var isButtonClicked = false
@@ -173,11 +150,9 @@ class MainWorkflowCoreComponentsUITest {
 
         composeTestRule.onNodeWithText("High-Contrast Theme Test").assertIsDisplayed()
 
-        // Text eingeben
         composeTestRule.onNodeWithText("Nachricht schreiben...").performTextInput("Hallo Kliq Team!")
         composeTestRule.waitForIdle()
 
-        // Sende-Button prüfen & klicken
         composeTestRule.onNodeWithText("Senden").assertIsEnabled().performClick()
         composeTestRule.waitForIdle()
 

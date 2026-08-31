@@ -120,8 +120,7 @@ class UserDistanceIntegrationTest {
 
     @Test
     fun testUpdateUserDistances_exactMatchCoordinates_returnsZeroMeters() {
-        // Lena (usr_lena) ist im Klagenfurt-Fallback-Datensatz an der Strandbar Loretto
-        // positioniert: 46.6162, 14.2696 (siehe MapViewModel.getFallbackUsers()).
+
         viewModel.updateUserDistances(46.6162, 14.2696)
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -133,26 +132,25 @@ class UserDistanceIntegrationTest {
 
     @Test
     fun testUpdateUserDistances_farAwayCoordinates_formatsInKilometers() {
-        // Positioniert weit entfernt von Klagenfurt (Wien: 48.2082, 16.3738).
+
         viewModel.updateUserDistances(48.2082, 16.3738)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val lena = viewModel.uiState.value.userMarkers.first { it.userId == "usr_lena" }
         assertNotNull(lena.distanceMeters)
-        assertTrue(lena.distanceMeters!! > 200000.0) // > 200 km
+        assertTrue(lena.distanceMeters!! > 200000.0)
         assertTrue(lena.formattedDistance.endsWith("km"))
     }
 
     @Test
     fun testLocationRepositoryUpdates_automaticallyRecalculateDistances() {
-        // Emit location via reactive flow
+
         fakeLocationRepository.emitLocation(LocationData(latitude = 46.6162, longitude = 14.2696))
         testDispatcher.scheduler.advanceUntilIdle()
 
         val lena = viewModel.uiState.value.userMarkers.first { it.userId == "usr_lena" }
         assertEquals("0 m", lena.formattedDistance)
 
-        // Emit new location snapshot (Villach, ca. 40 km entfernt)
         fakeLocationRepository.emitLocation(LocationData(latitude = 46.6103, longitude = 13.8558))
         testDispatcher.scheduler.advanceUntilIdle()
 

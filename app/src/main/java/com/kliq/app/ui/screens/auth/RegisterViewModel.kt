@@ -4,7 +4,9 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kliq.app.data.model.DrinkingHabit
 import com.kliq.app.data.model.SearchIntent
+import com.kliq.app.data.model.SmokingHabit
 import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.data.util.ImageCompressor
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,6 +31,8 @@ class RegisterViewModel @Inject constructor(
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
 
     private var usernameCheckJob: Job? = null
+    private var emailCheckJob: Job? = null
+    private var phoneCheckJob: Job? = null
 
     fun onUsernameChanged(input: String) {
         val trimmed = input.trim()
@@ -57,7 +61,7 @@ class RegisterViewModel @Inject constructor(
         if (error == null && trimmed.length >= 3) {
             usernameCheckJob?.cancel()
             usernameCheckJob = viewModelScope.launch {
-                delay(300) // Debounce
+                delay(350)
                 val isAvailable = userRepository.checkUsernameAvailability(trimmed)
                 _uiState.update { current ->
                     val newStatus = if (isAvailable) {
@@ -68,6 +72,50 @@ class RegisterViewModel @Inject constructor(
                     val updated = current.copy(
                         usernameStatus = newStatus,
                         usernameError = if (isAvailable) null else "Dieser Benutzername ist bereits vergeben."
+                    )
+                    updated.copy(isFormValid = calculateIsFormValid(updated))
+                }
+            }
+        }
+    }
+
+    fun onEmailChanged(input: String) {
+        val trimmed = input.trim()
+        val emailRegex = Regex("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
+        val error = when {
+            trimmed.isBlank() -> "E-Mail darf nicht leer sein."
+            !emailRegex.matches(trimmed) -> "Bitte gib eine gültige E-Mail-Adresse ein."
+            else -> null
+        }
+
+        _uiState.update { current ->
+            val status = if (error != null) {
+                EmailCheckStatus.Invalid(error)
+            } else {
+                EmailCheckStatus.Checking
+            }
+            val updated = current.copy(
+                email = input,
+                emailError = error,
+                emailStatus = status
+            )
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+
+        if (error == null && emailRegex.matches(trimmed)) {
+            emailCheckJob?.cancel()
+            emailCheckJob = viewModelScope.launch {
+                delay(350)
+                val isAvailable = userRepository.checkEmailAvailability(trimmed)
+                _uiState.update { current ->
+                    val newStatus = if (isAvailable) {
+                        EmailCheckStatus.Available
+                    } else {
+                        EmailCheckStatus.Taken("Diese E-Mail-Adresse wird bereits verwendet.")
+                    }
+                    val updated = current.copy(
+                        emailStatus = newStatus,
+                        emailError = if (isAvailable) null else "Diese E-Mail-Adresse wird bereits verwendet."
                     )
                     updated.copy(isFormValid = calculateIsFormValid(updated))
                 }
@@ -114,7 +162,11 @@ class RegisterViewModel @Inject constructor(
         }
     }
 
-    fun onImageSelected(context: Context, uri: Uri) {
+    fun onPhotoSlotClicked(slotIndex: Int) {
+        _uiState.update { it.copy(selectedPhotoSlotIndex = slotIndex) }
+    }
+
+    fun onPhotoSelected(context: Context, uri: Uri, slotIndex: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isProcessingImage = true, errorMessage = null) }
             val compressor = ImageCompressor(context)
@@ -122,8 +174,14 @@ class RegisterViewModel @Inject constructor(
 
             result.onSuccess { savedPath ->
                 _uiState.update { current ->
+                    val mutablePhotos = current.photos.toMutableList()
+                    if (slotIndex < mutablePhotos.size) {
+                        mutablePhotos[slotIndex] = savedPath
+                    } else {
+                        mutablePhotos.add(savedPath)
+                    }
                     val updated = current.copy(
-                        profilePictureUrl = savedPath,
+                        photos = mutablePhotos,
                         profilePictureError = null,
                         isProcessingImage = false
                     )
@@ -137,6 +195,48 @@ class RegisterViewModel @Inject constructor(
                     )
                 }
             }
+        }
+    }
+
+    fun onRemovePhoto(slotIndex: Int) {
+        _uiState.update { current ->
+            val mutablePhotos = current.photos.toMutableList()
+            if (slotIndex in mutablePhotos.indices) {
+                mutablePhotos.removeAt(slotIndex)
+            }
+            val updated = current.copy(photos = mutablePhotos)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun openPreviewModal(initialIndex: Int = 0) {
+        if (_uiState.value.photos.isNotEmpty()) {
+            _uiState.update {
+                it.copy(
+                    isPreviewModalOpen = true,
+                    previewPhotoIndex = initialIndex.coerceIn(0, it.photos.size - 1)
+                )
+            }
+        }
+    }
+
+    fun closePreviewModal() {
+        _uiState.update { it.copy(isPreviewModalOpen = false) }
+    }
+
+    fun nextPreviewPhoto() {
+        _uiState.update { current ->
+            if (current.previewPhotoIndex < current.photos.size - 1) {
+                current.copy(previewPhotoIndex = current.previewPhotoIndex + 1)
+            } else current
+        }
+    }
+
+    fun previousPreviewPhoto() {
+        _uiState.update { current ->
+            if (current.previewPhotoIndex > 0) {
+                current.copy(previewPhotoIndex = current.previewPhotoIndex - 1)
+            } else current
         }
     }
 
@@ -183,7 +283,20 @@ class RegisterViewModel @Inject constructor(
     }
 
     fun onCountryCodeChanged(code: String) {
-        _uiState.update { it.copy(countryCode = code) }
+        _uiState.update { current ->
+            val updated = current.copy(countryCode = code, isCountryCodeDropdownExpanded = false)
+
+            checkPhoneAvailabilityAsync(updated.countryCode, updated.phoneNumber)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun toggleCountryCodeDropdown() {
+        _uiState.update { it.copy(isCountryCodeDropdownExpanded = !it.isCountryCodeDropdownExpanded) }
+    }
+
+    fun dismissCountryCodeDropdown() {
+        _uiState.update { it.copy(isCountryCodeDropdownExpanded = false) }
     }
 
     fun onPhoneNumberChanged(input: String) {
@@ -196,14 +309,65 @@ class RegisterViewModel @Inject constructor(
             else -> null
         }
         _uiState.update { current ->
-            val updated = current.copy(phoneNumber = clean, phoneNumberError = error)
+            val status = if (error != null) {
+                PhoneCheckStatus.Invalid(error)
+            } else {
+                PhoneCheckStatus.Checking
+            }
+            val updated = current.copy(
+                phoneNumber = clean,
+                phoneNumberError = error,
+                phoneStatus = status
+            )
             updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+
+        if (error == null && digits.length >= 4) {
+            checkPhoneAvailabilityAsync(_uiState.value.countryCode, clean)
+        }
+    }
+
+    private fun checkPhoneAvailabilityAsync(countryCode: String, phoneInput: String) {
+        val digits = phoneInput.filter { it.isDigit() }
+        if (digits.length < 4) return
+        val fullPhone = "$countryCode$digits"
+
+        phoneCheckJob?.cancel()
+        phoneCheckJob = viewModelScope.launch {
+            delay(350)
+            val isAvailable = userRepository.checkPhoneAvailability(fullPhone)
+            _uiState.update { current ->
+                val newStatus = if (isAvailable) {
+                    PhoneCheckStatus.Available
+                } else {
+                    PhoneCheckStatus.Taken("Diese Telefonnummer ist bereits registriert.")
+                }
+                val updated = current.copy(
+                    phoneStatus = newStatus,
+                    phoneNumberError = if (isAvailable) null else "Diese Telefonnummer ist bereits registriert."
+                )
+                updated.copy(isFormValid = calculateIsFormValid(updated))
+            }
         }
     }
 
     fun onSearchIntentSelected(intent: SearchIntent) {
         _uiState.update { current ->
             val updated = current.copy(searchIntent = intent)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onSmokingHabitSelected(habit: SmokingHabit) {
+        _uiState.update { current ->
+            val updated = current.copy(smokingHabit = habit)
+            updated.copy(isFormValid = calculateIsFormValid(updated))
+        }
+    }
+
+    fun onDrinkingHabitSelected(habit: DrinkingHabit) {
+        _uiState.update { current ->
+            val updated = current.copy(drinkingHabit = habit)
             updated.copy(isFormValid = calculateIsFormValid(updated))
         }
     }
@@ -263,9 +427,8 @@ class RegisterViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            // Final check on username availability
-            val isAvailable = userRepository.checkUsernameAvailability(current.username.trim())
-            if (!isAvailable) {
+            val isUserAvail = userRepository.checkUsernameAvailability(current.username.trim())
+            if (!isUserAvail) {
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -277,19 +440,52 @@ class RegisterViewModel @Inject constructor(
                 return@launch
             }
 
+            val isEmailAvail = userRepository.checkEmailAvailability(current.email.trim())
+            if (!isEmailAvail) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        emailStatus = EmailCheckStatus.Taken("Diese E-Mail-Adresse wird bereits verwendet."),
+                        emailError = "Diese E-Mail-Adresse wird bereits verwendet.",
+                        errorMessage = "Die E-Mail-Adresse wird bereits verwendet."
+                    )
+                }
+                return@launch
+            }
+
             val digitsPhone = current.phoneNumber.filter { it.isDigit() }
             val formattedFullPhone = "${current.countryCode}$digitsPhone"
 
+            val isPhoneAvail = userRepository.checkPhoneAvailability(formattedFullPhone)
+            if (!isPhoneAvail) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        phoneStatus = PhoneCheckStatus.Taken("Diese Telefonnummer ist bereits registriert."),
+                        phoneNumberError = "Diese Telefonnummer ist bereits registriert.",
+                        errorMessage = "Diese Telefonnummer ist bereits registriert."
+                    )
+                }
+                return@launch
+            }
+
+            val primaryPhoto = current.photos.firstOrNull { it.isNotBlank() } ?: ""
+
             val result = userRepository.registerUser(
                 username = current.username.trim(),
+                email = current.email.trim(),
                 firstName = current.firstName.trim(),
                 lastName = current.lastName.trim(),
                 birthDateMs = current.birthDateMs ?: 0L,
                 gender = current.gender,
                 hometown = current.hometown.trim(),
+                countryCode = current.countryCode,
                 phoneNumber = formattedFullPhone,
-                profilePictureUrl = current.profilePictureUrl ?: "",
+                profilePictureUrl = primaryPhoto,
+                photos = current.photos,
                 searchIntent = current.searchIntent,
+                smokingHabit = current.smokingHabit,
+                drinkingHabit = current.drinkingHabit,
                 bio = current.bio.trim(),
                 password = current.password
             )
@@ -311,17 +507,24 @@ class RegisterViewModel @Inject constructor(
         val usernameValid = state.username.isNotBlank() &&
                 state.usernameError == null &&
                 state.usernameStatus is UsernameCheckStatus.Available
+        val emailValid = state.email.isNotBlank() &&
+                state.emailError == null &&
+                state.emailStatus !is EmailCheckStatus.Taken &&
+                state.emailStatus !is EmailCheckStatus.Invalid
         val firstNameValid = state.firstName.isNotBlank() && state.firstNameError == null
         val lastNameValid = state.lastName.isNotBlank() && state.lastNameError == null
         val birthDateValid = state.birthDateMs != null && state.birthDateError == null
         val hometownValid = com.kliq.app.data.model.AustrianCities.isValidCity(state.hometown) && state.hometownError == null
-        val phoneValid = state.phoneNumber.filter { it.isDigit() }.length in 4..15 && state.phoneNumberError == null
-        val profilePicValid = !state.profilePictureUrl.isNullOrBlank()
+        val phoneValid = state.phoneNumber.filter { it.isDigit() }.length in 4..15 &&
+                state.phoneNumberError == null &&
+                state.phoneStatus !is PhoneCheckStatus.Taken &&
+                state.phoneStatus !is PhoneCheckStatus.Invalid
+        val photosValid = state.photos.isNotEmpty()
         val passwordValid = state.password.length >= 6 &&
                 state.passwordError == null &&
                 state.confirmPassword == state.password &&
                 state.confirmPasswordError == null
 
-        return usernameValid && firstNameValid && lastNameValid && birthDateValid && hometownValid && phoneValid && profilePicValid && passwordValid
+        return usernameValid && emailValid && firstNameValid && lastNameValid && birthDateValid && hometownValid && phoneValid && photosValid && passwordValid
     }
 }

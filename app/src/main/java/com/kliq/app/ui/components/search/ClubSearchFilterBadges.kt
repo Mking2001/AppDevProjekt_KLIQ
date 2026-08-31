@@ -10,13 +10,6 @@ import androidx.compose.ui.unit.dp
 import com.kliq.app.data.model.SearchFilterType
 import com.kliq.app.ui.components.KliqCategoryChip
 
-/**
- * Horizontal scrollbare Filter-Badge Leiste für die Club- und Regionen-Suche.
- *
- * @param activeFilter Aktuell ausgewählter Filter.
- * @param onFilterSelected Callback bei Auswahl eines Filters.
- * @param modifier Der Modifier für die Layout-Komponente.
- */
 @Composable
 fun ClubSearchFilterBadges(
     activeFilter: SearchFilterType,

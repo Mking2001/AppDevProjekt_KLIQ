@@ -8,13 +8,17 @@ query GetUserById($id: String!) @auth(level: PUBLIC) {
     id
     username
     email
+    firstName
+    lastName
+    birthDateMs
     age
+    gender
     hometown
+    countryCode
+    phoneNumber
     profilePictureUrl
     bio
-    phoneNumber
-    isVerified
-    gender
+    password
     updatedAt
   }
 }
@@ -23,9 +27,37 @@ query ListUsers @auth(level: PUBLIC) {
   users {
     id
     username
+    email
+    phoneNumber
+    firstName
+    lastName
     profilePictureUrl
-    isVerified
     gender
+    hometown
+    password
+  }
+}
+
+query CheckUsername($username: String!) @auth(level: PUBLIC) {
+  users(where: { username: { eq: $username } }) {
+    id
+    username
+    email
+    phoneNumber
+    password
+  }
+}
+
+query GetUserPhotos($userId: String!) @auth(level: PUBLIC) {
+  userPhotos(
+    where: { userId: { eq: $userId } }
+    orderBy: [{ displayOrder: ASC }]
+  ) {
+    id
+    userId
+    imageUrl
+    displayOrder
+    createdAt
   }
 }
 
@@ -38,6 +70,61 @@ query GetUserPreferences($userId: String!) @auth(level: PUBLIC) {
     searchIntent
     smokingHabit
     drinkingHabit
+  }
+}
+
+# ===== FEED POST Queries =====
+query GetFeedPosts @auth(level: PUBLIC) {
+  feedPosts(orderBy: [{ createdAtMs: DESC }]) {
+    id
+    authorUserId
+    authorName
+    authorAvatarUrl
+    contentText
+    imageUrl
+    clubId
+    clubName
+    locationName
+    isEventPinned
+    likeCount
+    commentCount
+    createdAtMs
+  }
+}
+
+query GetFeedComments($postId: String!) @auth(level: PUBLIC) {
+  feedComments(
+    where: { postId: { eq: $postId } }
+    orderBy: [{ createdAtMs: ASC }]
+  ) {
+    id
+    postId
+    authorUserId
+    authorName
+    text
+    createdAtMs
+  }
+}
+
+query GetFeedPostLikes($postId: String!) @auth(level: PUBLIC) {
+  feedPostLikes(where: { postId: { eq: $postId } }) {
+    postId
+    userId
+    createdAtMs
+  }
+}
+
+# ===== STORY Queries =====
+query GetActiveStories @auth(level: PUBLIC) {
+  stories(orderBy: [{ createdAtMs: DESC }]) {
+    id
+    authorUserId
+    authorName
+    avatarUrl
+    imageUrl
+    headline
+    clubName
+    createdAtMs
   }
 }
 
@@ -60,6 +147,8 @@ query GetAllClubs @auth(level: PUBLIC) {
     totalLiveVisitors
     isFavorite
     isPromoted
+    flameCount
+    flameDate
   }
 }
 
@@ -90,6 +179,20 @@ query GetClubById($id: String!) @auth(level: PUBLIC) {
     externalSearchTags
     isFavorite
     isPromoted
+    flameCount
+    flameDate
+  }
+}
+
+query GetUserHypesForDate($userId: String!, $dateString: String!) @auth(level: PUBLIC) {
+  clubHypes(where: {
+    userId: { eq: $userId }
+    dateString: { eq: $dateString }
+  }) {
+    clubId
+    userId
+    dateString
+    createdAtMs
   }
 }
 
@@ -163,8 +266,6 @@ query GetReviewsByClub($clubId: String!) @auth(level: PUBLIC) {
     rating
     text
     timestamp
-    isVerified
-    verificationMethod
     helpfulVotesCount
   }
 }
@@ -176,7 +277,6 @@ query GetReviewsByUser($userId: String!) @auth(level: PUBLIC) {
     rating
     text
     timestamp
-    isVerified
   }
 }
 
@@ -188,8 +288,6 @@ query GetReviewsForTargetUser($targetUserId: String!) @auth(level: PUBLIC) {
     rating
     text
     timestamp
-    isVerified
-    verificationMethod
   }
 }
 
@@ -262,7 +360,7 @@ query GetDirectMessages($senderId: String!, $receiverId: String!) @auth(level: P
   }
 }
 
-# ===== FRIEND (Social) Queries =====
+# ===== FRIEND Queries =====
 query GetFriendsByUser($userId: String!) @auth(level: PUBLIC) {
   friends(where: { userId: { eq: $userId }, status: { eq: "ACCEPTED" } }) {
     userId

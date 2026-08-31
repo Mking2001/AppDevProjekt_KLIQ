@@ -131,15 +131,22 @@ class ProfileCreationViewModelTest {
             age: Int,
             hometown: String,
             bio: String,
-            profilePictureUrl: String?
+            profilePictureUrl: String?,
+            photos: List<String>,
+            email: String?,
+            phoneNumber: String?,
+            searchIntent: com.kliq.app.data.model.SearchIntent?,
+            smokingHabit: com.kliq.app.data.model.SmokingHabit?,
+            drinkingHabit: com.kliq.app.data.model.DrinkingHabit?
         ) {
             savedUser = UserEntity(
                 id = userId,
                 username = username,
-                email = "test@kliq.de",
+                email = email ?: "test@kliq.de",
                 age = age,
                 hometown = hometown,
                 profilePictureUrl = profilePictureUrl,
+                photos = photos,
                 bio = bio
             )
         }

@@ -56,14 +56,14 @@ class RoomConverters {
 
     @TypeConverter
     fun fromStringList(value: List<String>?): String {
-        if (value == null) return ""
-        return value.joinToString(separator = "|||")
+        if (value.isNullOrEmpty()) return ""
+        return value.filter { it.isNotBlank() }.joinToString(separator = "|||")
     }
 
     @TypeConverter
     fun toStringList(value: String?): List<String> {
-        if (value.isNullOrEmpty()) return emptyList()
-        return value.split("|||")
+        if (value.isNullOrBlank()) return emptyList()
+        return value.split("|||").filter { it.isNotBlank() }
     }
 
     @TypeConverter

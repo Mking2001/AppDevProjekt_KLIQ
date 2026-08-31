@@ -27,10 +27,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 
-/**
- * Prüft, dass die Chat-Übersicht ihre Inhalte vollständig aus dem
- * ChatRepository bezieht und Schreibvorgänge dorthin delegiert.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatListViewModelTest {
 
@@ -77,6 +73,7 @@ class ChatListViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         `when`(userRepository.getBlockedUserIds(anyString())).thenReturn(flowOf(emptyList()))
+        `when`(userRepository.getUserById(anyString())).thenReturn(flowOf(null))
         `when`(locationRepository.locationUpdates).thenReturn(locationUpdatesFlow)
 
         chatRepository = FakeChatRepository(
@@ -180,8 +177,8 @@ class ChatListViewModelTest {
         locationUpdatesFlow.value = LocationData(latitude = 46.6236, longitude = 14.3084)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val activeChat = viewModel.uiState.value.activeGpsCityChat
-        assertEquals("Klagenfurt - Tonight", activeChat?.title)
-        assertTrue(activeChat?.isGpsAssigned == true)
+        val activeCity = viewModel.uiState.value.activeCity
+        assertEquals("Klagenfurt - Tonight", activeCity.title)
+        assertFalse(viewModel.uiState.value.showCitySwitchSuggestion)
     }
 }

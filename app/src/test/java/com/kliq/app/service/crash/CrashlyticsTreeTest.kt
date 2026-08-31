@@ -7,9 +7,6 @@ import org.junit.Before
 import org.junit.Test
 import timber.log.Timber
 
-/**
- * Unit-Tests zur Verifizierung des Timber Trees [KliqCrashlyticsTree] und der Logger-Abstraktion [CrashReportingLogger].
- */
 class CrashlyticsTreeTest {
 
     @Before
@@ -31,7 +28,7 @@ class CrashlyticsTreeTest {
     @Test
     fun testCrashReportingLogger_logBreadcrumb_doesNotCrash() {
         CrashReportingLogger.logBreadcrumb("User opened Berghain club details with phone +4915100000")
-        // Stellt sicher, dass das Breadcrumb-Logging im Offline/Test-Modus fehlerfrei durchläuft
+
         assertNotNull(CrashReportingLogger.getCustomKeys())
     }
 
@@ -66,4 +63,3 @@ class CrashlyticsTreeTest {
         CrashReportingLogger.triggerTestFatalCrash()
     }
 }
-

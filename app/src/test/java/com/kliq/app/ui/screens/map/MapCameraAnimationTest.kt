@@ -24,11 +24,6 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 
-/**
- * Unit tests for Map Camera Animations (Chapter 4.9), verifying reactive event streams,
- * smooth re-centering durations, 3D night tilt/rotation transitions, and automatic
- * bounding box calculations.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapCameraAnimationTest {
 
@@ -78,8 +73,6 @@ class MapCameraAnimationTest {
             viewModel.cameraEventFlow.collect { events.add(it) }
         }
 
-        // Ohne LocationRepository faellt onLocationRequested() auf das
-        // Klagenfurt-Stadtzentrum aus KlagenfurtSeedData zurueck.
         viewModel.onLocationRequested()
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -195,7 +188,7 @@ class MapCameraAnimationTest {
             viewModel.cameraEventFlow.collect { events.add(it) }
         }
 
-        viewModel.onFilterSelected(1) // Select 'Clubs'
+        viewModel.onFilterSelected(1)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val boundsEvent = events.filterIsInstance<MapCameraAnimationEvent.AnimateToBounds>().lastOrNull()

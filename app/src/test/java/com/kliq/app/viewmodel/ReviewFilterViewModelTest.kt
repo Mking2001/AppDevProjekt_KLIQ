@@ -223,7 +223,12 @@ class ReviewFilterViewModelTest {
         override suspend fun insertClub(club: ClubEntity) {}
         override suspend fun insertClubs(clubsList: List<ClubEntity>) {}
         override suspend fun updateFavoriteStatus(clubId: String, isFavorite: Boolean) {}
+        override suspend fun updateFlameCount(clubId: String, flameCount: Int, flameDate: String) {}
         override fun getEventsForClub(clubId: String): Flow<List<EventEntity>> = flowOf(emptyList())
         override suspend fun insertEvents(events: List<EventEntity>) {}
+        override suspend fun insertClubHype(hype: com.kliq.app.data.local.entities.ClubHypeEntity) {}
+        override suspend fun deleteClubHype(clubId: String, userId: String, dateString: String) {}
+        override fun isClubHypedToday(clubId: String, userId: String, dateString: String): Flow<Boolean> = flowOf(false)
+        override fun getHypedClubIdsToday(userId: String, dateString: String): Flow<List<String>> = flowOf(emptyList())
     }
 }

@@ -27,10 +27,6 @@ import androidx.compose.ui.unit.dp
 import com.kliq.app.ui.screens.map.VenueItemUi
 import com.kliq.app.ui.theme.KliqAnimations
 
-/**
- * High-contrast popup card displaying selected club details, active live events,
- * rating, capacity indicator, and navigation quick actions.
- */
 @Composable
 fun MapQuickViewCard(
     venue: VenueItemUi?,
@@ -102,115 +98,117 @@ fun MapQuickViewCard(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    val isEvent = currentVenue.category.equals("Event", ignoreCase = true) || currentVenue.id.startsWith("post_")
 
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        // Rating Badge
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            KliqIcon(
-                                imageVector = Icons.Filled.Star,
-                                contentDescription = "Bewertung",
-                                size = KliqIconSize.SMALL,
-                                category = KliqIconCategory.ACTION,
-                                tint = Color(0xFFFFB800)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "${currentVenue.rating}",
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
+                    if (!isEvent) {
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                        // Capacity Badge
-                        if (currentVenue.currentCapacityPercent > 0) {
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.primaryContainer
-                            ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                KliqIcon(
+                                    imageVector = Icons.Filled.Star,
+                                    contentDescription = "Bewertung",
+                                    size = KliqIconSize.SMALL,
+                                    category = KliqIconCategory.ACTION,
+                                    tint = Color(0xFFFFB800)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = "${currentVenue.currentCapacityPercent}% Auslastung",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    text = "${currentVenue.rating}",
+                                    style = MaterialTheme.typography.bodyMedium,
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
                             }
-                        }
-                    }
 
-                    // Live Visitor & Gender Ratio Section
-                    if (currentVenue.totalLiveVisitors > 0 || currentVenue.malePercentage > 0 || currentVenue.femalePercentage > 0) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Surface(
-                            shape = RoundedCornerShape(12.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                            if (currentVenue.currentCapacityPercent > 0) {
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer
                                 ) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        KliqIcon(
-                                            imageVector = Icons.Default.Group,
-                                            contentDescription = "Besucherstatistik",
-                                            size = KliqIconSize.SMALL,
-                                            category = KliqIconCategory.ACTION,
-                                            tint = MaterialTheme.colorScheme.primary
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            text = if (currentVenue.totalLiveVisitors > 0) "${currentVenue.totalLiveVisitors} Besucher live" else "Besucherstatistik",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onSurface
-                                        )
+                                    Text(
+                                        text = "${currentVenue.currentCapacityPercent}% Auslastung",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+
+                        if (currentVenue.totalLiveVisitors > 0 || currentVenue.malePercentage > 0 || currentVenue.femalePercentage > 0) {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(10.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            KliqIcon(
+                                                imageVector = Icons.Default.Group,
+                                                contentDescription = "Besucherstatistik",
+                                                size = KliqIconSize.SMALL,
+                                                category = KliqIconCategory.ACTION,
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = if (currentVenue.totalLiveVisitors > 0) "${currentVenue.totalLiveVisitors} Besucher live" else "Besucherstatistik",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+
+                                        if (currentVenue.malePercentage > 0 || currentVenue.femalePercentage > 0) {
+                                            Text(
+                                                text = "♂ ${currentVenue.malePercentage}%  |  ♀ ${currentVenue.femalePercentage}%",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                fontWeight = FontWeight.Bold,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
                                     }
 
                                     if (currentVenue.malePercentage > 0 || currentVenue.femalePercentage > 0) {
-                                        Text(
-                                            text = "♂ ${currentVenue.malePercentage}%  |  ♀ ${currentVenue.femalePercentage}%",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary
-                                        )
-                                    }
-                                }
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(6.dp)
+                                                .clip(RoundedCornerShape(3.dp))
+                                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        ) {
+                                            val maleWeight = (currentVenue.malePercentage.coerceIn(0, 100)).toFloat() / 100f
+                                            val femaleWeight = (1f - maleWeight).coerceAtLeast(0f)
 
-                                if (currentVenue.malePercentage > 0 || currentVenue.femalePercentage > 0) {
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .height(6.dp)
-                                            .clip(RoundedCornerShape(3.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    ) {
-                                        val maleWeight = (currentVenue.malePercentage.coerceIn(0, 100)).toFloat() / 100f
-                                        val femaleWeight = (1f - maleWeight).coerceAtLeast(0f)
-
-                                        if (maleWeight > 0f) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxHeight()
-                                                    .weight(maleWeight.coerceAtLeast(0.01f))
-                                                    .background(Color(0xFF3B82F6))
-                                            )
-                                        }
-                                        if (femaleWeight > 0f) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxHeight()
-                                                    .weight(femaleWeight.coerceAtLeast(0.01f))
-                                                    .background(Color(0xFFEC4899))
-                                            )
+                                            if (maleWeight > 0f) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxHeight()
+                                                        .weight(maleWeight.coerceAtLeast(0.01f))
+                                                        .background(Color(0xFF3B82F6))
+                                                )
+                                            }
+                                            if (femaleWeight > 0f) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxHeight()
+                                                        .weight(femaleWeight.coerceAtLeast(0.01f))
+                                                        .background(Color(0xFFEC4899))
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -218,7 +216,6 @@ fun MapQuickViewCard(
                         }
                     }
 
-                    // Active Event Display
                     currentVenue.activeEventTitle?.let { eventTitle ->
                         Spacer(modifier = Modifier.height(12.dp))
                         Surface(

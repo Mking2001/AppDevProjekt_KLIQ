@@ -1,6 +1,8 @@
 package com.kliq.app.data.repository
 
 import com.kliq.app.data.local.dao.BlockedUserDao
+import com.kliq.app.data.local.dao.ChatDao
+import com.kliq.app.data.local.dao.FeedDao
 import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.dao.UserDao
 import com.kliq.app.data.local.entities.BlockedUserEntity
@@ -14,15 +16,12 @@ import com.kliq.app.data.remote.BlockUserRequestDto
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.remote.ReportUserRequestDto
 import com.kliq.app.data.generated.*
-import timber.log.Timber
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -35,47 +34,115 @@ class UserRepositoryImpl @Inject constructor(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val blockedUserDao: BlockedUserDao? = null,
     private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null,
-    private val sessionRepository: SessionRepository? = null
+    private val sessionRepository: SessionRepository? = null,
+    private val feedDao: FeedDao? = null,
+    private val chatDao: ChatDao? = null
 ) : UserRepository {
+
+    override fun getUsersByIds(userIds: List<String>): Flow<List<UserEntity>> = userDao.getUsersByIds(userIds).flowOn(ioDispatcher)
 
     override suspend fun checkUsernameAvailability(username: String): Boolean = withContext(ioDispatcher) {
         val trimmed = username.trim()
-        if (trimmed.length < 3) return@withContext false
+        if (trimmed.isBlank()) return@withContext false
+        if (userDao.getUserByUsername(trimmed) != null) return@withContext false
 
-        // 1. Check local Room DB
-        val localUser = userDao.getUserByUsername(trimmed)
-        if (localUser != null) {
-            Timber.d("Username '%s' exists locally in Room DB", trimmed)
-            return@withContext false
-        }
-
-        // 2. Check Firebase Data Connect Cloud SQL (if available)
         kliqConnector?.let { connector ->
             try {
-                val cloudUsers = connector.listUsers.execute().data.users
-                val existsInCloud = cloudUsers.any { it.username.equals(trimmed, ignoreCase = true) }
-                if (existsInCloud) {
-                    Timber.i("Username '%s' already taken in Firebase SQL Connect", trimmed)
+                val res = connector.checkUsername.execute(username = trimmed)
+                if (res.data.users.isNotEmpty()) {
                     return@withContext false
                 }
             } catch (e: Exception) {
-                Timber.w(e, "Could not check username in Firebase SQL Connect, relying on local DB")
+                timber.log.Timber.d("DataConnect: checkUsername: %s", e.message)
+            }
+        }
+        true
+    }
+
+    override suspend fun checkEmailAvailability(email: String): Boolean = withContext(ioDispatcher) {
+        val trimmed = email.trim()
+        if (trimmed.isBlank()) return@withContext false
+        if (userDao.getUserByEmail(trimmed) != null) return@withContext false
+        true
+    }
+
+    override suspend fun loginUser(identifier: String, password: String): Result<UserEntity> = withContext(ioDispatcher) {
+        val trimmed = identifier.trim()
+        if (trimmed.isBlank()) {
+            return@withContext Result.failure(IllegalArgumentException("Bitte gib deinen Benutzernamen, deine E-Mail oder Telefonnummer ein."))
+        }
+        if (password.length < 6) {
+            return@withContext Result.failure(IllegalArgumentException("Das Passwort muss mindestens 6 Zeichen lang sein."))
+        }
+
+        var foundUser = userDao.getUserByUsername(trimmed)
+            ?: userDao.getUserByEmail(trimmed)
+            ?: userDao.getUserByPhone(trimmed)
+
+        if (foundUser == null && kliqConnector != null) {
+            try {
+                val usernameResult = kliqConnector.checkUsername.execute(username = trimmed)
+                val cloudUserSummary = usernameResult.data.users.firstOrNull()
+
+                val cloudUserId = cloudUserSummary?.id ?: run {
+                    val allUsers = kliqConnector.listUsers.execute().data.users
+                    allUsers.find {
+                        it.username.equals(trimmed, ignoreCase = true)
+                    }?.id
+                }
+
+                if (cloudUserId != null) {
+                    val fullCloudUser = kliqConnector.getUserById.execute(id = cloudUserId).data.user
+                    if (fullCloudUser != null) {
+                        val importedUser = UserEntity(
+                            id = fullCloudUser.id,
+                            username = fullCloudUser.username,
+                            email = fullCloudUser.email,
+                            age = fullCloudUser.age,
+                            hometown = fullCloudUser.hometown,
+                            profilePictureUrl = fullCloudUser.profilePictureUrl,
+                            bio = fullCloudUser.bio,
+                            phoneNumber = fullCloudUser.phoneNumber,
+                            isVerified = true,
+                            gender = fullCloudUser.gender ?: "UNSPECIFIED",
+                            updatedAtTimestampMs = System.currentTimeMillis(),
+                            password = fullCloudUser.password
+                        )
+                        userDao.insertUser(importedUser)
+                        foundUser = importedUser
+                    }
+                }
+            } catch (e: Exception) {
+                timber.log.Timber.e(e, "DataConnect: Cloud SQL login lookup failed")
             }
         }
 
-        true
+        if (foundUser != null) {
+            if (!foundUser.password.isNullOrBlank() && foundUser.password != password) {
+                return@withContext Result.failure(IllegalArgumentException("Das eingegebene Passwort ist falsch."))
+            }
+            sessionRepository?.saveSession(token = "jwt_${foundUser.id}", userId = foundUser.id)
+            Result.success(foundUser)
+        } else {
+            Result.failure(IllegalArgumentException("Kein Konto mit diesen Anmeldedaten gefunden. Bitte registriere dich zuerst."))
+        }
     }
 
     override suspend fun registerUser(
         username: String,
+        email: String,
         firstName: String,
         lastName: String,
         birthDateMs: Long,
         gender: String,
         hometown: String,
+        countryCode: String,
         phoneNumber: String,
         profilePictureUrl: String,
+        photos: List<String>,
         searchIntent: SearchIntent,
+        smokingHabit: SmokingHabit,
+        drinkingHabit: DrinkingHabit,
         bio: String,
         password: String
     ): Result<UserEntity> = withContext(ioDispatcher) {
@@ -83,65 +150,62 @@ class UserRepositoryImpl @Inject constructor(
             val trimmedUsername = username.trim()
             val userId = "usr_${System.currentTimeMillis()}"
             val finalHometown = hometown.trim().ifBlank { "${firstName.trim()} ${lastName.trim()}".trim() }
+            val finalEmail = email.trim().ifBlank { "${trimmedUsername.lowercase()}@kliq.app" }
+            val primaryPhotoUrl = photos.firstOrNull { it.isNotBlank() } ?: profilePictureUrl.ifBlank { null }
 
-            // Calculate approximate age from birthDateMs
             val nowMs = System.currentTimeMillis()
             val ageYears = ((nowMs - birthDateMs) / (365.25 * 24 * 60 * 60 * 1000L)).toInt().coerceAtLeast(18)
 
             val newUser = UserEntity(
                 id = userId,
                 username = trimmedUsername,
-                email = "${trimmedUsername.lowercase()}@kliq.app",
+                email = finalEmail,
                 age = ageYears,
                 hometown = finalHometown,
-                profilePictureUrl = profilePictureUrl.ifBlank { null },
+                profilePictureUrl = primaryPhotoUrl,
                 bio = bio.trim().ifBlank { "Hey, ich bin neu bei KLIQ!" },
                 phoneNumber = phoneNumber.trim().ifBlank { null },
                 isVerified = true,
                 gender = gender,
-                updatedAtTimestampMs = System.currentTimeMillis()
+                updatedAtTimestampMs = System.currentTimeMillis(),
+                password = password
             )
 
-            // 1. Save User in Room
             userDao.insertUser(newUser)
-            Timber.i("Saved user locally in Room DB: %s (%s)", newUser.id, newUser.username)
 
-            // 2. Save Preferences in Room
             val preferences = UserPreferencesEntity(
                 userId = userId,
-                searchIntent = searchIntent
+                searchIntent = searchIntent,
+                smokingHabit = smokingHabit,
+                drinkingHabit = drinkingHabit
             )
             userDao.insertUserPreferences(preferences)
 
-            // 3. Save Session so user is authenticated
             sessionRepository?.saveSession(token = "jwt_$userId", userId = userId)
 
-            // 4. Sync to Firebase Data Connect Cloud SQL
             kliqConnector?.let { connector ->
                 try {
+                    timber.log.Timber.d("DataConnect: Creating user %s (%s, %s)...", newUser.id, newUser.username, newUser.email)
                     connector.createUser.execute(
                         id = newUser.id,
                         username = newUser.username,
                         email = newUser.email
-                    )
-                    Timber.i("Successfully created user '%s' in Firebase SQL Connect", newUser.id)
-                } catch (e: Exception) {
-                    Timber.e(e, "Failed to create user in Firebase SQL Connect (createUser)")
-                }
-
-                try {
-                    connector.updateUserProfile.execute(id = newUser.id) {
-                        this.username = newUser.username
+                    ) {
+                        this.firstName = firstName.trim().ifBlank { null }
+                        this.lastName = lastName.trim().ifBlank { null }
+                        this.birthDateMs = birthDateMs
+                        this.age = ageYears
+                        this.gender = gender
+                        this.hometown = finalHometown
+                        this.countryCode = countryCode.ifBlank { "+43" }
+                        this.phoneNumber = phoneNumber.trim().ifBlank { null }
+                        this.profilePictureUrl = primaryPhotoUrl
                         this.bio = newUser.bio
-                        this.profilePictureUrl = newUser.profilePictureUrl
-                        this.age = newUser.age
-                        this.hometown = newUser.hometown
-                        this.gender = newUser.gender
-                        this.phoneNumber = newUser.phoneNumber
+                        this.password = password
                     }
-                    Timber.i("Successfully updated profile for '%s' in Firebase SQL Connect", newUser.id)
+                    timber.log.Timber.d("DataConnect: User created successfully on Cloud SQL!")
                 } catch (e: Exception) {
-                    Timber.e(e, "Failed to update user profile in Firebase SQL Connect")
+                    timber.log.Timber.e(e, "DataConnect: Failed to create user on Cloud SQL")
                 }
 
                 try {
@@ -151,53 +215,41 @@ class UserRepositoryImpl @Inject constructor(
                         searchRadiusKm = 10,
                         pushNotificationsEnabled = true,
                         searchIntent = searchIntent.name,
-                        smokingHabit = SmokingHabit.NEVER.name,
-                        drinkingHabit = DrinkingHabit.NEVER.name
+                        smokingHabit = smokingHabit.name,
+                        drinkingHabit = drinkingHabit.name
                     )
-                    Timber.i("Successfully saved user preferences for '%s' in Firebase SQL Connect", newUser.id)
+                    timber.log.Timber.d("DataConnect: User preferences upserted successfully on Cloud SQL!")
                 } catch (e: Exception) {
-                    Timber.e(e, "Failed to upsert user preference in Firebase SQL Connect")
+                    timber.log.Timber.e(e, "DataConnect: Failed to upsert user preferences on Cloud SQL")
                 }
-            } ?: Timber.w("KliqConnectorConnector is null during registerUser - skipping Cloud SQL sync")
+
+                photos.forEachIndexed { index, photoUrl ->
+                    if (photoUrl.isNotBlank()) {
+                        try {
+                            val photoId = "photo_${userId}_${System.currentTimeMillis()}_$index"
+                            connector.addUserPhoto.execute(
+                                id = photoId,
+                                userId = userId,
+                                imageUrl = photoUrl
+                            ) {
+                                this.displayOrder = index
+                            }
+                            timber.log.Timber.d("DataConnect: User photo %d synced to Cloud SQL", index)
+                        } catch (e: Exception) {
+                            timber.log.Timber.e(e, "DataConnect: Failed to sync photo %d to Cloud SQL", index)
+                        }
+                    }
+                }
+            }
 
             Result.success(newUser)
         } catch (e: Exception) {
-            Timber.e(e, "Error registering user in UserRepositoryImpl")
+            timber.log.Timber.e(e, "UserRepository.registerUser failed")
             Result.failure(e)
         }
     }
 
     override fun getUserById(userId: String): Flow<UserEntity?> {
-        kliqConnector?.let { connector ->
-            kotlinx.coroutines.CoroutineScope(ioDispatcher).launch {
-                try {
-                    val local = userDao.getUserByIdOneShot(userId)
-                    if (local == null) {
-                        val response = connector.getUserById.execute(id = userId)
-                        val remote = response.data.user
-                        if (remote != null) {
-                            val entity = UserEntity(
-                                id = remote.id,
-                                username = remote.username,
-                                email = remote.email,
-                                age = remote.age,
-                                hometown = remote.hometown,
-                                profilePictureUrl = remote.profilePictureUrl,
-                                bio = remote.bio,
-                                phoneNumber = remote.phoneNumber,
-                                isVerified = remote.isVerified,
-                                gender = remote.gender,
-                                updatedAtTimestampMs = System.currentTimeMillis()
-                            )
-                            userDao.insertUser(entity)
-                            Timber.i("Fetched remote user '%s' from SQL Connect and cached locally", userId)
-                        }
-                    }
-                } catch (e: Exception) {
-                    Timber.d(e, "Could not fetch user '%s' from Firebase SQL Connect (offline or not found)", userId)
-                }
-            }
-        }
         return userDao.getUserById(userId).flowOn(ioDispatcher)
     }
 
@@ -221,40 +273,75 @@ class UserRepositoryImpl @Inject constructor(
         }.flowOn(ioDispatcher)
     }
 
+    suspend fun clearLocalCache() = withContext(ioDispatcher) {
+        try {
+            chatDao?.deleteAllMessages()
+            chatDao?.deleteAllChats()
+            feedDao?.deleteAllComments()
+            feedDao?.deleteAllPosts()
+            feedDao?.deleteAllStories()
+            userDao.clearUsers()
+            timber.log.Timber.d("Room: Local cache cleared successfully")
+        } catch (e: Exception) {
+            timber.log.Timber.e(e, "Room: Failed to clear local cache")
+        }
+    }
+
     override suspend fun syncUserProfile(userId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
-            kliqConnector?.let { connector ->
+            if (kliqConnector != null) {
                 try {
-                    val response = connector.getUserById.execute(id = userId)
-                    val remote = response.data.user
-                    if (remote != null) {
-                        val entity = UserEntity(
-                            id = remote.id,
-                            username = remote.username,
-                            email = remote.email,
-                            age = remote.age,
-                            hometown = remote.hometown,
-                            profilePictureUrl = remote.profilePictureUrl,
-                            bio = remote.bio,
-                            phoneNumber = remote.phoneNumber,
-                            isVerified = remote.isVerified,
-                            gender = remote.gender,
-                            updatedAtTimestampMs = System.currentTimeMillis()
+                    val cloudUser = kliqConnector.getUserById.execute(id = userId).data.user
+                    if (cloudUser != null) {
+                        var photosList = emptyList<String>()
+                        try {
+                            val cloudPhotos = kliqConnector.getUserPhotos.execute(userId = userId).data.userPhotos
+                            photosList = cloudPhotos.map { it.imageUrl }
+                        } catch (ignored: Exception) { }
+
+                        val userEntity = UserEntity(
+                            id = cloudUser.id,
+                            username = cloudUser.username,
+                            email = cloudUser.email,
+                            age = cloudUser.age,
+                            hometown = cloudUser.hometown,
+                            profilePictureUrl = cloudUser.profilePictureUrl ?: photosList.firstOrNull(),
+                            photos = photosList,
+                            bio = cloudUser.bio,
+                            phoneNumber = cloudUser.phoneNumber,
+                            isVerified = true,
+                            gender = cloudUser.gender ?: "UNSPECIFIED",
+                            updatedAtTimestampMs = System.currentTimeMillis(),
+                            password = cloudUser.password
                         )
-                        userDao.insertUser(entity)
-                        Timber.i("Successfully synced user profile for '%s' from SQL Connect", userId)
+                        userDao.insertUser(userEntity)
+                        timber.log.Timber.d("DataConnect: User profile synced — photos: %d, bio: %s", photosList.size, cloudUser.bio?.take(30))
+
+                        try {
+                            val cloudPrefs = kliqConnector.getUserPreferences.execute(userId = userId).data.userPreferences.firstOrNull()
+                            if (cloudPrefs != null) {
+                                val prefEntity = UserPreferencesEntity(
+                                    userId = userId,
+                                    isDarkMode = cloudPrefs.isDarkMode,
+                                    searchRadiusKm = cloudPrefs.searchRadiusKm,
+                                    pushNotificationsEnabled = cloudPrefs.pushNotificationsEnabled,
+                                    searchIntent = try { SearchIntent.valueOf(cloudPrefs.searchIntent) } catch (e: Exception) { SearchIntent.BOTH },
+                                    smokingHabit = try { SmokingHabit.valueOf(cloudPrefs.smokingHabit) } catch (e: Exception) { SmokingHabit.NEVER },
+                                    drinkingHabit = try { DrinkingHabit.valueOf(cloudPrefs.drinkingHabit) } catch (e: Exception) { DrinkingHabit.NEVER }
+                                )
+                                userDao.insertUserPreferences(prefEntity)
+                            }
+                        } catch (ignored: Exception) { }
+
                         return@withContext Result.success(Unit)
                     }
                 } catch (e: Exception) {
-                    Timber.w(e, "Failed to sync user from SQL Connect, trying REST API fallback")
+                    timber.log.Timber.d("DataConnect: syncUserProfile: %s", e.message)
                 }
             }
 
-            val remoteUser = apiService.getUserProfile(userId)
-            userDao.insertUser(remoteUser)
             Result.success(Unit)
         } catch (e: Exception) {
-            Timber.e(e, "Error syncing user profile for '%s'", userId)
             Result.failure(e)
         }
     }
@@ -268,9 +355,8 @@ class UserRepositoryImpl @Inject constructor(
                     username = user.username,
                     email = user.email
                 )
-                Timber.i("Saved user '%s' in Firebase SQL Connect", user.id)
-            } catch (e: Exception) {
-                Timber.w(e, "Failed to save user in Firebase SQL Connect (createUser)")
+            } catch (ignored: Exception) {
+
             }
         }
         Unit
@@ -282,22 +368,47 @@ class UserRepositoryImpl @Inject constructor(
         age: Int,
         hometown: String,
         bio: String,
-        profilePictureUrl: String?
+        profilePictureUrl: String?,
+        photos: List<String>,
+        email: String?,
+        phoneNumber: String?,
+        searchIntent: SearchIntent?,
+        smokingHabit: SmokingHabit?,
+        drinkingHabit: DrinkingHabit?
     ): Unit = withContext(ioDispatcher) {
         val existingUser = userDao.getUserByIdOneShot(userId)
+        val finalPhotos = if (photos.isNotEmpty()) {
+            photos.filter { it.isNotBlank() }
+        } else {
+            existingUser?.photos ?: emptyList()
+        }
+        val finalProfilePic = profilePictureUrl ?: finalPhotos.firstOrNull() ?: existingUser?.profilePictureUrl
+
         val updatedUser = UserEntity(
             id = userId,
             username = username,
-            email = existingUser?.email ?: "",
+            email = email ?: existingUser?.email ?: "",
             age = age,
             hometown = hometown,
-            profilePictureUrl = profilePictureUrl ?: existingUser?.profilePictureUrl,
+            profilePictureUrl = finalProfilePic,
+            photos = finalPhotos,
             bio = bio.ifBlank { null },
-            phoneNumber = existingUser?.phoneNumber,
+            phoneNumber = phoneNumber ?: existingUser?.phoneNumber,
             isVerified = existingUser?.isVerified ?: false,
             updatedAtTimestampMs = System.currentTimeMillis()
         )
         userDao.insertUser(updatedUser)
+
+        if (searchIntent != null || smokingHabit != null || drinkingHabit != null) {
+            val existingPref = userDao.getUserPreferencesOneShot(userId)
+            val updatedPref = (existingPref ?: UserPreferencesEntity(userId = userId)).copy(
+                searchIntent = searchIntent ?: existingPref?.searchIntent ?: SearchIntent.BOTH,
+                smokingHabit = smokingHabit ?: existingPref?.smokingHabit ?: SmokingHabit.NEVER,
+                drinkingHabit = drinkingHabit ?: existingPref?.drinkingHabit ?: DrinkingHabit.NEVER
+            )
+            userDao.insertUserPreferences(updatedPref)
+        }
+
         kliqConnector?.let { connector ->
             try {
                 connector.createUser.execute(
@@ -306,7 +417,7 @@ class UserRepositoryImpl @Inject constructor(
                     email = updatedUser.email
                 )
             } catch (ignored: Exception) {
-                // User may already exist in Cloud SQL
+
             }
             try {
                 connector.updateUserProfile.execute(id = updatedUser.id) {
@@ -317,9 +428,8 @@ class UserRepositoryImpl @Inject constructor(
                     this.hometown = updatedUser.hometown
                     this.phoneNumber = updatedUser.phoneNumber
                 }
-                Timber.i("Successfully updated profile for '%s' in Firebase SQL Connect", userId)
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to update profile in Firebase SQL Connect for '%s'", userId)
+            } catch (ignored: Exception) {
+
             }
         }
         Unit
@@ -341,10 +451,7 @@ class UserRepositoryImpl @Inject constructor(
                 connector.updateUserProfile.execute(id = userId) {
                     this.profilePictureUrl = pictureUrl
                 }
-                Timber.i("Updated profile picture in Firebase SQL Connect for user '%s'", userId)
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to update profile picture in Firebase SQL Connect for user '%s'", userId)
-            }
+            } catch (ignored: Exception) { }
         }
         Unit
     }
@@ -408,10 +515,7 @@ class UserRepositoryImpl @Inject constructor(
                             username = newUser.username,
                             email = newUser.email
                         )
-                        Timber.i("OTP User created in Firebase SQL Connect: %s", newUser.id)
-                    } catch (e: Exception) {
-                        Timber.e(e, "Failed to create OTP user in Firebase SQL Connect: %s", newUser.id)
-                    }
+                    } catch (ignored: Exception) { }
                 }
                 Result.success(newUser)
             } else {
@@ -451,7 +555,7 @@ class UserRepositoryImpl @Inject constructor(
                     )
                 )
             } catch (ignored: Exception) {
-                // Network error handled gracefully, local change takes effect immediately
+
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -465,7 +569,7 @@ class UserRepositoryImpl @Inject constructor(
             try {
                 apiService.unblockUser(currentUserId, targetUserId)
             } catch (ignored: Exception) {
-                // Graceful fallback
+
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -490,11 +594,117 @@ class UserRepositoryImpl @Inject constructor(
                     )
                 )
             } catch (ignored: Exception) {
-                // Graceful handling of offline/mock mode
+
             }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    override suspend fun deleteAccount(userId: String): Result<Unit> = withContext(ioDispatcher) {
+        try {
+
+            kliqConnector?.let { connector ->
+                try { connector.deleteUserPhotos.execute(userId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserPosts.execute(authorUserId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserComments.execute(authorUserId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserStories.execute(authorUserId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserReviews.execute(reviewerUserId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserPostLikes.execute(userId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserFriendships.execute(userId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserFriendshipsReverse.execute(friendUserId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserVisitedLogs.execute(userId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserBlockedEntries.execute(userId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserBlockedEntriesReverse.execute(blockedUserId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUserPreference.execute(userId = userId) } catch (ignored: Exception) { }
+                try { connector.deleteUser.execute(id = userId) } catch (ignored: Exception) { }
+                timber.log.Timber.d("DataConnect: All data for user %s permanently deleted from Cloud SQL", userId)
+            }
+
+            feedDao?.deletePostsByAuthor(userId)
+            feedDao?.deleteCommentsByAuthor(userId)
+            feedDao?.deleteStoriesByAuthor(userId)
+            userDao.deleteUserById(userId)
+            userDao.deleteUserPreferencesByUserId(userId)
+
+            clearLocalCache()
+
+            sessionRepository?.clearSession()
+            timber.log.Timber.d("Account %s successfully deleted — all data purged", userId)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            timber.log.Timber.e(e, "UserRepository.deleteAccount failed")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun searchUsers(query: String): List<UserEntity> = withContext(ioDispatcher) {
+        val trimmed = query.trim()
+        if (trimmed.isBlank()) return@withContext emptyList()
+
+        val localResults = userDao.searchUsers(trimmed).toMutableList()
+
+        if (kliqConnector != null) {
+            try {
+                val cloudUsers = kliqConnector.listUsers.execute().data.users
+                val matches = cloudUsers.filter {
+                    it.username.contains(trimmed, ignoreCase = true) ||
+                    (it.firstName?.contains(trimmed, ignoreCase = true) == true) ||
+                    (it.lastName?.contains(trimmed, ignoreCase = true) == true) ||
+                    (it.hometown?.contains(trimmed, ignoreCase = true) == true)
+                }
+                for (cloudUser in matches) {
+                    if (localResults.none { it.id == cloudUser.id }) {
+                        val imported = UserEntity(
+                            id = cloudUser.id,
+                            username = cloudUser.username,
+                            email = cloudUser.email ?: "${cloudUser.username}@kliq.app",
+                            hometown = cloudUser.hometown ?: "${cloudUser.firstName.orEmpty()} ${cloudUser.lastName.orEmpty()}".trim().ifBlank { null },
+                            profilePictureUrl = cloudUser.profilePictureUrl,
+                            phoneNumber = cloudUser.phoneNumber,
+                            gender = cloudUser.gender ?: "UNSPECIFIED",
+                            isVerified = true,
+                            updatedAtTimestampMs = System.currentTimeMillis()
+                        )
+                        userDao.insertUser(imported)
+                        localResults.add(imported)
+                    }
+                }
+            } catch (e: Exception) {
+                timber.log.Timber.e(e, "DataConnect: Cloud SQL user search failed")
+            }
+        }
+
+        localResults.distinctBy { it.id }
+    }
+
+    override suspend fun getAllUsers(): List<UserEntity> = withContext(ioDispatcher) {
+        val local = userDao.getAllUsers().toMutableList()
+        if (kliqConnector != null) {
+            try {
+                val cloudUsers = kliqConnector.listUsers.execute().data.users
+                for (cloudUser in cloudUsers) {
+                    if (local.none { it.id == cloudUser.id }) {
+                        val imported = UserEntity(
+                            id = cloudUser.id,
+                            username = cloudUser.username,
+                            email = cloudUser.email ?: "${cloudUser.username}@kliq.app",
+                            hometown = cloudUser.hometown ?: "${cloudUser.firstName.orEmpty()} ${cloudUser.lastName.orEmpty()}".trim().ifBlank { null },
+                            profilePictureUrl = cloudUser.profilePictureUrl,
+                            phoneNumber = cloudUser.phoneNumber,
+                            gender = cloudUser.gender ?: "UNSPECIFIED",
+                            isVerified = true,
+                            updatedAtTimestampMs = System.currentTimeMillis()
+                        )
+                        userDao.insertUser(imported)
+                        local.add(imported)
+                    }
+                }
+            } catch (e: Exception) {
+                timber.log.Timber.d("DataConnect: getAllUsers fetch: %s", e.message)
+            }
+        }
+        local.distinctBy { it.id }
     }
 }

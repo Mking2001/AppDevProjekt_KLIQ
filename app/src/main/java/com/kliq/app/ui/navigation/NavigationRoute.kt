@@ -16,11 +16,6 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 
-/**
- * Sealed class defining all top-level navigation routes for the Kliq Bottom Bar.
- * Each route encapsulates its route string, display label, and icon variants
- * (filled for selected state, outlined for unselected state).
- */
 sealed class NavigationRoute(
     val route: String,
     val label: String,
@@ -91,58 +86,41 @@ sealed class NavigationRoute(
     )
 
     companion object {
-        /** Route-Template für den SMS-Verifizierungs-Screen. Erwartet phoneNumber als Argument. */
+
         const val VERIFICATION_ROUTE = "verification/{phoneNumber}"
 
-        /** Erzeugt die Navigations-Route zur Verifizierung mit URL-kodierter Telefonnummer. */
         fun verificationRoute(phoneNumber: String): String {
             return "verification/${Uri.encode(phoneNumber)}"
         }
 
-        /** Ordered list of all bottom bar tabs */
         val bottomBarItems: List<NavigationRoute>
             get() = listOf(Home, Explore, Map, Messages, Profile)
     }
 }
 
-/**
- * Zusätzliche Navigationsrouten, die nicht in der Bottom Bar
- * angezeigt werden (Chat-Screens, Detail-Ansichten, etc.).
- */
 object ChatRoutes {
-    /** Route zur Chat-Listen-Übersicht */
+
     const val CHAT_LIST = "chat_list"
 
-    /** Route zum Chat-Detail-Screen mit chatId-Parameter */
     const val CHAT_DETAIL = "chat_detail/{chatId}"
 
-    /** Erzeugt die konkrete Route für einen bestimmten Chat */
     fun chatDetail(chatId: String): String = "chat_detail/$chatId"
 
-    /** Argument-Name für die Chat-ID im NavGraph */
     const val ARG_CHAT_ID = "chatId"
 
-    /** Route fuer den 1-zu-1 Private Chat Screen mit receiverId-Parameter */
     const val PRIVATE_CHAT = "private_chat/{receiverId}"
 
-    /** Erzeugt die konkrete Route fuer 1-zu-1 Private Messaging */
     fun privateChat(receiverId: String): String = "private_chat/$receiverId"
 
-    /** Argument-Name fuer die Empfaenger-ID im NavGraph */
     const val ARG_RECEIVER_ID = "receiverId"
 
-    /** Deep Link URI Muster für Push-Benachrichtigungen */
     const val DEEP_LINK_URI_PATTERN = "kliq://chat/{chatId}?senderId={senderId}&type={type}"
 
-    /** Erzeugt ein Deep-Link-Uri-String für einen konkreten Chat */
     fun createDeepLinkUriString(chatId: String, senderId: String = "", type: String = "direct_message"): String {
         return "kliq://chat/$chatId?senderId=$senderId&type=$type"
     }
 }
 
-/**
- * Kern-Routen für Onboarding und Splash.
- */
 object CoreRoutes {
     const val SPLASH = "splash"
     const val AUTH_SELECTION = "auth_selection"
@@ -150,22 +128,17 @@ object CoreRoutes {
     const val REGISTER = "register"
 }
 
-/**
- * Routen für Club-Analytics und Info-System.
- */
 object ClubRoutes {
     const val CLUB_DETAIL = "club_detail/{clubId}"
     const val CLUB_SEARCH = "club_search"
-    
+
     fun clubDetail(clubId: String): String = "club_detail/$clubId"
-    
+
     const val ARG_CLUB_ID = "clubId"
 }
 
-/**
- * Routen für Benutzer-Profile, Scanner und Details.
- */
 object ProfileRoutes {
+    const val EDIT_PROFILE = "profile/edit"
     const val OTHER_USER_PROFILE = "profile/other/{userId}"
     const val QR_SCANNER = "profile/qr_scanner"
 

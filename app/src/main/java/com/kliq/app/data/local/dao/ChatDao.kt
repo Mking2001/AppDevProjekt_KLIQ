@@ -30,6 +30,9 @@ interface ChatDao {
     @Query("SELECT * FROM chats WHERE id = :chatId")
     fun getChatById(chatId: String): Flow<ChatEntity?>
 
+    @Query("SELECT COALESCE(SUM(unreadCount), 0) FROM chats WHERE isArchived = 0")
+    fun getTotalUnreadCount(): Flow<Int>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertChat(chat: ChatEntity)
 
@@ -81,6 +84,18 @@ interface ChatDao {
     @Query("UPDATE chats SET unreadCount = 0 WHERE id = :chatId")
     suspend fun markChatAsRead(chatId: String)
 
+    @Query("UPDATE chats SET name = :name, avatarInitial = :avatarInitial WHERE id = :chatId")
+    suspend fun updateChatName(chatId: String, name: String, avatarInitial: String)
+
     @Query("DELETE FROM chats WHERE id = :chatId")
     suspend fun deleteChatById(chatId: String)
+
+    @Query("DELETE FROM messages WHERE chatId = :chatId")
+    suspend fun deleteMessagesForChat(chatId: String)
+
+    @Query("DELETE FROM chats")
+    suspend fun deleteAllChats()
+
+    @Query("DELETE FROM messages")
+    suspend fun deleteAllMessages()
 }

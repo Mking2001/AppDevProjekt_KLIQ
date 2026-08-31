@@ -19,19 +19,12 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/**
- * Controller managing adaptive location sampling intervals, device stationary detection,
- * burst session lifecycles, and application lifecycle-aware power throttling.
- */
 @Singleton
 class AdaptiveLocationController @Inject constructor() {
 
     private var defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
     private var scope: CoroutineScope = CoroutineScope(defaultDispatcher)
 
-    /**
-     * Secondary constructor allowing custom [CoroutineDispatcher] injection for testing.
-     */
     constructor(dispatcher: CoroutineDispatcher) : this() {
         this.defaultDispatcher = dispatcher
         this.scope = CoroutineScope(dispatcher)
@@ -70,9 +63,6 @@ class AdaptiveLocationController @Inject constructor() {
         private const val EARTH_RADIUS_METERS = 6371000.0
     }
 
-    /**
-     * Updates the base target tracking mode configured by the user or application.
-     */
     fun setTrackingMode(mode: LocationTrackingMode) {
         _configuredMode.value = mode
         if (!_isBurstActive.value) {
@@ -80,10 +70,6 @@ class AdaptiveLocationController @Inject constructor() {
         }
     }
 
-    /**
-     * Informs the controller whether the app is in the foreground or background.
-     * When backgrounded without an active burst, tracking is throttled to conserve battery.
-     */
     fun setForegroundState(inForeground: Boolean) {
         _isForeground.value = inForeground
         if (!_isBurstActive.value) {
@@ -91,10 +77,6 @@ class AdaptiveLocationController @Inject constructor() {
         }
     }
 
-    /**
-     * Triggers a temporary high-accuracy burst session (e.g. for QR scan, check-in, geofence validation).
-     * Automatically reverts to the appropriate ambient/idle mode once the timeout expires.
-     */
     fun requestHighAccuracyBurst(durationMs: Long = DEFAULT_BURST_DURATION_MS) {
         burstJob?.cancel()
         _isBurstActive.value = true
@@ -115,9 +97,6 @@ class AdaptiveLocationController @Inject constructor() {
         }
     }
 
-    /**
-     * Cancels an active burst session immediately and restores standard power policies.
-     */
     fun cancelBurstSession() {
         burstJob?.cancel()
         burstJob = null
@@ -126,9 +105,6 @@ class AdaptiveLocationController @Inject constructor() {
         recalculateEffectiveMode()
     }
 
-    /**
-     * Ingests a new location fix to evaluate movement and update stationary state.
-     */
     fun onLocationSampleReceived(location: LocationData) {
         val prev = lastRecordedLocation
         lastRecordedLocation = location
@@ -159,19 +135,12 @@ class AdaptiveLocationController @Inject constructor() {
         }
     }
 
-    /**
-     * Manually overrides or resets the stationary status (useful for simulated movement or testing).
-     */
     fun setStationaryState(stationary: Boolean) {
         _isStationary.value = stationary
         stationaryCount = if (stationary) CONSECUTIVE_STATIONARY_FIXES_REQUIRED else 0
         recalculateEffectiveMode()
     }
 
-    /**
-     * Recalculates effective mode and policy based on configured mode, burst status,
-     * foreground lifecycle state, and stationary detection.
-     */
     private fun recalculateEffectiveMode() {
         if (_isBurstActive.value) {
             _effectiveMode.value = LocationTrackingMode.HIGH_ACCURACY

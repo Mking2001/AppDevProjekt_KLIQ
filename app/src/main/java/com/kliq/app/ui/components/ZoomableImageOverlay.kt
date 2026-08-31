@@ -55,25 +55,12 @@ import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 import kotlin.math.roundToInt
 
-/**
- * Minimum zoom scale factor.
- */
 const val MIN_ZOOM_SCALE = 1.0f
 
-/**
- * Maximum zoom scale factor.
- */
 const val MAX_ZOOM_SCALE = 4.0f
 
-/**
- * Default double-tap target scale factor.
- */
 const val DOUBLE_TAP_ZOOM_SCALE = 2.5f
 
-/**
- * Calculates clamped translation offsets based on current scale factor and container bounds.
- * Prevents zoomed images from panning outside container edges.
- */
 fun calculateClampedOffset(
     scale: Float,
     rawOffsetX: Float,
@@ -91,10 +78,6 @@ fun calculateClampedOffset(
     return Pair(clampedX, clampedY)
 }
 
-/**
- * Fullscreen high-contrast modal dialog supporting pinch-to-zoom, pan drag with boundary limits,
- * double-tap reset, and smooth spring physics animations.
- */
 @Composable
 fun ZoomableImageOverlay(
     isVisible: Boolean,

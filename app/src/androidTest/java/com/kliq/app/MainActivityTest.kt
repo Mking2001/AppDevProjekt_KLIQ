@@ -14,13 +14,9 @@ class MainActivityTest {
     @get:Rule
     val composeTestRule = createAndroidComposeRule<MainActivity>()
 
-    /**
-     * Prüft, ob die App korrekt startet und
-     * den Home-Screen mit dem "Kliq"-Titel anzeigt.
-     */
     @Test
     fun appStartsAndDisplaysHomeScreen() {
-        // Der Home-Screen zeigt den App-Titel "Kliq" in der TopAppBar
+
         composeTestRule.onNodeWithText("Kliq").assertIsDisplayed()
     }
 }

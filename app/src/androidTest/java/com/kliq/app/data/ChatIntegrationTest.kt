@@ -50,7 +50,7 @@ class ChatIntegrationTest {
 
     @Test
     fun testMessageInstantiationAndLocalDatabasePersistence() = runBlocking {
-        // 1. Chat-Verbindung in der Room-Datenbank erstellen
+
         val chatId = "chat_persist_101"
         chatDao.insertChat(
             ChatEntity(
@@ -63,7 +63,6 @@ class ChatIntegrationTest {
             )
         )
 
-        // 2. Instanziieren & Speichern einer Nachricht mit ISO-Zeitstempel und Foto-Medien-URL
         val messageEntity = MessageEntity(
             id = "msg_persist_88",
             chatId = chatId,
@@ -78,7 +77,6 @@ class ChatIntegrationTest {
         )
         chatDao.insertMessage(messageEntity)
 
-        // 3. Auslesen aus der Datenbank & Verifikation aller Attribute
         val persistedMessages = chatDao.getMessagesForChat(chatId).first()
         assertEquals(1, persistedMessages.size)
 
@@ -110,7 +108,6 @@ class ChatIntegrationTest {
             )
         )
 
-        // Einfügen von Nachrichten in ungeordneter Reihenfolge bezüglich Zeitstempel
         val msg3 = MessageEntity("msg_3", chatId, "user_3", "Anna", "Späteste Nachricht", 3000L, "2026-07-21T22:00:00Z", null, MessageStatus.SENT, false)
         val msg1 = MessageEntity("msg_1", chatId, "user_1", "Ben", "Früheste Nachricht", 1000L, "2026-07-21T20:00:00Z", null, MessageStatus.SENT, false)
         val msg2 = MessageEntity("msg_2", chatId, "user_2", "Du", "Mittlere Nachricht", 2000L, "2026-07-21T21:00:00Z", null, MessageStatus.SENT, true)
@@ -119,7 +116,6 @@ class ChatIntegrationTest {
         chatDao.insertMessage(msg1)
         chatDao.insertMessage(msg2)
 
-        // Auslesen aus der Datenbank & Verifikation der chronologischen Sortierung (ASC)
         val sortedMessages = chatDao.getMessagesForChat(chatId).first()
         assertEquals(3, sortedMessages.size)
         assertEquals("msg_1", sortedMessages[0].id)
@@ -144,7 +140,6 @@ class ChatIntegrationTest {
             )
         )
 
-        // 1. Nachricht im Status "SENT" senden
         val sendResult = chatRepository.sendTextMessage(
             chatId = chatId,
             senderUserId = "usr_alex",
@@ -156,15 +151,12 @@ class ChatIntegrationTest {
         assertNotNull(msg)
         assertEquals(MessageStatus.SENT, msg!!.status)
 
-        // 2. Statusaktualisierung auf "READ" (Gelesen)
         chatRepository.updateMessageStatus(msg.id, MessageStatus.READ)
 
-        // 3. Verifikation des aktualisierten Status in der Datenbank
         val dbMessages = chatDao.getMessagesForChat(chatId).first()
         assertEquals(1, dbMessages.size)
         assertEquals(MessageStatus.READ, dbMessages[0].status)
 
-        // 4. Verifikation der High-Contrast Lila UI-Sprechblasen-Formatierung
         val uiState = msg.copy(status = MessageStatus.READ, isMine = true)
             .toHighContrastBubbleState(isGroupChat = false)
         assertTrue(uiState.statusIconText.contains("Gelesen"))
@@ -173,7 +165,7 @@ class ChatIntegrationTest {
 
     @Test
     fun testDistinctionBetweenPrivateOneOnOneAndPublicCityGroupChat() = runBlocking {
-        // 1. Erstellung eines privaten 1-zu-1-Chats
+
         val privateChatId = "chat_private_sarah"
         val privateChat = ChatEntity(
             id = privateChatId,
@@ -186,7 +178,6 @@ class ChatIntegrationTest {
         )
         chatDao.insertChat(privateChat)
 
-        // 2. Erstellung eines öffentlichen Stadt-basierten Gruppenchats ("Berlin - Tonight")
         val cityChatId = "chat_public_berlin_tonight"
         val cityGroupChat = ChatEntity(
             id = cityChatId,
@@ -200,7 +191,6 @@ class ChatIntegrationTest {
         )
         chatDao.insertChat(cityGroupChat)
 
-        // Nachrichten in beide Chats einfügen
         val privMsg = MessageEntity("msg_priv", privateChatId, "user_sarah", "Sarah", "Hi Alex", 100L, "2026-07-21T21:00:00Z", null, MessageStatus.READ, false)
         val cityMsg = MessageEntity("msg_city", cityChatId, "user_dj", "DJ Felix", "Welcher Club?", 200L, "2026-07-21T21:05:00Z", null, MessageStatus.SENT, false)
         chatDao.insertMessage(privMsg)
@@ -209,7 +199,6 @@ class ChatIntegrationTest {
         val privChatMessage = com.kliq.app.data.model.ChatMessage("msg_priv", privateChatId, "user_sarah", "Sarah", null, "Hi Alex", 100L, "2026-07-21T21:00:00Z", null, MessageStatus.READ, false)
         val cityChatMessage = com.kliq.app.data.model.ChatMessage("msg_city", cityChatId, "user_dj", "DJ Felix", null, "Welcher Club?", 200L, "2026-07-21T21:05:00Z", null, MessageStatus.SENT, false)
 
-        // 3. Verifikation der DAO-Query-Filterung (Private vs Öffentliche Stadt-Chats)
         val privateChatsList = chatDao.getPrivateChats().first()
         assertEquals(1, privateChatsList.size)
         assertEquals("Sarah Connor", privateChatsList[0].name)
@@ -221,7 +210,6 @@ class ChatIntegrationTest {
         assertEquals("Berlin", publicCityChatsList[0].cityRegion)
         assertEquals(ChatType.PUBLIC_CITY, publicCityChatsList[0].chatType)
 
-        // 4. Verifikation der unterschiedlichen Sprechblasen-Formatierung
         val privBubble = privChatMessage.toHighContrastBubbleState(isGroupChat = false)
         assertFalse("Private Nachrichten zeigen keinen Gruppen-Absender-Header", privBubble.showSenderHeader)
 

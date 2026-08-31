@@ -25,9 +25,6 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
 
-/**
- * Integration Test for Chapter 7.1 Gender Ratio Aggregation Logic and ClubAnalyticsViewModel.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class GenderAggregationIntegrationTest {
 
@@ -51,13 +48,6 @@ class GenderAggregationIntegrationTest {
         Dispatchers.resetMain()
     }
 
-    /**
-     * Test-Szenario: 20 verifizierte Check-ins an Club-ID "club_berghain_71"
-     *   - 10x Weiblich
-     *   - 8x Männlich
-     *   - 2x Divers
-     * Verifiziert: Korrekte Prozentwerte (50% W / 40% M / 10% D) im ClubAnalyticsViewModel.
-     */
     @Test
     fun testSimulated20CheckInsGenderAggregation_returnsCorrectPercentages() = runTest {
         val targetClubId = "club_berghain_71"
@@ -78,12 +68,10 @@ class GenderAggregationIntegrationTest {
         assertEquals(20, state.totalLiveVisitors)
         assertTrue(state.genderRatio.hasSufficientData)
 
-        // Verifikation der Prozentwerte (50% W, 40% M, 10% D)
         assertEquals(50f, state.genderRatio.femalePercentage, 0.01f)
         assertEquals(40f, state.genderRatio.malePercentage, 0.01f)
         assertEquals(10f, state.genderRatio.diversePercentage, 0.01f)
 
-        // Verifikation der UI-Bar Segmente für Kliq High-Contrast Lila Style
         assertEquals(3, state.segments.size)
 
         val femaleSegment = state.segments.find { it.gender == Gender.FEMALE }
@@ -102,9 +90,6 @@ class GenderAggregationIntegrationTest {
         assertEquals("#14B8A6", diverseSegment?.colorHex)
     }
 
-    /**
-     * Edge Case Test: 0 Check-ins (Division by Zero Abfangung & Anonymisierungs-Schwellenwert)
-     */
     @Test
     fun testZeroCheckIns_preventsDivisionByZero_andMasksData() = runTest {
         val targetClubId = "club_empty"
@@ -125,9 +110,6 @@ class GenderAggregationIntegrationTest {
         assertTrue(state.segments.isEmpty())
     }
 
-    /**
-     * Edge Case Test: Unter Minimum-Datenschutz-Schwellenwert (< 5 Check-ins)
-     */
     @Test
     fun testUnderPrivacyThreshold_masksIndividualData() = runTest {
         val targetClubId = "club_low_visitors"

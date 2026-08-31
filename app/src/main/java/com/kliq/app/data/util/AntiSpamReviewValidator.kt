@@ -40,7 +40,7 @@ class AntiSpamReviewValidator @Inject constructor() {
         expectedEventIdOrClubId: String
     ): AntiSpamVerificationResult {
         val isValidToken = qrToken.isNotBlank() && (qrToken.contains(expectedEventIdOrClubId) || qrToken.startsWith("KLIQ_PASS_"))
-        
+
         return if (isValidToken) {
             AntiSpamVerificationResult(
                 isVerified = true,

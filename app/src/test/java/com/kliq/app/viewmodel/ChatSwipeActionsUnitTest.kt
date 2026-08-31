@@ -30,10 +30,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 
-/**
- * Prüft die Swipe-Aktionen der Chat-Liste: Löschen, Archivieren und
- * Wiederherstellen wirken über das Repository und spiegeln sich im State.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatSwipeActionsUnitTest {
 
@@ -59,6 +55,7 @@ class ChatSwipeActionsUnitTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         `when`(userRepository.getBlockedUserIds(anyString())).thenReturn(flowOf(emptyList()))
+        `when`(userRepository.getUserById(anyString())).thenReturn(flowOf(null))
         `when`(locationRepository.locationUpdates).thenReturn(locationUpdatesFlow)
 
         chatRepository = FakeChatRepository(initialChats = listOf(privateChat))

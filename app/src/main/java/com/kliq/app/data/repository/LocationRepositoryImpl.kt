@@ -20,10 +20,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Implementation of [LocationRepository] coordinating state management, Room persistence,
- * adaptive power policy calculations, and background service lifecycle commands.
- */
 @Singleton
 class LocationRepositoryImpl @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -72,7 +68,7 @@ class LocationRepositoryImpl @Inject constructor(
                 }
                 context.startService(intent)
             } catch (e: Exception) {
-                // Non-android host environment fallback
+
             }
         }
     }
@@ -85,7 +81,7 @@ class LocationRepositoryImpl @Inject constructor(
             }
             ContextCompat.startForegroundService(context, intent)
         } catch (e: Exception) {
-            // Non-android host environment fallback
+
         }
     }
 
@@ -97,7 +93,7 @@ class LocationRepositoryImpl @Inject constructor(
             }
             context.stopService(intent)
         } catch (e: Exception) {
-            // Non-android host environment fallback
+
         }
     }
 

@@ -65,7 +65,6 @@ class VisitedHistoryEmulatorTest {
             )
         }
 
-        // Wait for UI to render
         composeTestRule.onNodeWithText("Besucht am", substring = true)
     }
 }

@@ -16,15 +16,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-/**
- * Performante, moderne Suchleiste im Kliq High-Contrast Violet/Dark-Design.
- *
- * @param query Aktueller Suchtext.
- * @param onQueryChange Callback bei Eingabeänderungen.
- * @param onClearClick Callback beim Klick auf den Clear-Button.
- * @param modifier Der Modifier für das Layout.
- * @param placeholderText Platzhaltertext für die Suchleiste.
- */
 @Composable
 fun ClubSearchBar(
     query: String,

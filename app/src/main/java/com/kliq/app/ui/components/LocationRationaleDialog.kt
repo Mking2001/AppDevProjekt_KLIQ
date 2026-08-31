@@ -33,10 +33,6 @@ import androidx.compose.ui.window.Dialog
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-/**
- * Custom Kliq Rationale Dialog explaining location permission necessity
- * for Geofencing and location-verified reviews in High-Contrast Dark-Purple design.
- */
 @Composable
 fun LocationRationaleDialog(
     isVisible: Boolean,
@@ -60,7 +56,7 @@ fun LocationRationaleDialog(
                 modifier = Modifier.padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // High-Contrast Purple Location Icon Header
+
                 Column(
                     modifier = Modifier
                         .size(64.dp)
@@ -98,7 +94,6 @@ fun LocationRationaleDialog(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // High-Contrast Action Button
                 Button(
                     onClick = onConfirmActivate,
                     modifier = Modifier
@@ -134,10 +129,6 @@ fun LocationRationaleDialog(
     }
 }
 
-/**
- * Custom Dialog for permanently denied location permissions offering direct deep-linking
- * to system settings.
- */
 @Composable
 fun LocationPermanentlyDeniedDialog(
     isVisible: Boolean,

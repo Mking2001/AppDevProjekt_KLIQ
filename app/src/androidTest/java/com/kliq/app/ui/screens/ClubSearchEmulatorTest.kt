@@ -19,10 +19,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * UI- & Integrationstests für die Club- und Regionen-Suchfunktion (Kapitel 7.4).
- * Verifiziert die Lauffähigkeit im Android-Emulator/Simulator.
- */
 @RunWith(AndroidJUnit4::class)
 class ClubSearchEmulatorTest {
 

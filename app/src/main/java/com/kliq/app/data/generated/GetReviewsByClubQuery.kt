@@ -62,10 +62,6 @@ public interface GetReviewsByClubQuery :
   
     val timestamp: Long,
   
-    val isVerified: Boolean,
-  
-    val verificationMethod: String,
-  
     val helpfulVotesCount: Int,
   
   ) {

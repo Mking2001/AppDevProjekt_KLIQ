@@ -6,10 +6,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit-Tests für den [MockSmsVerificationService].
- * Verifiziert die Simulation von Latenz, Code-Validierung und Fehlerfällen.
- */
 class MockSmsVerificationServiceTest {
 
     private lateinit var service: SmsVerificationService

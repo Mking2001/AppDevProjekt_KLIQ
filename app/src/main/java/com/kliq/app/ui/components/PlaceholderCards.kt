@@ -31,14 +31,6 @@ import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.ui.theme.FuchsiaTertiary
 
-/**
- * Runder Avatar-Platzhalter mit Gradient-Rahmen.
- * Wird in Feed-Karten, Story-Row und Profil verwendet.
- *
- * @param size Durchmesser des Avatars.
- * @param showGradientBorder Ob ein Lila-Gradient-Rahmen angezeigt wird.
- * @param modifier Optionaler Modifier.
- */
 @Composable
 fun KliqAvatarCircle(
     size: Dp = 48.dp,
@@ -64,7 +56,7 @@ fun KliqAvatarCircle(
             .background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
     ) {
-        // Initialen-Platzhalter innerhalb des Avatars
+
         Text(
             text = "K",
             style = MaterialTheme.typography.labelMedium,
@@ -74,15 +66,6 @@ fun KliqAvatarCircle(
     }
 }
 
-/**
- * Selektierbarer Kategorie-Chip im Lila-Design.
- * Wird in Explore- und Map-Screen für Filteroptionen verwendet.
- *
- * @param label Beschriftung des Chips.
- * @param selected Ob der Chip aktuell ausgewählt ist.
- * @param onClick Callback bei Klick.
- * @param modifier Optionaler Modifier.
- */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun KliqCategoryChip(
@@ -111,15 +94,6 @@ fun KliqCategoryChip(
     )
 }
 
-/**
- * Einzelne Benachrichtigungszeile.
- * Zeigt Avatar, Beschreibungstext, Zeitstempel und visuellen Ungelesen-Indikator.
- *
- * @param text Benachrichtigungstext.
- * @param timeAgo Zeitangabe.
- * @param isUnread Ob die Benachrichtigung ungelesen ist.
- * @param modifier Optionaler Modifier.
- */
 @Composable
 fun KliqNotificationItem(
     text: String,
@@ -137,7 +111,7 @@ fun KliqNotificationItem(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Ungelesen-Indikator (kleiner Punkt)
+
         if (isUnread) {
             Box(
                 modifier = Modifier

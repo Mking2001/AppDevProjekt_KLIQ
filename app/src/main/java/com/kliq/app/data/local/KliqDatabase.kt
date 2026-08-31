@@ -18,6 +18,7 @@ import com.kliq.app.data.local.dao.VisitedLogDao
 import com.kliq.app.data.local.entities.BlockedUserEntity
 import com.kliq.app.data.local.entities.ChatEntity
 import com.kliq.app.data.local.entities.ClubEntity
+import com.kliq.app.data.local.entities.ClubHypeEntity
 import com.kliq.app.data.local.entities.ClubOfferEntity
 import com.kliq.app.data.local.entities.DirectMessageEntity
 import com.kliq.app.data.local.entities.EventEntity
@@ -37,6 +38,7 @@ import com.kliq.app.data.local.entities.VisitedLogEntity
         UserEntity::class,
         UserPreferencesEntity::class,
         ClubEntity::class,
+        ClubHypeEntity::class,
         EventEntity::class,
         ClubOfferEntity::class,
         ReviewEntity::class,
@@ -51,7 +53,7 @@ import com.kliq.app.data.local.entities.VisitedLogEntity
         FeedCommentEntity::class,
         StoryEntity::class
     ],
-    version = 20,
+    version = 24,
     exportSchema = false
 )
 @TypeConverters(RoomConverters::class)

@@ -7,10 +7,6 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 
-/**
- * Unit tests for [HapticFeedbackManager] validating pattern mappings,
- * event-specific reason logging triggers, and delegation.
- */
 class HapticFeedbackManagerTest {
 
     private val hapticFeedbackManager: HapticFeedbackManager = mock(HapticFeedbackManager::class.java)

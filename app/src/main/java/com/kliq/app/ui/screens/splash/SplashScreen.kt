@@ -28,16 +28,9 @@ import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.viewmodel.AuthUiState
 import com.kliq.app.viewmodel.AuthViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 
-/**
- * Splash Screen für den Kliq App Start.
- * Evaluates persistent session state via [AuthViewModel] and navigates to either Main Navigation Host or Phone Login UI.
- *
- * @param authViewModel Hilt-injected ViewModel zur Session-Prüfung.
- * @param onNavigateToHome Callback bei erfolgreicher Auto-Login Session-Prüfung.
- * @param onNavigateToPhoneLogin Callback bei fehlender/invalider Session.
- * @param onSplashFinished Optionaler Legacy-Callback für Abwärtskompatibilität.
- */
 @Composable
 fun SplashScreen(
     authViewModel: AuthViewModel = hiltViewModel(),
@@ -48,9 +41,9 @@ fun SplashScreen(
 ) {
     val authState by authViewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(authState) {
-        delay(1200)
-        when (authState) {
+    LaunchedEffect(Unit) {
+        delay(1000)
+        when (val current = authViewModel.uiState.value) {
             is AuthUiState.Authenticated -> {
                 onNavigateToHome()
                 onSplashFinished?.invoke()
@@ -60,7 +53,15 @@ fun SplashScreen(
                 onSplashFinished?.invoke()
             }
             is AuthUiState.Loading -> {
-                // Waiting for session state evaluation
+                val state = withTimeoutOrNull(1500) {
+                    authViewModel.uiState.first { it !is AuthUiState.Loading }
+                }
+                if (state is AuthUiState.Authenticated) {
+                    onNavigateToHome()
+                } else {
+                    onNavigateToAuthSelection()
+                }
+                onSplashFinished?.invoke()
             }
         }
     }

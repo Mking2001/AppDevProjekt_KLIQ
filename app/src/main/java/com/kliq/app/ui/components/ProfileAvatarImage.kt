@@ -161,7 +161,6 @@ fun ProfileAvatarImage(
     }
 }
 
-
 private fun String?.isNullGlanceable(): Boolean {
     return this.isNullOrBlank() || this == "null"
 }

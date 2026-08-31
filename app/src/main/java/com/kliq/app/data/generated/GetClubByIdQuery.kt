@@ -98,6 +98,10 @@ public interface GetClubByIdQuery :
   
     val isPromoted: Boolean,
   
+    val flameCount: Int,
+  
+    val flameDate: String?,
+  
   ) {
     
     

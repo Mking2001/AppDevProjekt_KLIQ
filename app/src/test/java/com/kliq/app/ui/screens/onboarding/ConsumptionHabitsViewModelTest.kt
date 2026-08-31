@@ -74,7 +74,6 @@ class ConsumptionHabitsViewModelTest {
         viewModel.selectDrinkingHabit(DrinkingHabit.FREQUENTLY)
         assertTrue(viewModel.uiState.value.isSelectionValid)
 
-        // Toggle smoking off by selecting same habit again
         viewModel.selectSmokingHabit(SmokingHabit.OCCASIONALLY)
         val state = viewModel.uiState.value
         assertNull(state.selectedSmokingHabit)
@@ -141,7 +140,13 @@ class ConsumptionHabitsViewModelTest {
             age: Int,
             hometown: String,
             bio: String,
-            profilePictureUrl: String?
+            profilePictureUrl: String?,
+            photos: List<String>,
+            email: String?,
+            phoneNumber: String?,
+            searchIntent: SearchIntent?,
+            smokingHabit: SmokingHabit?,
+            drinkingHabit: DrinkingHabit?
         ) {}
 
         override suspend fun requestOtp(countryCode: String, phoneNumber: String): Result<Boolean> = Result.success(true)

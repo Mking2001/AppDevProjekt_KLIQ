@@ -8,17 +8,10 @@ import kotlin.math.pow
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/**
- * Represents the display state of a map marker item, which can be either
- * an individual venue node or a cluster of multiple nearby venues.
- */
 sealed class ClusterMarkerUiState {
     abstract val id: String
     abstract val position: LatLng
 
-    /**
-     * Single venue node on the map.
-     */
     data class SingleNode(
         val venue: VenueItemUi
     ) : ClusterMarkerUiState() {
@@ -26,9 +19,6 @@ sealed class ClusterMarkerUiState {
         override val position: LatLng get() = LatLng(venue.latitude, venue.longitude)
     }
 
-    /**
-     * Grouped cluster node representing multiple venues in close visual proximity.
-     */
     data class ClusterNode(
         val clusterId: String,
         val count: Int,
@@ -42,11 +32,6 @@ sealed class ClusterMarkerUiState {
     }
 }
 
-/**
- * Performance-optimized clustering manager for map markers.
- * Uses spatial grid binning and fast distance heuristics to group venues dynamically
- * based on viewport zoom level, maintaining 60 FPS performance for hundreds of pins.
- */
 object MapClusterManager {
 
     private const val BASE_GRID_SIZE_KM = 0.8
@@ -58,17 +43,12 @@ object MapClusterManager {
     }
     private val lock = Any()
 
-    /**
-     * Computes marker clusters for a given list of venues and current camera zoom.
-     * Uses spatial binning and LRU memory caching to avoid unnecessary recalculations during map pans.
-     */
     fun clusterVenues(
         venues: List<VenueItemUi>,
         zoom: Float
     ): List<ClusterMarkerUiState> {
         if (venues.isEmpty()) return emptyList()
 
-        // High zoom levels (zoom >= 15f): Show individual markers directly with zero clustering overhead
         if (zoom >= 15.0f) {
             return venues.map { ClusterMarkerUiState.SingleNode(it) }
         }
@@ -78,12 +58,10 @@ object MapClusterManager {
             cache.get(cacheKey)?.let { return it }
         }
 
-        // Calculate max clustering distance threshold in meters based on zoom level
         val maxClusterDistanceMeters = (BASE_GRID_SIZE_KM * 1000.0) / 2.0.pow((zoom - 10f).toDouble()).coerceAtLeast(1.0)
-        
-        // Approximate degree delta for fast bounding box pre-filtering (~111.32 km per degree lat)
+
         val latDegreeDelta = (maxClusterDistanceMeters / 111320.0)
-        
+
         val unvisited = ArrayList(venues)
         val result = ArrayList<ClusterMarkerUiState>()
 
@@ -96,8 +74,7 @@ object MapClusterManager {
             val iterator = unvisited.iterator()
             while (iterator.hasNext()) {
                 val candidate = iterator.next()
-                
-                // Fast bounding-box check before executing expensive trigonometry
+
                 val dLat = Math.abs(candidate.latitude - pivot.latitude)
                 val dLng = Math.abs(candidate.longitude - pivot.longitude)
                 if (dLat <= latDegreeDelta && dLng <= lngDegreeDelta) {
@@ -156,9 +133,6 @@ object MapClusterManager {
         return "c_${venues.size}_${hash}_$roundedZoom"
     }
 
-    /**
-     * Calculates distance in meters between two geographical coordinates using the Haversine formula.
-     */
     fun calculateDistanceMeters(
         lat1: Double, lon1: Double,
         lat2: Double, lon2: Double
@@ -180,13 +154,9 @@ object MapClusterManager {
         return earthRadius * c
     }
 
-    /**
-     * Clears cached cluster calculations.
-     */
     fun clearCache() {
         synchronized(lock) {
             cache.clear()
         }
     }
 }
-

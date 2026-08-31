@@ -15,14 +15,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.navigation.NavBackStackEntry
 
-/**
- * Custom performance-optimized transition specs for the Kliq App screen navigation.
- * Designed to strictly align with Kliq's High-Contrast Dark/Purple design system
- * while guaranteeing smooth 60 FPS / 120 FPS rendering across all devices.
- */
 object KliqScreenTransitions {
 
-    /** FastOutSlowIn custom cubic bezier easing curve for fluid, responsive animations */
     val KliqDecelerationEasing = CubicBezierEasing(0.2f, 0.0f, 0.0f, 1.0f)
     val KliqAccelerateEasing = CubicBezierEasing(0.4f, 0.0f, 1.0f, 1.0f)
 
@@ -32,9 +26,6 @@ object KliqScreenTransitions {
     const val DURATION_MODAL = 350
     const val DURATION_FADE = 250
 
-    /**
-     * Horizontal slide & scaled fade enter transition for bottom bar tab switches.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.tabEnterTransition(
         slideRight: Boolean,
         durationMs: Int = DURATION_TAB_SWITCH
@@ -53,9 +44,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Horizontal slide & scaled fade exit transition for bottom bar tab switches.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.tabExitTransition(
         slideRight: Boolean,
         durationMs: Int = DURATION_TAB_SWITCH
@@ -74,10 +62,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Forward push transition into detail screens (e.g. Chat Detail, User Profile).
-     * Combines right-to-left slide with a subtle scale-in and fade.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.detailPushEnterTransition(
         durationMs: Int = DURATION_DETAIL_PUSH
     ): EnterTransition {
@@ -92,9 +76,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Forward exit transition when pushing into a detail screen.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.detailPushExitTransition(
         durationMs: Int = DURATION_DETAIL_PUSH
     ): ExitTransition {
@@ -109,9 +90,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Pop enter transition when returning from a detail screen to its caller.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.detailPopEnterTransition(
         durationMs: Int = DURATION_DETAIL_PUSH
     ): EnterTransition {
@@ -126,9 +104,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Pop exit transition when returning from a detail screen.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.detailPopExitTransition(
         durationMs: Int = DURATION_DETAIL_PUSH
     ): ExitTransition {
@@ -143,10 +118,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Shared Element style card expansion transition for Map to Club Analytics / Details.
-     * Scale up from 0.90x + vertical slide up + fade-in.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.sharedElementExpandEnterTransition(
         durationMs: Int = DURATION_SHARED_ELEMENT
     ): EnterTransition {
@@ -161,9 +132,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Shared Element style exit transition when opening Club Analytics / Details.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.sharedElementExpandExitTransition(
         durationMs: Int = DURATION_SHARED_ELEMENT
     ): ExitTransition {
@@ -175,9 +143,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Shared Element style pop exit transition when dismissing Club Analytics back to Map.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.sharedElementPopExitTransition(
         durationMs: Int = DURATION_SHARED_ELEMENT
     ): ExitTransition {
@@ -192,9 +157,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Slide-up enter transition for modal screens (e.g. QR Scanner).
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.modalSlideUpEnterTransition(
         durationMs: Int = DURATION_MODAL
     ): EnterTransition {
@@ -206,9 +168,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Slide-down exit transition for modal screens.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.modalSlideUpExitTransition(
         durationMs: Int = DURATION_MODAL
     ): ExitTransition {
@@ -220,9 +179,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Simple fade enter transition for splash and auth screens.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultFadeEnterTransition(
         durationMs: Int = DURATION_FADE
     ): EnterTransition {
@@ -231,9 +187,6 @@ object KliqScreenTransitions {
         )
     }
 
-    /**
-     * Simple fade exit transition for splash and auth screens.
-     */
     fun AnimatedContentTransitionScope<NavBackStackEntry>.defaultFadeExitTransition(
         durationMs: Int = DURATION_FADE
     ): ExitTransition {

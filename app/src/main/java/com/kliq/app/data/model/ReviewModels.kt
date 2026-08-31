@@ -19,7 +19,7 @@ data class Review(
     val targetUserId: String? = null,
     val clubId: String? = null,
     val eventId: String? = null,
-    val rating: Int, // 1 to 5 stars
+    val rating: Int,
     val text: String,
     val timestamp: Long = System.currentTimeMillis(),
     val verificationMethod: ReviewVerificationMethod = ReviewVerificationMethod.UNVERIFIED,

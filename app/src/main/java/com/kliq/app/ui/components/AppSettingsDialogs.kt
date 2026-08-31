@@ -29,20 +29,6 @@ import androidx.compose.ui.unit.dp
 import com.kliq.app.BuildConfig
 import com.kliq.app.viewmodel.ThemeMode
 
-/**
- * Einstellungen-Dialog des globalen Overflow-Menüs.
- *
- * Enthält ausschließlich Aktionen, die tatsächlich wirksam sind:
- * Umschalten der Darstellung, Öffnen der System-Benachrichtigungseinstellungen
- * und Leeren des App-Cache.
- *
- * @param isVisible Ob der Dialog angezeigt wird.
- * @param themeMode Aktuell gewählter Darstellungsmodus.
- * @param onToggleTheme Callback zum Weiterschalten der Darstellung.
- * @param onOpenNotificationSettings Callback zum Öffnen der System-Einstellungen.
- * @param onClearCache Callback zum Leeren des Cache.
- * @param onDismiss Callback zum Schließen des Dialogs.
- */
 @Composable
 fun KliqSettingsDialog(
     isVisible: Boolean,
@@ -96,16 +82,12 @@ fun KliqSettingsDialog(
     )
 }
 
-/** Beschriftung des aktuellen Darstellungsmodus. */
 private fun themeModeLabel(themeMode: ThemeMode): String = when (themeMode) {
     ThemeMode.DARK -> "Dunkel"
     ThemeMode.LIGHT -> "Hell"
     ThemeMode.SYSTEM -> "Systemvorgabe"
 }
 
-/**
- * Einzelne Einstellungszeile mit Symbol, Titel und Erläuterung.
- */
 @Composable
 private fun SettingsRow(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
@@ -144,12 +126,6 @@ private fun SettingsRow(
     }
 }
 
-/**
- * Info-Dialog mit Projekt- und Versionsangaben.
- *
- * @param isVisible Ob der Dialog angezeigt wird.
- * @param onDismiss Callback zum Schließen des Dialogs.
- */
 @Composable
 fun KliqAboutDialog(
     isVisible: Boolean,
@@ -194,9 +170,6 @@ fun KliqAboutDialog(
     )
 }
 
-/**
- * Zeile aus Bezeichnung und Wert im Info-Dialog.
- */
 @Composable
 private fun AboutRow(label: String, value: String) {
     Row(
@@ -220,11 +193,6 @@ private fun AboutRow(label: String, value: String) {
     }
 }
 
-/**
- * Öffnet die System-Benachrichtigungseinstellungen der App.
- * Fällt auf die allgemeine App-Detailseite zurück, falls der
- * spezifische Intent nicht verfügbar ist.
- */
 fun openAppNotificationSettings(context: Context) {
     val notificationIntent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
         putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
@@ -239,11 +207,6 @@ fun openAppNotificationSettings(context: Context) {
     }
 }
 
-/**
- * Löscht den Inhalt des App-Cache-Verzeichnisses.
- *
- * @return Anzahl der entfernten Einträge.
- */
 fun clearApplicationCache(context: Context): Int {
     val entries = context.cacheDir?.listFiles() ?: return 0
     var removed = 0

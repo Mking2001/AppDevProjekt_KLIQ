@@ -21,14 +21,6 @@ import com.kliq.app.ui.theme.DarkOnSurfaceVariant
 import com.kliq.app.ui.theme.DarkSurface
 import com.kliq.app.ui.theme.ErrorRed
 
-/**
- * Bestätigungsdialog für das Blockieren eines Nutzers.
- * Informiert transparent über die Auswirkung der Blockierung.
- *
- * @param username Name des zu blockierenden Nutzers.
- * @param onDismiss Callback beim Abbrechen.
- * @param onConfirmBlock Callback bei Bestätigung.
- */
 @Composable
 fun BlockConfirmationDialog(
     username: String = "diesen Nutzer",

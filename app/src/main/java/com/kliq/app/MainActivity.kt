@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val themeState by themeViewModel.themeState.collectAsStateWithLifecycle()
-            
+
             KliqTheme(themeMode = themeState.themeMode) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -63,4 +63,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-

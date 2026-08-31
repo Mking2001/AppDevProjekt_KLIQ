@@ -27,23 +27,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Automatisierte UI-Tests für die Haupt-Navigation über den Navigation Host (Bottom Bar).
- *
- * Testet:
- *   1. Nahtloses Umschalten aller 5 Bottom-Bar-Tabs (Home, Entdecken, Karte, Aktivität, Profil)
- *   2. Navigationsfluss von der Entdecken-Übersicht zum Club-Detail-Screen
- *   3. Profil-Screen Navigation und Interaktions-Triggers
- */
 @RunWith(AndroidJUnit4::class)
 class MainWorkflowNavigationUITest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    /**
-     * Testfall 1: Prüft das Umschalten aller 5 Haupt-Tabs der Bottom Bar.
-     */
     @Test
     fun testBottomBarNavigationHostTabSwitching() {
         var selectedRoute by mutableStateOf(NavigationRoute.Home.route)
@@ -58,45 +47,35 @@ class MainWorkflowNavigationUITest {
             }
         }
 
-        // 1. Alle 5 Bottom-Bar-Items prüfen
         composeTestRule.onAllNodesWithText("Home").filterToOne(hasClickAction()).assertIsDisplayed()
         composeTestRule.onAllNodesWithText("Entdecken").filterToOne(hasClickAction()).assertIsDisplayed()
         composeTestRule.onAllNodesWithText("Karte").filterToOne(hasClickAction()).assertIsDisplayed()
         composeTestRule.onAllNodesWithText("Aktivität").filterToOne(hasClickAction()).assertIsDisplayed()
         composeTestRule.onAllNodesWithText("Profil").filterToOne(hasClickAction()).assertIsDisplayed()
 
-        // Initial ausgewählt: Home
         assertEquals(NavigationRoute.Home.route, selectedRoute)
 
-        // 2. Zu "Entdecken" wechseln
         composeTestRule.onAllNodesWithText("Entdecken").filterToOne(hasClickAction()).performClick()
         composeTestRule.waitForIdle()
         assertEquals(NavigationRoute.Explore.route, selectedRoute)
 
-        // 3. Zu "Karte" wechseln
         composeTestRule.onAllNodesWithText("Karte").filterToOne(hasClickAction()).performClick()
         composeTestRule.waitForIdle()
         assertEquals(NavigationRoute.Map.route, selectedRoute)
 
-        // 4. Zu "Aktivität" wechseln
         composeTestRule.onAllNodesWithText("Aktivität").filterToOne(hasClickAction()).performClick()
         composeTestRule.waitForIdle()
         assertEquals(NavigationRoute.Notifications.route, selectedRoute)
 
-        // 5. Zu "Profil" wechseln
         composeTestRule.onAllNodesWithText("Profil").filterToOne(hasClickAction()).performClick()
         composeTestRule.waitForIdle()
         assertEquals(NavigationRoute.Profile.route, selectedRoute)
 
-        // 6. Zurück zu "Home" wechseln (Tab-Zyklus vollendet)
         composeTestRule.onAllNodesWithText("Home").filterToOne(hasClickAction()).performClick()
         composeTestRule.waitForIdle()
         assertEquals(NavigationRoute.Home.route, selectedRoute)
     }
 
-    /**
-     * Testfall 2: Navigationsfluss von Entdecken zu Club-Details (Live-Stats, Geschlecht, Events).
-     */
     @Test
     fun testExploreToClubDetailNavigation() {
         val testClub = FakeBackendStateModule.mockClubList.first()
@@ -119,37 +98,29 @@ class MainWorkflowNavigationUITest {
             }
         }
 
-        // Header & Name verifizieren
         composeTestRule.onNodeWithText("Berghain / Panorama Bar").assertIsDisplayed()
 
-        // Auslastung & Live-Statistiken
         composeTestRule.onNodeWithText("Live-Besucherstatistiken").assertIsDisplayed()
         composeTestRule.onNodeWithText("Auslastung: 85%").assertIsDisplayed()
 
-        // Geschlechterverhältnis
         composeTestRule.onNodeWithText("Geschlechterverhältnis (1275 Gäste)").assertIsDisplayed()
         composeTestRule.onNodeWithText("45% W").assertIsDisplayed()
         composeTestRule.onNodeWithText("55% M").assertIsDisplayed()
 
-        // Event-Highlight
         composeTestRule.onNodeWithText("Event-Highlight").assertIsDisplayed()
         composeTestRule.onNodeWithText("Klubnacht Weekend special").assertIsDisplayed()
 
-        // Öffnungszeiten
         composeTestRule.onNodeWithText("Öffnungszeiten").assertIsDisplayed()
         composeTestRule.onNodeWithText("Jetzt Geöffnet (23:59 - 12:00)").assertIsDisplayed()
     }
 
-    /**
-     * Testfall 3: Prüft die Profil-Screen Navigation & Aktionen.
-     */
     @Test
     fun testProfileScreenNavigationAndActions() {
         var isQrScannerOpened by mutableStateOf(false)
 
         composeTestRule.setContent {
             KliqTheme {
-                // Simuliere Profil-Screen Aktionen
+
                 val user = FakeBackendStateModule.mockTestUser
                 KliqBottomBar(
                     currentRoute = NavigationRoute.Profile.route,
@@ -161,7 +132,6 @@ class MainWorkflowNavigationUITest {
             }
         }
 
-        // Check active tab Profile
         composeTestRule.onAllNodesWithText("Profil").filterToOne(hasClickAction()).assertIsDisplayed()
     }
 }

@@ -29,7 +29,7 @@ interface ClubDao {
     fun searchClubs(query: String): Flow<List<ClubEntity>>
 
     @Query("""
-        SELECT * FROM clubs 
+        SELECT * FROM clubs
         WHERE (:query = '' OR LOWER(name) LIKE '%' || LOWER(:query) || '%' OR LOWER(externalSearchTags) LIKE '%' || LOWER(:query) || '%' OR LOWER(category) LIKE '%' || LOWER(:query) || '%' OR LOWER(region) LIKE '%' || LOWER(:query) || '%' OR LOWER(city) LIKE '%' || LOWER(:query) || '%')
         AND (:region = '' OR LOWER(region) LIKE '%' || LOWER(:region) || '%' OR LOWER(city) LIKE '%' || LOWER(:region) || '%')
         AND (:category = '' OR LOWER(category) LIKE '%' || LOWER(:category) || '%' OR LOWER(externalSearchTags) LIKE '%' || LOWER(:category) || '%')
@@ -53,9 +53,24 @@ interface ClubDao {
     @Query("UPDATE clubs SET isFavorite = :isFavorite WHERE id = :clubId")
     suspend fun updateFavoriteStatus(clubId: String, isFavorite: Boolean)
 
+    @Query("UPDATE clubs SET flameCount = :flameCount, flameDate = :flameDate WHERE id = :clubId")
+    suspend fun updateFlameCount(clubId: String, flameCount: Int, flameDate: String)
+
     @Query("SELECT * FROM events WHERE clubId = :clubId")
     fun getEventsForClub(clubId: String): Flow<List<EventEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEvents(events: List<EventEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertClubHype(hype: com.kliq.app.data.local.entities.ClubHypeEntity)
+
+    @Query("DELETE FROM club_hypes WHERE clubId = :clubId AND userId = :userId AND dateString = :dateString")
+    suspend fun deleteClubHype(clubId: String, userId: String, dateString: String)
+
+    @Query("SELECT COUNT(*) > 0 FROM club_hypes WHERE clubId = :clubId AND userId = :userId AND dateString = :dateString")
+    fun isClubHypedToday(clubId: String, userId: String, dateString: String): Flow<Boolean>
+
+    @Query("SELECT clubId FROM club_hypes WHERE userId = :userId AND dateString = :dateString")
+    fun getHypedClubIdsToday(userId: String, dateString: String): Flow<List<String>>
 }

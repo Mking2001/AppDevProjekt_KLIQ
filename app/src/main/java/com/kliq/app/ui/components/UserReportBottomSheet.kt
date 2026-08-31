@@ -48,15 +48,6 @@ import com.kliq.app.ui.theme.ErrorRed
 import com.kliq.app.ui.theme.PurpleContainer
 import com.kliq.app.ui.theme.PurplePrimary
 
-/**
- * Modal Bottom Sheet für den Nutzer-Meldeprozess im Kliq High-Contrast Lila/Dark-Theme.
- * Bietet vordefinierte Meldegründe sowie ein optionales Freitextfeld für Details.
- *
- * @param targetUsername Name des zu meldenden Nutzers.
- * @param isSubmitting Status der Absendung.
- * @param onDismiss Callback zum Schließen.
- * @param onSubmitReport Callback nach Wahl eines Grundes und Freitexts.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserReportBottomSheet(

@@ -19,7 +19,11 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
   override val dataConnect: com.google.firebase.dataconnect.FirebaseDataConnect
 
   
+    public val addClubHype: AddClubHypeMutation
+  
     public val addFriend: AddFriendMutation
+  
+    public val addUserPhoto: AddUserPhotoMutation
   
     public val archiveChat: ArchiveChatMutation
   
@@ -27,15 +31,59 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
   
     public val cancelEvent: CancelEventMutation
   
+    public val checkUsername: CheckUsernameQuery
+  
     public val createChat: CreateChatMutation
   
     public val createClubOffer: CreateClubOfferMutation
   
     public val createEvent: CreateEventMutation
   
+    public val createFeedComment: CreateFeedCommentMutation
+  
+    public val createFeedPost: CreateFeedPostMutation
+  
     public val createReview: CreateReviewMutation
   
+    public val createStory: CreateStoryMutation
+  
     public val createUser: CreateUserMutation
+  
+    public val deleteFeedComment: DeleteFeedCommentMutation
+  
+    public val deleteFeedPost: DeleteFeedPostMutation
+  
+    public val deleteStory: DeleteStoryMutation
+  
+    public val deleteUser: DeleteUserMutation
+  
+    public val deleteUserBlockedEntries: DeleteUserBlockedEntriesMutation
+  
+    public val deleteUserBlockedEntriesReverse: DeleteUserBlockedEntriesReverseMutation
+  
+    public val deleteUserComments: DeleteUserCommentsMutation
+  
+    public val deleteUserFriendships: DeleteUserFriendshipsMutation
+  
+    public val deleteUserFriendshipsReverse: DeleteUserFriendshipsReverseMutation
+  
+    public val deleteUserPhoto: DeleteUserPhotoMutation
+  
+    public val deleteUserPhotos: DeleteUserPhotosMutation
+  
+    public val deleteUserPostLikes: DeleteUserPostLikesMutation
+  
+    public val deleteUserPosts: DeleteUserPostsMutation
+  
+    public val deleteUserPreference: DeleteUserPreferenceMutation
+  
+    public val deleteUserReviews: DeleteUserReviewsMutation
+  
+    public val deleteUserStories: DeleteUserStoriesMutation
+  
+    public val deleteUserVisitedLogs: DeleteUserVisitedLogsMutation
+  
+    public val getActiveStories: GetActiveStoriesQuery
   
     public val getAllChats: GetAllChatsQuery
   
@@ -53,6 +101,12 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
   
     public val getEventsByClub: GetEventsByClubQuery
   
+    public val getFeedComments: GetFeedCommentsQuery
+  
+    public val getFeedPostLikes: GetFeedPostLikesQuery
+  
+    public val getFeedPosts: GetFeedPostsQuery
+  
     public val getFriendsByUser: GetFriendsByUserQuery
   
     public val getMessagesByChat: GetMessagesByChatQuery
@@ -67,13 +121,21 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
   
     public val getUserById: GetUserByIdQuery
   
+    public val getUserHypesForDate: GetUserHypesForDateQuery
+  
+    public val getUserPhotos: GetUserPhotosQuery
+  
     public val getUserPreferences: GetUserPreferencesQuery
   
     public val getVisitedLogsByUser: GetVisitedLogsByUserQuery
   
+    public val likeFeedPost: LikeFeedPostMutation
+  
     public val listUsers: ListUsersQuery
   
     public val logVisit: LogVisitMutation
+  
+    public val removeClubHype: RemoveClubHypeMutation
   
     public val removeFriend: RemoveFriendMutation
   
@@ -91,11 +153,17 @@ public interface KliqConnectorConnector : com.google.firebase.dataconnect.genera
   
     public val unblockUser: UnblockUserMutation
   
+    public val unlikeFeedPost: UnlikeFeedPostMutation
+  
     public val updateChatLastMessage: UpdateChatLastMessageMutation
+  
+    public val updateClubFlames: UpdateClubFlamesMutation
   
     public val updateClubLiveStats: UpdateClubLiveStatsMutation
   
     public val updateDirectMessageStatus: UpdateDirectMessageStatusMutation
+  
+    public val updateFeedPost: UpdateFeedPostMutation
   
     public val updateFriendStatus: UpdateFriendStatusMutation
   
@@ -152,8 +220,16 @@ private class KliqConnectorConnectorImpl(
   override val dataConnect: com.google.firebase.dataconnect.FirebaseDataConnect
 ) : KliqConnectorConnector {
   
+    override val addClubHype by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      AddClubHypeMutationImpl(this)
+    }
+  
     override val addFriend by lazy(LazyThreadSafetyMode.PUBLICATION) {
       AddFriendMutationImpl(this)
+    }
+  
+    override val addUserPhoto by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      AddUserPhotoMutationImpl(this)
     }
   
     override val archiveChat by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -168,6 +244,10 @@ private class KliqConnectorConnectorImpl(
       CancelEventMutationImpl(this)
     }
   
+    override val checkUsername by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      CheckUsernameQueryImpl(this)
+    }
+  
     override val createChat by lazy(LazyThreadSafetyMode.PUBLICATION) {
       CreateChatMutationImpl(this)
     }
@@ -180,12 +260,96 @@ private class KliqConnectorConnectorImpl(
       CreateEventMutationImpl(this)
     }
   
+    override val createFeedComment by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      CreateFeedCommentMutationImpl(this)
+    }
+  
+    override val createFeedPost by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      CreateFeedPostMutationImpl(this)
+    }
+  
     override val createReview by lazy(LazyThreadSafetyMode.PUBLICATION) {
       CreateReviewMutationImpl(this)
     }
   
+    override val createStory by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      CreateStoryMutationImpl(this)
+    }
+  
     override val createUser by lazy(LazyThreadSafetyMode.PUBLICATION) {
       CreateUserMutationImpl(this)
+    }
+  
+    override val deleteFeedComment by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteFeedCommentMutationImpl(this)
+    }
+  
+    override val deleteFeedPost by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteFeedPostMutationImpl(this)
+    }
+  
+    override val deleteStory by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteStoryMutationImpl(this)
+    }
+  
+    override val deleteUser by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserMutationImpl(this)
+    }
+  
+    override val deleteUserBlockedEntries by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserBlockedEntriesMutationImpl(this)
+    }
+  
+    override val deleteUserBlockedEntriesReverse by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserBlockedEntriesReverseMutationImpl(this)
+    }
+  
+    override val deleteUserComments by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserCommentsMutationImpl(this)
+    }
+  
+    override val deleteUserFriendships by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserFriendshipsMutationImpl(this)
+    }
+  
+    override val deleteUserFriendshipsReverse by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserFriendshipsReverseMutationImpl(this)
+    }
+  
+    override val deleteUserPhoto by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserPhotoMutationImpl(this)
+    }
+  
+    override val deleteUserPhotos by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserPhotosMutationImpl(this)
+    }
+  
+    override val deleteUserPostLikes by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserPostLikesMutationImpl(this)
+    }
+  
+    override val deleteUserPosts by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserPostsMutationImpl(this)
+    }
+  
+    override val deleteUserPreference by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserPreferenceMutationImpl(this)
+    }
+  
+    override val deleteUserReviews by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserReviewsMutationImpl(this)
+    }
+  
+    override val deleteUserStories by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserStoriesMutationImpl(this)
+    }
+  
+    override val deleteUserVisitedLogs by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      DeleteUserVisitedLogsMutationImpl(this)
+    }
+  
+    override val getActiveStories by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      GetActiveStoriesQueryImpl(this)
     }
   
     override val getAllChats by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -220,6 +384,18 @@ private class KliqConnectorConnectorImpl(
       GetEventsByClubQueryImpl(this)
     }
   
+    override val getFeedComments by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      GetFeedCommentsQueryImpl(this)
+    }
+  
+    override val getFeedPostLikes by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      GetFeedPostLikesQueryImpl(this)
+    }
+  
+    override val getFeedPosts by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      GetFeedPostsQueryImpl(this)
+    }
+  
     override val getFriendsByUser by lazy(LazyThreadSafetyMode.PUBLICATION) {
       GetFriendsByUserQueryImpl(this)
     }
@@ -248,6 +424,14 @@ private class KliqConnectorConnectorImpl(
       GetUserByIdQueryImpl(this)
     }
   
+    override val getUserHypesForDate by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      GetUserHypesForDateQueryImpl(this)
+    }
+  
+    override val getUserPhotos by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      GetUserPhotosQueryImpl(this)
+    }
+  
     override val getUserPreferences by lazy(LazyThreadSafetyMode.PUBLICATION) {
       GetUserPreferencesQueryImpl(this)
     }
@@ -256,12 +440,20 @@ private class KliqConnectorConnectorImpl(
       GetVisitedLogsByUserQueryImpl(this)
     }
   
+    override val likeFeedPost by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      LikeFeedPostMutationImpl(this)
+    }
+  
     override val listUsers by lazy(LazyThreadSafetyMode.PUBLICATION) {
       ListUsersQueryImpl(this)
     }
   
     override val logVisit by lazy(LazyThreadSafetyMode.PUBLICATION) {
       LogVisitMutationImpl(this)
+    }
+  
+    override val removeClubHype by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      RemoveClubHypeMutationImpl(this)
     }
   
     override val removeFriend by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -296,8 +488,16 @@ private class KliqConnectorConnectorImpl(
       UnblockUserMutationImpl(this)
     }
   
+    override val unlikeFeedPost by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      UnlikeFeedPostMutationImpl(this)
+    }
+  
     override val updateChatLastMessage by lazy(LazyThreadSafetyMode.PUBLICATION) {
       UpdateChatLastMessageMutationImpl(this)
+    }
+  
+    override val updateClubFlames by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      UpdateClubFlamesMutationImpl(this)
     }
   
     override val updateClubLiveStats by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -306,6 +506,10 @@ private class KliqConnectorConnectorImpl(
   
     override val updateDirectMessageStatus by lazy(LazyThreadSafetyMode.PUBLICATION) {
       UpdateDirectMessageStatusMutationImpl(this)
+    }
+  
+    override val updateFeedPost by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      UpdateFeedPostMutationImpl(this)
     }
   
     override val updateFriendStatus by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -340,16 +544,40 @@ private class KliqConnectorConnectorImpl(
   @com.google.firebase.dataconnect.ExperimentalFirebaseDataConnect
   override fun mutations(): List<com.google.firebase.dataconnect.generated.GeneratedMutation<KliqConnectorConnector, *, *>> =
     listOf(
-      addFriend,
+      addClubHype,
+        addFriend,
+        addUserPhoto,
         archiveChat,
         blockUser,
         cancelEvent,
         createChat,
         createClubOffer,
         createEvent,
+        createFeedComment,
+        createFeedPost,
         createReview,
+        createStory,
         createUser,
+        deleteFeedComment,
+        deleteFeedPost,
+        deleteStory,
+        deleteUser,
+        deleteUserBlockedEntries,
+        deleteUserBlockedEntriesReverse,
+        deleteUserComments,
+        deleteUserFriendships,
+        deleteUserFriendshipsReverse,
+        deleteUserPhoto,
+        deleteUserPhotos,
+        deleteUserPostLikes,
+        deleteUserPosts,
+        deleteUserPreference,
+        deleteUserReviews,
+        deleteUserStories,
+        deleteUserVisitedLogs,
+        likeFeedPost,
         logVisit,
+        removeClubHype,
         removeFriend,
         sendDirectMessage,
         sendMessage,
@@ -358,9 +586,12 @@ private class KliqConnectorConnectorImpl(
         toggleClubFavorite,
         trackUserLocation,
         unblockUser,
+        unlikeFeedPost,
         updateChatLastMessage,
+        updateClubFlames,
         updateClubLiveStats,
         updateDirectMessageStatus,
+        updateFeedPost,
         updateFriendStatus,
         updateMessageStatus,
         updateUserProfile,
@@ -373,7 +604,9 @@ private class KliqConnectorConnectorImpl(
   @com.google.firebase.dataconnect.ExperimentalFirebaseDataConnect
   override fun queries(): List<com.google.firebase.dataconnect.generated.GeneratedQuery<KliqConnectorConnector, *, *>> =
     listOf(
-      getAllChats,
+      checkUsername,
+        getActiveStories,
+        getAllChats,
         getAllClubs,
         getBlockedUsers,
         getClubById,
@@ -381,6 +614,9 @@ private class KliqConnectorConnectorImpl(
         getClubsByRegion,
         getDirectMessages,
         getEventsByClub,
+        getFeedComments,
+        getFeedPostLikes,
+        getFeedPosts,
         getFriendsByUser,
         getMessagesByChat,
         getOffersByClub,
@@ -388,6 +624,8 @@ private class KliqConnectorConnectorImpl(
         getReviewsByUser,
         getReviewsForTargetUser,
         getUserById,
+        getUserHypesForDate,
+        getUserPhotos,
         getUserPreferences,
         getVisitedLogsByUser,
         listUsers,
@@ -526,6 +764,21 @@ private open class KliqConnectorConnectorGeneratedMutationImpl<Data, Variables>(
 
 
 
+private class AddClubHypeMutationImpl(
+  connector: KliqConnectorConnector
+):
+  AddClubHypeMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      AddClubHypeMutation.Data,
+      AddClubHypeMutation.Variables
+  >(
+    connector,
+    AddClubHypeMutation.Companion.operationName,
+    AddClubHypeMutation.Companion.dataDeserializer,
+    AddClubHypeMutation.Companion.variablesSerializer,
+  )
+
+
 private class AddFriendMutationImpl(
   connector: KliqConnectorConnector
 ):
@@ -538,6 +791,21 @@ private class AddFriendMutationImpl(
     AddFriendMutation.Companion.operationName,
     AddFriendMutation.Companion.dataDeserializer,
     AddFriendMutation.Companion.variablesSerializer,
+  )
+
+
+private class AddUserPhotoMutationImpl(
+  connector: KliqConnectorConnector
+):
+  AddUserPhotoMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      AddUserPhotoMutation.Data,
+      AddUserPhotoMutation.Variables
+  >(
+    connector,
+    AddUserPhotoMutation.Companion.operationName,
+    AddUserPhotoMutation.Companion.dataDeserializer,
+    AddUserPhotoMutation.Companion.variablesSerializer,
   )
 
 
@@ -586,6 +854,21 @@ private class CancelEventMutationImpl(
   )
 
 
+private class CheckUsernameQueryImpl(
+  connector: KliqConnectorConnector
+):
+  CheckUsernameQuery,
+  KliqConnectorConnectorGeneratedQueryImpl<
+      CheckUsernameQuery.Data,
+      CheckUsernameQuery.Variables
+  >(
+    connector,
+    CheckUsernameQuery.Companion.operationName,
+    CheckUsernameQuery.Companion.dataDeserializer,
+    CheckUsernameQuery.Companion.variablesSerializer,
+  )
+
+
 private class CreateChatMutationImpl(
   connector: KliqConnectorConnector
 ):
@@ -631,6 +914,36 @@ private class CreateEventMutationImpl(
   )
 
 
+private class CreateFeedCommentMutationImpl(
+  connector: KliqConnectorConnector
+):
+  CreateFeedCommentMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      CreateFeedCommentMutation.Data,
+      CreateFeedCommentMutation.Variables
+  >(
+    connector,
+    CreateFeedCommentMutation.Companion.operationName,
+    CreateFeedCommentMutation.Companion.dataDeserializer,
+    CreateFeedCommentMutation.Companion.variablesSerializer,
+  )
+
+
+private class CreateFeedPostMutationImpl(
+  connector: KliqConnectorConnector
+):
+  CreateFeedPostMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      CreateFeedPostMutation.Data,
+      CreateFeedPostMutation.Variables
+  >(
+    connector,
+    CreateFeedPostMutation.Companion.operationName,
+    CreateFeedPostMutation.Companion.dataDeserializer,
+    CreateFeedPostMutation.Companion.variablesSerializer,
+  )
+
+
 private class CreateReviewMutationImpl(
   connector: KliqConnectorConnector
 ):
@@ -646,6 +959,21 @@ private class CreateReviewMutationImpl(
   )
 
 
+private class CreateStoryMutationImpl(
+  connector: KliqConnectorConnector
+):
+  CreateStoryMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      CreateStoryMutation.Data,
+      CreateStoryMutation.Variables
+  >(
+    connector,
+    CreateStoryMutation.Companion.operationName,
+    CreateStoryMutation.Companion.dataDeserializer,
+    CreateStoryMutation.Companion.variablesSerializer,
+  )
+
+
 private class CreateUserMutationImpl(
   connector: KliqConnectorConnector
 ):
@@ -658,6 +986,276 @@ private class CreateUserMutationImpl(
     CreateUserMutation.Companion.operationName,
     CreateUserMutation.Companion.dataDeserializer,
     CreateUserMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteFeedCommentMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteFeedCommentMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteFeedCommentMutation.Data,
+      DeleteFeedCommentMutation.Variables
+  >(
+    connector,
+    DeleteFeedCommentMutation.Companion.operationName,
+    DeleteFeedCommentMutation.Companion.dataDeserializer,
+    DeleteFeedCommentMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteFeedPostMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteFeedPostMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteFeedPostMutation.Data,
+      DeleteFeedPostMutation.Variables
+  >(
+    connector,
+    DeleteFeedPostMutation.Companion.operationName,
+    DeleteFeedPostMutation.Companion.dataDeserializer,
+    DeleteFeedPostMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteStoryMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteStoryMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteStoryMutation.Data,
+      DeleteStoryMutation.Variables
+  >(
+    connector,
+    DeleteStoryMutation.Companion.operationName,
+    DeleteStoryMutation.Companion.dataDeserializer,
+    DeleteStoryMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserMutation.Data,
+      DeleteUserMutation.Variables
+  >(
+    connector,
+    DeleteUserMutation.Companion.operationName,
+    DeleteUserMutation.Companion.dataDeserializer,
+    DeleteUserMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserBlockedEntriesMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserBlockedEntriesMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserBlockedEntriesMutation.Data,
+      DeleteUserBlockedEntriesMutation.Variables
+  >(
+    connector,
+    DeleteUserBlockedEntriesMutation.Companion.operationName,
+    DeleteUserBlockedEntriesMutation.Companion.dataDeserializer,
+    DeleteUserBlockedEntriesMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserBlockedEntriesReverseMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserBlockedEntriesReverseMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserBlockedEntriesReverseMutation.Data,
+      DeleteUserBlockedEntriesReverseMutation.Variables
+  >(
+    connector,
+    DeleteUserBlockedEntriesReverseMutation.Companion.operationName,
+    DeleteUserBlockedEntriesReverseMutation.Companion.dataDeserializer,
+    DeleteUserBlockedEntriesReverseMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserCommentsMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserCommentsMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserCommentsMutation.Data,
+      DeleteUserCommentsMutation.Variables
+  >(
+    connector,
+    DeleteUserCommentsMutation.Companion.operationName,
+    DeleteUserCommentsMutation.Companion.dataDeserializer,
+    DeleteUserCommentsMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserFriendshipsMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserFriendshipsMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserFriendshipsMutation.Data,
+      DeleteUserFriendshipsMutation.Variables
+  >(
+    connector,
+    DeleteUserFriendshipsMutation.Companion.operationName,
+    DeleteUserFriendshipsMutation.Companion.dataDeserializer,
+    DeleteUserFriendshipsMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserFriendshipsReverseMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserFriendshipsReverseMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserFriendshipsReverseMutation.Data,
+      DeleteUserFriendshipsReverseMutation.Variables
+  >(
+    connector,
+    DeleteUserFriendshipsReverseMutation.Companion.operationName,
+    DeleteUserFriendshipsReverseMutation.Companion.dataDeserializer,
+    DeleteUserFriendshipsReverseMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserPhotoMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserPhotoMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserPhotoMutation.Data,
+      DeleteUserPhotoMutation.Variables
+  >(
+    connector,
+    DeleteUserPhotoMutation.Companion.operationName,
+    DeleteUserPhotoMutation.Companion.dataDeserializer,
+    DeleteUserPhotoMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserPhotosMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserPhotosMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserPhotosMutation.Data,
+      DeleteUserPhotosMutation.Variables
+  >(
+    connector,
+    DeleteUserPhotosMutation.Companion.operationName,
+    DeleteUserPhotosMutation.Companion.dataDeserializer,
+    DeleteUserPhotosMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserPostLikesMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserPostLikesMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserPostLikesMutation.Data,
+      DeleteUserPostLikesMutation.Variables
+  >(
+    connector,
+    DeleteUserPostLikesMutation.Companion.operationName,
+    DeleteUserPostLikesMutation.Companion.dataDeserializer,
+    DeleteUserPostLikesMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserPostsMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserPostsMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserPostsMutation.Data,
+      DeleteUserPostsMutation.Variables
+  >(
+    connector,
+    DeleteUserPostsMutation.Companion.operationName,
+    DeleteUserPostsMutation.Companion.dataDeserializer,
+    DeleteUserPostsMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserPreferenceMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserPreferenceMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserPreferenceMutation.Data,
+      DeleteUserPreferenceMutation.Variables
+  >(
+    connector,
+    DeleteUserPreferenceMutation.Companion.operationName,
+    DeleteUserPreferenceMutation.Companion.dataDeserializer,
+    DeleteUserPreferenceMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserReviewsMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserReviewsMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserReviewsMutation.Data,
+      DeleteUserReviewsMutation.Variables
+  >(
+    connector,
+    DeleteUserReviewsMutation.Companion.operationName,
+    DeleteUserReviewsMutation.Companion.dataDeserializer,
+    DeleteUserReviewsMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserStoriesMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserStoriesMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserStoriesMutation.Data,
+      DeleteUserStoriesMutation.Variables
+  >(
+    connector,
+    DeleteUserStoriesMutation.Companion.operationName,
+    DeleteUserStoriesMutation.Companion.dataDeserializer,
+    DeleteUserStoriesMutation.Companion.variablesSerializer,
+  )
+
+
+private class DeleteUserVisitedLogsMutationImpl(
+  connector: KliqConnectorConnector
+):
+  DeleteUserVisitedLogsMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      DeleteUserVisitedLogsMutation.Data,
+      DeleteUserVisitedLogsMutation.Variables
+  >(
+    connector,
+    DeleteUserVisitedLogsMutation.Companion.operationName,
+    DeleteUserVisitedLogsMutation.Companion.dataDeserializer,
+    DeleteUserVisitedLogsMutation.Companion.variablesSerializer,
+  )
+
+
+private class GetActiveStoriesQueryImpl(
+  connector: KliqConnectorConnector
+):
+  GetActiveStoriesQuery,
+  KliqConnectorConnectorGeneratedQueryImpl<
+      GetActiveStoriesQuery.Data,
+      Unit
+  >(
+    connector,
+    GetActiveStoriesQuery.Companion.operationName,
+    GetActiveStoriesQuery.Companion.dataDeserializer,
+    GetActiveStoriesQuery.Companion.variablesSerializer,
   )
 
 
@@ -781,6 +1379,51 @@ private class GetEventsByClubQueryImpl(
   )
 
 
+private class GetFeedCommentsQueryImpl(
+  connector: KliqConnectorConnector
+):
+  GetFeedCommentsQuery,
+  KliqConnectorConnectorGeneratedQueryImpl<
+      GetFeedCommentsQuery.Data,
+      GetFeedCommentsQuery.Variables
+  >(
+    connector,
+    GetFeedCommentsQuery.Companion.operationName,
+    GetFeedCommentsQuery.Companion.dataDeserializer,
+    GetFeedCommentsQuery.Companion.variablesSerializer,
+  )
+
+
+private class GetFeedPostLikesQueryImpl(
+  connector: KliqConnectorConnector
+):
+  GetFeedPostLikesQuery,
+  KliqConnectorConnectorGeneratedQueryImpl<
+      GetFeedPostLikesQuery.Data,
+      GetFeedPostLikesQuery.Variables
+  >(
+    connector,
+    GetFeedPostLikesQuery.Companion.operationName,
+    GetFeedPostLikesQuery.Companion.dataDeserializer,
+    GetFeedPostLikesQuery.Companion.variablesSerializer,
+  )
+
+
+private class GetFeedPostsQueryImpl(
+  connector: KliqConnectorConnector
+):
+  GetFeedPostsQuery,
+  KliqConnectorConnectorGeneratedQueryImpl<
+      GetFeedPostsQuery.Data,
+      Unit
+  >(
+    connector,
+    GetFeedPostsQuery.Companion.operationName,
+    GetFeedPostsQuery.Companion.dataDeserializer,
+    GetFeedPostsQuery.Companion.variablesSerializer,
+  )
+
+
 private class GetFriendsByUserQueryImpl(
   connector: KliqConnectorConnector
 ):
@@ -886,6 +1529,36 @@ private class GetUserByIdQueryImpl(
   )
 
 
+private class GetUserHypesForDateQueryImpl(
+  connector: KliqConnectorConnector
+):
+  GetUserHypesForDateQuery,
+  KliqConnectorConnectorGeneratedQueryImpl<
+      GetUserHypesForDateQuery.Data,
+      GetUserHypesForDateQuery.Variables
+  >(
+    connector,
+    GetUserHypesForDateQuery.Companion.operationName,
+    GetUserHypesForDateQuery.Companion.dataDeserializer,
+    GetUserHypesForDateQuery.Companion.variablesSerializer,
+  )
+
+
+private class GetUserPhotosQueryImpl(
+  connector: KliqConnectorConnector
+):
+  GetUserPhotosQuery,
+  KliqConnectorConnectorGeneratedQueryImpl<
+      GetUserPhotosQuery.Data,
+      GetUserPhotosQuery.Variables
+  >(
+    connector,
+    GetUserPhotosQuery.Companion.operationName,
+    GetUserPhotosQuery.Companion.dataDeserializer,
+    GetUserPhotosQuery.Companion.variablesSerializer,
+  )
+
+
 private class GetUserPreferencesQueryImpl(
   connector: KliqConnectorConnector
 ):
@@ -916,6 +1589,21 @@ private class GetVisitedLogsByUserQueryImpl(
   )
 
 
+private class LikeFeedPostMutationImpl(
+  connector: KliqConnectorConnector
+):
+  LikeFeedPostMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      LikeFeedPostMutation.Data,
+      LikeFeedPostMutation.Variables
+  >(
+    connector,
+    LikeFeedPostMutation.Companion.operationName,
+    LikeFeedPostMutation.Companion.dataDeserializer,
+    LikeFeedPostMutation.Companion.variablesSerializer,
+  )
+
+
 private class ListUsersQueryImpl(
   connector: KliqConnectorConnector
 ):
@@ -943,6 +1631,21 @@ private class LogVisitMutationImpl(
     LogVisitMutation.Companion.operationName,
     LogVisitMutation.Companion.dataDeserializer,
     LogVisitMutation.Companion.variablesSerializer,
+  )
+
+
+private class RemoveClubHypeMutationImpl(
+  connector: KliqConnectorConnector
+):
+  RemoveClubHypeMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      RemoveClubHypeMutation.Data,
+      RemoveClubHypeMutation.Variables
+  >(
+    connector,
+    RemoveClubHypeMutation.Companion.operationName,
+    RemoveClubHypeMutation.Companion.dataDeserializer,
+    RemoveClubHypeMutation.Companion.variablesSerializer,
   )
 
 
@@ -1066,6 +1769,21 @@ private class UnblockUserMutationImpl(
   )
 
 
+private class UnlikeFeedPostMutationImpl(
+  connector: KliqConnectorConnector
+):
+  UnlikeFeedPostMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      UnlikeFeedPostMutation.Data,
+      UnlikeFeedPostMutation.Variables
+  >(
+    connector,
+    UnlikeFeedPostMutation.Companion.operationName,
+    UnlikeFeedPostMutation.Companion.dataDeserializer,
+    UnlikeFeedPostMutation.Companion.variablesSerializer,
+  )
+
+
 private class UpdateChatLastMessageMutationImpl(
   connector: KliqConnectorConnector
 ):
@@ -1078,6 +1796,21 @@ private class UpdateChatLastMessageMutationImpl(
     UpdateChatLastMessageMutation.Companion.operationName,
     UpdateChatLastMessageMutation.Companion.dataDeserializer,
     UpdateChatLastMessageMutation.Companion.variablesSerializer,
+  )
+
+
+private class UpdateClubFlamesMutationImpl(
+  connector: KliqConnectorConnector
+):
+  UpdateClubFlamesMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      UpdateClubFlamesMutation.Data,
+      UpdateClubFlamesMutation.Variables
+  >(
+    connector,
+    UpdateClubFlamesMutation.Companion.operationName,
+    UpdateClubFlamesMutation.Companion.dataDeserializer,
+    UpdateClubFlamesMutation.Companion.variablesSerializer,
   )
 
 
@@ -1108,6 +1841,21 @@ private class UpdateDirectMessageStatusMutationImpl(
     UpdateDirectMessageStatusMutation.Companion.operationName,
     UpdateDirectMessageStatusMutation.Companion.dataDeserializer,
     UpdateDirectMessageStatusMutation.Companion.variablesSerializer,
+  )
+
+
+private class UpdateFeedPostMutationImpl(
+  connector: KliqConnectorConnector
+):
+  UpdateFeedPostMutation,
+  KliqConnectorConnectorGeneratedMutationImpl<
+      UpdateFeedPostMutation.Data,
+      UpdateFeedPostMutation.Variables
+  >(
+    connector,
+    UpdateFeedPostMutation.Companion.operationName,
+    UpdateFeedPostMutation.Companion.dataDeserializer,
+    UpdateFeedPostMutation.Companion.variablesSerializer,
   )
 
 

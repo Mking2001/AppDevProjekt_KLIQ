@@ -1,0 +1,18 @@
+extend type ClubOffer {
+  """
+  ✨ Implicit foreign key field based on `ClubOffer`.`club`. It must match the value of `Club`.`id`. See `@ref` for how to customize it.
+  """
+  clubId: String! @fdc_generated(from: "ClubOffer.club", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Event {
+  """
+  ✨ Implicit foreign key field based on `Event`.`club`. It must match the value of `Club`.`id`. See `@ref` for how to customize it.
+  """
+  clubId: String! @fdc_generated(from: "Event.club", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Message {
+  """
+  ✨ Implicit foreign key field based on `Message`.`chat`. It must match the value of `Chat`.`id`. See `@ref` for how to customize it.
+  """
+  chatId: String! @fdc_generated(from: "Message.chat", purpose: IMPLICIT_REF_FIELD)
+}

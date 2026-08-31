@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.flowOf
 interface UserRepository {
     fun getUserById(userId: String): Flow<UserEntity?>
     fun getUser(userId: String): Flow<UserEntity?> = getUserById(userId)
+    fun getUsersByIds(userIds: List<String>): Flow<List<UserEntity>> = flowOf(emptyList())
     fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?>
     fun getUserReputationSummary(userId: String): Flow<UserReputationSummary> =
         flowOf(UserReputationSummary(targetUserId = userId))
@@ -30,28 +31,45 @@ interface UserRepository {
         age: Int,
         hometown: String,
         bio: String,
-        profilePictureUrl: String? = null
+        profilePictureUrl: String? = null,
+        photos: List<String> = emptyList(),
+        email: String? = null,
+        phoneNumber: String? = null,
+        searchIntent: SearchIntent? = null,
+        smokingHabit: SmokingHabit? = null,
+        drinkingHabit: DrinkingHabit? = null
     ) {}
     suspend fun updateProfilePicture(userId: String, pictureUrl: String) {}
     suspend fun requestOtp(countryCode: String, phoneNumber: String): Result<Boolean>
     suspend fun verifyOtp(countryCode: String, phoneNumber: String, otpCode: String): Result<UserEntity>
     suspend fun checkUsernameAvailability(username: String): Boolean = true
+    suspend fun checkEmailAvailability(email: String): Boolean = true
+    suspend fun checkPhoneAvailability(phoneNumber: String): Boolean = true
+    suspend fun loginUser(identifier: String, password: String): Result<UserEntity> = Result.failure(NotImplementedError())
     suspend fun registerUser(
         username: String,
+        email: String,
         firstName: String,
         lastName: String,
         birthDateMs: Long,
         gender: String = "MALE",
         hometown: String = "",
+        countryCode: String = "+43",
         phoneNumber: String = "",
         profilePictureUrl: String,
+        photos: List<String> = emptyList(),
         searchIntent: SearchIntent,
+        smokingHabit: SmokingHabit = SmokingHabit.NEVER,
+        drinkingHabit: DrinkingHabit = DrinkingHabit.NEVER,
         bio: String,
         password: String
-    ): Result<UserEntity>
+    ): Result<UserEntity> = Result.failure(NotImplementedError())
     fun isUserBlocked(currentUserId: String, targetUserId: String): Flow<Boolean> = flowOf(false)
     fun getBlockedUserIds(currentUserId: String): Flow<List<String>> = flowOf(emptyList())
     suspend fun blockUser(currentUserId: String, targetUserId: String, reason: String? = null): Result<Unit> = Result.success(Unit)
     suspend fun unblockUser(currentUserId: String, targetUserId: String): Result<Unit> = Result.success(Unit)
     suspend fun reportUser(reporterUserId: String, targetUserId: String, reason: String, details: String? = null): Result<Unit> = Result.success(Unit)
+    suspend fun deleteAccount(userId: String): Result<Unit> = Result.success(Unit)
+    suspend fun searchUsers(query: String): List<UserEntity> = emptyList()
+    suspend fun getAllUsers(): List<UserEntity> = emptyList()
 }

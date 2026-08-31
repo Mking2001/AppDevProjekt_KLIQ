@@ -102,7 +102,6 @@ private val KliqPurple = Color(0xFF8B5CF6)
 private val KliqDarkBackground = Color(0xFF0F0F1A)
 private val KliqCardBackground = Color(0xFF1E1E2E)
 
-
 @Composable
 fun QRScannerScreen(
     onNavigateBack: () -> Unit = {},
@@ -155,7 +154,6 @@ fun QRScannerScreen(
 
                 ScannerOverlayMask()
 
-                // Top Header Bar
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -202,7 +200,6 @@ fun QRScannerScreen(
                     }
                 }
 
-                // Subtitle Instruction
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
@@ -219,7 +216,6 @@ fun QRScannerScreen(
                     )
                 }
 
-                // Loading Indicator overlay when processing
                 if (uiState.isProcessingScan) {
                     Box(
                         modifier = Modifier
@@ -234,7 +230,6 @@ fun QRScannerScreen(
                     }
                 }
 
-                // Result Dialog / Card at bottom
                 AnimatedVisibility(
                     visible = uiState.scanResult != null,
                     enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
@@ -378,7 +373,6 @@ private fun ScannerOverlayMask() {
             color = Color.Black.copy(alpha = 0.70f)
         )
 
-        // Draw Frame Border
         drawRoundRect(
             color = KliqPurple,
             topLeft = Offset(left, top),
@@ -387,7 +381,6 @@ private fun ScannerOverlayMask() {
             style = Stroke(width = 3.dp.toPx())
         )
 
-        // Draw Pulsating / Moving Scan Laser Line
         val currentY = top + (boxHeight * animatedProgress)
         val laserGradient = Brush.horizontalGradient(
             colors = listOf(

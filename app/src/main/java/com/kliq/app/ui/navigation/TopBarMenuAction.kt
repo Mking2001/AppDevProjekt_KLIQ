@@ -2,20 +2,13 @@ package com.kliq.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
-/**
- * Sealed class definiert die verfügbaren Aktionen im globalen
- * Overflow-Menü der Top-App-Bar. Jede Aktion kapselt ihr Label
- * und Icon für konsistente Darstellung über alle Screens hinweg.
- *
- * @param label Anzeigename der Menü-Aktion.
- * @param icon Icon-Vektor für die Menü-Zeile.
- */
 sealed class TopBarMenuAction(
     val label: String,
     val icon: ImageVector
@@ -45,10 +38,15 @@ sealed class TopBarMenuAction(
         icon = Icons.Outlined.Logout
     )
 
+    data object DeleteAccount : TopBarMenuAction(
+        label = "Profil löschen",
+        icon = Icons.Outlined.DeleteForever
+    )
+
     companion object {
-        /** Geordnete Liste aller Menü-Einträge */
+
         val allActions: List<TopBarMenuAction> = listOf(
-            Settings, EditProfile, ToggleTheme, About, Logout
+            Settings, EditProfile, ToggleTheme, About, Logout, DeleteAccount
         )
     }
 }

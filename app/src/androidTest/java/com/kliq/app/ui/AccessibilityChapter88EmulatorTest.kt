@@ -46,22 +46,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Automated Emulator/Simulator UI & Accessibility Test for Chapter 8.8.
- * Verifies systemwide font scaling (1.5x, 2.0x) across all 5 main screens (Map, Social Discovery, Chat, Profile, Analytics),
- * automated WCAG AA dark-theme color contrast compliance, top-to-bottom screenreader focus traversal,
- * and 48dp minimum touch target size audit.
- */
 @RunWith(AndroidJUnit4::class)
 class AccessibilityChapter88EmulatorTest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    /**
-     * Test 1: Systemweit Schriftgrößen-Test (Font Scale 2.0x) auf allen 5 Haupt-Screens
-     * Verifiziert, dass Map, Social Discovery, Chat, Profil und Analytics ohne Visual Clipping darstellen.
-     */
     @Test
     fun testSystemwideFontScaling_5MainScreens_noClippingOrOverlap() {
         composeTestRule.setContent {
@@ -79,13 +69,12 @@ class AccessibilityChapter88EmulatorTest {
                             .verticalScroll(rememberScrollState())
                             .padding(16.dp)
                     ) {
-                        // 1. Map Screen Component
+
                         MapFilterSegmentedControl(
                             selectedMode = MapLocationFilterMode.ALL,
                             onModeSelected = {}
                         )
 
-                        // 2. Social Discovery Screen Component
                         ClubSearchBar(
                             query = "Electro Club Berlin",
                             onQueryChange = {},
@@ -96,7 +85,6 @@ class AccessibilityChapter88EmulatorTest {
                             onFilterSelected = {}
                         )
 
-                        // 3. Chat Screen Component
                         ChatBubble(
                             message = ChatMessage(
                                 id = "msg_scaled",
@@ -108,7 +96,6 @@ class AccessibilityChapter88EmulatorTest {
                             )
                         )
 
-                        // 4. Profil Screen Component
                         ProfileAvatarImage(
                             imageUri = null,
                             initials = "AM",
@@ -122,7 +109,6 @@ class AccessibilityChapter88EmulatorTest {
                             hasRatings = true
                         )
 
-                        // 5. Analytics / Visitor Stats Component
                         LiveVisitorStatsCard(
                             totalVisitors = 480,
                             malePercentage = 50,
@@ -134,17 +120,12 @@ class AccessibilityChapter88EmulatorTest {
             }
         }
 
-        // Verifikation der Sichtbarkeit unter 2.0x Skalierung
         composeTestRule.onNodeWithText("Electro Club Berlin").assertIsDisplayed()
         composeTestRule.onNodeWithText("4.9").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Nachricht von Alex M.: Hallo! Das ist ein Skalierungstest bei 2.0x Schriftgröße.").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Profilbild mit Initialen AM. Zum Ändern tippen.").assertIsDisplayed()
     }
 
-    /**
-     * Test 2: Kontrast-Check im Lila-Dark-Mode
-     * Validierung der Farbkontraste für Text (>= 4.5:1) und UI-Borders/Icons (>= 3:1) gemäß WCAG AA.
-     */
     @Test
     fun testColorContrast_PurpleDarkMode_WCAG_AA_Compliance() {
         val textContrast = AccessibilityUtils.calculateContrastRatio(PurplePrimaryLight, DarkBackground)
@@ -160,9 +141,6 @@ class AccessibilityChapter88EmulatorTest {
         assertEquals(WcagComplianceLevel.AAA, complianceLevel)
     }
 
-    /**
-     * Test 3: Screenreader-Fokus-Traversierung auf Profil- und Chat-Screens
-     */
     @Test
     fun testScreenreaderFocusTraversal_ProfileAndChatScreens() {
         var tabSelected = ""
@@ -199,19 +177,13 @@ class AccessibilityChapter88EmulatorTest {
             }
         }
 
-        // Top-Bar Heading check
         composeTestRule.onNodeWithText("Profil & Chat Übersicht").assertIsDisplayed()
 
-        // User Card check
         composeTestRule.onNodeWithText("Sarah K.").assertIsDisplayed()
 
-        // Bottom Bar Tab semantics check
         composeTestRule.onNodeWithContentDescription("Profil, 3 ungelesene Benachrichtigungen").assertIsDisplayed()
     }
 
-    /**
-     * Test 4: Touch-Target-Mindestgrößen & Label Audit Report
-     */
     @Test
     fun testTouchTargetSizesAndContentDescriptions_Audit() {
         composeTestRule.setContent {

@@ -45,10 +45,6 @@ public interface CreateReviewMutation :
   
     val reviewerAvatarUrl: com.google.firebase.dataconnect.OptionalVariable<String?>,
   
-    val verificationMethod: com.google.firebase.dataconnect.OptionalVariable<String?>,
-  
-    val isVerified: com.google.firebase.dataconnect.OptionalVariable<Boolean?>,
-  
   ) {
     
     
@@ -68,8 +64,6 @@ public interface CreateReviewMutation :
         public var timestamp: Long
         public var reviewerUsername: String
         public var reviewerAvatarUrl: String?
-        public var verificationMethod: String?
-        public var isVerified: Boolean?
         
       }
 
@@ -93,10 +87,6 @@ public interface CreateReviewMutation :
             var timestamp= timestamp
             var reviewerUsername= reviewerUsername
             var reviewerAvatarUrl: com.google.firebase.dataconnect.OptionalVariable<String?> =
-                com.google.firebase.dataconnect.OptionalVariable.Undefined
-            var verificationMethod: com.google.firebase.dataconnect.OptionalVariable<String?> =
-                com.google.firebase.dataconnect.OptionalVariable.Undefined
-            var isVerified: com.google.firebase.dataconnect.OptionalVariable<Boolean?> =
                 com.google.firebase.dataconnect.OptionalVariable.Undefined
             
 
@@ -141,19 +131,11 @@ public interface CreateReviewMutation :
               get() = throw UnsupportedOperationException("getting builder values is not supported")
               set(value_) { reviewerAvatarUrl = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
               
-            override var verificationMethod: String?
-              get() = throw UnsupportedOperationException("getting builder values is not supported")
-              set(value_) { verificationMethod = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
-              
-            override var isVerified: Boolean?
-              get() = throw UnsupportedOperationException("getting builder values is not supported")
-              set(value_) { isVerified = com.google.firebase.dataconnect.OptionalVariable.Value(value_) }
-              
             
           }.apply(block_)
           .let {
             Variables(
-              id=id,reviewerUserId=reviewerUserId,targetUserId=targetUserId,clubId=clubId,eventId=eventId,rating=rating,text=text,timestamp=timestamp,reviewerUsername=reviewerUsername,reviewerAvatarUrl=reviewerAvatarUrl,verificationMethod=verificationMethod,isVerified=isVerified,
+              id=id,reviewerUserId=reviewerUserId,targetUserId=targetUserId,clubId=clubId,eventId=eventId,rating=rating,text=text,timestamp=timestamp,reviewerUsername=reviewerUsername,reviewerAvatarUrl=reviewerAvatarUrl,
             )
           }
         }

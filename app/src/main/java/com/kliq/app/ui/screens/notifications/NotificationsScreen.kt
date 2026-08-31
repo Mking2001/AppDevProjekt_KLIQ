@@ -37,16 +37,6 @@ import com.kliq.app.ui.components.KliqScreenScaffold
 import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
 
-/**
- * Notifications-Screen mit Filter-Tabs, scrollbarer
- * Benachrichtigungsliste und Empty-State-Darstellung.
- *
- * @param topBarState Aktueller Top-Bar UI-State.
- * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
- * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
- * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
- * @param viewModel Hilt-injiziertes [NotificationsViewModel].
- */
 @Composable
 fun NotificationsScreen(
     topBarState: TopBarUiState,
@@ -64,7 +54,7 @@ fun NotificationsScreen(
         onDismissMenu = onDismissMenu,
         onMenuAction = onMenuAction,
         actions = {
-            // "Alle gelesen" Button in der Top-Bar
+
             if (uiState.unreadCount > 0) {
                 IconButton(onClick = { viewModel.onMarkAllRead() }) {
                     Icon(
@@ -81,7 +71,7 @@ fun NotificationsScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Filter-Tab-Row (Alle, Likes, Kommentare, Follows)
+
             ScrollableTabRow(
                 selectedTabIndex = uiState.selectedTabIndex,
                 containerColor = MaterialTheme.colorScheme.background,
@@ -111,7 +101,6 @@ fun NotificationsScreen(
                 thickness = 0.5.dp
             )
 
-            // Gefilterte Benachrichtigungsliste
             val filteredNotifications = filterNotifications(
                 notifications = uiState.notifications,
                 selectedTabIndex = uiState.selectedTabIndex
@@ -145,15 +134,12 @@ fun NotificationsScreen(
     }
 }
 
-/**
- * Filtert Benachrichtigungen basierend auf dem ausgewählten Tab.
- */
 private fun filterNotifications(
     notifications: List<NotificationItemUi>,
     selectedTabIndex: Int
 ): List<NotificationItemUi> {
     return when (selectedTabIndex) {
-        0 -> notifications // Alle
+        0 -> notifications
         1 -> notifications.filter { it.type == NotificationType.LIKE }
         2 -> notifications.filter { it.type == NotificationType.COMMENT }
         3 -> notifications.filter { it.type == NotificationType.FOLLOW }
@@ -161,10 +147,6 @@ private fun filterNotifications(
     }
 }
 
-/**
- * Empty-State-Darstellung wenn keine Benachrichtigungen vorhanden.
- * Zeigt ein gedimmtes Icon und einen Hinweistext.
- */
 @Composable
 private fun EmptyNotificationsState() {
     Box(

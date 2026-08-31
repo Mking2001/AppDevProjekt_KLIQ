@@ -54,19 +54,27 @@ public interface GetUserByIdQuery :
   
     val email: String,
   
+    val firstName: String?,
+  
+    val lastName: String?,
+  
+    val birthDateMs: Long?,
+  
     val age: Int?,
   
+    val gender: String,
+  
     val hometown: String?,
+  
+    val countryCode: String,
+  
+    val phoneNumber: String?,
   
     val profilePictureUrl: String?,
   
     val bio: String?,
   
-    val phoneNumber: String?,
-  
-    val isVerified: Boolean,
-  
-    val gender: String,
+    val password: String?,
   
     val updatedAt: @kotlinx.serialization.Serializable(with = com.google.firebase.dataconnect.serializers.TimestampSerializer::class) com.google.firebase.Timestamp?,
   

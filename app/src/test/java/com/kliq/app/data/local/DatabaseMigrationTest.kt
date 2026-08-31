@@ -35,7 +35,7 @@ class DatabaseMigrationTest {
 
     @Test
     fun migrate1To7_fullChain_preservesDataAndInitializesNewSchema() {
-        // Step 1: Create V1 Schema
+
         val configV1 = SupportSQLiteOpenHelper.Configuration.builder(context)
             .name(TEST_DB_NAME)
             .callback(object : SupportSQLiteOpenHelper.Callback(1) {
@@ -86,7 +86,6 @@ class DatabaseMigrationTest {
 
         helperV1.close()
 
-        // Step 2: Migrate from V1 to V7
         val configV7 = SupportSQLiteOpenHelper.Configuration.builder(context)
             .name(TEST_DB_NAME)
             .callback(object : SupportSQLiteOpenHelper.Callback(7) {
@@ -107,7 +106,6 @@ class DatabaseMigrationTest {
         val helperV7 = FrameworkSQLiteOpenHelperFactory().create(configV7)
         val dbV7 = helperV7.writableDatabase
 
-        // Step 3: Assert user, club, chat data preserved
         val uCursor = dbV7.query("SELECT * FROM `users` WHERE `id` = 'u_v1'")
         assertTrue(uCursor.moveToFirst())
         assertEquals("v1_user", uCursor.getString(uCursor.getColumnIndexOrThrow("username")))
@@ -128,7 +126,7 @@ class DatabaseMigrationTest {
 
     @Test
     fun migrate6To7_preservesExistingDataAndAddsNewFields() {
-        // Step 1: Create Version 6 Database Schema manually
+
         val configV6 = SupportSQLiteOpenHelper.Configuration.builder(context)
             .name(TEST_DB_NAME)
             .callback(object : SupportSQLiteOpenHelper.Callback(6) {
@@ -137,7 +135,7 @@ class DatabaseMigrationTest {
                 }
 
                 override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {
-                    // No upgrade needed during initial creation
+
                 }
             })
             .build()
@@ -145,7 +143,6 @@ class DatabaseMigrationTest {
         val helperV6 = FrameworkSQLiteOpenHelperFactory().create(configV6)
         val dbV6 = helperV6.writableDatabase
 
-        // Insert test records into V6 database
         dbV6.execSQL(
             "INSERT INTO `users` (`id`, `username`, `email`, `profilePictureUrl`, `bio`) " +
             "VALUES ('u1', 'alex_night', 'alex@example.com', 'https://avatar.com/u1.jpg', 'Party enthusiast')"
@@ -187,7 +184,6 @@ class DatabaseMigrationTest {
 
         helperV6.close()
 
-        // Step 2: Open database with Migration from 6 to 7
         val configV7 = SupportSQLiteOpenHelper.Configuration.builder(context)
             .name(TEST_DB_NAME)
             .callback(object : SupportSQLiteOpenHelper.Callback(7) {
@@ -204,7 +200,6 @@ class DatabaseMigrationTest {
         val helperV7 = FrameworkSQLiteOpenHelperFactory().create(configV7)
         val dbV7 = helperV7.writableDatabase
 
-        // Step 3: Verify User table migration
         val userCursor = dbV7.query("SELECT * FROM `users` WHERE `id` = 'u1'")
         assertTrue(userCursor.moveToFirst())
         assertEquals("alex_night", userCursor.getString(userCursor.getColumnIndexOrThrow("username")))
@@ -214,7 +209,6 @@ class DatabaseMigrationTest {
         assertEquals(0L, userCursor.getLong(userCursor.getColumnIndexOrThrow("updatedAtTimestampMs")))
         userCursor.close()
 
-        // Step 4: Verify Club table migration
         val clubCursor = dbV7.query("SELECT * FROM `clubs` WHERE `id` = 'c1'")
         assertTrue(clubCursor.moveToFirst())
         assertEquals("Club Velvet", clubCursor.getString(clubCursor.getColumnIndexOrThrow("name")))
@@ -224,7 +218,6 @@ class DatabaseMigrationTest {
         assertEquals("", clubCursor.getString(clubCursor.getColumnIndexOrThrow("postalCode")))
         clubCursor.close()
 
-        // Step 5: Verify Event table migration
         val eventCursor = dbV7.query("SELECT * FROM `events` WHERE `id` = 'e1'")
         assertTrue(eventCursor.moveToFirst())
         assertEquals("Midnight Beats", eventCursor.getString(eventCursor.getColumnIndexOrThrow("title")))
@@ -233,7 +226,6 @@ class DatabaseMigrationTest {
         assertEquals("", eventCursor.getString(eventCursor.getColumnIndexOrThrow("category")))
         eventCursor.close()
 
-        // Step 6: Verify Review table migration
         val reviewCursor = dbV7.query("SELECT * FROM `reviews` WHERE `id` = 'r1'")
         assertTrue(reviewCursor.moveToFirst())
         assertEquals("Best venue ever!", reviewCursor.getString(reviewCursor.getColumnIndexOrThrow("text")))
@@ -241,7 +233,6 @@ class DatabaseMigrationTest {
         assertEquals(0, reviewCursor.getInt(reviewCursor.getColumnIndexOrThrow("flaggedCount")))
         reviewCursor.close()
 
-        // Step 7: Verify Chat table migration
         val chatCursor = dbV7.query("SELECT * FROM `chats` WHERE `id` = 'ch1'")
         assertTrue(chatCursor.moveToFirst())
         assertEquals("Munich Nightlife", chatCursor.getString(chatCursor.getColumnIndexOrThrow("name")))
@@ -250,7 +241,6 @@ class DatabaseMigrationTest {
         assertTrue(chatCursor.isNull(chatCursor.getColumnIndexOrThrow("lastReadMessageId")))
         chatCursor.close()
 
-        // Step 8: Verify Message table migration
         val messageCursor = dbV7.query("SELECT * FROM `messages` WHERE `id` = 'm1'")
         assertTrue(messageCursor.moveToFirst())
         assertEquals("See you there!", messageCursor.getString(messageCursor.getColumnIndexOrThrow("text")))

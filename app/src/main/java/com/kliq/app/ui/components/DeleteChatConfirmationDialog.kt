@@ -20,14 +20,6 @@ import com.kliq.app.ui.theme.DarkOnSurfaceVariant
 import com.kliq.app.ui.theme.DarkSurface
 import com.kliq.app.ui.theme.ErrorRed
 
-/**
- * Bestätigungsdialog für das endgültige Löschen eines Chats aus der Chat-Liste.
- * Verhindert versehentliches Löschen durch eine explizite Sicherheitsabfrage.
- *
- * @param chatTitle Name oder Titel des zu löschenden Chats.
- * @param onDismiss Callback beim Abbrechen.
- * @param onConfirmDelete Callback bei Bestätigung der Löschung.
- */
 @Composable
 fun DeleteChatConfirmationDialog(
     chatTitle: String = "diesen Chat",

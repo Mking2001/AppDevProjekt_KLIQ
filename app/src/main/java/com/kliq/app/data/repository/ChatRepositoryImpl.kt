@@ -7,11 +7,13 @@ import com.kliq.app.data.local.entities.DirectMessageEntity
 import com.kliq.app.data.local.entities.MessageEntity
 import com.kliq.app.data.model.ChatConversation
 import com.kliq.app.data.model.ChatMessage
+import com.kliq.app.data.model.ChatType
 import com.kliq.app.data.model.DirectMessage
 import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.model.formatMsToIso
 import com.kliq.app.data.remote.KliqApiService
 import com.kliq.app.data.generated.*
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -26,44 +28,51 @@ import javax.inject.Singleton
 class ChatRepositoryImpl @Inject constructor(
     private val chatDao: ChatDao,
     private val directMessageDao: DirectMessageDao,
+    private val currentUserProvider: com.kliq.app.domain.CurrentUserProvider? = null,
     private val apiService: KliqApiService? = null,
-    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null,
+    private val notificationHelper: com.kliq.app.service.notification.NotificationHelper? = null,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ChatRepository {
 
     override fun getAllChats(): Flow<List<ChatConversation>> {
         return chatDao.getAllChats().map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getActiveChats(): Flow<List<ChatConversation>> {
         return chatDao.getActiveChats().map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getArchivedChats(): Flow<List<ChatConversation>> {
         return chatDao.getArchivedChats().map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getPrivateChats(): Flow<List<ChatConversation>> {
         return chatDao.getPrivateChats().map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getPublicCityChats(cityRegion: String?): Flow<List<ChatConversation>> {
         return chatDao.getPublicCityChats(cityRegion).map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getChatById(chatId: String): Flow<ChatConversation?> {
         return chatDao.getChatById(chatId).map { entity ->
             entity?.toDomain()
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
+    }
+
+    override fun getTotalUnreadCount(): Flow<Int> {
+        return chatDao.getTotalUnreadCount().flowOn(ioDispatcher)
     }
 
     override suspend fun createChatIfMissing(
@@ -72,10 +81,15 @@ class ChatRepositoryImpl @Inject constructor(
         chatType: com.kliq.app.data.model.ChatType,
         cityRegion: String?,
         avatarInitial: String?
-    ): Result<ChatConversation> = withContext(Dispatchers.IO) {
+    ): Result<ChatConversation> = withContext(ioDispatcher) {
         try {
             val existing = chatDao.getChatById(chatId).first()
             if (existing != null) {
+                if ((existing.name == "Direktnachricht" || existing.name == "Kliq Chat" || existing.name.isBlank()) && name.isNotBlank() && name != "Direktnachricht" && name != "Kliq Chat") {
+                    val newInitial = avatarInitial?.takeIf { it.isNotBlank() } ?: name.trim().take(1).uppercase().ifBlank { "K" }
+                    chatDao.updateChatName(chatId, name, newInitial)
+                    return@withContext Result.success(existing.copy(name = name, avatarInitial = newInitial).toDomain())
+                }
                 return@withContext Result.success(existing.toDomain())
             }
 
@@ -92,6 +106,22 @@ class ChatRepositoryImpl @Inject constructor(
                 chatType = chatType
             )
             chatDao.insertChat(entity)
+
+            kliqConnector?.let { connector ->
+                try {
+                    connector.createChat.execute(
+                        id = chatId,
+                        name = name,
+                        chatType = chatType.name,
+                        lastMessageText = "",
+                        lastMessageTimestampMs = nowMs,
+                        avatarInitial = entity.avatarInitial
+                    ) {
+                        this.cityRegion = cityRegion
+                    }
+                } catch (ignored: Exception) { }
+            }
+
             Result.success(entity.toDomain())
         } catch (e: Exception) {
             Result.failure(e)
@@ -101,16 +131,194 @@ class ChatRepositoryImpl @Inject constructor(
     override fun getMessagesForChat(chatId: String): Flow<List<ChatMessage>> {
         return chatDao.getMessagesForChat(chatId).map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun searchMessagesInChat(chatId: String, query: String): Flow<List<ChatMessage>> {
         return chatDao.searchMessagesInChat(chatId, query).map { entities ->
             entities.map { it.toDomain() }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
-    override suspend fun syncChatMessages(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun syncAllChats(): Result<Unit> = withContext(ioDispatcher) {
+        val currentUserId = currentUserProvider?.userId() ?: ""
+        if (currentUserId.isNotBlank()) {
+            syncAllChatsAndMessages(currentUserId)
+        } else {
+            try {
+                kliqConnector?.let { connector ->
+                    val response = connector.getAllChats.execute()
+                    val remoteChats = response.data.chats.map { c ->
+                        val type = try { ChatType.valueOf(c.chatType) } catch (e: Exception) { ChatType.PUBLIC_CITY }
+                        ChatEntity(
+                            id = c.id,
+                            name = c.name,
+                            cityRegion = c.cityRegion,
+                            lastMessageText = c.lastMessageText,
+                            lastMessageTimestampMs = c.lastMessageTimestampMs,
+                            lastMessageTimestampIso = c.lastMessageTimestampIso,
+                            avatarInitial = c.avatarInitial,
+                            avatarUrl = c.avatarUrl,
+                            unreadCount = c.unreadCount,
+                            chatType = type,
+                            isOnline = c.isOnline,
+                            isPinned = c.isPinned,
+                            isMuted = c.isMuted,
+                            isArchived = c.isArchived
+                        )
+                    }
+                    if (remoteChats.isNotEmpty()) {
+                        chatDao.insertChats(remoteChats)
+                    }
+                }
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun syncAllChatsAndMessages(currentUserId: String): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            kliqConnector?.let { connector ->
+                val allChatsResponse = connector.getAllChats.execute()
+                val remoteChats = allChatsResponse.data.chats
+
+                for (cloudChat in remoteChats) {
+                    val chatType = try { ChatType.valueOf(cloudChat.chatType) } catch (e: Exception) { ChatType.PUBLIC_CITY }
+
+                    if (chatType == ChatType.PUBLIC_CITY) {
+                        val localExisting = chatDao.getChatById(cloudChat.id).first()
+                        val chatEntity = ChatEntity(
+                            id = cloudChat.id,
+                            name = cloudChat.name,
+                            cityRegion = cloudChat.cityRegion,
+                            lastMessageText = if (localExisting != null && localExisting.lastMessageText.isNotBlank()) localExisting.lastMessageText else cloudChat.lastMessageText,
+                            lastMessageTimestampMs = if (localExisting != null && localExisting.lastMessageTimestampMs > 0) localExisting.lastMessageTimestampMs else cloudChat.lastMessageTimestampMs,
+                            lastMessageTimestampIso = if (localExisting != null && localExisting.lastMessageTimestampIso.isNotBlank()) localExisting.lastMessageTimestampIso else cloudChat.lastMessageTimestampIso,
+                            avatarInitial = cloudChat.avatarInitial,
+                            avatarUrl = cloudChat.avatarUrl,
+                            unreadCount = localExisting?.unreadCount ?: 0,
+                            chatType = chatType,
+                            isOnline = cloudChat.isOnline,
+                            isPinned = localExisting?.isPinned ?: cloudChat.isPinned,
+                            isMuted = localExisting?.isMuted ?: cloudChat.isMuted,
+                            isArchived = localExisting?.isArchived ?: cloudChat.isArchived
+                        )
+                        chatDao.insertChat(chatEntity)
+
+                        val msgsResponse = connector.getMessagesByChat.execute(chatId = cloudChat.id)
+                        val msgs = msgsResponse.data.messages
+                        for (msg in msgs) {
+                            val localMsg = MessageEntity(
+                                id = msg.id,
+                                chatId = cloudChat.id,
+                                senderUserId = msg.senderUserId,
+                                senderName = msg.senderName,
+                                text = msg.text,
+                                timestampMs = msg.timestampMs,
+                                timestampIso = msg.timestampIso,
+                                mediaUrl = msg.mediaUrl,
+                                messageType = try { com.kliq.app.data.model.MessageType.valueOf(msg.messageType ?: "TEXT") } catch (e: Exception) { com.kliq.app.data.model.MessageType.TEXT },
+                                thumbnailUrl = msg.thumbnailUrl,
+                                caption = msg.caption,
+                                audioDurationMs = msg.audioDurationMs ?: 0L,
+                                status = try { MessageStatus.valueOf(msg.status) } catch (e: Exception) { MessageStatus.DELIVERED },
+                                isMine = msg.senderUserId == currentUserId
+                            )
+                            chatDao.insertMessage(localMsg)
+                        }
+                    } else {
+
+                        val msgsResponse = connector.getMessagesByChat.execute(chatId = cloudChat.id)
+                        val msgs = msgsResponse.data.messages
+                        if (msgs.isNotEmpty()) {
+                            val participants = msgs.map { it.senderUserId }.filter { it.isNotBlank() }.distinct()
+                            val isUserInvolved = participants.contains(currentUserId) || cloudChat.id.contains(currentUserId)
+
+                            if (isUserInvolved) {
+                                val otherParticipantId = participants.firstOrNull { it != currentUserId }
+                                    ?: cloudChat.id.removePrefix("chat_").removePrefix("priv_")
+
+                                val otherParticipantName = msgs.firstOrNull { it.senderUserId != currentUserId }?.senderName
+                                    ?: if (cloudChat.name != "Chat" && cloudChat.name != "Direktnachricht" && cloudChat.name != "Kliq Chat") cloudChat.name else "Kliq Nutzer"
+
+                                var unreadForMe = 0
+                                val localExistingMsgs = chatDao.getMessagesForChat(cloudChat.id).first()
+
+                                for (msg in msgs) {
+                                    val isMine = msg.senderUserId == currentUserId
+                                    val existingLocal = localExistingMsgs.find { it.id == msg.id }
+
+                                    val isUnread = !isMine && (existingLocal == null || existingLocal.status != MessageStatus.READ)
+                                    if (isUnread) {
+                                        unreadForMe++
+                                    }
+
+                                    val localMsg = MessageEntity(
+                                        id = msg.id,
+                                        chatId = cloudChat.id,
+                                        senderUserId = msg.senderUserId,
+                                        senderName = msg.senderName,
+                                        text = msg.text,
+                                        timestampMs = msg.timestampMs,
+                                        timestampIso = msg.timestampIso,
+                                        mediaUrl = msg.mediaUrl,
+                                        messageType = try { com.kliq.app.data.model.MessageType.valueOf(msg.messageType ?: "TEXT") } catch (e: Exception) { com.kliq.app.data.model.MessageType.TEXT },
+                                        thumbnailUrl = msg.thumbnailUrl,
+                                        caption = msg.caption,
+                                        audioDurationMs = msg.audioDurationMs ?: 0L,
+                                        status = if (existingLocal != null && existingLocal.status == MessageStatus.READ) MessageStatus.READ else try { MessageStatus.valueOf(msg.status) } catch (e: Exception) { MessageStatus.DELIVERED },
+                                        isMine = isMine
+                                    )
+                                    chatDao.insertMessage(localMsg)
+                                }
+
+                                val latestMsg = msgs.last()
+                                val localChat = chatDao.getChatById(cloudChat.id).first()
+                                val prevUnread = localChat?.unreadCount ?: 0
+
+                                val privateChatEntity = ChatEntity(
+                                    id = cloudChat.id,
+                                    name = otherParticipantName,
+                                    cityRegion = null,
+                                    lastMessageText = latestMsg.text,
+                                    lastMessageTimestampMs = latestMsg.timestampMs,
+                                    lastMessageTimestampIso = latestMsg.timestampIso,
+                                    avatarInitial = otherParticipantName.take(1).uppercase().ifBlank { "U" },
+                                    avatarUrl = cloudChat.avatarUrl,
+                                    unreadCount = unreadForMe,
+                                    chatType = ChatType.PRIVATE,
+                                    isOnline = true,
+                                    isPinned = localChat?.isPinned ?: false,
+                                    isMuted = localChat?.isMuted ?: false,
+                                    isArchived = localChat?.isArchived ?: false
+                                )
+                                chatDao.insertChat(privateChatEntity)
+
+                                if (unreadForMe > prevUnread && latestMsg.senderUserId != currentUserId) {
+                                    notificationHelper?.showChatNotification(
+                                        com.kliq.app.data.model.ChatPushPayload(
+                                            chatId = cloudChat.id,
+                                            senderId = latestMsg.senderUserId,
+                                            senderName = latestMsg.senderName,
+                                            previewText = latestMsg.text,
+                                            notificationType = com.kliq.app.data.model.PushNotificationType.DIRECT_MESSAGE
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun syncChatMessages(chatId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
             kliqConnector?.let { connector ->
                 val response = connector.getMessagesByChat.execute(chatId = chatId)
@@ -147,7 +355,7 @@ class ChatRepositoryImpl @Inject constructor(
         senderUserId: String,
         senderName: String,
         text: String
-    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+    ): Result<ChatMessage> = withContext(ioDispatcher) {
         sendInternalMessage(
             chatId = chatId,
             senderUserId = senderUserId,
@@ -169,7 +377,7 @@ class ChatRepositoryImpl @Inject constructor(
         mediaWidth: Int,
         mediaHeight: Int,
         captionText: String?
-    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+    ): Result<ChatMessage> = withContext(ioDispatcher) {
         sendInternalMessage(
             chatId = chatId,
             senderUserId = senderUserId,
@@ -191,7 +399,7 @@ class ChatRepositoryImpl @Inject constructor(
         senderName: String,
         audioUrl: String,
         audioDurationMs: Long
-    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+    ): Result<ChatMessage> = withContext(ioDispatcher) {
         sendInternalMessage(
             chatId = chatId,
             senderUserId = senderUserId,
@@ -216,7 +424,7 @@ class ChatRepositoryImpl @Inject constructor(
         mediaHeight: Int = 0,
         captionText: String? = null,
         audioDurationMs: Long = 0L
-    ): Result<ChatMessage> = withContext(Dispatchers.IO) {
+    ): Result<ChatMessage> = withContext(ioDispatcher) {
         try {
             val nowMs = System.currentTimeMillis()
             val nowIso = formatMsToIso(nowMs)
@@ -247,9 +455,16 @@ class ChatRepositoryImpl @Inject constructor(
                 com.kliq.app.data.model.MessageType.VOICE -> "🎤 Sprachnachricht"
                 else -> text
             }
+            val existingChat = chatDao.getChatById(chatId).first()
+            val formattedPreview = if (existingChat?.chatType == com.kliq.app.data.model.ChatType.PUBLIC_CITY) {
+                val displayName = if (senderName.isNotBlank()) senderName else "Nutzer"
+                "$displayName: $previewText"
+            } else {
+                previewText
+            }
             chatDao.updateChatLastMessage(
                 chatId = chatId,
-                text = previewText,
+                text = formattedPreview,
                 timestampMs = nowMs,
                 timestampIso = nowIso,
                 unreadIncrement = 0
@@ -275,7 +490,7 @@ class ChatRepositoryImpl @Inject constructor(
                         }
                     }
                 } catch (ignored: Exception) {
-                    // Graceful fallback for offline / mock mode
+
                 }
             }
 
@@ -285,23 +500,23 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateMessageStatus(messageId: String, status: MessageStatus) = withContext(Dispatchers.IO) {
+    override suspend fun updateMessageStatus(messageId: String, status: MessageStatus) = withContext(ioDispatcher) {
         chatDao.updateMessageStatus(messageId, status)
     }
 
-    override suspend fun markMessageAsDelivered(messageId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markMessageAsDelivered(messageId: String) = withContext(ioDispatcher) {
         chatDao.markMessageAsDelivered(messageId = messageId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markMessageAsRead(messageId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markMessageAsRead(messageId: String) = withContext(ioDispatcher) {
         chatDao.markMessageAsRead(messageId = messageId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markAllSentMessagesAsDelivered(chatId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markAllSentMessagesAsDelivered(chatId: String) = withContext(ioDispatcher) {
         chatDao.markAllSentMessagesAsDelivered(chatId = chatId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markChatAsRead(chatId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markChatAsRead(chatId: String) = withContext(ioDispatcher) {
         chatDao.markChatAsRead(chatId)
     }
 
@@ -310,17 +525,17 @@ class ChatRepositoryImpl @Inject constructor(
             entities.map { entity ->
                 entity.toDomain(isMine = entity.senderId == currentUserId)
             }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getUnreadDirectMessages(userId: String): Flow<List<DirectMessage>> {
         return directMessageDao.getUnreadDirectMessages(userId).map { entities ->
             entities.map { it.toDomain(isMine = false) }
-        }.flowOn(Dispatchers.IO)
+        }.flowOn(ioDispatcher)
     }
 
     override fun getUnreadCountForUser(userId: String): Flow<Int> {
-        return directMessageDao.getUnreadCountForUser(userId).flowOn(Dispatchers.IO)
+        return directMessageDao.getUnreadCountForUser(userId).flowOn(ioDispatcher)
     }
 
     override suspend fun sendDirectMessage(
@@ -329,7 +544,7 @@ class ChatRepositoryImpl @Inject constructor(
         text: String,
         isEncrypted: Boolean,
         mediaUrl: String?
-    ): Result<DirectMessage> = withContext(Dispatchers.IO) {
+    ): Result<DirectMessage> = withContext(ioDispatcher) {
         try {
             val nowMs = System.currentTimeMillis()
             val nowIso = formatMsToIso(nowMs)
@@ -363,7 +578,7 @@ class ChatRepositoryImpl @Inject constructor(
                         this.mediaUrl = mediaUrl
                     }
                 } catch (ignored: Exception) {
-                    // Graceful fallback for offline mode
+
                 }
             }
 
@@ -373,7 +588,7 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun receiveDirectMessage(message: DirectMessage): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun receiveDirectMessage(message: DirectMessage): Result<Unit> = withContext(ioDispatcher) {
         try {
             val entity = DirectMessageEntity(
                 messageId = message.messageId,
@@ -394,7 +609,7 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun syncDirectMessages(userId: String, targetUserId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun syncDirectMessages(userId: String, targetUserId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
             kliqConnector?.let { connector ->
                 val response = connector.getDirectMessages.execute(senderId = userId, receiverId = targetUserId)
@@ -436,10 +651,10 @@ class ChatRepositoryImpl @Inject constructor(
             distanceKm = distance,
             isGpsAssigned = true
         )
-        return kotlinx.coroutines.flow.flowOf(item).flowOn(Dispatchers.IO)
+        return kotlinx.coroutines.flow.flowOf(item).flowOn(ioDispatcher)
     }
 
-    override suspend fun syncPublicCityMessages(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun syncPublicCityMessages(chatId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
             Result.success(Unit)
         } catch (e: Exception) {
@@ -447,27 +662,27 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateDirectMessageStatus(messageId: String, status: MessageStatus) = withContext(Dispatchers.IO) {
+    override suspend fun updateDirectMessageStatus(messageId: String, status: MessageStatus) = withContext(ioDispatcher) {
         directMessageDao.updateDeliveryStatus(messageId, status)
     }
 
-    override suspend fun markDirectMessageAsDelivered(messageId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markDirectMessageAsDelivered(messageId: String) = withContext(ioDispatcher) {
         directMessageDao.markDirectMessageAsDelivered(messageId = messageId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markDirectMessageAsRead(messageId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markDirectMessageAsRead(messageId: String) = withContext(ioDispatcher) {
         directMessageDao.markDirectMessageAsRead(messageId = messageId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markDirectConversationAsDelivered(senderId: String, receiverId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markDirectConversationAsDelivered(senderId: String, receiverId: String) = withContext(ioDispatcher) {
         directMessageDao.markConversationAsDelivered(senderId = senderId, receiverId = receiverId, timestampMs = System.currentTimeMillis())
     }
 
-    override suspend fun markDirectConversationAsRead(senderId: String, receiverId: String) = withContext(Dispatchers.IO) {
+    override suspend fun markDirectConversationAsRead(senderId: String, receiverId: String) = withContext(ioDispatcher) {
         directMessageDao.markConversationAsRead(senderId = senderId, receiverId = receiverId)
     }
 
-    override suspend fun joinPublicCityChat(chatId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    override suspend fun joinPublicCityChat(chatId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
             Result.success(Unit)
         } catch (e: Exception) {
@@ -485,7 +700,7 @@ class ChatRepositoryImpl @Inject constructor(
         mediaWidth: Int,
         mediaHeight: Int,
         captionText: String?
-    ): Result<DirectMessage> = withContext(Dispatchers.IO) {
+    ): Result<DirectMessage> = withContext(ioDispatcher) {
         try {
             val nowMs = System.currentTimeMillis()
             val nowIso = formatMsToIso(nowMs)
@@ -522,7 +737,7 @@ class ChatRepositoryImpl @Inject constructor(
         receiverId: String,
         audioUrl: String,
         audioDurationMs: Long
-    ): Result<DirectMessage> = withContext(Dispatchers.IO) {
+    ): Result<DirectMessage> = withContext(ioDispatcher) {
         try {
             val nowMs = System.currentTimeMillis()
             val nowIso = formatMsToIso(nowMs)
@@ -550,12 +765,60 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun archiveChat(chatId: String, isArchived: Boolean) = withContext(Dispatchers.IO) {
+    override suspend fun archiveChat(chatId: String, isArchived: Boolean) = withContext(ioDispatcher) {
         chatDao.updateArchiveStatus(chatId, isArchived)
     }
 
-    override suspend fun deleteChat(chatId: String) = withContext(Dispatchers.IO) {
+    override suspend fun deleteChat(chatId: String) = withContext(ioDispatcher) {
         chatDao.deleteChatById(chatId)
+        chatDao.deleteMessagesForChat(chatId)
+        val targetId = if (chatId.startsWith("chat_")) chatId.removePrefix("chat_") else chatId
+        directMessageDao.deleteAllMessagesForUser(targetId)
+    }
+
+    override suspend fun updateChatName(chatId: String, name: String) = withContext(ioDispatcher) {
+        val initial = name.trim().take(1).uppercase().ifBlank { "G" }
+        chatDao.updateChatName(chatId, name, initial)
+    }
+
+    override suspend fun createGroupChat(
+        name: String,
+        description: String,
+        imageUrl: String?,
+        memberUserIds: List<String>
+    ): Result<String> = withContext(ioDispatcher) {
+        try {
+            val groupId = "group_${System.currentTimeMillis()}"
+            val nowMs = System.currentTimeMillis()
+            val initial = name.trim().take(1).uppercase().ifBlank { "G" }
+            val entity = ChatEntity(
+                id = groupId,
+                name = name,
+                cityRegion = description.ifBlank { null },
+                lastMessageText = "Gruppe erstellt",
+                lastMessageTimestampMs = nowMs,
+                lastMessageTimestampIso = formatMsToIso(nowMs),
+                avatarInitial = initial,
+                avatarUrl = imageUrl,
+                chatType = ChatType.PUBLIC_CITY
+            )
+            chatDao.insertChat(entity)
+            kliqConnector?.let { connector ->
+                try {
+                    connector.createChat.execute(
+                        id = groupId,
+                        name = name,
+                        chatType = "GROUP",
+                        avatarInitial = initial,
+                        lastMessageText = "Gruppe erstellt",
+                        lastMessageTimestampMs = nowMs
+                    )
+                } catch (ignored: Exception) {}
+            }
+            Result.success(groupId)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     private fun ChatEntity.toDomain(): ChatConversation {
@@ -577,11 +840,17 @@ class ChatRepositoryImpl @Inject constructor(
     }
 
     private fun MessageEntity.toDomain(): ChatMessage {
+        val currentUserId = currentUserProvider?.userId()
+        val isSenderMe = if (!currentUserId.isNullOrBlank() && senderUserId.isNotBlank()) {
+            senderUserId == currentUserId
+        } else {
+            isMine
+        }
         return ChatMessage(
             id = id,
             chatId = chatId,
             senderUserId = senderUserId,
-            senderName = senderName,
+            senderName = if (isSenderMe) "Du" else senderName,
             text = text,
             timestampMs = timestampMs,
             timestampIso = timestampIso.ifBlank { formatMsToIso(timestampMs) },
@@ -596,11 +865,17 @@ class ChatRepositoryImpl @Inject constructor(
             status = status,
             deliveredAtMs = deliveredAtMs,
             readAtMs = readAtMs,
-            isMine = isMine
+            isMine = isSenderMe
         )
     }
 
-    private fun DirectMessageEntity.toDomain(isMine: Boolean): DirectMessage {
+    private fun DirectMessageEntity.toDomain(isMine: Boolean = false): DirectMessage {
+        val currentUserId = currentUserProvider?.userId()
+        val isSenderMe = if (!currentUserId.isNullOrBlank() && senderId.isNotBlank()) {
+            senderId == currentUserId
+        } else {
+            isMine
+        }
         return DirectMessage(
             messageId = messageId,
             senderId = senderId,
@@ -621,7 +896,7 @@ class ChatRepositoryImpl @Inject constructor(
             mediaHeight = mediaHeight,
             captionText = caption,
             audioDurationMs = audioDurationMs,
-            isMine = isMine
+            isMine = isSenderMe
         )
     }
 }

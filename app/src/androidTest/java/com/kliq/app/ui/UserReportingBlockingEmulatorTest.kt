@@ -41,18 +41,14 @@ class UserReportingBlockingEmulatorTest {
             )
         }
 
-        // Verify title & reasons
         composeTestRule.onNodeWithText("Max Mustermann melden").assertIsDisplayed()
         composeTestRule.onNodeWithText("Fake-Profil").assertIsDisplayed()
         composeTestRule.onNodeWithText("Spam").assertIsDisplayed()
 
-        // Select 'Fake-Profil'
         composeTestRule.onNodeWithText("Fake-Profil").performClick()
 
-        // Enter details
         composeTestRule.onNodeWithText("Zusätzliche Details (optional)").performTextInput("Verwendet fremde Fotos")
 
-        // Click submit
         composeTestRule.onNodeWithText("Meldung absenden").performClick()
 
         assertEquals("Fake-Profil", submittedReason)
@@ -72,11 +68,9 @@ class UserReportingBlockingEmulatorTest {
             )
         }
 
-        // Verify title & warning
         composeTestRule.onNodeWithText("Lisa W. blockieren?").assertIsDisplayed()
         composeTestRule.onNodeWithText("Möchtest du Lisa W. wirklich blockieren?").assertIsDisplayed()
 
-        // Click confirm
         composeTestRule.onNodeWithText("Blockieren").performClick()
 
         assertTrue(isConfirmed)

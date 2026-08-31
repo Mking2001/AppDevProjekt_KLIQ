@@ -16,7 +16,6 @@ class AntiSpamReviewValidatorTest {
         val clubLon = 13.4432
         val radiusMeters = 300.0
 
-        // User inside radius (approx 100m)
         val insideResult = validator.validateGpsLocationMatch(
             userLat = 52.5118,
             userLon = 13.4435,
@@ -28,7 +27,6 @@ class AntiSpamReviewValidatorTest {
         assertEquals(ReviewVerificationMethod.GPS_GEOFENCE_MATCH, insideResult.method)
         assertTrue(insideResult.confidenceScore > 0.8f)
 
-        // User outside radius (approx 5km)
         val outsideResult = validator.validateGpsLocationMatch(
             userLat = 52.5400,
             userLon = 13.4000,
@@ -46,7 +44,6 @@ class AntiSpamReviewValidatorTest {
         val clubLat = 52.5112
         val clubLon = 13.4432
 
-        // User at exact center
         val centerResult = validator.validateGpsLocationMatch(
             userLat = clubLat,
             userLon = clubLon,
@@ -57,10 +54,9 @@ class AntiSpamReviewValidatorTest {
         assertTrue(centerResult.isVerified)
         assertEquals(1.0f, centerResult.confidenceScore, 0.01f)
 
-        // Custom radius (e.g. 50m tight geofence)
         val tightRadiusResult = validator.validateGpsLocationMatch(
             userLat = 52.5118,
-            userLon = 13.4435, // ~70m away
+            userLon = 13.4435,
             targetLat = clubLat,
             targetLon = clubLon,
             allowedRadiusMeters = 50.0

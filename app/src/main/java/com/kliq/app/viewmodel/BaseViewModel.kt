@@ -13,10 +13,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/**
- * Base ViewModel providing common functionalities like Loading State
- * and unified Error/UI Event handling via SharedFlow.
- */
 abstract class BaseViewModel : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
@@ -25,10 +21,6 @@ abstract class BaseViewModel : ViewModel() {
     private val _uiEvents = MutableSharedFlow<UiEvent>()
     val uiEvents: SharedFlow<UiEvent> = _uiEvents.asSharedFlow()
 
-    /**
-     * Unified exception handler for Coroutines launched in this ViewModel.
-     * Automatically emits a Snackbar event on failure.
-     */
     protected val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
         _isLoading.value = false
         sendEvent(UiEvent.ShowSnackbar(exception.message ?: "Ein unbekannter Fehler ist aufgetreten."))

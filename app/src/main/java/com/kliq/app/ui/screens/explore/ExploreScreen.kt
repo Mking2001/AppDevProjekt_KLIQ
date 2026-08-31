@@ -35,8 +35,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,9 +52,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil.compose.AsyncImage
 import com.kliq.app.ui.components.KliqCategoryChip
 import com.kliq.app.ui.components.KliqScreenScaffold
 import com.kliq.app.ui.navigation.TopBarMenuAction
@@ -60,20 +64,6 @@ import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.util.talkBackDescription
 
-/**
- * Explore-Screen mit Suchleiste, Kategorie- und Bewertungsfiltern
- * sowie einem 2-spaltigen Discovery-Grid.
- *
- * Die Inhalte stammen aus [ExploreViewModel] und damit aus der lokalen
- * Datenbank. Favoriten lassen sich direkt in der Kachel setzen.
- *
- * @param topBarState Aktueller Top-Bar UI-State.
- * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
- * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
- * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
- * @param onNavigateToClub Navigation zur Club-Detailansicht.
- * @param viewModel Hilt-injiziertes [ExploreViewModel].
- */
 @Composable
 fun ExploreScreen(
     topBarState: TopBarUiState,
@@ -202,7 +192,8 @@ fun ExploreScreen(
                                 DiscoverGridCard(
                                     item = item,
                                     onClick = { onNavigateToClub(item.id) },
-                                    onToggleFavorite = { viewModel.onToggleFavorite(item.id) }
+                                    onToggleFavorite = { viewModel.onToggleFavorite(item.id) },
+                                    onToggleHype = { viewModel.onToggleHype(item.id) }
                                 )
                             }
                         }
@@ -218,12 +209,8 @@ fun ExploreScreen(
     }
 }
 
-/** Auswählbare Mindestbewertungen der Filterleiste. */
 private val RATING_FILTERS = listOf(0f, 3f, 4f, 4.5f)
 
-/**
- * Hinweis, wenn kein Eintrag den aktiven Filtern entspricht.
- */
 @Composable
 private fun EmptyDiscoverHint() {
     Column(
@@ -248,42 +235,58 @@ private fun EmptyDiscoverHint() {
     }
 }
 
-/**
- * Einzelne Kachel des Discovery-Grids.
- * Zeigt Titel, Untertitel, Bewertung, Kategorie-Badge, Öffnungsstatus
- * und einen Favoriten-Umschalter.
- *
- * @param onClick Callback beim Antippen der Kachel.
- * @param onToggleFavorite Callback beim Antippen des Favoriten-Symbols.
- */
 @Composable
 private fun DiscoverGridCard(
     item: DiscoverItemUi,
     onClick: () -> Unit,
-    onToggleFavorite: () -> Unit
+    onToggleFavorite: () -> Unit,
+    onToggleHype: () -> Unit
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .aspectRatio(0.85f)
-            .clip(RoundedCornerShape(16.dp))
+            .aspectRatio(0.80f)
+            .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .clickable { onClick() }
             .talkBackDescription(
-                "${item.title}, ${item.category}, Bewertung ${item.rating} von 5 Sternen" +
+                "${item.title}, ${item.category}, Bewertung ${item.rating} von 5 Sternen, ${item.flameCount} Flammen" +
                         if (item.isFavorite) ", als Favorit markiert" else ""
             )
     ) {
+
+        if (!item.imageUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = item.imageUrl,
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                MaterialTheme.colorScheme.primaryContainer,
+                                MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        )
+                    )
+            )
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.0f),
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f)
+                            Color.Black.copy(alpha = 0.20f),
+                            Color.Black.copy(alpha = 0.35f),
+                            Color.Black.copy(alpha = 0.80f),
+                            Color.Black.copy(alpha = 0.96f)
                         ),
                         startY = 0f,
                         endY = Float.POSITIVE_INFINITY
@@ -291,34 +294,87 @@ private fun DiscoverGridCard(
                 )
         )
 
-        if (item.isEvent) {
-            Icon(
-                imageVector = Icons.Filled.Event,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(36.dp)
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(10.dp)
+                .clip(RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
+                .padding(horizontal = 8.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text = item.category,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
             )
+        }
+
+        IconButton(
+            onClick = onToggleFavorite,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(6.dp)
+                .size(34.dp)
+                .clip(CircleShape)
+                .background(Color.Black.copy(alpha = 0.45f))
+                .talkBackDescription(
+                    if (item.isFavorite) "${item.title} aus Favoriten entfernen"
+                    else "${item.title} zu Favoriten hinzufügen"
+                )
+        ) {
+            Icon(
+                imageVector = if (item.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                contentDescription = null,
+                tint = if (item.isFavorite) Color(0xFFFF4081) else Color.White,
+                modifier = Modifier.size(18.dp)
+            )
+        }
+
+        Surface(
+            onClick = onToggleHype,
+            shape = RoundedCornerShape(12.dp),
+            color = if (item.isHypedToday) Color(0xFFFF5722) else Color.Black.copy(alpha = 0.65f),
+            border = if (item.isHypedToday) BorderStroke(1.dp, Color(0xFFFFD54F)) else BorderStroke(0.5.dp, Color.White.copy(alpha = 0.2f)),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    text = "🔥",
+                    style = MaterialTheme.typography.labelSmall
+                )
+                Text(
+                    text = "${item.flameCount}",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = if (item.isHypedToday) Color.White else Color.White.copy(alpha = 0.9f)
+                )
+            }
         }
 
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(12.dp)
+                .padding(start = 10.dp, bottom = 10.dp, end = 68.dp)
         ) {
             Text(
                 text = item.title,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = item.subtitle,
                 style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                color = Color.White.copy(alpha = 0.8f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -337,60 +393,25 @@ private fun DiscoverGridCard(
                     text = item.rating.toString(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = Color.White
                 )
 
-                if (!item.isEvent) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(6.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (item.isOpenNow) Color(0xFF3DDC84)
-                                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                            )
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = if (item.isOpenNow) "Offen" else "Zu",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                    )
-                }
-            }
-        }
-
-        Box(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(8.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.85f))
-                .padding(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = item.category,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-
-        if (!item.isEvent) {
-            IconButton(
-                onClick = onToggleFavorite,
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .talkBackDescription(
-                        if (item.isFavorite) "${item.title} aus Favoriten entfernen"
-                        else "${item.title} zu Favoriten hinzufügen"
-                    )
-            ) {
-                Icon(
-                    imageVector = if (item.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-                    contentDescription = null,
-                    tint = if (item.isFavorite) PurplePrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                Spacer(modifier = Modifier.width(6.dp))
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (item.isOpenNow) Color(0xFF3DDC84)
+                            else Color(0xFFFF5252)
+                        )
+                )
+                Spacer(modifier = Modifier.width(3.dp))
+                Text(
+                    text = if (item.isOpenNow) "Offen" else "Zu",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Medium,
+                    color = if (item.isOpenNow) Color(0xFF3DDC84) else Color.White.copy(alpha = 0.7f)
                 )
             }
         }

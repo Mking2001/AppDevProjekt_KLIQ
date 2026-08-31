@@ -2,11 +2,11 @@ package com.kliq.app.viewmodel
 
 import com.kliq.app.data.local.entities.UserEntity
 import com.kliq.app.data.repository.UserRepository
-import com.kliq.app.ui.screens.auth.CountryCodeOption
 import com.kliq.app.ui.screens.auth.PhoneLoginViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -39,120 +39,46 @@ class PhoneLoginViewModelTest {
     }
 
     @Test
-    fun testInitialStateHasDefaultCountryCodeAndDisabledSubmit() {
+    fun testInitialState() {
         val state = viewModel.uiState.value
-        assertEquals("+49", state.countryCode)
-        assertEquals("", state.phoneNumber)
-        assertFalse(state.isValidPhoneNumber)
-        assertFalse(state.isSubmitPhoneNumberEnabled)
+        assertEquals("", state.identifier)
+        assertEquals("", state.password)
+        assertFalse(state.isFormValid)
         assertFalse(state.isLoading)
-        assertFalse(state.isOtpSent)
+        assertFalse(state.isSuccess)
     }
 
     @Test
-    fun testPhoneNumberValidationShortNumber() {
-        viewModel.onPhoneNumberChanged("12345")
-        val state = viewModel.uiState.value
+    fun testValidationWithEmptyAndInvalidInputs() {
+        viewModel.onIdentifierChanged("")
+        assertTrue(viewModel.uiState.value.identifierError != null)
+        assertFalse(viewModel.uiState.value.isFormValid)
 
-        assertFalse(state.isValidPhoneNumber)
-        assertFalse(state.isSubmitPhoneNumberEnabled)
-        assertEquals("Telefonnummer zu kurz (mindestens 7 Ziffern).", state.validationErrorMessage)
+        viewModel.onPasswordChanged("123")
+        assertTrue(viewModel.uiState.value.passwordError != null)
+        assertFalse(viewModel.uiState.value.isFormValid)
+
+        viewModel.onIdentifierChanged("alex_mustermann")
+        viewModel.onPasswordChanged("geheimesPasswort123")
+        assertNull(viewModel.uiState.value.identifierError)
+        assertNull(viewModel.uiState.value.passwordError)
+        assertTrue(viewModel.uiState.value.isFormValid)
     }
 
     @Test
-    fun testPhoneNumberValidationValidNumber() {
-        viewModel.onPhoneNumberChanged("1512345678")
-        val state = viewModel.uiState.value
-
-        assertTrue(state.isValidPhoneNumber)
-        assertTrue(state.isSubmitPhoneNumberEnabled)
-        assertNull(state.validationErrorMessage)
-        assertEquals("+491512345678", state.fullPhoneNumber)
-    }
-
-    @Test
-    fun testPhoneNumberValidationLongNumber() {
-        viewModel.onPhoneNumberChanged("1234567890123456")
-        val state = viewModel.uiState.value
-
-        assertFalse(state.isValidPhoneNumber)
-        assertFalse(state.isSubmitPhoneNumberEnabled)
-        assertEquals("Telefonnummer zu lang (maximal 15 Ziffern).", state.validationErrorMessage)
-    }
-
-    @Test
-    fun testCountryCodeSelectionUpdatesState() {
-        val austriaOption = CountryCodeOption("Österreich", "🇦🇹", "+43", "AT")
-        viewModel.onCountrySelected(austriaOption)
-        viewModel.onPhoneNumberChanged("6601234567")
-
-        val state = viewModel.uiState.value
-        assertEquals("+43", state.countryCode)
-        assertEquals(austriaOption, state.selectedCountry)
-        assertEquals("+436601234567", state.fullPhoneNumber)
-        assertTrue(state.isValidPhoneNumber)
-    }
-
-    @Test
-    fun testSendOtpSuccessFlow() = runTest {
-        val phone = "1512345678"
-        `when`(userRepository.requestOtp("+49", phone)).thenReturn(Result.success(true))
-
-        viewModel.onPhoneNumberChanged(phone)
-        viewModel.sendOtp()
-
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
-        assertTrue(state.isOtpSent)
-        assertNull(state.errorMessage)
-    }
-
-    @Test
-    fun testSendOtpFailureFlow() = runTest {
-        val phone = "1512345678"
-        val failureReason = "Netzwerkfehler beim SMS-Versand"
-        `when`(userRepository.requestOtp("+49", phone)).thenReturn(Result.failure(Exception(failureReason)))
-
-        viewModel.onPhoneNumberChanged(phone)
-        viewModel.sendOtp()
-
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val state = viewModel.uiState.value
-        assertFalse(state.isLoading)
-        assertFalse(state.isOtpSent)
-        assertEquals(failureReason, state.errorMessage)
-    }
-
-    @Test
-    fun testVerifyOtpSuccessFlow() = runTest {
-        val phone = "1512345678"
-        val otp = "123456"
+    fun testSuccessfulLogin() = runTest(testDispatcher) {
         val dummyUser = UserEntity(
-            id = "usr_999",
-            username = "kliq_test",
-            email = "test@kliq.app",
-            profilePictureUrl = null,
-            bio = "Bio",
-            phoneNumber = "+491512345678",
-            isVerified = true,
-            updatedAtTimestampMs = 1000L
+            id = "usr_123",
+            username = "alex",
+            email = "alex@kliq.app"
         )
+        `when`(userRepository.loginUser("alex", "password123")).thenReturn(Result.success(dummyUser))
 
-        `when`(userRepository.requestOtp("+49", phone)).thenReturn(Result.success(true))
-        `when`(userRepository.verifyOtp("+49", phone, otp)).thenReturn(Result.success(dummyUser))
+        viewModel.onIdentifierChanged("alex")
+        viewModel.onPasswordChanged("password123")
+        viewModel.onLogin()
 
-        viewModel.onPhoneNumberChanged(phone)
-        viewModel.sendOtp()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.onOtpCodeChanged(otp)
-        assertTrue(viewModel.uiState.value.isValidOtp)
-
-        viewModel.verifyOtp()
-        testDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
@@ -161,44 +87,20 @@ class PhoneLoginViewModelTest {
     }
 
     @Test
-    fun testVerifyOtpFailureFlow() = runTest {
-        val phone = "1512345678"
-        val otp = "000000"
-        val failureMessage = "Der eingegebener Code ist ungültig."
+    fun testFailedLoginShowsErrorMessage() = runTest(testDispatcher) {
+        `when`(userRepository.loginUser("unknown_user", "wrong_pass")).thenReturn(
+            Result.failure(IllegalArgumentException("Benutzer nicht gefunden"))
+        )
 
-        `when`(userRepository.requestOtp("+49", phone)).thenReturn(Result.success(true))
-        `when`(userRepository.verifyOtp("+49", phone, otp)).thenReturn(Result.failure(Exception(failureMessage)))
+        viewModel.onIdentifierChanged("unknown_user")
+        viewModel.onPasswordChanged("wrong_pass")
+        viewModel.onLogin()
 
-        viewModel.onPhoneNumberChanged(phone)
-        viewModel.sendOtp()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.onOtpCodeChanged(otp)
-        viewModel.verifyOtp()
-        testDispatcher.scheduler.advanceUntilIdle()
+        advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
         assertFalse(state.isSuccess)
-        assertEquals(failureMessage, state.errorMessage)
-    }
-
-    @Test
-    fun testResetOtpStateResetsToPhoneInput() = runTest {
-        val phone = "1512345678"
-        `when`(userRepository.requestOtp("+49", phone)).thenReturn(Result.success(true))
-
-        viewModel.onPhoneNumberChanged(phone)
-        viewModel.sendOtp()
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        assertTrue(viewModel.uiState.value.isOtpSent)
-
-        viewModel.resetOtpState()
-
-        val state = viewModel.uiState.value
-        assertFalse(state.isOtpSent)
-        assertEquals("", state.otpCode)
-        assertFalse(state.isValidOtp)
+        assertEquals("Benutzer nicht gefunden", state.errorMessage)
     }
 }

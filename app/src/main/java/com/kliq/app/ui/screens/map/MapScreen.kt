@@ -103,23 +103,6 @@ import com.kliq.app.viewmodel.PermissionViewModel
 import kotlinx.coroutines.flow.collectLatest
 import timber.log.Timber
 
-/**
- * Native Map Screen integrating Google Maps Compose SDK with custom dark-purple JSON styling,
- * custom Kliq purple club pins, circular user profile markers, performance marker clustering,
- * interactive quick view cards, and location filter mode switching (Public Events vs Private Locations).
- *
- * Behebt Abstürze auf physischen Geräten durch defensive MapsInitializer-Initialisierung,
- * Lifecycle-Management, SecurityException-geschützte Standortermittlung und overflow-sichere Filter.
- *
- * @param topBarState Top bar UI state.
- * @param onToggleMenu Callback for menu toggle.
- * @param onDismissMenu Callback for menu dismiss.
- * @param onMenuAction Callback for menu actions.
- * @param onNavigateToClub Navigation zur Club-Detailansicht.
- * @param onNavigateToChat Navigation in einen Chat mit der angetippten Person.
- * @param viewModel Hilt-injected [MapViewModel].
- * @param permissionViewModel Hilt-injected [PermissionViewModel].
- */
 @Composable
 fun MapScreen(
     topBarState: TopBarUiState,
@@ -128,6 +111,7 @@ fun MapScreen(
     onMenuAction: (TopBarMenuAction) -> Unit,
     onNavigateToClub: (String) -> Unit = {},
     onNavigateToChat: (String) -> Unit = {},
+    onNavigateToUserProfile: (String) -> Unit = {},
     viewModel: MapViewModel = hiltViewModel(),
     permissionViewModel: PermissionViewModel = hiltViewModel()
 ) {
@@ -137,7 +121,6 @@ fun MapScreen(
     val haptic = LocalHapticFeedback.current
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // 1. Defensive Initialisierung des Maps SDK Renderers vor dem Rendern
     var isMapsRendererReady by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -160,7 +143,6 @@ fun MapScreen(
         }
     }
 
-    // 2. Saubere Anbindung an den Android-Lifecycle zur Vermeidung von Renderer-Deadlocks
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -185,7 +167,6 @@ fun MapScreen(
         }
     }
 
-    // 3. Defensive Initialisierung von CameraPositionState (Klagenfurt 46.6247, 14.3053, Zoom 13.5f)
     val cameraPositionState = rememberCameraPositionState {
         val initLat = if (uiState.cameraPosition.latitude != 0.0) uiState.cameraPosition.latitude else 46.6247
         val initLng = if (uiState.cameraPosition.longitude != 0.0) uiState.cameraPosition.longitude else 14.3053
@@ -193,7 +174,6 @@ fun MapScreen(
         position = CameraPosition.fromLatLngZoom(LatLng(initLat, initLng), initZoom)
     }
 
-    // Kamera-Animation Events aus dem ViewModel verarbeiten
     LaunchedEffect(Unit) {
         viewModel.cameraEventFlow.collectLatest { event ->
             try {
@@ -246,7 +226,6 @@ fun MapScreen(
         }
     }
 
-    // Debounced Viewport-Updates bei Kamerabewegung
     LaunchedEffect(cameraPositionState.isMoving) {
         if (!cameraPositionState.isMoving) {
             val target = cameraPositionState.position.target
@@ -255,7 +234,6 @@ fun MapScreen(
         }
     }
 
-    // 4. Runtime Permission Check vor Aktivierung der Standortermittlung (SecurityException-Schutz)
     val hasLocationPermission = remember(permissionUiState.permissionState) {
         try {
             val fineGranted = ContextCompat.checkSelfPermission(
@@ -273,7 +251,6 @@ fun MapScreen(
         }
     }
 
-    // Caching des Map Styles zur Vermeidung von Design-Resets bei Tab-Wechseln
     val darkMapStyle = remember {
         try {
             MapStyleOptions.loadRawResourceStyle(context, R.raw.map_style_dark_purple)
@@ -288,7 +265,7 @@ fun MapScreen(
             mapStyleOptions = if (uiState.styleConfig.isCustomStyleEnabled) darkMapStyle else null,
             isBuildingEnabled = uiState.styleConfig.isBuildingEnabled,
             isIndoorEnabled = uiState.styleConfig.isIndoorEnabled,
-            // isMyLocationEnabled darf NIEMALS true sein, wenn keine Permission vorliegt
+
             isMyLocationEnabled = uiState.isLocationEnabled && hasLocationPermission
         )
     }
@@ -324,7 +301,6 @@ fun MapScreen(
         }
     }
 
-    // Beim Betreten der Map sofort nach Standortfreigabe fragen bzw. echte Position zentrieren
     LaunchedEffect(hasLocationPermission) {
         if (!hasLocationPermission) {
             permissionViewModel.onRequestPermissionClicked(context)
@@ -337,7 +313,7 @@ fun MapScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Native Google Map SDK Component
+
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
@@ -346,7 +322,7 @@ fun MapScreen(
             onMapLoaded = { viewModel.onMapLoaded() },
             onMapClick = { viewModel.onQuickViewDismissed() }
         ) {
-            // Rendere Custom Kliq User Profile Markers (nur wenn showPrivateLocations aktiv ist)
+
             if (uiState.showPrivateLocations) {
                 uiState.userMarkers.forEach { userMarker ->
                     androidx.compose.runtime.key(userMarker.userId) {
@@ -380,7 +356,6 @@ fun MapScreen(
                 }
             }
 
-            // Rendere Clustered & Single Kliq Club Markers (nur wenn showPublicEvents aktiv ist)
             if (uiState.showPublicEvents) {
                 uiState.clusteredMarkers.forEach { markerItem ->
                     androidx.compose.runtime.key(markerItem.id) {
@@ -453,7 +428,6 @@ fun MapScreen(
             }
         }
 
-        // Floating Top Filter Controls (MapLocationFilterMode & Category Sub-Chips)
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -501,7 +475,6 @@ fun MapScreen(
             }
         }
 
-        // Location FAB
         FloatingActionButton(
             onClick = {
                 if (hasLocationPermission) {
@@ -536,7 +509,6 @@ fun MapScreen(
             }
         }
 
-        // Bottom Sheet Peek for nearby venues
         VenueBottomSheet(
             venues = uiState.nearbyVenues,
             onVenueClick = { viewModel.onMarkerClicked(it) },
@@ -547,7 +519,6 @@ fun MapScreen(
             modifier = Modifier.align(Alignment.BottomCenter)
         )
 
-        // Overlay Quick View Card for selected club venue
         MapQuickViewCard(
             venue = uiState.selectedVenue,
             isVisible = uiState.selectedVenue != null,
@@ -561,19 +532,18 @@ fun MapScreen(
                 .padding(top = 135.dp)
         )
 
-        // Overlay Quick View Card for selected user marker
         UserQuickViewCard(
             user = uiState.selectedUser,
             isVisible = uiState.selectedUser != null,
             onDismiss = { viewModel.onUserQuickViewDismissed() },
             onSendMessage = { userId -> onNavigateToChat("chat_$userId") },
+            onViewProfile = onNavigateToUserProfile,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .statusBarsPadding()
                 .padding(top = 135.dp)
         )
 
-        // Custom Kliq Location Rationale Dialog
         LocationRationaleDialog(
             isVisible = permissionUiState.showRationaleDialog,
             onConfirmActivate = {
@@ -588,7 +558,6 @@ fun MapScreen(
             onDismiss = { permissionViewModel.onRationaleDismissed() }
         )
 
-        // Custom Permanently Denied Settings Deep-Link Dialog
         LocationPermanentlyDeniedDialog(
             isVisible = permissionUiState.showPermanentlyDeniedDialog,
             onOpenSettings = { permissionViewModel.onOpenSettingsClicked(context) },
@@ -597,9 +566,6 @@ fun MapScreen(
     }
 }
 
-/**
- * Bottom-Sheet-Peek with scrollable list of nearby venues.
- */
 @Composable
 private fun VenueBottomSheet(
     venues: List<VenueItemUi>,
@@ -656,9 +622,6 @@ private fun VenueBottomSheet(
     }
 }
 
-/**
- * Individual Venue Card item supporting long-press quick-view gesture.
- */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun VenueCard(
@@ -737,18 +700,6 @@ private fun VenueCard(
     }
 }
 
-/**
- * Startet die Routenführung in einer externen Karten-App (Google Maps Navigation).
- *
- * Es wird zunächst der Google-Maps-Navigationsintent versucht (`google.navigation:q=Lat,Lng`).
- * Ist die Google Maps App nicht installiert oder schlägt fehl, wird auf einen generischen `geo:`-Intent
- * bzw. auf den Webbrowser ausgewichen.
- *
- * Alle Intent-Aufrufe sind defensiv in Try-Catch-Blöcken gekapselt.
- *
- * @param context Kontext zum Starten der Activity.
- * @param venue Ziel-Venue mit Koordinaten und Namen.
- */
 private fun launchExternalRoute(context: Context, venue: VenueItemUi) {
     try {
         val label = Uri.encode(venue.name)
@@ -794,9 +745,6 @@ private fun launchExternalRoute(context: Context, venue: VenueItemUi) {
     }
 }
 
-/**
- * Fragt die exakte aktuelle GPS-Position des Nutzers über den FusedLocationProviderClient ab.
- */
 @SuppressLint("MissingPermission")
 private fun requestDeviceLocation(context: Context, onLocationResult: (Double, Double) -> Unit) {
     try {

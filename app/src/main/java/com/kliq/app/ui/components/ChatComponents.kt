@@ -2,6 +2,8 @@ package com.kliq.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,12 +23,17 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import com.kliq.app.util.ensureMinTouchTarget
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.Close
@@ -38,23 +45,24 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Send
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import com.kliq.app.ui.components.KliqIcon
-import com.kliq.app.ui.components.KliqIconCategory
-import com.kliq.app.ui.components.KliqIconSize
-import com.kliq.app.util.ensureMinTouchTarget
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -87,20 +95,26 @@ import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.model.MessageType
 import com.kliq.app.data.model.toChatListItem
 import com.kliq.app.ui.theme.DarkSurface
+import com.kliq.app.ui.theme.DarkSurfaceVariant
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryDark
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChatListItem(
     item: com.kliq.app.data.model.ChatListItem,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick
+            )
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -156,8 +170,13 @@ fun ChatListItem(
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(2.dp))
+            val previewDisplay = if (item.chatType == ChatType.PUBLIC_CITY && !item.lastMessage.senderName.isNullOrBlank() && !item.lastMessage.text.startsWith("${item.lastMessage.senderName}:")) {
+                "${item.lastMessage.senderName}: ${item.lastMessage.text}"
+            } else {
+                item.lastMessage.text
+            }
             Text(
-                text = item.lastMessage.text,
+                text = previewDisplay,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -206,15 +225,16 @@ fun ChatListItem(
 fun ChatListItem(
     conversation: ChatConversation,
     onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     ChatListItem(
         item = conversation.toChatListItem(),
         onClick = onClick,
+        onLongClick = onLongClick,
         modifier = modifier
     )
 }
-
 
 @Composable
 fun VoiceMessageBubble(
@@ -317,6 +337,7 @@ fun ChatBubble(
     voicePlaybackDurationMs: Long = 0L,
     onPlayPauseVoice: (() -> Unit)? = null,
     onSeekVoice: ((Long) -> Unit)? = null,
+    onSenderClick: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var isFullscreenVisible by remember { mutableStateOf(false) }
@@ -345,10 +366,14 @@ fun ChatBubble(
                 style = MaterialTheme.typography.labelSmall,
                 color = PurplePrimaryLight,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(
-                    start = 12.dp,
-                    bottom = 4.dp
-                )
+                modifier = Modifier
+                    .padding(
+                        start = 12.dp,
+                        bottom = 4.dp
+                    )
+                    .clickable(enabled = onSenderClick != null && message.senderUserId.isNotBlank()) {
+                        onSenderClick?.invoke(message.senderUserId)
+                    }
             )
         }
 
@@ -1061,13 +1086,11 @@ fun ChatDateDivider(
 
 @Composable
 fun CityChatHeaderBanner(
-    activeCityChat: com.kliq.app.data.model.ChatListItem?,
+    suggestedCity: com.kliq.app.data.util.CityChatConfig?,
     onSwitchCityClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cityTitle = activeCityChat?.title ?: "Berlin - Tonight"
-    val onlineCount = activeCityChat?.onlineMembersCount ?: 248
-    val distanceText = activeCityChat?.distanceKm?.let { String.format("%.1f km entfernt", it) } ?: "GPS-aktiv"
+    if (suggestedCity == null) return
 
     androidx.compose.material3.Card(
         modifier = modifier
@@ -1075,12 +1098,12 @@ fun CityChatHeaderBanner(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
         colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f)
         ),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
             brush = Brush.linearGradient(
-                colors = listOf(PurplePrimaryLight.copy(alpha = 0.6f), PurplePrimary.copy(alpha = 0.2f))
+                colors = listOf(PurplePrimaryLight.copy(alpha = 0.7f), PurplePrimary.copy(alpha = 0.3f))
             )
         )
     ) {
@@ -1111,17 +1134,15 @@ fun CityChatHeaderBanner(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = cityTitle,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    Text(
+                        text = "Du bist in ${suggestedCity.cityRegion}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "⚡ $onlineCount Feiernde online • $distanceText",
+                        text = "Zu „${suggestedCity.cityRegion}“ wechseln?",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -1129,11 +1150,18 @@ fun CityChatHeaderBanner(
                 }
             }
 
-            androidx.compose.material3.TextButton(onClick = onSwitchCityClick) {
+            androidx.compose.material3.Button(
+                onClick = onSwitchCityClick,
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = PurplePrimary
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
                 Text(
                     text = "Wechseln",
                     style = MaterialTheme.typography.labelMedium,
-                    color = PurplePrimaryLight,
+                    color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -1226,6 +1254,537 @@ fun CityChatSwitcherSheet(
                     thickness = 0.5.dp
                 )
             }
+        }
+    }
+}
+
+@Composable
+fun ImagePreviewSendDialog(
+    imageUri: String,
+    caption: String,
+    onCaptionChange: (String) -> Unit,
+    isCompressing: Boolean,
+    onSend: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(
+        onDismissRequest = { if (!isCompressing) onDismiss() },
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.92f))
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = onDismiss,
+                        enabled = !isCompressing
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Abbrechen",
+                            tint = Color.White
+                        )
+                    }
+                    Text(
+                        text = "Vorschau",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    Spacer(modifier = Modifier.size(48.dp))
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AsyncImage(
+                        model = imageUri,
+                        contentDescription = "Ausgewähltes Bild",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(16.dp))
+                    )
+
+                    if (isCompressing) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color.Black.copy(alpha = 0.5f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(color = PurplePrimaryLight)
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = caption,
+                        onValueChange = onCaptionChange,
+                        placeholder = { Text("Bildunterschrift hinzufügen...", color = Color.Gray) },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = PurplePrimary,
+                            unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f),
+                            focusedContainerColor = DarkSurface,
+                            unfocusedContainerColor = DarkSurface
+                        ),
+                        shape = RoundedCornerShape(24.dp),
+                        enabled = !isCompressing
+                    )
+
+                    IconButton(
+                        onClick = onSend,
+                        enabled = !isCompressing,
+                        modifier = Modifier
+                            .size(50.dp)
+                            .clip(CircleShape)
+                            .background(PurplePrimary)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Send,
+                            contentDescription = "Senden",
+                            tint = Color.White
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreateGroupDialog(
+    availableUsers: List<com.kliq.app.data.local.entities.UserEntity>,
+    onPickImageGallery: () -> Unit,
+    onPickImageCamera: () -> Unit,
+    groupImageUri: String?,
+    onCreateGroup: (name: String, description: String, selectedUserIds: List<String>) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var groupName by remember { mutableStateOf("") }
+    var groupDescription by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedUserIds by remember { mutableStateOf(setOf<String>()) }
+
+    val filteredUsers = remember(availableUsers, searchQuery) {
+        if (searchQuery.isBlank()) availableUsers
+        else availableUsers.filter {
+            it.username.contains(searchQuery, ignoreCase = true) ||
+            it.hometown?.contains(searchQuery, ignoreCase = true) == true
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .fillMaxHeight(0.88f)
+                .padding(8.dp),
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = DarkSurface)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp)
+            ) {
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Neue Gruppe erstellen",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "Schließen", tint = Color.White)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(68.dp)
+                            .clip(CircleShape)
+                            .background(DarkSurfaceVariant)
+                            .clickable { onPickImageGallery() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (!groupImageUri.isNullOrBlank()) {
+                            AsyncImage(
+                                model = groupImageUri,
+                                contentDescription = "Gruppenbild",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.AddPhotoAlternate,
+                                contentDescription = "Bild wählen",
+                                tint = PurplePrimaryLight,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        OutlinedTextField(
+                            value = groupName,
+                            onValueChange = { if (it.length <= 35) groupName = it },
+                            label = { Text("Gruppenname *") },
+                            placeholder = { Text("z.B. VIP Night Crew") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = PurplePrimary,
+                                unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = groupDescription,
+                    onValueChange = { if (it.length <= 120) groupDescription = it },
+                    label = { Text("Gruppenbeschreibung / Thema") },
+                    placeholder = { Text("z.B. Treffen vor dem Clubbing") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PurplePrimary,
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.5f)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Mitglieder hinzufügen (${selectedUserIds.size} ausgewählt)",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = PurplePrimaryLight
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Kontakte / Personen suchen…") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = PurplePrimary,
+                        unfocusedBorderColor = Color.Gray.copy(alpha = 0.3f)
+                    ),
+                    shape = RoundedCornerShape(20.dp)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                LazyColumn(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    if (filteredUsers.isEmpty()) {
+                        item {
+                            Text(
+                                text = "Keine weiteren Kontakte gefunden",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Color.Gray,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    } else {
+                        items(items = filteredUsers, key = { it.id }) { user ->
+                            val isSelected = selectedUserIds.contains(user.id)
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        selectedUserIds = if (isSelected) selectedUserIds - user.id else selectedUserIds + user.id
+                                    }
+                                    .padding(vertical = 6.dp, horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(PurplePrimary.copy(alpha = 0.2f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = user.username.take(1).uppercase(),
+                                        fontWeight = FontWeight.Bold,
+                                        color = PurplePrimaryLight
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = user.username,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = Color.White
+                                    )
+                                    if (!user.hometown.isNullOrBlank()) {
+                                        Text(
+                                            text = user.hometown,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                                Checkbox(
+                                    checked = isSelected,
+                                    onCheckedChange = { checked ->
+                                        selectedUserIds = if (checked) selectedUserIds + user.id else selectedUserIds - user.id
+                                    },
+                                    colors = CheckboxDefaults.colors(
+                                        checkedColor = PurplePrimary,
+                                        checkmarkColor = Color.White
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text("Abbrechen", color = Color.Gray)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            if (groupName.isNotBlank()) {
+                                onCreateGroup(groupName.trim(), groupDescription.trim(), selectedUserIds.toList())
+                            }
+                        },
+                        enabled = groupName.isNotBlank(),
+                        colors = ButtonDefaults.buttonColors(containerColor = PurplePrimary),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Gruppe erstellen", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GroupInfoSheet(
+    title: String,
+    description: String?,
+    avatarUrl: String?,
+    memberCount: Int,
+    members: List<com.kliq.app.data.local.entities.UserEntity> = emptyList(),
+    canAddMembers: Boolean = true,
+    onAddMemberClick: () -> Unit = {},
+    onLeaveGroupClick: () -> Unit = {},
+    onDismiss: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        containerColor = DarkSurface
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .size(90.dp)
+                    .clip(CircleShape)
+                    .background(PurplePrimary.copy(alpha = 0.25f)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (!avatarUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Text(
+                        text = title.take(1).uppercase(),
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = PurplePrimaryLight
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+
+            if (!description.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
+            Text(
+                text = "$memberCount Mitglieder",
+                style = MaterialTheme.typography.labelMedium,
+                color = PurplePrimaryLight,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            if (canAddMembers) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(DarkSurfaceVariant)
+                        .clickable { onAddMemberClick() }
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = PurplePrimaryLight)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Mitglieder hinzufügen", fontWeight = FontWeight.SemiBold, color = Color.White)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (members.isNotEmpty()) {
+                Text(
+                    text = "Teilnehmer",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Gray,
+                    modifier = Modifier.align(Alignment.Start)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(items = members, key = { it.id }) { user ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(PurplePrimary.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = user.username.take(1).uppercase(),
+                                    fontWeight = FontWeight.Bold,
+                                    color = PurplePrimaryLight
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(user.username, color = Color.White, fontWeight = FontWeight.Medium)
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    onDismiss()
+                    onLeaveGroupClick()
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEF4444).copy(alpha = 0.15f)),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFEF4444))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Gruppe verlassen & löschen", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
         }
     }
 }

@@ -7,9 +7,6 @@ import androidx.room.Query
 import com.kliq.app.data.local.entities.BlockedUserEntity
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Data Access Object für den Zugriff auf blockierte Nutzer in der Room-Datenbank.
- */
 @Dao
 interface BlockedUserDao {
 

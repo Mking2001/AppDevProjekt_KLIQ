@@ -7,22 +7,34 @@ import com.kliq.app.ui.navigation.NavigationRoute
 import com.kliq.app.ui.navigation.NavigationViewModel
 import com.kliq.app.ui.navigation.ProfileRoutes
 import com.kliq.app.ui.navigation.ScreenTransitionType
+import com.kliq.app.testing.FakeChatRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit tests for [NavigationViewModel] transition state logic and MVVM decoupling.
- */
+@OptIn(ExperimentalCoroutinesApi::class)
 class NavigationViewModelTest {
 
+    private val testDispatcher = StandardTestDispatcher()
     private lateinit var viewModel: NavigationViewModel
 
     @Before
     fun setUp() {
-        viewModel = NavigationViewModel()
+        Dispatchers.setMain(testDispatcher)
+        viewModel = NavigationViewModel(chatRepository = FakeChatRepository())
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
     }
 
     @Test

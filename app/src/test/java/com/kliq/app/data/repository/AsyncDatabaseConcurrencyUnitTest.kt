@@ -56,9 +56,6 @@ class AsyncDatabaseConcurrencyUnitTest {
         db.close()
     }
 
-    /**
-     * 1. Asynchroner Datenabruf & Reaktives Streaming via Flow
-     */
     @Test
     fun test1_asynchronousDataQueryAndReactiveStreaming() = runBlocking {
         val club = ClubEntity(
@@ -85,9 +82,6 @@ class AsyncDatabaseConcurrencyUnitTest {
         assertEquals("KitKat Async Stream", clubs[0].name)
     }
 
-    /**
-     * 2. Thread-Sicherheit & Paralleles Schreiben von 100 Datensätzen
-     */
     @Test
     fun test2_parallelWriteThreadSafetyAndNoDeadlocks() = runBlocking {
         val chat = ChatEntity(
@@ -131,9 +125,6 @@ class AsyncDatabaseConcurrencyUnitTest {
         )
     }
 
-    /**
-     * 3. Test-Dispatcher & Virtuelle Zeit-Mechanismen (runTest & virtual time)
-     */
     @Test
     fun test3_virtualTimeAndDeterministicTimeoutValidation() = runTest {
         val chat = ChatEntity(
@@ -149,7 +140,7 @@ class AsyncDatabaseConcurrencyUnitTest {
         db.chatDao().insertChat(chat)
 
         val startTimeMs = testScheduler.currentTime
-        delay(3000) // Virtuelle 3-Sekunden-Verzögerung ohne reale Wartezeit
+        delay(3000)
 
         val sendResult = chatRepository.sendTextMessage(
             chatId = "chat_virtual_unit",

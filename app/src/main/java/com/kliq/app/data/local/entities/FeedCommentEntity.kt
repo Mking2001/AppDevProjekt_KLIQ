@@ -5,10 +5,6 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/**
- * Room-Entity für einen Kommentar zu einem Feed-Beitrag.
- * Wird beim Löschen des zugehörigen Beitrags mit entfernt.
- */
 @Entity(
     tableName = "feed_comments",
     foreignKeys = [

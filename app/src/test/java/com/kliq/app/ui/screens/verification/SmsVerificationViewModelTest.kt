@@ -44,8 +44,7 @@ class SmsVerificationViewModelTest {
     fun initialState_hasCorrectPhoneNumberAndTimerStarted() = runTest {
         assertEquals(testPhoneNumber, viewModel.phoneNumber)
         assertEquals("", viewModel.enteredCode.value)
-        
-        // Initial code sending starts timer
+
         testDispatcher.scheduler.advanceUntilIdle()
         assertFalse(viewModel.resendTimerState.value.canResend)
         assertEquals(30, viewModel.resendTimerState.value.secondsRemaining)
@@ -61,10 +60,9 @@ class SmsVerificationViewModelTest {
     fun onCodeChanged_whenSixDigits_triggersAutoVerification_success() = runTest {
         testDispatcher.scheduler.advanceUntilIdle()
         viewModel.onCodeChanged("123456")
-        
-        // State should transition to Loading then Success
+
         assertEquals(VerificationUiState.Loading, viewModel.verificationState.value)
-        
+
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(VerificationUiState.Success, viewModel.verificationState.value)
     }
@@ -73,7 +71,7 @@ class SmsVerificationViewModelTest {
     fun onCodeChanged_whenSixDigits_triggersAutoVerification_failure() = runTest {
         testDispatcher.scheduler.advanceUntilIdle()
         viewModel.onCodeChanged("000000")
-        
+
         testDispatcher.scheduler.advanceUntilIdle()
         assertTrue(viewModel.verificationState.value is VerificationUiState.Error)
         assertEquals("", viewModel.enteredCode.value)
@@ -82,8 +80,7 @@ class SmsVerificationViewModelTest {
     @Test
     fun timer_countsDownToZero_andEnablesResendButton() = runTest {
         testDispatcher.scheduler.advanceUntilIdle()
-        
-        // Advance 30 seconds
+
         advanceTimeBy(30_000L)
         testDispatcher.scheduler.advanceUntilIdle()
 

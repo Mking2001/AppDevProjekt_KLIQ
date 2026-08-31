@@ -102,33 +102,43 @@ class GroupPresenceDataSourceImpl @Inject constructor() : GroupPresenceDataSourc
             )
         )
 
-        val munichSummary = GroupPresenceSummary(
-            chatId = "pub_2",
-            chatTitle = "München - Party Radar",
-            totalOnlineCount = 184,
-            totalMembersCount = 980,
-            members = listOf(
-                GroupMemberPresence("current_user", "Du (Ich)", null, "D", UserStatus.ONLINE, GroupMemberRole.MEMBER, "Online im Chat", 0.0),
-                GroupMemberPresence("u_20", "Korbinian W.", null, "K", UserStatus.ONLINE, GroupMemberRole.HOST, "Pacha München 💃", 0.6),
-                GroupMemberPresence("u_21", "Anna L.", null, "A", UserStatus.ONLINE, GroupMemberRole.MODERATOR, "Glockenbachviertel", 1.1),
-                GroupMemberPresence("u_22", "Florian S.", null, "F", UserStatus.ONLINE, GroupMemberRole.MEMBER, "089 Bar warmup", 1.4)
-            )
+        val klagenfurtMembers = listOf(
+            GroupMemberPresence("current_user", "Du (Ich)", null, "D", UserStatus.ONLINE, GroupMemberRole.MEMBER, "Online im Chat", 0.0),
+            GroupMemberPresence("u_seed_1", "Elena M.", null, "E", UserStatus.ONLINE, GroupMemberRole.MODERATOR, "Am Wörthersee", 0.8),
+            GroupMemberPresence("u_seed_2", "Lukas K.", null, "L", UserStatus.ONLINE, GroupMemberRole.MEMBER, "Klagenfurt Innenstadt", 1.2)
         )
-
+        val klagenfurtSummary = GroupPresenceSummary(
+            chatId = "pub_klagenfurt",
+            chatTitle = "Klagenfurt",
+            totalOnlineCount = klagenfurtMembers.count { it.status == UserStatus.ONLINE || it.status == UserStatus.AWAY },
+            totalMembersCount = klagenfurtMembers.size,
+            members = klagenfurtMembers
+        )
         presenceMap["pub_1"] = MutableStateFlow(berlinSummary)
-        presenceMap["pub_2"] = MutableStateFlow(munichSummary)
+        presenceMap["pub_klagenfurt"] = MutableStateFlow(klagenfurtSummary)
     }
 
     private fun createDefaultSummaryForChat(chatId: String): GroupPresenceSummary {
+        val defaultMembers = listOf(
+            GroupMemberPresence("current_user", "Du", null, "D", UserStatus.ONLINE, GroupMemberRole.MEMBER, "Aktiv", 0.0)
+        )
+        val onlineCount = defaultMembers.count { it.status == UserStatus.ONLINE || it.status == UserStatus.AWAY }
+        val title = when (chatId) {
+            "pub_klagenfurt" -> "Klagenfurt"
+            "pub_villach" -> "Villach"
+            "pub_graz" -> "Graz"
+            "pub_wien" -> "Wien"
+            "pub_salzburg" -> "Salzburg"
+            "pub_innsbruck" -> "Innsbruck"
+            "pub_linz" -> "Linz"
+            else -> "Gruppe #$chatId"
+        }
         return GroupPresenceSummary(
             chatId = chatId,
-            chatTitle = "Gruppe #$chatId",
-            totalOnlineCount = 12,
-            totalMembersCount = 45,
-            members = listOf(
-                GroupMemberPresence("current_user", "Du", null, "D", UserStatus.ONLINE, GroupMemberRole.MEMBER, "Aktiv", 0.0),
-                GroupMemberPresence("u_99", "Alex N.", null, "A", UserStatus.ONLINE, GroupMemberRole.MEMBER, "In der Gruppe", 1.0)
-            )
+            chatTitle = title,
+            totalOnlineCount = onlineCount,
+            totalMembersCount = defaultMembers.size,
+            members = defaultMembers
         )
     }
 }

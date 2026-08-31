@@ -48,16 +48,6 @@ import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.util.ensureMinTouchTarget
 
-/**
- * Custom-styled Bottom Navigation Bar for the Kliq app.
- * Applies the Lila/Dark-Mode High-Contrast theme with animated
- * selection indicators, icon scaling, and notification badge support.
- *
- * @param currentRoute The currently selected navigation route string.
- * @param notificationBadgeCount Badge count for the Notifications tab.
- * @param onTabSelected Callback invoked when a tab is tapped.
- * @param modifier Optional [Modifier] for this composable.
- */
 @Composable
 fun KliqBottomBar(
     currentRoute: String,
@@ -80,7 +70,7 @@ fun KliqBottomBar(
         tonalElevation = 8.dp
     ) {
         Column {
-            // Top accent gradient line
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -124,11 +114,6 @@ fun KliqBottomBar(
     }
 }
 
-/**
- * Individual item in the Kliq Bottom Bar.
- * Features spring-animated scaling, color transitions, and an
- * active-state indicator pill beneath the icon.
- */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 private fun KliqBottomBarItem(
@@ -185,7 +170,7 @@ private fun KliqBottomBarItem(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Active indicator pill
+
         Box(
             modifier = Modifier
                 .size(
@@ -201,7 +186,6 @@ private fun KliqBottomBarItem(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Icon with optional badge
         BadgedBox(
             badge = {
                 if (badgeCount > 0) {
@@ -231,7 +215,6 @@ private fun KliqBottomBarItem(
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        // Label
         Text(
             text = navItem.label,
             style = MaterialTheme.typography.labelSmall,

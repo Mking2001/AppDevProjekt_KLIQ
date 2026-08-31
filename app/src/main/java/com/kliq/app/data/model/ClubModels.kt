@@ -69,6 +69,8 @@ data class Club(
     val websiteUrl: String? = null,
     val phoneNumber: String? = null,
     val contactEmail: String? = null,
+    val flameCount: Int = 0,
+    val isHypedToday: Boolean = false,
     val contactInfo: ClubContactInfo = ClubContactInfo(
         phoneNumber = phoneNumber,
         email = contactEmail,

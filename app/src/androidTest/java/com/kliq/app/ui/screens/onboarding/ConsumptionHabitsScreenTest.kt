@@ -38,18 +38,15 @@ class ConsumptionHabitsScreenTest {
             }
         }
 
-        // 1. Layout & Rendering Test
         composeTestRule.onNodeWithText("SCHRITT 3 VON 3 • KONSUM-GEWOHNHEITEN").assertIsDisplayed()
         composeTestRule.onNodeWithText("Rauchen & Trinken").assertIsDisplayed()
         composeTestRule.onNodeWithText("Rauchverhalten").assertIsDisplayed()
         composeTestRule.onNodeWithText("Trinkverhalten").assertIsDisplayed()
 
-        // Verify smoking options rendering
         composeTestRule.onNodeWithText("Ich rauche gar nicht").assertIsDisplayed()
         composeTestRule.onNodeWithText("Ab und zu beim Feiern oder in Gesellschaft").assertIsDisplayed()
         composeTestRule.onNodeWithText("Regelmäßiger Raucher im Alltag").assertIsDisplayed()
 
-        // Verify drinking options rendering
         composeTestRule.onNodeWithText("Ich trinke keinen Alkohol").assertIsDisplayed()
         composeTestRule.onNodeWithText("Ab und zu in Gesellschaft oder bei Events").assertIsDisplayed()
         composeTestRule.onNodeWithText("Gerne und regelmäßig beim Ausgehen").assertIsDisplayed()
@@ -66,21 +63,17 @@ class ConsumptionHabitsScreenTest {
             }
         }
 
-        // 2. Interaction Test: Confirm button is initially disabled
         composeTestRule.onNodeWithText("Auswahl speichern & Weiter").assertIsNotEnabled()
 
-        // Select smoking option
         composeTestRule.onNodeWithText("Ich rauche gar nicht").performClick()
         assertEquals(SmokingHabit.NEVER, viewModel.uiState.value.selectedSmokingHabit)
         assertNull(viewModel.uiState.value.selectedDrinkingHabit)
-        // Button still disabled until drinking option is also selected
+
         composeTestRule.onNodeWithText("Auswahl speichern & Weiter").assertIsNotEnabled()
 
-        // Select drinking option
         composeTestRule.onNodeWithText("Ab und zu in Gesellschaft oder bei Events").performClick()
         assertEquals(DrinkingHabit.SOCIAL, viewModel.uiState.value.selectedDrinkingHabit)
 
-        // Now button must be enabled
         composeTestRule.onNodeWithText("Auswahl speichern & Weiter").assertIsEnabled()
         composeTestRule.onNodeWithText("Auswahl speichern & Weiter").assertHasClickAction()
     }
@@ -100,7 +93,6 @@ class ConsumptionHabitsScreenTest {
             }
         }
 
-        // 3. State & Persistence Test
         composeTestRule.onNodeWithText("Regelmäßiger Raucher im Alltag").performClick()
         composeTestRule.onNodeWithText("Gerne und regelmäßig beim Ausgehen").performClick()
 
@@ -109,7 +101,6 @@ class ConsumptionHabitsScreenTest {
 
         composeTestRule.waitForIdle()
 
-        // Verify state passed to ViewModel & persisted in Repository
         assertEquals(SmokingHabit.REGULARLY, fakeRepo.savedSmokingHabit)
         assertEquals(DrinkingHabit.FREQUENTLY, fakeRepo.savedDrinkingHabit)
         assertTrue(viewModel.uiState.value.isSaved)

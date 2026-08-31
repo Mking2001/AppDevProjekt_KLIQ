@@ -39,7 +39,6 @@ class KliqDatabaseMigrationAndroidTest {
     fun verifyMigrationFromVersion1ToLatestVersion7_onEmulator() {
         Log.i(TEST_TAG, "Step 1: Creating Schema Version 1 database instance...")
 
-        // Step 1: Create Version 1 SQLite Database
         val configV1 = SupportSQLiteOpenHelper.Configuration.builder(context)
             .name(EMULATOR_TEST_DB)
             .callback(object : SupportSQLiteOpenHelper.Callback(1) {
@@ -75,20 +74,17 @@ class KliqDatabaseMigrationAndroidTest {
 
         Log.i(TEST_TAG, "Inserting Schema V1 sample records...")
 
-        // Insert V1 User
         dbV1.execSQL(
             "INSERT INTO `users` (`id`, `username`, `email`, `profilePictureUrl`, `bio`) " +
             "VALUES ('user_v1_001', 'night_owl', 'owl@kliq.app', 'https://kliq.app/avatars/owl.jpg', 'Party lover')"
         )
 
-        // Insert V1 Club
         dbV1.execSQL(
             "INSERT INTO `clubs` (`id`, `name`, `category`, `rating`, `imageUrl`, `region`, " +
             "`isFavorite`, `currentCapacityPercent`, `malePercentage`, `femalePercentage`, `totalLiveVisitors`) " +
             "VALUES ('club_v1_101', 'Pacha Club', 'EDM', 4.5, 'https://kliq.app/pacha.jpg', 'Munich', 1, 80, 50, 50, 400)"
         )
 
-        // Insert V1 Chat
         dbV1.execSQL(
             "INSERT INTO `chats` (`id`, `name`, `lastMessageText`, `lastMessageTimestamp`, `avatarInitial`, " +
             "`unreadCount`, `chatType`, `isOnline`) " +
@@ -98,7 +94,6 @@ class KliqDatabaseMigrationAndroidTest {
         helperV1.close()
         Log.i(TEST_TAG, "Schema V1 initialization complete.")
 
-        // Step 2: Run sequential migrations V1 -> V7
         Log.i(TEST_TAG, "Step 2: Executing migration chain from V1 to V7...")
 
         val configV7 = SupportSQLiteOpenHelper.Configuration.builder(context)
@@ -145,7 +140,6 @@ class KliqDatabaseMigrationAndroidTest {
 
         Log.i(TEST_TAG, "Step 3: Verifying data preservation and schema integrity post-migration...")
 
-        // Validate Users Data Preservation
         val userCursor = dbV7.query("SELECT * FROM `users` WHERE `id` = 'user_v1_001'")
         assertTrue("Migrated user record must exist", userCursor.moveToFirst())
         assertEquals("night_owl", userCursor.getString(userCursor.getColumnIndexOrThrow("username")))
@@ -156,7 +150,6 @@ class KliqDatabaseMigrationAndroidTest {
         assertEquals(0L, userCursor.getLong(userCursor.getColumnIndexOrThrow("updatedAtTimestampMs")))
         userCursor.close()
 
-        // Validate Clubs Data Preservation & New Columns
         val clubCursor = dbV7.query("SELECT * FROM `clubs` WHERE `id` = 'club_v1_101'")
         assertTrue("Migrated club record must exist", clubCursor.moveToFirst())
         assertEquals("Pacha Club", clubCursor.getString(clubCursor.getColumnIndexOrThrow("name")))
@@ -168,7 +161,6 @@ class KliqDatabaseMigrationAndroidTest {
         assertEquals(0, clubCursor.getInt(clubCursor.getColumnIndexOrThrow("isPromoted")))
         clubCursor.close()
 
-        // Validate Chats Data Preservation & New Columns
         val chatCursor = dbV7.query("SELECT * FROM `chats` WHERE `id` = 'chat_v1_201'")
         assertTrue("Migrated chat record must exist", chatCursor.moveToFirst())
         assertEquals("VIP Crew", chatCursor.getString(chatCursor.getColumnIndexOrThrow("name")))
@@ -179,7 +171,6 @@ class KliqDatabaseMigrationAndroidTest {
         assertTrue(chatCursor.isNull(chatCursor.getColumnIndexOrThrow("lastReadMessageId")))
         chatCursor.close()
 
-        // Validate New Tables Existence
         val prefCursor = dbV7.query("SELECT COUNT(*) FROM `user_preferences`")
         assertNotNull(prefCursor)
         prefCursor.close()
@@ -196,7 +187,6 @@ class KliqDatabaseMigrationAndroidTest {
         assertNotNull(messageCursor)
         messageCursor.close()
 
-        // Validate PRAGMA Quick Check Integrity
         val checkCursor = dbV7.query("PRAGMA quick_check")
         assertTrue(checkCursor.moveToFirst())
         val quickCheckResult = checkCursor.getString(0)

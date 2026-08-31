@@ -27,10 +27,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 
-/**
- * Prüft die GPS-gestützte Zuordnung des Stadt-Gruppenchats sowie den
- * manuellen Stadtwechsel. Zielmarkt ist Klagenfurt.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CityPublicChatViewModelTest {
 
@@ -47,6 +43,7 @@ class CityPublicChatViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         `when`(userRepository.getBlockedUserIds(anyString())).thenReturn(flowOf(emptyList()))
+        `when`(userRepository.getUserById(anyString())).thenReturn(flowOf(null))
         `when`(locationRepository.locationUpdates).thenReturn(locationUpdatesFlow)
 
         chatRepository = FakeChatRepository()
@@ -64,24 +61,25 @@ class CityPublicChatViewModelTest {
     }
 
     @Test
-    fun locationUpdate_selectsNearestSupportedCity() = runTest {
+    fun locationUpdate_suggestsForeignCityWhenDifferentFromActive() = runTest {
         val villachLocation = LocationData(latitude = 46.6103, longitude = 13.8558)
         locationUpdatesFlow.value = villachLocation
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val activeChat = viewModel.uiState.value.activeGpsCityChat
-        assertNotNull(activeChat)
-        assertEquals("Villach - Party Radar", activeChat?.title)
-        assertTrue(activeChat?.isGpsAssigned == true)
+        val suggested = viewModel.uiState.value.suggestedForeignCity
+        assertNotNull(suggested)
+        assertEquals("Villach - Party Radar", suggested?.title)
+        assertTrue(viewModel.uiState.value.showCitySwitchSuggestion)
     }
 
     @Test
     fun locationUpdate_createsCityChatInRepository() = runTest {
-        locationUpdatesFlow.value = LocationData(latitude = 46.6236, longitude = 14.3084)
+        val grazConfig = CityChatLocationMapper.SUPPORTED_CITIES.first { it.cityRegion == "Graz" }
+        viewModel.selectCityChat(grazConfig)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        assertTrue(state.publicChats.any { it.id == "pub_klagenfurt" })
+        assertTrue(state.publicChats.any { it.id == "pub_graz" })
     }
 
     @Test
@@ -91,7 +89,7 @@ class CityPublicChatViewModelTest {
         viewModel.selectCityChat(grazConfig)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        assertEquals("Graz - Nightlife", viewModel.uiState.value.activeGpsCityChat?.title)
+        assertEquals("Graz - Nightlife", viewModel.uiState.value.activeCity.title)
         assertFalse(viewModel.uiState.value.isCitySwitcherOpen)
         assertTrue(viewModel.uiState.value.publicChats.any { it.id == grazConfig.id })
     }
@@ -109,7 +107,8 @@ class CityPublicChatViewModelTest {
     fun defaultCity_isKlagenfurtWhenNoLocationAvailable() = runTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
-        val activeChat = viewModel.uiState.value.activeGpsCityChat
-        assertEquals("Klagenfurt - Tonight", activeChat?.title)
+        val activeCity = viewModel.uiState.value.activeCity
+        assertEquals("Klagenfurt - Tonight", activeCity.title)
+        assertFalse(viewModel.uiState.value.showCitySwitchSuggestion)
     }
 }

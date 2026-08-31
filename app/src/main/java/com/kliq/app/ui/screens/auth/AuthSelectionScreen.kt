@@ -54,10 +54,6 @@ import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.ui.theme.TealSecondary
 
-/**
- * Willkommens- und Einstiegsbildschirm nach frischer Installation oder Logout.
- * Bietet die primäre Auswahl zwischen Neuregistrierung ("Anmelden") und Login ("Einloggen").
- */
 @Composable
 fun AuthSelectionScreen(
     onNavigateToLogin: () -> Unit,
@@ -88,7 +84,7 @@ fun AuthSelectionScreen(
                 )
             )
     ) {
-        // Glowing Ambient Background Orbs
+
         Box(
             modifier = Modifier
                 .size(280.dp)
@@ -114,7 +110,7 @@ fun AuthSelectionScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Header & Branding
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(top = 32.dp)
@@ -176,7 +172,6 @@ fun AuthSelectionScreen(
                 )
             }
 
-            // Highlights Cards
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -198,13 +193,12 @@ fun AuthSelectionScreen(
                 )
             }
 
-            // Action Buttons
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                // Register Button (Primary Gradient)
+
                 Button(
                     onClick = onNavigateToRegister,
                     modifier = Modifier
@@ -240,7 +234,6 @@ fun AuthSelectionScreen(
                     }
                 }
 
-                // Login Button (Secondary Outlined / Glassmorphic)
                 OutlinedButton(
                     onClick = onNavigateToLogin,
                     modifier = Modifier

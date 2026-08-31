@@ -31,20 +31,17 @@ data class ChatListUiState(
     val selectedTab: ChatType = ChatType.PUBLIC_CITY,
     val searchQuery: String = "",
     val isSearchActive: Boolean = false,
-    val activeGpsCityChat: ChatListItem? = null,
+    val activeCity: CityChatConfig = CityChatLocationMapper.SUPPORTED_CITIES.first(),
+    val suggestedForeignCity: CityChatConfig? = null,
+    val showCitySwitchSuggestion: Boolean = false,
     val isCitySwitcherOpen: Boolean = false,
+    val isCreateGroupDialogOpen: Boolean = false,
+    val groupImageUri: String? = null,
+    val availableUsers: List<com.kliq.app.data.local.entities.UserEntity> = emptyList(),
     val isLoading: Boolean = true,
     val error: String? = null
 )
 
-/**
- * ViewModel für die Chat-Übersicht.
- *
- * Die Chat-Liste wird ausschließlich aus dem [ChatRepository] gespeist. Archivieren,
- * Löschen und das Zurücksetzen des Ungelesen-Zählers schreiben in die Datenbank;
- * die Anzeige folgt dem Room-Flow. Damit bleibt die Liste konsistent zu den
- * tatsächlich gespeicherten Chats.
- */
 @HiltViewModel
 class ChatListViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
@@ -59,16 +56,54 @@ class ChatListViewModel @Inject constructor(
     private var activeChats: List<ChatListItem> = emptyList()
     private var archivedChats: List<ChatListItem> = emptyList()
     private var blockedUserIds: Set<String> = emptySet()
+    private var currentGpsCity: CityChatConfig? = null
+    private var manualSelectedCity: CityChatConfig? = null
 
     init {
+        observeUserProfile()
         observeChats()
         observeLocationUpdates()
+        syncChatsFromCloud()
     }
 
-    /**
-     * Beobachtet aktive Chats, archivierte Chats und die Blockierliste gemeinsam,
-     * damit jede Änderung genau eine Neuberechnung der Anzeige auslöst.
-     */
+    private fun syncChatsFromCloud() {
+        viewModelScope.launch {
+            try {
+                chatRepository.syncAllChats()
+            } catch (ignored: Exception) { }
+        }
+    }
+
+    private fun observeUserProfile() {
+        viewModelScope.launch {
+            val currentUserId = currentUserProvider.userId()
+            userRepository.getUserById(currentUserId).collect { user ->
+                val hometown = user?.hometown?.ifBlank { null } ?: "Klagenfurt"
+                val homeCityConfig = CityChatLocationMapper.resolveCityByName(hometown)
+
+                val targetCity = manualSelectedCity ?: homeCityConfig
+                val isDifferent = currentGpsCity != null &&
+                        !currentGpsCity!!.cityRegion.equals(targetCity.cityRegion, ignoreCase = true)
+
+                _uiState.update { state ->
+                    state.copy(
+                        activeCity = targetCity,
+                        suggestedForeignCity = if (isDifferent) currentGpsCity else null,
+                        showCitySwitchSuggestion = isDifferent
+                    )
+                }
+
+                chatRepository.createChatIfMissing(
+                    chatId = targetCity.id,
+                    name = targetCity.title,
+                    chatType = ChatType.PUBLIC_CITY,
+                    cityRegion = targetCity.cityRegion,
+                    avatarInitial = targetCity.avatarInitial
+                )
+            }
+        }
+    }
+
     private fun observeChats() {
         viewModelScope.launch {
             val currentUserId = currentUserProvider.userId()
@@ -117,10 +152,6 @@ class ChatListViewModel @Inject constructor(
         applyFilters()
     }
 
-    /**
-     * Setzt den Ungelesen-Zähler eines Chats zurück, sobald er geöffnet wird.
-     * Das Badge verschwindet dadurch dauerhaft und nicht nur für die Sitzung.
-     */
     fun onChatOpened(chatId: String) {
         viewModelScope.launch {
             chatRepository.markChatAsRead(chatId)
@@ -143,8 +174,11 @@ class ChatListViewModel @Inject constructor(
             }
         }
 
+        val activeCityRegion = _uiState.value.activeCity.cityRegion
         val filteredPublic = activeChats.filter {
-            it.chatType == ChatType.PUBLIC_CITY && matchesQuery(it)
+            it.chatType == ChatType.PUBLIC_CITY &&
+            it.cityRegion.equals(activeCityRegion, ignoreCase = true) &&
+            matchesQuery(it)
         }
         val filteredPrivate = activeChats.filter {
             it.chatType == ChatType.PRIVATE && !isFromBlockedUser(it) && matchesQuery(it)
@@ -208,10 +242,6 @@ class ChatListViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Stellt einen archivierten oder gelöschten Chat wieder her.
-     * Bei gelöschten Chats wird der Datensatz neu angelegt.
-     */
     fun onUndoDelete(item: ChatListItem) {
         viewModelScope.launch {
             chatRepository.createChatIfMissing(
@@ -229,38 +259,20 @@ class ChatListViewModel @Inject constructor(
         onUndoDelete(chat.toChatListItem())
     }
 
-    /**
-     * Ordnet dem Nutzer anhand der GPS-Position den nächstgelegenen Stadt-Chat zu
-     * und legt diesen bei Bedarf in der Datenbank an.
-     */
     private fun observeLocationUpdates() {
         viewModelScope.launch {
             locationRepository.locationUpdates.collect { location ->
+                if (location == null) return@collect
                 val resolvedConfig = CityChatLocationMapper.resolveCityForLocation(location)
-                val distance = if (location != null) {
-                    CityChatLocationMapper.calculateDistanceInKm(
-                        location.latitude, location.longitude,
-                        resolvedConfig.latitude, resolvedConfig.longitude
+                currentGpsCity = resolvedConfig
+
+                _uiState.update { state ->
+                    val isDifferent = !resolvedConfig.cityRegion.equals(state.activeCity.cityRegion, ignoreCase = true)
+                    state.copy(
+                        suggestedForeignCity = if (isDifferent) resolvedConfig else null,
+                        showCitySwitchSuggestion = isDifferent
                     )
-                } else {
-                    null
                 }
-
-                val gpsAssignedItem = CityChatLocationMapper.buildCityChatListItem(
-                    config = resolvedConfig,
-                    distanceKm = distance,
-                    isGpsAssigned = true
-                )
-
-                chatRepository.createChatIfMissing(
-                    chatId = resolvedConfig.id,
-                    name = resolvedConfig.title,
-                    chatType = ChatType.PUBLIC_CITY,
-                    cityRegion = resolvedConfig.cityRegion,
-                    avatarInitial = resolvedConfig.avatarInitial
-                )
-
-                _uiState.update { it.copy(activeGpsCityChat = gpsAssignedItem) }
             }
         }
     }
@@ -273,15 +285,8 @@ class ChatListViewModel @Inject constructor(
         _uiState.update { it.copy(isCitySwitcherOpen = false) }
     }
 
-    /**
-     * Wechselt manuell in einen anderen Stadt-Chat und legt ihn bei Bedarf an.
-     */
     fun selectCityChat(config: CityChatConfig) {
-        val newItem = CityChatLocationMapper.buildCityChatListItem(
-            config = config,
-            distanceKm = null,
-            isGpsAssigned = false
-        )
+        manualSelectedCity = config
 
         viewModelScope.launch {
             chatRepository.createChatIfMissing(
@@ -293,11 +298,57 @@ class ChatListViewModel @Inject constructor(
             )
         }
 
-        _uiState.update {
-            it.copy(
-                activeGpsCityChat = newItem,
+        _uiState.update { state ->
+            val isDifferentFromGps = currentGpsCity != null &&
+                    !currentGpsCity!!.cityRegion.equals(config.cityRegion, ignoreCase = true)
+            state.copy(
+                activeCity = config,
+                suggestedForeignCity = if (isDifferentFromGps) currentGpsCity else null,
+                showCitySwitchSuggestion = isDifferentFromGps,
                 isCitySwitcherOpen = false
             )
+        }
+    }
+
+    fun openCreateGroupDialog() {
+        viewModelScope.launch {
+            val users = try {
+                userRepository.getAllUsers()
+            } catch (e: Exception) {
+                emptyList()
+            }
+            val currentUserId = currentUserProvider.userId()
+            _uiState.update {
+                it.copy(
+                    isCreateGroupDialogOpen = true,
+                    groupImageUri = null,
+                    availableUsers = users.filter { u -> u.id != currentUserId }
+                )
+            }
+        }
+    }
+
+    fun closeCreateGroupDialog() {
+        _uiState.update { it.copy(isCreateGroupDialogOpen = false, groupImageUri = null) }
+    }
+
+    fun setGroupImageUri(uri: String?) {
+        _uiState.update { it.copy(groupImageUri = uri) }
+    }
+
+    fun createGroup(name: String, description: String, selectedUserIds: List<String>, onCreated: (String) -> Unit) {
+        viewModelScope.launch {
+            val imageUri = _uiState.value.groupImageUri
+            val res = chatRepository.createGroupChat(
+                name = name,
+                description = description,
+                imageUrl = imageUri,
+                memberUserIds = selectedUserIds
+            )
+            closeCreateGroupDialog()
+            res.onSuccess { newGroupId ->
+                onCreated(newGroupId)
+            }
         }
     }
 }

@@ -30,10 +30,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Vollständiges Emulator- & Szenario-Testskript zur Überprüfung aller 3 Ausführungszustände
- * und Prüfkriterien von Kapitel 6.7 ("Nachrichten-Status: Gelesen/Empfangen").
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
@@ -70,17 +66,12 @@ class MessageStatusValidationScenarioTest {
         Dispatchers.resetMain()
     }
 
-    /**
-     * SZENARIO 1: Daten-Simulation & Dynamische UI-Icon-Zustände (SENT -> DELIVERED -> READ)
-     * PASS Prüfkriterium: Das UI-Icon ändert sich dynamisch von "Gesendet" zu "Empfangen" und zu "Gelesen".
-     */
     @Test
     fun testScenario1_DataSimulationAndIconTransitions() = runTest {
         println("=================================================================")
         println("[$TAG] SZENARIO 1: Daten-Simulation (SENT -> DELIVERED -> READ)")
         println("=================================================================")
 
-        // 1. Senden einer Nachricht (Status: SENT)
         val sendResult = chatRepository.sendDirectMessage(
             senderId = senderId,
             receiverId = receiverId,
@@ -93,7 +84,6 @@ class MessageStatusValidationScenarioTest {
         assertNull(initialMsg.deliveredAtMs)
         assertNull(initialMsg.readAtMs)
 
-        // UI-State Mapping verifizieren (Icon Text & Farbe für SENT)
         val chatMessageSent = ChatMessage(
             id = initialMsg.messageId,
             chatId = "chat_123",
@@ -108,7 +98,6 @@ class MessageStatusValidationScenarioTest {
         assertEquals(ChatHighContrastPalette.StatusSentGray, uiStateSent.statusIconColorHex)
         println("[PASS] Status 1: GESENDET (✓ Gesendet, Gray Icon)")
 
-        // 2. Simuliere Empfang einer Bestätigung durch das Backend (Status: DELIVERED)
         chatRepository.markDirectMessageAsDelivered(initialMsg.messageId)
         val dbMessagesDelivered = directMessageDao.getDirectMessagesBetweenUsers(senderId, receiverId).first()
         val deliveredMsg = dbMessagesDelivered.first { it.messageId == initialMsg.messageId }
@@ -124,7 +113,6 @@ class MessageStatusValidationScenarioTest {
         assertEquals(ChatHighContrastPalette.StatusDeliveredGreen, uiStateDelivered.statusIconColorHex)
         println("[PASS] Status 2: EMPFANGEN/ZUGESTELLT (✓✓ Empfangen, Green/White Icon)")
 
-        // 3. Simuliere Öffnen des Chats durch den Empfänger (Status: READ)
         chatRepository.markDirectMessageAsRead(initialMsg.messageId)
         val dbMessagesRead = directMessageDao.getDirectMessagesBetweenUsers(senderId, receiverId).first()
         val readMsg = dbMessagesRead.first { it.messageId == initialMsg.messageId }
@@ -142,17 +130,12 @@ class MessageStatusValidationScenarioTest {
         println("[PASS] Status 3: GELESEN (✓✓ Gelesen, Kliq Violet Icon)")
     }
 
-    /**
-     * SZENARIO 2: Unterbrechung der Netzwerkverbindung (Offline-Glättung & Re-Sync)
-     * PASS Prüfkriterium: Bei Unterbrechung bleibt lokaler Status geglättet und wird nach Re-Connect synchronisiert.
-     */
     @Test
     fun testScenario2_NetworkDisruptionAndOfflineResync() = runTest {
         println("=================================================================")
         println("[$TAG] SZENARIO 2: Netzunterbrechung & Re-Synchronisation")
         println("=================================================================")
 
-        // Sende Nachricht im Offline/Verzögerten Zustand
         val sendResult = chatRepository.sendDirectMessage(
             senderId = senderId,
             receiverId = receiverId,
@@ -160,28 +143,21 @@ class MessageStatusValidationScenarioTest {
         )
         val msgId = sendResult.getOrThrow().messageId
 
-        // Nachricht verbleibt geglättet im lokalen Raum als SENT
         val dbInitial = directMessageDao.getDirectMessagesBetweenUsers(senderId, receiverId).first()
         assertEquals(MessageStatus.SENT, dbInitial.first { it.messageId == msgId }.deliveryStatus)
         println("[PASS] Offline-Status lokal stabil auf SENT geglättet")
 
-        // Simulation: Netzwerk wiederhergestellt -> Batch Delivered Update
         chatRepository.markDirectConversationAsDelivered(senderId = senderId, receiverId = receiverId)
         val dbAfterDelivered = directMessageDao.getDirectMessagesBetweenUsers(senderId, receiverId).first()
         assertEquals(MessageStatus.DELIVERED, dbAfterDelivered.first { it.messageId == msgId }.deliveryStatus)
         println("[PASS] Re-Sync 1: Status automatisch zu DELIVERED aktualisiert")
 
-        // Simulation: Empfänger öffnet Chat -> Batch Read Update
         chatRepository.markDirectConversationAsRead(senderId = senderId, receiverId = receiverId)
         val dbAfterRead = directMessageDao.getDirectMessagesBetweenUsers(senderId, receiverId).first()
         assertEquals(MessageStatus.READ, dbAfterRead.first { it.messageId == msgId }.deliveryStatus)
         println("[PASS] Re-Sync 2: Status automatisch zu READ synchronisiert")
     }
 
-    /**
-     * SZENARIO 3: Schneller Wechsel zwischen Chat-Strängen (Keine UI-Hänger / Jank / OOM)
-     * PASS Prüfkriterium: Unterbrechungsfreie Verarbeitung von mehreren Konversationen.
-     */
     @Test
     fun testScenario3_RapidConversationSwitching() = runTest {
         println("=================================================================")

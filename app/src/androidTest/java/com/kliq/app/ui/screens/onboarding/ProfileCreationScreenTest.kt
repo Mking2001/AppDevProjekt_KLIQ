@@ -34,10 +34,8 @@ class ProfileCreationScreenTest {
             }
         }
 
-        // Initially button is disabled
         composeTestRule.onNodeWithText("Profil erstellen").assertIsNotEnabled()
 
-        // Input invalid age (16)
         composeTestRule.onNodeWithText("Alter *").performTextInput("16")
         composeTestRule.onNodeWithText("Du musst mindestens 18 Jahre alt sein.").assertIsDisplayed()
         composeTestRule.onNodeWithText("Profil erstellen").assertIsNotEnabled()
@@ -58,13 +56,11 @@ class ProfileCreationScreenTest {
             }
         }
 
-        // Fill form with valid inputs
         composeTestRule.onNodeWithText("Benutzername *").performTextInput("test_hero")
         composeTestRule.onNodeWithText("Alter *").performTextInput("25")
         composeTestRule.onNodeWithText("Heimatstadt *").performTextInput("Hamburg")
         composeTestRule.onNodeWithText("Bio / Über mich").performTextInput("Loves EDM festival summer!")
 
-        // Button should now be enabled
         composeTestRule.onNodeWithText("Profil erstellen").assertIsEnabled()
         composeTestRule.onNodeWithText("Profil erstellen").assertHasClickAction()
     }

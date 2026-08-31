@@ -15,10 +15,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * UI- & Emulator-Test für Kapitel 7.6: Integration von externen Club-Infos & Öffnungszeiten.
- * Verifiziert Daten-Mocking (Mitternacht, Geschlossen, Fehlende Website), UI-Rendering und Interaktions-Stabilität.
- */
 @RunWith(AndroidJUnit4::class)
 class ClubExternalInfoEmulatorTest {
 

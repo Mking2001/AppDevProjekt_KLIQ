@@ -24,12 +24,6 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 
-/**
- * Unit tests for [MapViewModel] validating ClubRepository flow integration,
- * dynamic marker clustering, separate ClubMarkerUiState and UserMarkerUiState,
- * camera position management, venue filtering, long-press gesture quick-view trigger,
- * live visitor stats and gender ratio mapping.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapViewModelTest {
 
@@ -176,13 +170,12 @@ class MapViewModelTest {
 
     @Test
     fun testFilterSelectionTogglesCorrectIndexAndFiltersVenues() {
-        viewModel.onFilterSelected(1) // "Clubs"
+        viewModel.onFilterSelected(1)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, viewModel.uiState.value.selectedFilter)
         assertEquals(2, viewModel.uiState.value.nearbyVenues.size)
 
-        // Select "Events" filter (index 3) - only Berghain (c1) has activeEvent
         viewModel.onFilterSelected(3)
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -190,7 +183,6 @@ class MapViewModelTest {
         assertEquals(1, viewModel.uiState.value.nearbyVenues.size)
         assertEquals("c1", viewModel.uiState.value.nearbyVenues.first().id)
 
-        // Toggle off when selecting same filter
         viewModel.onFilterSelected(3)
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -200,8 +192,7 @@ class MapViewModelTest {
 
     @Test
     fun testLocationRequestedUpdatesCameraPositionAndLocationState() {
-        // Ohne LocationRepository faellt onLocationRequested() auf das
-        // Klagenfurt-Stadtzentrum aus KlagenfurtSeedData zurueck.
+
         viewModel.onLocationRequested()
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -273,8 +264,7 @@ class MapViewModelTest {
 
     @Test
     fun testEdgeCase_emptyRepositoryFlow_usesFallbackVenuesSafely() {
-        // Bleibt die Room-Datenbank leer, faellt das ViewModel auf den
-        // Klagenfurt-Demonstrationsdatensatz zurueck (KlagenfurtSeedData.clubs()).
+
         `when`(clubRepository.getAllClubs()).thenReturn(flowOf(emptyList()))
         val fallbackVm = MapViewModel(clubRepository = clubRepository, defaultDispatcher = testDispatcher)
         testDispatcher.scheduler.advanceUntilIdle()

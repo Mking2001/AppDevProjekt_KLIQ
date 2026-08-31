@@ -69,9 +69,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-// High-Contrast Dark-Mode Violet Colors
-private val PurpleAccentPrimary = Color(0xFF8A2BE2) // BlueViolet (#8A2BE2)
-private val PurpleAccentSecondary = Color(0xFF7F00FF) // Electric Purple (#7F00FF)
+private val PurpleAccentPrimary = Color(0xFF8A2BE2)
+private val PurpleAccentSecondary = Color(0xFF7F00FF)
 private val PurpleAccentLight = Color(0xFFBB86FC)
 private val HighContrastBackground = Color(0xFF0F0B15)
 private val SurfaceDark = Color(0xFF1A1523)
@@ -79,9 +78,6 @@ private val SurfaceVariantDark = Color(0xFF2D2640)
 private val HighContrastText = Color(0xFFF0ECFA)
 private val SubduedText = Color(0xFFAAA4C0)
 
-/**
- * 1-zu-1 Private Chat Screen mit High-Contrast Lila Dark-Mode Design.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PrivateChatScreen(
@@ -158,9 +154,6 @@ fun PrivateChatScreen(
     }
 }
 
-/**
- * Custom High-Contrast Top-Bar mit E2E-Verschluesselungs-Badge und Online-Status.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PrivateChatTopBar(
@@ -285,9 +278,6 @@ private fun PrivateChatTopBar(
     )
 }
 
-/**
- * Sprechblase fuer 1-zu-1 Nachrichten mit Richtungs- und Statusanzeige.
- */
 @Composable
 private fun DirectMessageBubble(
     message: DirectMessage,
@@ -379,9 +369,6 @@ private fun DirectMessageBubble(
     }
 }
 
-/**
- * Status-Icon fuer Sende- & Gelesen-Status der Nachricht.
- */
 @Composable
 private fun DeliveryStatusIcon(status: MessageStatus) {
     val icon = when (status) {
@@ -403,9 +390,6 @@ private fun DeliveryStatusIcon(status: MessageStatus) {
     )
 }
 
-/**
- * High-Contrast Eingabeleiste mit Lila Akzent-Sendebutton.
- */
 @Composable
 private fun PrivateChatInputBar(
     value: String,

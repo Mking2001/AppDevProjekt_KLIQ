@@ -118,5 +118,8 @@ class ClubExternalInfoViewModelTest {
         override suspend fun isUserWithinGeofence(clubId: String, userLat: Double, userLon: Double): Boolean = false
         override fun getClubGenderRatio(clubId: String, timeWindowMs: Long): Flow<GenderRatio> = flowOf(GenderRatio())
         override suspend fun calculateClubGenderRatio(clubId: String, timeWindowMs: Long): GenderRatio = GenderRatio()
+        override suspend fun toggleClubHype(clubId: String, userId: String): Result<Boolean> = Result.success(true)
+        override fun isClubHypedToday(clubId: String, userId: String): Flow<Boolean> = flowOf(false)
+        override fun getHypedClubIdsToday(userId: String): Flow<List<String>> = flowOf(emptyList())
     }
 }

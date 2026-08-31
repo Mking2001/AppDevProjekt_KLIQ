@@ -5,16 +5,16 @@ enum class DrinkingHabit(
     val description: String
 ) {
     NEVER(
-        title = "Nie",
+        title = "Nicht Trinker",
         description = "Ich trinke keinen Alkohol"
     ),
     SOCIAL(
-        title = "Gesellschaftlich",
-        description = "Ab und zu in Gesellschaft oder bei Events"
+        title = "Genuss Trinker",
+        description = "Ab und zu ein Drink zum Genuss"
     ),
     FREQUENTLY(
-        title = "Oft",
-        description = "Gerne und regelmäßig beim Ausgehen"
+        title = "Säufer",
+        description = "Gerne und viel beim Feiern"
     );
 
     companion object {

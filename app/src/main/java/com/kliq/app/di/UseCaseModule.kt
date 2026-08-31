@@ -10,9 +10,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/**
- * Hilt Dependency Injection module providing Domain UseCases for clean architecture.
- */
 @Module
 @InstallIn(SingletonComponent::class)
 object UseCaseModule {

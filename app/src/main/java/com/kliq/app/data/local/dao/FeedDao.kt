@@ -9,14 +9,23 @@ import com.kliq.app.data.local.entities.FeedPostEntity
 import com.kliq.app.data.local.entities.StoryEntity
 import kotlinx.coroutines.flow.Flow
 
-/**
- * DAO für Home-Feed-Beiträge, Kommentare und Storys.
- */
 @Dao
 interface FeedDao {
 
     @Query("SELECT * FROM feed_posts ORDER BY createdAtMs DESC")
     fun getFeedPosts(): Flow<List<FeedPostEntity>>
+
+    @Query("SELECT * FROM feed_posts WHERE isEventPinned = 1 ORDER BY createdAtMs DESC")
+    fun getPinnedEvents(): Flow<List<FeedPostEntity>>
+
+    @Query("SELECT * FROM feed_posts WHERE authorUserId = :userId ORDER BY createdAtMs DESC")
+    fun getFeedPostsByAuthor(userId: String): Flow<List<FeedPostEntity>>
+
+    @Query("UPDATE feed_posts SET flameCount = :flameCount, flameDate = :flameDate WHERE id = :postId")
+    suspend fun updateFlameCount(postId: String, flameCount: Int, flameDate: String)
+
+    @Query("SELECT COUNT(*) FROM feed_posts WHERE authorUserId = :userId")
+    fun getFeedPostCountByAuthor(userId: String): Flow<Int>
 
     @Query("SELECT COUNT(*) FROM feed_posts")
     suspend fun countFeedPosts(): Int
@@ -77,4 +86,22 @@ interface FeedDao {
 
     @Query("DELETE FROM feed_comments WHERE id LIKE 'cmt_kf_%'")
     suspend fun deleteMockComments()
+
+    @Query("DELETE FROM feed_posts WHERE authorUserId = :userId")
+    suspend fun deletePostsByAuthor(userId: String)
+
+    @Query("DELETE FROM feed_comments WHERE authorUserId = :userId")
+    suspend fun deleteCommentsByAuthor(userId: String)
+
+    @Query("DELETE FROM stories WHERE authorUserId = :userId")
+    suspend fun deleteStoriesByAuthor(userId: String)
+
+    @Query("DELETE FROM feed_posts")
+    suspend fun deleteAllPosts()
+
+    @Query("DELETE FROM feed_comments")
+    suspend fun deleteAllComments()
+
+    @Query("DELETE FROM stories")
+    suspend fun deleteAllStories()
 }

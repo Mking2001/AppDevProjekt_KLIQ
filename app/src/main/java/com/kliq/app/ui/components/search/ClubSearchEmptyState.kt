@@ -25,14 +25,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
-/**
- * Empty-State Komponente im Kliq High-Contrast Design bei leeren Suchergebnissen.
- *
- * @param title Haupttitel des Empty States (z. B. "Keine Clubs in dieser Region gefunden").
- * @param description Erklärungstext mit hilfreichen Tipps.
- * @param icon Das visualisierende Symbol.
- * @param modifier Der Modifier für die Layout-Komponente.
- */
 @Composable
 fun ClubSearchEmptyState(
     title: String = "Keine Clubs in dieser Region gefunden",

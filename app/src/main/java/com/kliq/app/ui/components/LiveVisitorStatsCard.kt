@@ -54,9 +54,6 @@ import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.TealSecondary
 import com.kliq.app.viewmodel.ClubAnalyticsUiState
 
-/**
- * High-Contrast Lila/Dark-Mode Jetpack Compose Component for Live Visitor Statistics & Occupancy.
- */
 @Composable
 fun LiveVisitorStatsCard(
     state: ClubAnalyticsUiState,
@@ -101,7 +98,7 @@ fun LiveVisitorStatsCard(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header Row: Title + Pulsing Live Badge
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -111,22 +108,25 @@ fun LiveVisitorStatsCard(
                     Icon(
                         imageVector = Icons.Default.Speed,
                         contentDescription = null,
-                        tint = PurplePrimary,
+                        tint = if (state.isLive) PurplePrimary else Color.Gray,
                         modifier = Modifier.size(24.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Live-Auslastung",
+                        text = if (state.isLive) "Live-Auslastung" else "Auslastung",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
-                LiveBadgeIndicator(pulseAlpha = livePulseAlpha)
+                if (state.isLive) {
+                    LiveBadgeIndicator(pulseAlpha = livePulseAlpha)
+                } else {
+                    InactiveBadgeIndicator()
+                }
             }
 
-            // Occupancy Highlight Block
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = DarkSurfaceVariant,
@@ -161,7 +161,6 @@ fun LiveVisitorStatsCard(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Progress Bar
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -187,7 +186,6 @@ fun LiveVisitorStatsCard(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Description Note
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -208,7 +206,6 @@ fun LiveVisitorStatsCard(
                 }
             }
 
-            // Stats Sub-Bar: Trend & Visitor Ratio
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -246,7 +243,6 @@ fun LiveVisitorStatsCard(
                 }
             }
 
-            // Optional Gender Ratio Breakdown if data is present
             if (state.segments.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
@@ -309,6 +305,33 @@ private fun LiveBadgeIndicator(pulseAlpha: Float) {
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Black,
                 color = Color(0xFFEF4444)
+            )
+        }
+    }
+}
+
+@Composable
+private fun InactiveBadgeIndicator() {
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = Color.Gray.copy(alpha = 0.15f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color.Gray.copy(alpha = 0.4f))
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .background(Color.Gray, shape = CircleShape)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "GESCHLOSSEN",
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                color = Color.Gray
             )
         }
     }

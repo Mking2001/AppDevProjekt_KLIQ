@@ -7,11 +7,6 @@ import org.junit.Before
 import org.junit.Test
 import kotlin.system.measureTimeMillis
 
-/**
- * Unit tests for [MapClusterManager] validating distance calculation,
- * zoom-dependent clustering algorithm, spatial partitioning, caching behavior,
- * and high-volume performance (500+ markers).
- */
 class MapClusterManagerTest {
 
     private val venue1 = VenueItemUi(
@@ -60,7 +55,6 @@ class MapClusterManagerTest {
         val venues = listOf(venue1, venue2, venueFar)
         val clusters = MapClusterManager.clusterVenues(venues, zoom = 11.0f)
 
-        // venue1 and venue2 should be grouped together into a ClusterNode, venueFar should be SingleNode
         assertEquals(2, clusters.size)
         val clusterNode = clusters.filterIsInstance<ClusterMarkerUiState.ClusterNode>().firstOrNull()
         val singleNode = clusters.filterIsInstance<ClusterMarkerUiState.SingleNode>().firstOrNull()
@@ -86,7 +80,6 @@ class MapClusterManagerTest {
             52.5210, 13.4060
         )
 
-        // Distance between (52.5200, 13.4050) and (52.5210, 13.4060) is approx 130-140 meters
         assertTrue(dist in 100.0..200.0)
     }
 
@@ -98,7 +91,7 @@ class MapClusterManagerTest {
 
     @Test
     fun testHighVolumePerformance_clusters500PinsUnder50ms() {
-        // Generate 500 venue items across a city grid
+
         val baseLat = 52.5200
         val baseLng = 13.4050
         val venues = (1..500).map { i ->
@@ -116,13 +109,11 @@ class MapClusterManagerTest {
         val durationMs = measureTimeMillis {
             val clusters = MapClusterManager.clusterVenues(venues, zoom = 12.0f)
             assertTrue(clusters.isNotEmpty())
-            assertTrue(clusters.size < venues.size) // Effective grouping
+            assertTrue(clusters.size < venues.size)
         }
 
-        // Must complete within 100ms on first run, even in testing environment
         assertTrue("Clustering took $durationMs ms", durationMs < 200)
 
-        // Cached run should be instantaneous (< 5ms)
         val cachedDurationMs = measureTimeMillis {
             val cachedClusters = MapClusterManager.clusterVenues(venues, zoom = 12.0f)
             assertTrue(cachedClusters.isNotEmpty())
@@ -130,4 +121,3 @@ class MapClusterManagerTest {
         assertTrue("Cached lookup took $cachedDurationMs ms", cachedDurationMs < 20)
     }
 }
-

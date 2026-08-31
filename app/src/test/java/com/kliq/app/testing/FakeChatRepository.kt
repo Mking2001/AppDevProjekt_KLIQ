@@ -16,14 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-/**
- * In-Memory-Test-Double des [ChatRepository].
- *
- * Ersetzt Room in Unit-Tests und verhält sich wie die echte Implementierung:
- * Schreibvorgänge verändern den Zustand, Leseflüsse geben die Änderungen aus.
- * Dadurch prüfen die Tests das tatsächliche Verhalten und nicht nur
- * die Aufrufreihenfolge einzelner Methoden.
- */
 class FakeChatRepository(
     initialChats: List<ChatConversation> = emptyList(),
     initialMessages: List<ChatMessage> = emptyList()
@@ -32,13 +24,10 @@ class FakeChatRepository(
     private val chats = MutableStateFlow(initialChats)
     private val messages = MutableStateFlow(initialMessages)
 
-    /** Zählt Aufrufe von [markChatAsRead] je Chat-ID. */
     val markedAsReadChatIds = mutableListOf<String>()
 
-    /** Protokolliert Archivierungsaufrufe als Paar aus Chat-ID und Zielzustand. */
     val archiveCalls = mutableListOf<Pair<String, Boolean>>()
 
-    /** Protokolliert gelöschte Chat-IDs. */
     val deletedChatIds = mutableListOf<String>()
 
     private var messageCounter = 0
@@ -61,6 +50,9 @@ class FakeChatRepository(
 
     override fun getChatById(chatId: String): Flow<ChatConversation?> =
         chats.map { list -> list.find { it.id == chatId } }
+
+    override fun getTotalUnreadCount(): Flow<Int> =
+        chats.map { list -> list.filterNot { it.isArchived }.sumOf { it.unreadCount } }
 
     override suspend fun createChatIfMissing(
         chatId: String,
@@ -92,6 +84,10 @@ class FakeChatRepository(
         messages.map { list ->
             list.filter { it.chatId == chatId && it.text.contains(query, ignoreCase = true) }
         }
+
+    override suspend fun syncAllChats(): Result<Unit> = Result.success(Unit)
+
+    override suspend fun syncAllChatsAndMessages(currentUserId: String): Result<Unit> = Result.success(Unit)
 
     override suspend fun syncChatMessages(chatId: String): Result<Unit> = Result.success(Unit)
 
@@ -219,10 +215,6 @@ class FakeChatRepository(
         messages.value = messages.value.filterNot { it.chatId == chatId }
     }
 
-    // -----------------------------------------------------------------
-    // Direktnachrichten-Pfad: in diesen Tests nicht verwendet
-    // -----------------------------------------------------------------
-
     override fun getDirectMessages(currentUserId: String, targetUserId: String): Flow<List<DirectMessage>> =
         flowOf(emptyList())
 
@@ -291,4 +283,21 @@ class FakeChatRepository(
     override suspend fun syncPublicCityMessages(chatId: String): Result<Unit> = Result.success(Unit)
 
     override suspend fun joinPublicCityChat(chatId: String): Result<Unit> = Result.success(Unit)
+
+    override suspend fun updateChatName(chatId: String, name: String) {
+        chats.value = chats.value.map {
+            if (it.id == chatId) it.copy(name = name) else it
+        }
+    }
+
+    override suspend fun createGroupChat(
+        name: String,
+        description: String,
+        imageUrl: String?,
+        memberUserIds: List<String>
+    ): Result<String> {
+        val id = "group_${System.currentTimeMillis()}"
+        createChatIfMissing(id, name, ChatType.PUBLIC_CITY, description, name.take(1).uppercase())
+        return Result.success(id)
+    }
 }

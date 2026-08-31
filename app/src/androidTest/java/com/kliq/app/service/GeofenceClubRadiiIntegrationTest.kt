@@ -32,10 +32,6 @@ import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
-/**
- * Executable Automated Integration Test for Kapitel 4.6: Geofencing-Logik für Club-Radien.
- * Simulates GPS entrance into a 50m radius club, GPS jitter stay, and exit transition.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
 class GeofenceClubRadiiIntegrationTest {
@@ -80,17 +76,13 @@ class GeofenceClubRadiiIntegrationTest {
 
     @Test
     fun testCompleteGeofenceWorkflow_ApproachJitterExit() = runTest {
-        // Initial state verification: outside geofence, review button disabled
+
         testDispatcher.scheduler.advanceUntilIdle()
         var uiState = geofenceViewModel.uiState.value
         assertFalse(uiState.isInsideGeofence)
         assertFalse(uiState.isReviewEnabled)
         assertNull(uiState.activeClubId)
 
-        // -------------------------------------------------------------------------
-        // Step 1: Annäherung & Eintritt in den 50m Club-Radius
-        // Simulated GPS: Lat 46.62401, Lon 14.30601 (Distance ~1.5m inside 50m radius)
-        // -------------------------------------------------------------------------
         geofenceRepository.handleGeofenceTransition("club_havana_50m", GeofenceTransitionType.ENTER)
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -102,19 +94,12 @@ class GeofenceClubRadiiIntegrationTest {
         assertEquals("club_havana_50m", uiState.verifiedClubId)
         assertNotNull("Entry timestamp must be set", uiState.entryTimestamp)
 
-        // Verify visit history record
         val historyStage1 = geofenceRepository.getVisitedHistoryForUser()
         assertEquals(1, historyStage1.size)
         assertEquals("club_havana_50m", historyStage1[0].clubId)
         assertNull("Active visit exitTimestamp must remain null during stay", historyStage1[0].exitTimestamp)
         assertTrue("Visit must be marked as verified", historyStage1[0].isVerifiedVisit)
 
-        // -------------------------------------------------------------------------
-        // Step 2: Aufenthalt im Radius mit GPS-Jitter (Koordinatenschwankungen)
-        // Jitter 1: 46.62403, 14.30604 (~4m)
-        // Jitter 2: 46.62398, 14.30596 (~5m)
-        // Jitter 3: 46.62405, 14.30608 (~8m)
-        // -------------------------------------------------------------------------
         val jitterCoordinates = listOf(
             Pair(46.62403, 14.30604),
             Pair(46.62398, 14.30596),
@@ -122,25 +107,19 @@ class GeofenceClubRadiiIntegrationTest {
         )
 
         for ((lat, lon) in jitterCoordinates) {
-            // Verify that location shifts inside geofence do not interrupt active state
+
             val dist = calculateDistanceMeters(mockClub50m.location.latitude, mockClub50m.location.longitude, lat, lon)
             assertTrue("Jitter position should remain inside 50m radius", dist < 50.0f)
 
-            // Re-evaluating state during stay
             uiState = geofenceViewModel.uiState.value
             assertTrue("State must remain continuously active during GPS jitter stay", uiState.isInsideGeofence)
             assertTrue("Review button must remain continuously enabled", uiState.isReviewEnabled)
             assertEquals("club_havana_50m", uiState.activeClubId)
         }
 
-        // History count remains stable at 1 entry
         val historyStage2 = geofenceRepository.getVisitedHistoryForUser()
         assertEquals("GPS jitter should not create duplicate visit history records", 1, historyStage2.size)
 
-        // -------------------------------------------------------------------------
-        // Step 3: Verlassen des Club-Radius (GPS far outside)
-        // Simulated GPS: Lat 46.6350, Lon 14.3200 (> 1.5 km outside radius)
-        // -------------------------------------------------------------------------
         val exitLat = 46.6350
         val exitLon = 14.3200
         val distExit = calculateDistanceMeters(mockClub50m.location.latitude, mockClub50m.location.longitude, exitLat, exitLon)
@@ -155,7 +134,6 @@ class GeofenceClubRadiiIntegrationTest {
         assertNull("Active club ID must be cleared upon exit", uiState.activeClubId)
         assertNull("Active club name must be cleared upon exit", uiState.activeClubName)
 
-        // Verify visit history entry completion
         val historyStage3 = geofenceRepository.getVisitedHistoryForUser()
         assertEquals(1, historyStage3.size)
         assertNotNull("Exit timestamp must be written to completed visit history record", historyStage3[0].exitTimestamp)

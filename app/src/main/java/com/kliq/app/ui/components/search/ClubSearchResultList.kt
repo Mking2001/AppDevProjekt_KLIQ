@@ -44,16 +44,6 @@ import com.kliq.app.ui.theme.ErrorRed
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.TealSecondary
 
-/**
- * Ergebnisliste der Club- und Regionen-Suche mit visueller Trennung in Abschnitte.
- *
- * @param clubResults Gefundene Clubs im High-Contrast State.
- * @param regionResults Gefundene Städte und Regionen.
- * @param onClubClick Callback bei Auswahl eines Clubs.
- * @param onRegionClick Callback bei Auswahl einer Region/Stadt.
- * @param onToggleFavorite Callback zum Umschalten des Favoriten-Status.
- * @param modifier Layout-Modifier.
- */
 @Composable
 fun ClubSearchResultList(
     clubResults: List<ClubHighContrastItemState>,
@@ -67,7 +57,7 @@ fun ClubSearchResultList(
         modifier = modifier,
         contentPadding = PaddingValues(bottom = 24.dp)
     ) {
-        // Abschnitt 1: Städte & Regionen (falls vorhanden)
+
         if (regionResults.isNotEmpty()) {
             item {
                 Text(
@@ -98,7 +88,6 @@ fun ClubSearchResultList(
             }
         }
 
-        // Abschnitt 2: Clubs & Locations
         if (clubResults.isNotEmpty()) {
             item {
                 Text(
@@ -122,9 +111,6 @@ fun ClubSearchResultList(
     }
 }
 
-/**
- * Chip-Karte für Regionen und Städte.
- */
 @Composable
 private fun RegionChipCard(
     region: RegionSearchResult,
@@ -166,9 +152,6 @@ private fun RegionChipCard(
     }
 }
 
-/**
- * High-Contrast Ergebnis-Karte für einen einzelnen Club.
- */
 @Composable
 private fun ClubResultCard(
     clubState: ClubHighContrastItemState,
@@ -190,7 +173,7 @@ private fun ClubResultCard(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Club Icon / Preview Box
+
             Box(
                 modifier = Modifier
                     .size(56.dp)
@@ -208,7 +191,6 @@ private fun ClubResultCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Information Column
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -227,7 +209,6 @@ private fun ClubResultCard(
 
                     Spacer(modifier = Modifier.width(6.dp))
 
-                    // Rating Badge
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -280,7 +261,6 @@ private fun ClubResultCard(
                 )
             }
 
-            // Favorite Toggle Icon
             AnimatedFavoriteButton(
                 isFavorite = clubState.isFavorite,
                 onToggleFavorite = onFavoriteToggle

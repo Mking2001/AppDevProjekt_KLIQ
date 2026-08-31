@@ -29,25 +29,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Automatisierte UI-Tests für den Onboarding- & Login-Workflow (Kapitel 9.2).
- *
- * Testet:
- *   1. Telefonnummer-Eingabe & SMS-OTP Verifizierung
- *   2. Profil-Erstellung mit Eingabefeldern und Validierung
- *   3. Intent-Matching Präferenz-Auswahl ("Freunde", "Dating", "Beides")
- *   4. Konsumgewohnheiten-Auswahl (Rauchen & Trinken)
- *   5. Vollständiger linearer Navigationsablauf im Onboarding
- */
 @RunWith(AndroidJUnit4::class)
 class MainWorkflowOnboardingUITest {
 
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    /**
-     * Testfall 1: Prüft die Telefonnummer-Eingabe und den Übergang zur OTP-Eingabe.
-     */
     @Test
     fun testPhoneLoginAndOtpVerificationFlow() {
         var isOtpSentState by mutableStateOf(false)
@@ -100,26 +87,21 @@ class MainWorkflowOnboardingUITest {
             }
         }
 
-        // 1. Initialzustand prüfen
         composeTestRule.onNodeWithText("Starte dein Nightlife-Erlebnis").assertIsDisplayed()
         composeTestRule.onNodeWithText("Handynummer eingeben").assertIsDisplayed()
 
-        // 2. Handynummer eingeben
         composeTestRule.onNodeWithText("151 2345678").performTextInput("1512345678")
         composeTestRule.waitForIdle()
 
-        // 3. SMS Code anfordern klicken
         composeTestRule.onNodeWithText("SMS-Code anfordern").assertIsEnabled().performClick()
         composeTestRule.waitForIdle()
 
         assertTrue(isOtpSentState)
         composeTestRule.onNodeWithText("Bestätigungscode eingeben").assertIsDisplayed()
 
-        // 4. 6-stelligen OTP Code eingeben
         composeTestRule.onNodeWithText("123456").performTextInput("123456")
         composeTestRule.waitForIdle()
 
-        // 5. Code bestätigen klicken
         composeTestRule.onNodeWithText("Code bestätigen").assertIsEnabled().performClick()
         composeTestRule.waitForIdle()
 
@@ -128,9 +110,6 @@ class MainWorkflowOnboardingUITest {
         assertEquals("123456", enteredOtp)
     }
 
-    /**
-     * Testfall 2: Prüft das Formular zur Profilerstellung (Name, Alter, Ort, Bio).
-     */
     @Test
     fun testProfileCreationFormAndValidation() {
         composeTestRule.setContent {
@@ -141,13 +120,11 @@ class MainWorkflowOnboardingUITest {
             }
         }
 
-        // Header & Untertitel prüfen
         composeTestRule.onNodeWithText("Erstelle dein Profil").assertIsDisplayed()
         composeTestRule.onNodeWithText("Benutzername *").assertIsDisplayed()
         composeTestRule.onNodeWithText("Alter *").assertIsDisplayed()
         composeTestRule.onNodeWithText("Heimatstadt *").assertIsDisplayed()
 
-        // Eingabefelder ausfüllen
         composeTestRule.onNodeWithText("z.B. alex_night").performTextInput("alex_night")
         composeTestRule.onNodeWithText("z.B. 24").performTextInput("24")
         composeTestRule.onNodeWithText("z.B. Berlin").performTextInput("Berlin")
@@ -155,13 +132,9 @@ class MainWorkflowOnboardingUITest {
 
         composeTestRule.waitForIdle()
 
-        // Button vorhanden & anklickbar
         composeTestRule.onNodeWithText("Profil erstellen").assertExists().assertHasClickAction()
     }
 
-    /**
-     * Testfall 3: Prüft die Intent-Matching Auswahlkarten ("Freunde", "Dating", "Beides").
-     */
     @Test
     fun testIntentMatchingPreferenceSelection() {
         composeTestRule.setContent {
@@ -172,25 +145,18 @@ class MainWorkflowOnboardingUITest {
             }
         }
 
-        // Header vorhanden
         composeTestRule.onNodeWithText("Was suchst du bei Kliq?").assertIsDisplayed()
 
-        // Intent-Optionen prüfen
         composeTestRule.onNodeWithText("Neue Leute & Party-Buddies").assertIsDisplayed()
         composeTestRule.onNodeWithText("Flirten, Dating & Ausgehen").assertIsDisplayed()
         composeTestRule.onNodeWithText("Offen für alles").assertIsDisplayed()
 
-        // Option auswählen (z. B. Offen für alles)
         composeTestRule.onNodeWithText("Offen für alles").performClick()
         composeTestRule.waitForIdle()
 
-        // Bestätigungsbutton vorhanden
         composeTestRule.onNodeWithText("Auswahl bestätigen").assertExists().assertHasClickAction()
     }
 
-    /**
-     * Testfall 4: Prüft die Konsumgewohnheiten-Auswahl (Rauchen & Trinken).
-     */
     @Test
     fun testConsumptionHabitsSelectionFlow() {
         composeTestRule.setContent {
@@ -201,26 +167,19 @@ class MainWorkflowOnboardingUITest {
             }
         }
 
-        // Header & Kategorien
         composeTestRule.onNodeWithText("Rauchen & Trinken").assertIsDisplayed()
         composeTestRule.onNodeWithText("Rauchverhalten").assertIsDisplayed()
         composeTestRule.onNodeWithText("Trinkverhalten").assertIsDisplayed()
 
-        // Rauchverhalten-Option anklicken
         composeTestRule.onNodeWithText("Nichtraucher").performClick()
         composeTestRule.waitForIdle()
 
-        // Trinkverhalten-Option anklicken
         composeTestRule.onNodeWithText("Gesellschaftstrinker").performClick()
         composeTestRule.waitForIdle()
 
-        // Action Button prüfen
         composeTestRule.onNodeWithText("Auswahl speichern & Weiter").assertExists().assertHasClickAction()
     }
 
-    /**
-     * Testfall 5: Testet den linearen Ablauf der Onboarding-Kette.
-     */
     @Test
     fun testCompleteOnboardingNavigationChain() {
         var currentStep by mutableStateOf(1)
@@ -236,7 +195,6 @@ class MainWorkflowOnboardingUITest {
             }
         }
 
-        // Schritt 1: Profile Creation sichtbar
         composeTestRule.onNodeWithText("Erstelle dein Profil").assertIsDisplayed()
         assertEquals(1, currentStep)
     }

@@ -42,7 +42,7 @@ data class ReviewEntity(
     val targetUserId: String? = null,
     val clubId: String? = null,
     val eventId: String? = null,
-    @IntRange(from = 1, to = 5) val rating: Int, // 1-5 stars
+    @IntRange(from = 1, to = 5) val rating: Int,
     val text: String,
     val timestamp: Long,
     val verificationMethod: ReviewVerificationMethod = ReviewVerificationMethod.UNVERIFIED,

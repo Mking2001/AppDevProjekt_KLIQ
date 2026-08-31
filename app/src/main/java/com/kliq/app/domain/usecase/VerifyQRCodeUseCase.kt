@@ -48,7 +48,6 @@ class VerifyQRCodeUseCase @Inject constructor(
 
         val alreadyFriends = socialRepository.isFriendOneShot(currentUserId, extractedUserId)
 
-        // Mark verification in verification service for anti-spam rating lock
         verificationService.verifyQrScanToken(currentUserId, extractedUserId, rawPayload)
 
         return if (alreadyFriends) {

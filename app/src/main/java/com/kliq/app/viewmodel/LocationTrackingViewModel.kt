@@ -20,9 +20,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * UI State data class for background location tracking and adaptive GPS battery optimization.
- */
 data class LocationTrackingUiState(
     val isTrackingActive: Boolean = false,
     val currentLocation: LocationData? = null,
@@ -37,10 +34,6 @@ data class LocationTrackingUiState(
     val minDisplacementMeters: Float = 50.0f
 )
 
-/**
- * ViewModel managing reactive background location tracking state, adaptive sampling mode selection,
- * high-accuracy burst sessions, permission status evaluation, and history cleanup.
- */
 @HiltViewModel
 class LocationTrackingViewModel @Inject constructor(
     @ApplicationContext private val context: Context,

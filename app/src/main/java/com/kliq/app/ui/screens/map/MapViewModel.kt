@@ -33,18 +33,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-/**
- * Enum defining map location filtering modes (Öffentliche Events vs. Private Standorte vs. Alle).
- */
 enum class MapLocationFilterMode {
     ALL,
     PUBLIC_ONLY,
     PRIVATE_ONLY
 }
 
-/**
- * UI State representation of a club/event map marker.
- */
 data class ClubMarkerUiState(
     val id: String,
     val name: String,
@@ -60,9 +54,6 @@ data class ClubMarkerUiState(
     val venue: VenueItemUi
 )
 
-/**
- * UI State representation of a Kliq user map marker.
- */
 data class UserMarkerUiState(
     val userId: String,
     val username: String,
@@ -77,9 +68,6 @@ data class UserMarkerUiState(
     val isLocationSharingEnabled: Boolean = true
 )
 
-/**
- * Immutable UI State for the MapScreen.
- */
 data class MapUiState(
     val cameraPosition: CameraPositionStateData = CameraPositionStateData(),
     val styleConfig: MapStyleConfig = MapStyleConfig(),
@@ -99,9 +87,6 @@ data class MapUiState(
     val isMapLoaded: Boolean = false
 )
 
-/**
- * UI representation of a club/venue item with geographic coordinates and status metadata.
- */
 data class VenueItemUi(
     val id: String,
     val name: String,
@@ -120,11 +105,6 @@ data class VenueItemUi(
     val femalePercentage: Int = 0
 )
 
-/**
- * High-performance ViewModel managing Map state, camera viewport, filters, custom styling,
- * asynchronous club/user data transformation, Coroutine/Flow debouncing (250ms),
- * and background marker clustering (Dispatchers.Default).
- */
 @OptIn(FlowPreview::class)
 @HiltViewModel
 class MapViewModel @Inject constructor(
@@ -134,6 +114,7 @@ class MapViewModel @Inject constructor(
     private val userDistanceFormatter: UserDistanceFormatter = UserDistanceFormatter.default,
     private val locationRepository: LocationRepository? = null,
     private val userRepository: UserRepository? = null,
+    private val feedRepository: com.kliq.app.data.repository.FeedRepository? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val hapticFeedbackManager: HapticFeedbackManager? = null,
     private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null
@@ -152,13 +133,11 @@ class MapViewModel @Inject constructor(
     )
     val cameraEventFlow: SharedFlow<MapCameraAnimationEvent> = _cameraEventFlow.asSharedFlow()
 
-    // Camera move stream for debounced spatial calculations during active pan & zoom
     private val cameraMoveStream = MutableSharedFlow<CameraPositionStateData>(
         extraBufferCapacity = 16,
         replay = 1
     )
 
-    // Raw Domain / Entity models (Separation of Concerns)
     private var allVenues: List<VenueItemUi> = emptyList()
     private var allUsers: List<UserMarkerUiState> = emptyList()
     private var blockedUserIds: Set<String> = emptySet()
@@ -238,7 +217,7 @@ class MapViewModel @Inject constructor(
                         )
                     }
                 } catch (ignored: Exception) {
-                    // Keep fallback users
+
                 }
             }
         }
@@ -261,7 +240,7 @@ class MapViewModel @Inject constructor(
                                         timestampMs = System.currentTimeMillis()
                                     )
                                 } catch (ignored: Exception) {
-                                    // Graceful fallback for offline mode
+
                                 }
                             }
                         }
@@ -275,8 +254,35 @@ class MapViewModel @Inject constructor(
         viewModelScope.launch {
             val currentLat = _uiState.value.cameraPosition.latitude
             val currentLng = _uiState.value.cameraPosition.longitude
-            getClubsWithDistanceUseCase(currentLat, currentLng).collect { venues ->
-                allVenues = if (venues.isNotEmpty()) venues else getFallbackVenues()
+            val venuesFlow = getClubsWithDistanceUseCase(currentLat, currentLng)
+            val pinnedEventsFlow = feedRepository?.getPinnedEvents() ?: kotlinx.coroutines.flow.flowOf(emptyList())
+
+            kotlinx.coroutines.flow.combine(venuesFlow, pinnedEventsFlow) { venues, pinnedPosts ->
+                val baseVenues = if (venues.isNotEmpty()) venues else getFallbackVenues()
+                val eventVenues = pinnedPosts.filter { post ->
+                    post.latitude != null && post.longitude != null && baseVenues.none { it.id == post.id }
+                }.map { post ->
+                    VenueItemUi(
+                        id = post.id,
+                        name = post.clubName ?: "Event",
+                        category = "Event",
+                        distance = "",
+                        rating = 5.0f,
+                        latitude = post.latitude ?: 46.6240,
+                        longitude = post.longitude ?: 14.3078,
+                        address = post.locationAddress ?: "",
+                        activeEventTitle = post.contentText,
+                        isFavorite = false,
+                        currentCapacityPercent = 50,
+                        isOpenNow = true,
+                        totalLiveVisitors = post.flameCount,
+                        malePercentage = 50,
+                        femalePercentage = 50
+                    )
+                }
+                baseVenues + eventVenues
+            }.collect { mergedVenues ->
+                allVenues = mergedVenues
                 updateFilteredAndClusteredVenues()
             }
         }
@@ -378,11 +384,6 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Liefert Venue-Marker aus dem Klagenfurt-Demonstrationsdatensatz.
-     * Greift nur, solange die Room-Datenbank noch nicht befuellt ist, und verwendet
-     * dieselben IDs wie der Seed, damit die Navigation zum Club-Detail funktioniert.
-     */
     private fun getFallbackVenues(): List<VenueItemUi> {
         return KlagenfurtSeedData.clubs().map { club ->
             VenueItemUi(
@@ -402,10 +403,6 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Liefert Nutzer-Marker im Stadtgebiet Klagenfurt. Die IDs entsprechen den
-     * Profilen aus [KlagenfurtSeedData], damit Chat und Profilaufruf funktionieren.
-     */
     private fun getFallbackUsers(): List<UserMarkerUiState> {
         return listOf(
             UserMarkerUiState(
@@ -494,10 +491,6 @@ class MapViewModel @Inject constructor(
         _uiState.update { it.copy(isLoadingLocation = true) }
     }
 
-    /**
-     * Verarbeitet empfangene GPS-Koordinaten vom FusedLocationProviderClient
-     * und zentriert die Karte direkt auf den Standort des Nutzers.
-     */
     fun onLocationReceived(lat: Double, lng: Double) {
         _uiState.update { state ->
             state.copy(
@@ -530,11 +523,6 @@ class MapViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Zentriert die Karte auf die letzte bekannte GPS-Position.
-     * Liegt noch kein Fix vor, wird auf das Stadtzentrum Klagenfurt zurueckgefallen,
-     * damit der Nutzer nicht auf einer leeren Weltkarte landet.
-     */
     fun onLocationRequested() {
         val lastKnown = locationRepository?.locationUpdates?.value
         val targetLat = lastKnown?.latitude ?: KlagenfurtSeedData.CITY_LATITUDE
@@ -560,7 +548,7 @@ class MapViewModel @Inject constructor(
             try {
                 clubRepository.toggleFavorite(clubId, currentFavoriteState)
             } catch (ignored: Exception) {
-                // Keep local UI state optimistic
+
             }
         }
     }

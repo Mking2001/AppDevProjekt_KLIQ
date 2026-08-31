@@ -7,16 +7,21 @@ import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.model.formatRelativeTime
 import com.kliq.app.data.repository.ChatRepository
 import com.kliq.app.data.repository.FeedRepository
+import com.kliq.app.data.repository.SocialRepository
 import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.data.util.ImageCompressor
 import com.kliq.app.domain.CurrentUserProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -24,25 +29,26 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
-/**
- * Immutable UI State für den Home-Screen.
- */
 data class HomeUiState(
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val feedItems: List<FeedItemUi> = emptyList(),
     val storyItems: List<StoryItemUi> = emptyList(),
     val myStory: StoryItemUi? = null,
-    val myProfilePictureUrl: String? = null,
-    val myUserName: String = "Du",
-    val isPostingStory: Boolean = false,
-    val activeStory: StoryItemUi? = null,
     val isComposerVisible: Boolean = false,
     val composerText: String = "",
     val composerImageUri: String? = null,
     val composerLocation: String = "",
+    val composerLocationAddress: String? = null,
+    val composerLatitude: Double? = null,
+    val composerLongitude: Double? = null,
     val composerIsEventPinned: Boolean = false,
+    val composerIsFollowersOnly: Boolean = false,
+    val composerAddressSuggestions: List<com.kliq.app.util.AddressSuggestion> = emptyList(),
+    val isSearchingAddresses: Boolean = false,
     val isPublishing: Boolean = false,
+    val activeStory: StoryItemUi? = null,
+    val isPostingStory: Boolean = false,
     val activeCommentPostId: String? = null,
     val comments: List<CommentItemUi> = emptyList(),
     val commentInput: String = "",
@@ -50,28 +56,41 @@ data class HomeUiState(
     val shareSearchQuery: String = "",
     val shareContacts: List<ShareContactUi> = emptyList(),
     val errorMessage: String? = null,
-    val infoMessage: String? = null
+    val infoMessage: String? = null,
+    val myProfilePictureUrl: String? = null,
+    val myUserName: String = "Du",
+    val userSearchQuery: String = "",
+    val userSearchResults: List<SearchedUserUi> = emptyList(),
+    val isSearchingUsers: Boolean = false,
+    val isUserSearchActive: Boolean = false
 )
 
-/**
- * Darstellungsmodell eines Feed-Beitrags.
- */
+data class SearchedUserUi(
+    val id: String,
+    val username: String,
+    val displayName: String,
+    val profilePictureUrl: String? = null,
+    val hometown: String? = null,
+    val isVerified: Boolean = false
+)
+
 data class FeedItemUi(
     val id: String,
+    val authorUserId: String = "",
     val userName: String,
     val timeAgo: String,
     val contentText: String,
     val clubName: String? = null,
+    val locationAddress: String? = null,
     val imageUrl: String? = null,
     val likeCount: Int = 0,
     val isLiked: Boolean = false,
     val commentCount: Int = 0,
-    val isPinnedToMap: Boolean = false
+    val isPinnedToMap: Boolean = false,
+    val isFollowersOnly: Boolean = false,
+    val isOwnPost: Boolean = false
 )
 
-/**
- * Darstellungsmodell einer Story-Kachel.
- */
 data class StoryItemUi(
     val id: String,
     val authorUserId: String = "",
@@ -80,12 +99,10 @@ data class StoryItemUi(
     val createdAtFormatted: String = "",
     val clubName: String? = null,
     val imageUrl: String? = null,
-    val hasUnseenStory: Boolean = true
+    val hasUnseenStory: Boolean = true,
+    val isOwnStory: Boolean = false
 )
 
-/**
- * Darstellungsmodell eines Kommentars im Kommentar-Sheet.
- */
 data class CommentItemUi(
     val id: String,
     val authorName: String,
@@ -93,9 +110,6 @@ data class CommentItemUi(
     val timeAgo: String
 )
 
-/**
- * Darstellungsmodell eines Kontakts im Teilen-Dialog.
- */
 data class ShareContactUi(
     val id: String,
     val name: String,
@@ -103,15 +117,13 @@ data class ShareContactUi(
     val lastMessage: String = ""
 )
 
-/**
- * ViewModel für den Home-Feed.
- */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
     private val currentUserProvider: CurrentUserProvider,
     private val userRepository: UserRepository? = null,
-    private val chatRepository: ChatRepository? = null
+    private val chatRepository: ChatRepository? = null,
+    private val socialRepository: SocialRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -123,6 +135,15 @@ class HomeViewModel @Inject constructor(
         observeFeed()
         observeStories()
         observeCurrentUser()
+        syncFeed()
+    }
+
+    fun syncFeed() {
+        viewModelScope.launch {
+            try {
+                feedRepository.syncFeedPosts()
+            } catch (ignored: Exception) { }
+        }
     }
 
     private fun observeCurrentUser() {
@@ -141,7 +162,8 @@ class HomeViewModel @Inject constructor(
 
     private fun observeFeed() {
         viewModelScope.launch {
-            feedRepository.getFeedPosts()
+            val currentUserId = currentUserProvider.userId()
+            feedRepository.getFeedPosts(currentUserId)
                 .catch { error ->
                     _uiState.update {
                         it.copy(
@@ -154,18 +176,35 @@ class HomeViewModel @Inject constructor(
                     val items = posts.map { post ->
                         FeedItemUi(
                             id = post.id,
+                            authorUserId = post.authorUserId,
                             userName = post.authorName,
                             timeAgo = formatRelativeTime(post.createdAtMs),
                             contentText = post.contentText,
                             clubName = post.clubName,
+                            locationAddress = post.locationAddress,
                             imageUrl = post.imageUrl,
                             likeCount = post.likeCount,
                             isLiked = post.isLikedByMe,
-                            commentCount = post.commentCount
+                            commentCount = post.commentCount,
+                            isPinnedToMap = post.isEventPinned,
+                            isFollowersOnly = post.isFollowersOnly,
+                            isOwnPost = (post.authorUserId == currentUserId)
                         )
                     }
                     _uiState.update { it.copy(feedItems = items, isLoading = false) }
                 }
+        }
+    }
+
+    fun onDeletePost(postId: String) {
+        viewModelScope.launch {
+            feedRepository.deletePost(postId)
+            _uiState.update { state ->
+                state.copy(
+                    feedItems = state.feedItems.filter { it.id != postId },
+                    infoMessage = "Beitrag wurde gelöscht."
+                )
+            }
         }
     }
 
@@ -174,53 +213,62 @@ class HomeViewModel @Inject constructor(
             val currentUserId = currentUserProvider.userId()
             val timeFormat = SimpleDateFormat("HH:mm 'Uhr'", Locale.GERMANY)
 
-            feedRepository.getStories()
-                .catch { error ->
-                    _uiState.update {
-                        it.copy(errorMessage = "Storys konnten nicht geladen werden: ${error.localizedMessage}")
-                    }
+            val friendsFlow: Flow<Set<String>> = socialRepository?.getFriendsForUser(currentUserId)
+                ?.map { friends ->
+                    friends.filter { it.status == "ACCEPTED" }.map { it.friendUserId }.toSet()
+                } ?: flowOf(emptySet())
+
+            combine(feedRepository.getStories(), friendsFlow) { stories, friendIds ->
+                Pair(stories, friendIds)
+            }
+            .catch { error ->
+                _uiState.update {
+                    it.copy(errorMessage = "Storys konnten nicht geladen werden: ${error.localizedMessage}")
                 }
-                .collect { stories ->
-                    val myStoryEntity = stories.find { it.authorUserId == currentUserId }
-                    val myStoryUi = myStoryEntity?.let {
+            }
+            .collect { (stories, friendIds) ->
+                val myStoryEntity = stories.find { it.authorUserId == currentUserId }
+                val myStoryUi = myStoryEntity?.let {
+                    StoryItemUi(
+                        id = it.id,
+                        authorUserId = it.authorUserId,
+                        userName = "Deine Story",
+                        headline = it.headline,
+                        createdAtFormatted = timeFormat.format(Date(it.createdAtMs)),
+                        clubName = it.clubName ?: "Klagenfurt",
+                        imageUrl = it.imageUrl,
+                        hasUnseenStory = false,
+                        isOwnStory = true
+                    )
+                }
+
+                val otherStories = stories
+                    .filter { it.authorUserId != currentUserId && (friendIds.contains(it.authorUserId) || it.authorUserId.startsWith("club_")) }
+                    .map { story ->
                         StoryItemUi(
-                            id = it.id,
-                            authorUserId = it.authorUserId,
-                            userName = "Deine Story",
-                            headline = it.headline,
-                            createdAtFormatted = timeFormat.format(Date(it.createdAtMs)),
-                            clubName = it.clubName ?: "Klagenfurt",
-                            imageUrl = it.imageUrl,
-                            hasUnseenStory = false
+                            id = story.id,
+                            authorUserId = story.authorUserId,
+                            userName = story.authorName,
+                            headline = story.headline,
+                            createdAtFormatted = timeFormat.format(Date(story.createdAtMs)),
+                            clubName = story.clubName ?: "Klagenfurt",
+                            imageUrl = story.imageUrl,
+                            hasUnseenStory = !story.isSeen,
+                            isOwnStory = false
                         )
                     }
 
-                    val otherStories = stories
-                        .filter { it.authorUserId != currentUserId }
-                        .map { story ->
-                            StoryItemUi(
-                                id = story.id,
-                                authorUserId = story.authorUserId,
-                                userName = story.authorName,
-                                headline = story.headline,
-                                createdAtFormatted = timeFormat.format(Date(story.createdAtMs)),
-                                clubName = story.clubName ?: "Klagenfurt",
-                                imageUrl = story.imageUrl,
-                                hasUnseenStory = !story.isSeen
-                            )
+                _uiState.update { state ->
+                    state.copy(
+                        myStory = myStoryUi,
+                        storyItems = otherStories,
+                        activeStory = state.activeStory?.let { active ->
+                            if (active.id == myStoryUi?.id) myStoryUi
+                            else otherStories.find { it.id == active.id } ?: active
                         }
-
-                    _uiState.update { state ->
-                        state.copy(
-                            myStory = myStoryUi,
-                            storyItems = otherStories,
-                            activeStory = state.activeStory?.let { active ->
-                                if (active.id == myStoryUi?.id) myStoryUi
-                                else otherStories.find { it.id == active.id } ?: active
-                            }
-                        )
-                    }
+                    )
                 }
+            }
         }
     }
 
@@ -284,13 +332,14 @@ class HomeViewModel @Inject constructor(
     }
 
     fun refreshFeed() {
-        _uiState.update { it.copy(isRefreshing = true) }
-        _uiState.update { it.copy(isRefreshing = false) }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+            try {
+                feedRepository.syncFeedPosts()
+            } catch (ignored: Exception) { }
+            _uiState.update { it.copy(isRefreshing = false) }
+        }
     }
-
-    // =====================================================================
-    // Storys
-    // =====================================================================
 
     fun onStoryOpened(storyId: String) {
         val state = _uiState.value
@@ -316,10 +365,6 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(activeStory = null) }
     }
 
-    // =====================================================================
-    // Beitrags-Editor
-    // =====================================================================
-
     fun onCreatePost() {
         _uiState.update {
             it.copy(
@@ -327,7 +372,12 @@ class HomeViewModel @Inject constructor(
                 composerText = "",
                 composerImageUri = null,
                 composerLocation = "",
-                composerIsEventPinned = false
+                composerLocationAddress = null,
+                composerLatitude = null,
+                composerLongitude = null,
+                composerIsEventPinned = false,
+                composerIsFollowersOnly = false,
+                composerAddressSuggestions = emptyList()
             )
         }
     }
@@ -339,13 +389,56 @@ class HomeViewModel @Inject constructor(
                 composerText = "",
                 composerImageUri = null,
                 composerLocation = "",
-                composerIsEventPinned = false
+                composerLocationAddress = null,
+                composerLatitude = null,
+                composerLongitude = null,
+                composerIsEventPinned = false,
+                composerIsFollowersOnly = false,
+                composerAddressSuggestions = emptyList()
             )
         }
     }
 
     fun onComposerTextChanged(text: String) {
         _uiState.update { it.copy(composerText = text) }
+    }
+
+    fun onComposerVisibilityChanged(isFollowersOnly: Boolean) {
+        _uiState.update { it.copy(composerIsFollowersOnly = isFollowersOnly) }
+    }
+
+    fun onComposerLocationQueryChanged(context: Context, query: String) {
+        _uiState.update { it.copy(composerLocation = query, isSearchingAddresses = true) }
+        viewModelScope.launch {
+            val suggestions = com.kliq.app.util.AddressSearchManager.search(context, query)
+            _uiState.update { it.copy(composerAddressSuggestions = suggestions, isSearchingAddresses = false) }
+        }
+    }
+
+    fun onSelectAddress(suggestion: com.kliq.app.util.AddressSuggestion) {
+        _uiState.update {
+            it.copy(
+                composerLocation = suggestion.name,
+                composerLocationAddress = suggestion.fullAddress,
+                composerLatitude = suggestion.latitude,
+                composerLongitude = suggestion.longitude,
+                composerAddressSuggestions = emptyList(),
+                isSearchingAddresses = false
+            )
+        }
+    }
+
+    fun onClearAddress() {
+        _uiState.update {
+            it.copy(
+                composerLocation = "",
+                composerLocationAddress = null,
+                composerLatitude = null,
+                composerLongitude = null,
+                composerIsEventPinned = false,
+                composerAddressSuggestions = emptyList()
+            )
+        }
     }
 
     fun onComposerImageSelected(context: Context, uri: Uri) {
@@ -363,11 +456,14 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(composerImageUri = null) }
     }
 
-    fun onComposerLocationChanged(location: String) {
-        _uiState.update { it.copy(composerLocation = location) }
-    }
-
     fun onToggleComposerEventPinned() {
+        val state = _uiState.value
+        if (state.composerLatitude == null || state.composerLongitude == null) {
+            _uiState.update {
+                it.copy(errorMessage = "Bitte wähle zuerst eine echte Adresse aus der Liste aus, um das Event auf der Karte zu fixieren.")
+            }
+            return
+        }
         _uiState.update { it.copy(composerIsEventPinned = !it.composerIsEventPinned) }
     }
 
@@ -375,8 +471,19 @@ class HomeViewModel @Inject constructor(
         val text = _uiState.value.composerText.trim()
         val image = _uiState.value.composerImageUri
         val location = _uiState.value.composerLocation.trim().ifBlank { null }
+        val locationAddress = _uiState.value.composerLocationAddress
+        val latitude = _uiState.value.composerLatitude
+        val longitude = _uiState.value.composerLongitude
+        val isEventPinned = _uiState.value.composerIsEventPinned
+        val isFollowersOnly = _uiState.value.composerIsFollowersOnly
+
         if (text.isEmpty() && image == null) {
             _uiState.update { it.copy(errorMessage = "Bitte gib einen Text oder ein Bild für den Beitrag ein.") }
+            return
+        }
+
+        if (isEventPinned && (latitude == null || longitude == null)) {
+            _uiState.update { it.copy(errorMessage = "Ohne ausgewählte Adresse kann das Event nicht auf der Karte fixiert werden.") }
             return
         }
 
@@ -391,7 +498,12 @@ class HomeViewModel @Inject constructor(
                 authorName = userName,
                 contentText = text,
                 imageUrl = image,
-                clubName = location
+                clubName = location,
+                locationAddress = locationAddress,
+                latitude = latitude,
+                longitude = longitude,
+                isEventPinned = isEventPinned,
+                isFollowersOnly = isFollowersOnly
             ).onSuccess {
                 _uiState.update {
                     it.copy(
@@ -400,8 +512,13 @@ class HomeViewModel @Inject constructor(
                         composerText = "",
                         composerImageUri = null,
                         composerLocation = "",
+                        composerLocationAddress = null,
+                        composerLatitude = null,
+                        composerLongitude = null,
                         composerIsEventPinned = false,
-                        infoMessage = "Beitrag veröffentlicht!"
+                        composerIsFollowersOnly = false,
+                        composerAddressSuggestions = emptyList(),
+                        infoMessage = if (isEventPinned) "Event erfolgreich veröffentlicht und auf der Karte fixiert!" else "Beitrag veröffentlicht!"
                     )
                 }
             }.onFailure { error ->
@@ -414,10 +531,6 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
-
-    // =====================================================================
-    // Likes und Kommentare
-    // =====================================================================
 
     fun onLikePost(postId: String) {
         viewModelScope.launch {
@@ -488,10 +601,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // =====================================================================
-    // Teilen von Beiträgen
-    // =====================================================================
-
     fun onSharePostOpened(post: FeedItemUi) {
         _uiState.update {
             it.copy(
@@ -540,6 +649,47 @@ class HomeViewModel @Inject constructor(
 
     fun onSharePostDismissed() {
         _uiState.update { it.copy(activeSharePost = null, shareSearchQuery = "") }
+    }
+
+    fun onUserSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(userSearchQuery = query, isUserSearchActive = query.isNotBlank()) }
+        if (query.isBlank()) {
+            _uiState.update { it.copy(userSearchResults = emptyList(), isSearchingUsers = false) }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSearchingUsers = true) }
+            val currentUserId = currentUserProvider.userId()
+            val results = userRepository?.searchUsers(query.trim()) ?: emptyList()
+            val mapped = results
+                .filter { it.id != currentUserId }
+                .map { user ->
+                    SearchedUserUi(
+                        id = user.id,
+                        username = user.username,
+                        displayName = user.hometown?.takeIf { it.isNotBlank() } ?: user.username,
+                        profilePictureUrl = user.profilePictureUrl,
+                        hometown = user.hometown,
+                        isVerified = user.isVerified
+                    )
+                }
+            _uiState.update { it.copy(userSearchResults = mapped, isSearchingUsers = false) }
+        }
+    }
+
+    fun onClearUserSearch() {
+        _uiState.update {
+            it.copy(
+                userSearchQuery = "",
+                userSearchResults = emptyList(),
+                isSearchingUsers = false,
+                isUserSearchActive = false
+            )
+        }
+    }
+
+    fun onToggleUserSearch() {
+        _uiState.update { it.copy(isUserSearchActive = !it.isUserSearchActive) }
     }
 
     fun onMessageShown() {

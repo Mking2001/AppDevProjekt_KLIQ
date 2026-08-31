@@ -79,7 +79,7 @@ fun StarRatingTestScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header
+
             Text(
                 text = "QA Sterne-Rating Test-Bench",
                 style = MaterialTheme.typography.headlineMedium.copy(
@@ -95,7 +95,6 @@ fun StarRatingTestScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Inline Gesture Component Playground Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = DarkSurface),
@@ -133,7 +132,6 @@ fun StarRatingTestScreen(
                 }
             }
 
-            // Controls Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
@@ -175,7 +173,6 @@ fun StarRatingTestScreen(
                 }
             }
 
-            // Action Buttons
             Button(
                 onClick = { isSheetVisible = true },
                 modifier = Modifier
@@ -206,7 +203,6 @@ fun StarRatingTestScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // State Inspector Display
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(containerColor = DarkSurface),
@@ -222,7 +218,6 @@ fun StarRatingTestScreen(
             }
         }
 
-        // Render Rating Bottom Sheet
         RatingBottomSheet(
             isVisible = isSheetVisible,
             uiState = ratingUiState,
@@ -237,7 +232,7 @@ fun StarRatingTestScreen(
             onSubmit = {
                 scope.launch {
                     ratingUiState = ratingUiState.copy(status = RatingSubmitStatus.Submitting)
-                    delay(1200) // Simulate network call
+                    delay(1200)
 
                     if (shouldSimulateError) {
                         ratingUiState = ratingUiState.copy(

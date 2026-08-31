@@ -118,7 +118,6 @@ class ChatDaoTest {
         assertEquals("https://kliq-app.de/uploads/stage.jpg", retrievedMsg.mediaUrl)
         assertEquals(MessageStatus.SENT, retrievedMsg.status)
 
-        // Status-Update (SENT -> READ)
         chatDao.updateMessageStatus("msg_101", MessageStatus.READ)
         val updatedMessages = chatDao.getMessagesForChat("chat_city_berlin").first()
         assertEquals(MessageStatus.READ, updatedMessages[0].status)

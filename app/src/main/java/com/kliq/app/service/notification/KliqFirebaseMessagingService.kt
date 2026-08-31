@@ -43,7 +43,7 @@ class KliqFirebaseMessagingService : FirebaseMessagingService() {
                 notificationHelper.showChatNotification(payload)
             }
         } else {
-            // Allgemeine Benachrichtigung (z. B. aus Firebase-Konsole oder Kampagne)
+
             val title = remoteMessage.notification?.title
                 ?: remoteMessage.data["title"]
                 ?: remoteMessage.data["sender_name"]

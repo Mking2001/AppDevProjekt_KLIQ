@@ -21,11 +21,6 @@ import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
 
-/**
- * Application class for Kliq.
- * Configures global notification channels, Coil ImageLoader memory cache bounds,
- * ComponentCallbacks2 memory trimming, initial database seeding, and async Crashlytics / Timber error reporting.
- */
 @HiltAndroidApp
 class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
 
@@ -35,10 +30,6 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
     @Inject
     lateinit var databaseSeeder: KliqDatabaseSeeder
 
-    /**
-     * Anwendungsweiter Scope für Initialisierungsarbeiten, die den
-     * Lebenszyklus einzelner Screens überdauern.
-     */
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private var imageLoaderInstance: ImageLoader? = null
 
@@ -73,10 +64,6 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
         }
     }
 
-    /**
-     * Initialisiert Timber und das Crashlytics-Logging-Tree asynchron im Hintergrund,
-     * ohne den Haupt-Thread oder die Kaltstart-Performance der App zu blockieren.
-     */
     private fun initCrashReportingAsync() {
         applicationScope.launch {
             if (BuildConfig.DEBUG) {
@@ -84,14 +71,12 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
             }
             Timber.plant(KliqCrashlyticsTree())
 
-            // Setze initiale anonymisierte Sitzungs- und System-Metadaten
             val sessionId = UUID.randomUUID().toString().take(8)
             CrashReportingLogger.setCustomKey("session_id", sessionId)
             CrashReportingLogger.setCustomKey("app_version", BuildConfig.VERSION_NAME)
             CrashReportingLogger.setCustomKey("build_type", BuildConfig.BUILD_TYPE)
             CrashReportingLogger.logBreadcrumb("App initialization completed")
 
-            // Firebase Analytics Event
             val analytics = com.google.firebase.analytics.FirebaseAnalytics.getInstance(this@KliqApplication)
             val bundle = android.os.Bundle().apply {
                 putString(com.google.firebase.analytics.FirebaseAnalytics.Param.ITEM_NAME, "app_startup")
@@ -99,7 +84,6 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
             }
             analytics.logEvent(com.google.firebase.analytics.FirebaseAnalytics.Event.APP_OPEN, bundle)
 
-            // Anonyme Firebase Auth Anmeldung für Data Connect Auth Context
             try {
                 com.google.firebase.auth.FirebaseAuth.getInstance().signInAnonymously().addOnCompleteListener { authTask ->
                     if (authTask.isSuccessful) {
@@ -112,7 +96,6 @@ class KliqApplication : Application(), ImageLoaderFactory, ComponentCallbacks2 {
                 Timber.w(e, "Fehler bei Firebase Auth Initialisierung")
             }
 
-            // Globales Topic "all" für Sofort-Pushs abonnieren
             try {
                 com.google.firebase.messaging.FirebaseMessaging.getInstance().subscribeToTopic("all")
                 com.google.firebase.messaging.FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->

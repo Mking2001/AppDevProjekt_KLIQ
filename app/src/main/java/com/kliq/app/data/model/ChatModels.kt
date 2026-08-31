@@ -102,7 +102,6 @@ fun ChatListItem.toChatConversation(): ChatConversation {
     )
 }
 
-
 data class ChatMessage(
     val id: String,
     val chatId: String,

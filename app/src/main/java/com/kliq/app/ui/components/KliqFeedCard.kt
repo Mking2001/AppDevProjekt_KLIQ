@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
+import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.NightsStay
 import androidx.compose.material.icons.outlined.Share
@@ -40,31 +41,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.kliq.app.ui.theme.ErrorRed
 import com.kliq.app.ui.theme.FuchsiaTertiary
 import com.kliq.app.ui.theme.PurplePrimary
+import com.kliq.app.ui.theme.PurplePrimaryLight
+import com.kliq.app.ui.theme.TealSecondary
 import com.kliq.app.util.ensureMinTouchTarget
 import com.kliq.app.util.talkBackDescription
 
-/**
- * Feed-Karte für den Home-Feed.
- *
- * Zeigt Verfasser, Zeitangabe, Motiv, Text und die Interaktionsleiste.
- * Liegt keine Bild-URL vor, wird eine Fallback-Grafik aus Kliq-Farbverlauf,
- * Nachtsymbol und optionalem Location-Namen gerendert, statt eine leere
- * Fläche anzuzeigen.
- *
- * @param userName Anzeigename des Verfassers.
- * @param timeAgo Relative Zeitangabe, zum Beispiel "Vor 15 Min.".
- * @param contentText Textinhalt des Beitrags.
- * @param likeCount Anzahl der Likes.
- * @param isLiked Ob der aktuelle Nutzer den Beitrag geliked hat.
- * @param commentCount Anzahl der Kommentare.
- * @param clubName Optionaler Name der verknüpften Location.
- * @param imageUrl Optionale Bild-URL des Beitrags.
- * @param onLikeClick Callback für den Like-Button.
- * @param onCommentClick Callback für den Kommentar-Button.
- * @param onShareClick Callback für den Teilen-Button.
- */
 @Composable
 fun KliqFeedCard(
     userName: String,
@@ -75,10 +59,15 @@ fun KliqFeedCard(
     isLiked: Boolean = false,
     commentCount: Int = 0,
     clubName: String? = null,
+    locationAddress: String? = null,
     imageUrl: String? = null,
+    isPinnedToMap: Boolean = false,
+    isFollowersOnly: Boolean = false,
+    isOwnPost: Boolean = false,
     onLikeClick: () -> Unit = {},
     onCommentClick: () -> Unit = {},
-    onShareClick: () -> Unit = {}
+    onShareClick: () -> Unit = {},
+    onDeletePostClick: (() -> Unit)? = null
 ) {
     val likeScale by animateFloatAsState(
         targetValue = if (isLiked) 1.15f else 1.0f,
@@ -95,7 +84,10 @@ fun KliqFeedCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 KliqAvatarCircle(size = 40.dp)
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
@@ -105,11 +97,45 @@ fun KliqFeedCard(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = timeAgo,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = timeAgo,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        if (isPinnedToMap) {
+                            Text(
+                                text = "• 📍 Event auf Karte",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = PurplePrimary
+                            )
+                        }
+                        if (isFollowersOnly) {
+                            Text(
+                                text = "• 🔒 Nur Follower",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = FuchsiaTertiary
+                            )
+                        }
+                    }
+                }
+
+                if (isOwnPost && onDeletePostClick != null) {
+                    IconButton(
+                        onClick = onDeletePostClick,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.DeleteOutline,
+                            contentDescription = "Beitrag löschen",
+                            tint = ErrorRed.copy(alpha = 0.85f),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
@@ -198,11 +224,6 @@ fun KliqFeedCard(
     }
 }
 
-/**
- * Motivbereich einer Feed-Karte.
- * Lädt ein Bild, wenn eine URL vorliegt, und rendert andernfalls
- * eine Fallback-Grafik mit Kliq-Farbverlauf und Location-Hinweis.
- */
 @Composable
 private fun FeedCardMedia(imageUrl: String?, clubName: String?) {
     if (imageUrl.isNullOrBlank() && clubName.isNullOrBlank()) {
@@ -254,7 +275,6 @@ private fun FeedCardMedia(imageUrl: String?, clubName: String?) {
         return
     }
 
-    // Only location tag without image
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))

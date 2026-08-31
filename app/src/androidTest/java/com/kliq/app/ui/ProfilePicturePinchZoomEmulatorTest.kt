@@ -26,11 +26,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Instrumented Emulator UI Test for Chapter 8.3: Pinch-to-Zoom Logic for Profile Pictures.
- * Validates profile avatar navigation tap, gesture simulation (pinch scale clamping, pan translation boundary limits,
- * double-tap reset), Kliq purple high-contrast dark theme styling, and ViewModel state reset on modal dismissal.
- */
 @RunWith(AndroidJUnit4::class)
 class ProfilePicturePinchZoomEmulatorTest {
 
@@ -60,13 +55,10 @@ class ProfilePicturePinchZoomEmulatorTest {
             }
         }
 
-        // 1. Initial State: Fullscreen overlay is not visible
         composeTestRule.onNodeWithContentDescription("Schließen").assertDoesNotExist()
 
-        // 2. Tap profile avatar
         composeTestRule.onNodeWithContentDescription("Profilbild. Zum Vergrößern tippen.").performClick()
 
-        // 3. Verify Fullscreen Zoom Overlay appears
         assertTrue(isModalVisible)
         composeTestRule.onNodeWithContentDescription("Schließen").assertIsDisplayed()
     }
@@ -96,24 +88,19 @@ class ProfilePicturePinchZoomEmulatorTest {
             }
         }
 
-        // 1. Initial scale is 1.0x -> Zoom badge is hidden
         composeTestRule.onNodeWithText("2.5x").assertDoesNotExist()
 
-        // 2. Perform Double-Tap on overlay image container
         composeTestRule.onNodeWithContentDescription("Vollbild Profilbild Zoom").performTouchInput {
             doubleClick()
         }
 
-        // 3. Verify scale factor increased to 2.5x and zoom badge displays "2.5x"
         assertEquals(2.5f, viewerState.currentScale, 0.01f)
         composeTestRule.onNodeWithText("2.5x").assertIsDisplayed()
 
-        // 4. Perform Double-Tap again to reset scale factor to 1.0x
         composeTestRule.onNodeWithContentDescription("Vollbild Profilbild Zoom").performTouchInput {
             doubleClick()
         }
 
-        // 5. Verify scale factor reset to 1.0x and zoom badge disappears
         assertEquals(1.0f, viewerState.currentScale, 0.01f)
         composeTestRule.onNodeWithText("2.5x").assertDoesNotExist()
     }
@@ -157,15 +144,12 @@ class ProfilePicturePinchZoomEmulatorTest {
             }
         }
 
-        // 1. Perform pan swipe gesture on zoomed image
         composeTestRule.onNodeWithContentDescription("Vollbild Profilbild Zoom").performTouchInput {
             swipeLeft()
         }
 
-        // 2. Click close button ("Schließen")
         composeTestRule.onNodeWithContentDescription("Schließen").performClick()
 
-        // 3. Verify modal is dismissed and state in ViewModel is reset to 1.0x
         assertFalse(viewerState.isFullscreenVisible)
         assertEquals(1.0f, viewerState.currentScale, 0.001f)
         assertEquals(0.0f, viewerState.translationOffsetX, 0.001f)

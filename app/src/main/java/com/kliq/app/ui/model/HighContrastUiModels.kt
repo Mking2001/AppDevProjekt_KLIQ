@@ -6,9 +6,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-/**
- * Color palette tokens tailored for High-Contrast Dark/Violet (Lila) UI theme.
- */
 object HighContrastVioletPalette {
     const val PrimaryViolet = "#BB86FC"
     const val DeepVioletContainer = "#25123E"

@@ -12,9 +12,6 @@ import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Utility provider supplying single-shot and fresh location queries with power-aware precision control.
- */
 @Singleton
 class LocationProvider @Inject constructor(
     @ApplicationContext private val context: Context
@@ -31,10 +28,6 @@ class LocationProvider @Inject constructor(
         }
     }
 
-    /**
-     * Obtains a fresh location fix, allowing power-conscious prioritization
-     * (High Accuracy for active checks vs Balanced Power for passive discovery).
-     */
     @SuppressLint("MissingPermission")
     suspend fun getFreshLocation(highAccuracy: Boolean = false): Location? {
         return try {

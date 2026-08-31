@@ -7,9 +7,6 @@ import androidx.room.Query
 import com.kliq.app.data.local.entities.VisitedLogEntity
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Data Access Object for managing historical club visit logs.
- */
 @Dao
 interface VisitedLogDao {
 
@@ -48,4 +45,3 @@ data class GenderCountResult(
     val gender: String,
     val count: Int
 )
-

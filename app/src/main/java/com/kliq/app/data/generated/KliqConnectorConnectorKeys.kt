@@ -36,6 +36,20 @@ package com.kliq.app.data.generated
   }
 
   @kotlinx.serialization.Serializable
+  public data class ClubHypeKey(
+  
+    val clubId: String,
+  
+    val userId: String,
+  
+    val dateString: String,
+  
+  ) {
+    
+    
+  }
+
+  @kotlinx.serialization.Serializable
   public data class ClubKey(
   
     val id: String,
@@ -76,6 +90,38 @@ package com.kliq.app.data.generated
   }
 
   @kotlinx.serialization.Serializable
+  public data class FeedCommentKey(
+  
+    val id: String,
+  
+  ) {
+    
+    
+  }
+
+  @kotlinx.serialization.Serializable
+  public data class FeedPostKey(
+  
+    val id: String,
+  
+  ) {
+    
+    
+  }
+
+  @kotlinx.serialization.Serializable
+  public data class FeedPostLikeKey(
+  
+    val postId: String,
+  
+    val userId: String,
+  
+  ) {
+    
+    
+  }
+
+  @kotlinx.serialization.Serializable
   public data class FriendKey(
   
     val userId: String,
@@ -108,6 +154,16 @@ package com.kliq.app.data.generated
   }
 
   @kotlinx.serialization.Serializable
+  public data class StoryKey(
+  
+    val id: String,
+  
+  ) {
+    
+    
+  }
+
+  @kotlinx.serialization.Serializable
   public data class UserKey(
   
     val id: String,
@@ -119,6 +175,16 @@ package com.kliq.app.data.generated
 
   @kotlinx.serialization.Serializable
   public data class UserLocationKey(
+  
+    val id: String,
+  
+  ) {
+    
+    
+  }
+
+  @kotlinx.serialization.Serializable
+  public data class UserPhotoKey(
   
     val id: String,
   

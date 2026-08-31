@@ -13,11 +13,20 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE id = :userId")
     fun getUserById(userId: String): Flow<UserEntity?>
 
+    @Query("SELECT * FROM users WHERE id IN (:userIds)")
+    fun getUsersByIds(userIds: List<String>): Flow<List<UserEntity>>
+
     @Query("SELECT * FROM users WHERE id = :userId LIMIT 1")
     suspend fun getUserByIdOneShot(userId: String): UserEntity?
 
     @Query("SELECT * FROM users WHERE LOWER(username) = LOWER(:username) LIMIT 1")
     suspend fun getUserByUsername(username: String): UserEntity?
+
+    @Query("SELECT * FROM users WHERE LOWER(email) = LOWER(:email) LIMIT 1")
+    suspend fun getUserByEmail(email: String): UserEntity?
+
+    @Query("SELECT * FROM users WHERE phoneNumber = :phoneNumber LIMIT 1")
+    suspend fun getUserByPhone(phoneNumber: String): UserEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserEntity)
@@ -28,10 +37,18 @@ interface UserDao {
     @Query("UPDATE users SET isVerified = :isVerified WHERE id = :userId")
     suspend fun updateUserVerificationStatus(userId: String, isVerified: Boolean)
 
+    @Query("DELETE FROM users WHERE id = :userId")
+    suspend fun deleteUserById(userId: String)
+
     @Query("DELETE FROM users")
     suspend fun clearUsers()
 
-    // Preferences
+    @Query("SELECT * FROM users WHERE LOWER(username) LIKE '%' || LOWER(:query) || '%' OR LOWER(hometown) LIKE '%' || LOWER(:query) || '%' ORDER BY username ASC LIMIT 25")
+    suspend fun searchUsers(query: String): List<UserEntity>
+
+    @Query("SELECT * FROM users ORDER BY username ASC LIMIT 50")
+    suspend fun getAllUsers(): List<UserEntity>
+
     @Query("SELECT * FROM user_preferences WHERE userId = :userId")
     fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?>
 
@@ -40,4 +57,7 @@ interface UserDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUserPreferences(preferences: UserPreferencesEntity)
+
+    @Query("DELETE FROM user_preferences WHERE userId = :userId")
+    suspend fun deleteUserPreferencesByUserId(userId: String)
 }

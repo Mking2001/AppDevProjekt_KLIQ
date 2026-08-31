@@ -36,12 +36,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * Android Foreground Service handling battery-optimized background location tracking for Kliq.
- *
- * Coordinates adaptive sampling policies (High-Accuracy burst, Balanced Ambient, and Idle Passive),
- * dynamic FusedLocationProviderClient re-registration, and persistent High-Contrast notification updates.
- */
 @AndroidEntryPoint
 class BackgroundLocationService : Service() {
 
@@ -149,7 +143,7 @@ class BackgroundLocationService : Service() {
 
     @SuppressLint("MissingPermission")
     private fun applyAdaptiveLocationPolicy(policy: LocationPowerPolicy) {
-        // Dynamically reconfigures location updates to match the current energy policy
+
         try {
             fusedLocationClient.removeLocationUpdates(locationCallback)
 
@@ -178,7 +172,7 @@ class BackgroundLocationService : Service() {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.notify(NOTIFICATION_ID, buildForegroundNotification())
         } catch (e: Exception) {
-            // Ignore notification update failures during teardown
+
         }
     }
 
@@ -186,7 +180,7 @@ class BackgroundLocationService : Service() {
         try {
             fusedLocationClient.removeLocationUpdates(locationCallback)
         } catch (e: Exception) {
-            // Ignore clean teardown exceptions
+
         }
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()

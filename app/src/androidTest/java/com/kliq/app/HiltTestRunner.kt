@@ -5,10 +5,6 @@ import android.content.Context
 import androidx.test.runner.AndroidJUnitRunner
 import dagger.hilt.android.testing.HiltTestApplication
 
-/**
- * Custom TestRunner für Hilt-basierte Instrumentierungs-Tests.
- * Wird in der build.gradle.kts als testInstrumentationRunner referenziert.
- */
 class HiltTestRunner : AndroidJUnitRunner() {
     override fun newApplication(
         cl: ClassLoader?,

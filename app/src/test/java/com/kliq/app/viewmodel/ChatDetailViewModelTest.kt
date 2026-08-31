@@ -29,11 +29,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 
-/**
- * Prüft, dass der Chat-Detail-Screen ausschließlich über das ChatRepository
- * arbeitet: Nachrichten werden persistiert, der Verlauf kommt aus dem Repository
- * und der Ungelesen-Zähler wird beim Öffnen zurückgesetzt.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatDetailViewModelTest {
 
@@ -138,7 +133,6 @@ class ChatDetailViewModelTest {
         viewModel.onSendMessage()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Der Chat ist als online markiert, daher folgt auf DELIVERED auch READ.
         assertEquals(MessageStatus.READ, viewModel.uiState.value.messages.last().status)
     }
 
@@ -186,7 +180,6 @@ class ChatDetailViewModelTest {
         viewModel.onSendMessage()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Zweites ViewModel simuliert das erneute Betreten des Screens.
         val reopenedViewModel = ChatDetailViewModel(
             chatRepository = chatRepository,
             userRepository = userRepository,

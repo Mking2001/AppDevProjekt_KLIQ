@@ -29,5 +29,7 @@ data class ClubEntity(
     val postalCode: String = "",
     val phoneNumber: String? = null,
     val contactEmail: String? = null,
-    val instagramHandle: String? = null
+    val instagramHandle: String? = null,
+    val flameCount: Int = 0,
+    val flameDate: String = ""
 )

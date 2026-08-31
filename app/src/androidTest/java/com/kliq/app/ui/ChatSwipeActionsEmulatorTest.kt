@@ -27,11 +27,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Instrumented Emulator UI Test for Chapter 8.2: Swipe-to-Action in Chat-Listen (Löschen/Archivieren).
- * Programmatically verifies swipe left (Archive) gesture, swipe right (Delete) gesture with confirmation dialog,
- * and permanent chat removal.
- */
 @RunWith(AndroidJUnit4::class)
 class ChatSwipeActionsEmulatorTest {
 
@@ -68,7 +63,6 @@ class ChatSwipeActionsEmulatorTest {
 
         composeTestRule.onNodeWithText("Lisa W.").assertIsDisplayed()
 
-        // Simulate Swipe Left gesture (End-to-Start / Archive)
         composeTestRule.onNodeWithText("Lisa W.").performTouchInput {
             swipeLeft()
         }
@@ -101,12 +95,10 @@ class ChatSwipeActionsEmulatorTest {
 
         composeTestRule.onNodeWithText("Lisa W.").assertIsDisplayed()
 
-        // Simulate Swipe Right gesture (Start-to-End / Delete)
         composeTestRule.onNodeWithText("Lisa W.").performTouchInput {
             swipeRight()
         }
 
-        // Verify Delete Confirmation Dialog is displayed with correct title and message
         composeTestRule.onNodeWithText("Chat löschen?").assertIsDisplayed()
         composeTestRule.onNodeWithText("Möchtest du den Chat mit „Lisa W.“ wirklich löschen?").assertIsDisplayed()
     }
@@ -131,10 +123,8 @@ class ChatSwipeActionsEmulatorTest {
             }
         }
 
-        // Verify dialog is open
         composeTestRule.onNodeWithText("Chat löschen?").assertIsDisplayed()
 
-        // Click "Chat löschen" confirm button
         composeTestRule.onNodeWithText("Chat löschen").performClick()
 
         assertTrue(deleteConfirmed)

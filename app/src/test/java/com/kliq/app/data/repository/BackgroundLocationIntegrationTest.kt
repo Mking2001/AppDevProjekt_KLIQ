@@ -57,9 +57,6 @@ class IntegrationFakeLocationDao : LocationDao {
     }
 }
 
-/**
- * Automated Integration Test Suite for Kapitel 4.3 & 9.7: Background Location Tracking and Adaptive GPS Optimization.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class BackgroundLocationIntegrationTest {
 
@@ -170,7 +167,6 @@ class BackgroundLocationIntegrationTest {
         testDispatcher.scheduler.advanceUntilIdle()
         assertEquals(LocationTrackingMode.BALANCED_AMBIENT, viewModel.uiState.value.trackingMode)
 
-        // Simulate stationary location updates
         val fix1 = LocationData(latitude = 52.52000, longitude = 13.40500, speed = 0.0f)
         val fix2 = LocationData(latitude = 52.52001, longitude = 13.40501, speed = 0.0f)
         val fix3 = LocationData(latitude = 52.52001, longitude = 13.40501, speed = 0.0f)

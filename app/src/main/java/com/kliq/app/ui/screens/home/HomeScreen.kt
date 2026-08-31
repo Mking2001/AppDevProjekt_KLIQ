@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Schedule
@@ -46,10 +47,25 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Verified
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.SolidColor
+import com.kliq.app.util.AddressSuggestion
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -85,20 +101,6 @@ import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.util.ensureMinTouchTarget
 import com.kliq.app.util.talkBackDescription
 
-/**
- * Home-Feed-Screen mit Story-Leiste, scrollbarem Feed und Beitrags-Editor.
- *
- * Alle Interaktionen laufen über das [HomeViewModel] und werden in der lokalen
- * Datenbank persistiert: Story-Aufrufe setzen den Gesehen-Status, Likes und
- * Kommentare werden gespeichert, neue Beiträge erscheinen an der Spitze des Feeds.
- *
- * @param topBarState Aktueller Top-Bar UI-State.
- * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
- * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
- * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
- * @param onNavigateToChat Navigation zur Chat-Übersicht.
- * @param viewModel Hilt-injiziertes [HomeViewModel].
- */
 @Composable
 fun HomeScreen(
     topBarState: TopBarUiState,
@@ -106,6 +108,7 @@ fun HomeScreen(
     onDismissMenu: () -> Unit,
     onMenuAction: (TopBarMenuAction) -> Unit,
     onNavigateToActivities: () -> Unit = {},
+    onNavigateToUserProfile: (String) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -190,6 +193,17 @@ fun HomeScreen(
                     )
                 }
 
+                item {
+                    UserSearchBarSection(
+                        query = uiState.userSearchQuery,
+                        onQueryChanged = { viewModel.onUserSearchQueryChanged(it) },
+                        onClear = { viewModel.onClearUserSearch() },
+                        isSearching = uiState.isSearchingUsers,
+                        searchResults = uiState.userSearchResults,
+                        onUserClick = { userId -> onNavigateToUserProfile(userId) }
+                    )
+                }
+
                 if (uiState.isLoading) {
                     item {
                         Box(
@@ -214,10 +228,15 @@ fun HomeScreen(
                         isLiked = feedItem.isLiked,
                         commentCount = feedItem.commentCount,
                         clubName = feedItem.clubName,
+                        locationAddress = feedItem.locationAddress,
                         imageUrl = feedItem.imageUrl,
+                        isPinnedToMap = feedItem.isPinnedToMap,
+                        isFollowersOnly = feedItem.isFollowersOnly,
+                        isOwnPost = feedItem.isOwnPost,
                         onLikeClick = { viewModel.onLikePost(feedItem.id) },
                         onCommentClick = { viewModel.onCommentsOpened(feedItem.id) },
                         onShareClick = { viewModel.onSharePostOpened(feedItem) },
+                        onDeletePostClick = { viewModel.onDeletePost(feedItem.id) },
                         modifier = Modifier.padding(horizontal = 16.dp)
                     )
                 }
@@ -235,13 +254,19 @@ fun HomeScreen(
             text = uiState.composerText,
             imageUri = uiState.composerImageUri,
             location = uiState.composerLocation,
+            locationAddress = uiState.composerLocationAddress,
             isEventPinned = uiState.composerIsEventPinned,
+            isFollowersOnly = uiState.composerIsFollowersOnly,
+            suggestions = uiState.composerAddressSuggestions,
             isPublishing = uiState.isPublishing,
             onTextChange = viewModel::onComposerTextChanged,
             onPickImage = { postImageLauncher.launch("image/*") },
             onRemoveImage = viewModel::onComposerImageRemoved,
-            onLocationChange = viewModel::onComposerLocationChanged,
+            onLocationQueryChange = { viewModel.onComposerLocationQueryChanged(context, it) },
+            onSelectAddress = viewModel::onSelectAddress,
+            onClearAddress = viewModel::onClearAddress,
             onToggleEventPinned = viewModel::onToggleComposerEventPinned,
+            onVisibilityChanged = viewModel::onComposerVisibilityChanged,
             onPublish = viewModel::onPublishPost,
             onDismiss = viewModel::onComposerDismissed
         )
@@ -251,6 +276,10 @@ fun HomeScreen(
         StoryViewerDialog(
             story = story,
             onDeleteClick = { viewModel.onDeleteStory(story.id) },
+            onAuthorClick = {
+                viewModel.onStoryDismissed()
+                onNavigateToUserProfile(story.authorUserId)
+            },
             onDismiss = viewModel::onStoryDismissed
         )
     }
@@ -277,9 +306,6 @@ fun HomeScreen(
     }
 }
 
-/**
- * Horizontale Story-Leiste. Erstes Element ist die eigene Story (Instagram-Style).
- */
 @Composable
 private fun StoryRow(
     myStory: StoryItemUi?,
@@ -295,7 +321,7 @@ private fun StoryRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 1. Deine Story (Instagram-Style)
+
         item(key = "my_own_story_item") {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -311,7 +337,7 @@ private fun StoryRow(
                     modifier = Modifier.size(64.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Profilbild-Kreis
+
                     Box(
                         modifier = Modifier
                             .size(64.dp)
@@ -358,7 +384,6 @@ private fun StoryRow(
                         }
                     }
 
-                    // Plus-Badge (+)
                     Box(
                         modifier = Modifier
                             .size(22.dp)
@@ -401,7 +426,6 @@ private fun StoryRow(
             }
         }
 
-        // 2. Storys von anderen Nutzern
         items(stories, key = { it.id }) { story ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -474,9 +498,6 @@ private fun StoryRow(
     }
 }
 
-/**
- * Hinweis, wenn noch keine Beiträge vorliegen.
- */
 @Composable
 private fun EmptyFeedHint() {
     Column(
@@ -501,44 +522,129 @@ private fun EmptyFeedHint() {
     }
 }
 
-/**
- * Dialog zum Erstellen eines neuen Beitrags mit Bild, Ort und Event-Pin.
- */
 @Composable
 private fun PostComposerDialog(
     text: String,
     imageUri: String?,
     location: String,
+    locationAddress: String?,
     isEventPinned: Boolean,
+    isFollowersOnly: Boolean,
+    suggestions: List<AddressSuggestion>,
     isPublishing: Boolean,
     onTextChange: (String) -> Unit,
     onPickImage: () -> Unit,
     onRemoveImage: () -> Unit,
-    onLocationChange: (String) -> Unit,
+    onLocationQueryChange: (String) -> Unit,
+    onSelectAddress: (AddressSuggestion) -> Unit,
+    onClearAddress: () -> Unit,
     onToggleEventPinned: () -> Unit,
+    onVisibilityChanged: (Boolean) -> Unit,
     onPublish: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val isAddressSelected = !locationAddress.isNullOrBlank()
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = "Neuer Beitrag",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
+            Column {
+                Text(
+                    text = "Neuer Beitrag",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Teile Neuigkeiten oder erstelle ein Event in Klagenfurt",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         },
         text = {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
+                // ===== 1. Sichtbarkeit (Öffentlich vs. Nur Follower) =====
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Sichtbarkeit",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                            .padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (!isFollowersOnly) PurplePrimary else Color.Transparent)
+                                .clickable { onVisibilityChanged(false) }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Filled.Public,
+                                    contentDescription = null,
+                                    tint = if (!isFollowersOnly) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Öffentlich",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = if (!isFollowersOnly) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (isFollowersOnly) FuchsiaTertiary else Color.Transparent)
+                                .clickable { onVisibilityChanged(true) }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Filled.Lock,
+                                    contentDescription = null,
+                                    tint = if (isFollowersOnly) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Nur Follower",
+                                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                    color = if (isFollowersOnly) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    Text(
+                        text = if (!isFollowersOnly) "Sichtbar für alle KLIQ-Nutzer" else "Nur für Personen sichtbar, die dir folgen",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
+                    )
+                }
+
+                // ===== 2. Beitrags-Text =====
                 OutlinedTextField(
                     value = text,
                     onValueChange = onTextChange,
-                    placeholder = { Text(text = "Was läuft heute Abend?") },
+                    placeholder = { Text(text = "Was läuft heute Abend in Klagenfurt?") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 90.dp),
@@ -547,7 +653,7 @@ private fun PostComposerDialog(
                     enabled = !isPublishing
                 )
 
-                // Bild-Vorschau oder Hinzufügen-Button
+                // ===== 3. Foto (Optional) =====
                 if (!imageUri.isNullOrBlank()) {
                     Box(
                         modifier = Modifier
@@ -595,43 +701,162 @@ private fun PostComposerDialog(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Foto hinzufügen",
+                            text = "Foto hinzufügen (optional)",
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium
                         )
                     }
                 }
 
-                // Standort-Eingabe (optional)
-                OutlinedTextField(
-                    value = location,
-                    onValueChange = onLocationChange,
-                    placeholder = { Text("Ort / Location (optional)") },
-                    leadingIcon = {
-                        Icon(Icons.Filled.LocationOn, contentDescription = null, tint = PurplePrimaryLight)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
-                    enabled = !isPublishing
-                )
+                // ===== 4. Ort / Location & Echte Adresssuche =====
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Ort / Location",
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
 
-                // Auf Karte fixieren (Event) Button / Switch
+                    if (isAddressSelected) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(PurplePrimary.copy(alpha = 0.12f))
+                                .border(1.dp, PurplePrimaryLight.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Place,
+                                    contentDescription = null,
+                                    tint = PurplePrimaryLight,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = location,
+                                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Icon(
+                                            imageVector = Icons.Filled.CheckCircle,
+                                            contentDescription = "Verifiziert",
+                                            tint = PurplePrimaryLight,
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
+                                    locationAddress?.let { fullAddr ->
+                                        Text(
+                                            text = fullAddr,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                            IconButton(
+                                onClick = onClearAddress,
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Close,
+                                    contentDescription = "Adresse entfernen",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    } else {
+                        OutlinedTextField(
+                            value = location,
+                            onValueChange = onLocationQueryChange,
+                            placeholder = { Text("Adresse / Ort suchen (z.B. Neuer Platz...)") },
+                            leadingIcon = {
+                                Icon(Icons.Filled.Search, contentDescription = null, tint = PurplePrimaryLight)
+                            },
+                            trailingIcon = {
+                                if (location.isNotBlank()) {
+                                    IconButton(onClick = onClearAddress) {
+                                        Icon(Icons.Filled.Clear, contentDescription = "Löschen", modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = !isPublishing
+                        )
+
+                        if (suggestions.isNotEmpty()) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                    suggestions.take(4).forEach { suggestion ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable { onSelectAddress(suggestion) }
+                                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Filled.LocationOn,
+                                                contentDescription = null,
+                                                tint = PurplePrimaryLight,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = suggestion.name,
+                                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                                    color = MaterialTheme.colorScheme.onSurface
+                                                )
+                                                Text(
+                                                    text = suggestion.fullAddress,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // ===== 5. Event auf der Karte fixieren =====
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
                         .background(
                             if (isEventPinned) PurplePrimary.copy(alpha = 0.2f)
-                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = if (isAddressSelected) 0.5f else 0.25f)
                         )
                         .border(
                             width = 1.dp,
                             color = if (isEventPinned) PurplePrimary else Color.Transparent,
                             shape = RoundedCornerShape(12.dp)
                         )
-                        .clickable { onToggleEventPinned() }
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                        .clickable(enabled = isAddressSelected) { onToggleEventPinned() }
+                        .padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
@@ -642,7 +867,11 @@ private fun PostComposerDialog(
                         Icon(
                             imageVector = Icons.Filled.Place,
                             contentDescription = null,
-                            tint = if (isEventPinned) PurplePrimaryLight else MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = when {
+                                isEventPinned -> PurplePrimaryLight
+                                isAddressSelected -> MaterialTheme.colorScheme.onSurfaceVariant
+                                else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                            },
                             modifier = Modifier.size(20.dp)
                         )
                         Spacer(modifier = Modifier.width(10.dp))
@@ -650,18 +879,30 @@ private fun PostComposerDialog(
                             Text(
                                 text = "Auf Karte fixieren (Event)",
                                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                                color = if (isEventPinned) Color.White else MaterialTheme.colorScheme.onSurface
+                                color = when {
+                                    isEventPinned -> Color.White
+                                    isAddressSelected -> MaterialTheme.colorScheme.onSurface
+                                    else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                                }
                             )
                             Text(
-                                text = if (isEventPinned) "Wird auf der Karte markiert" else "Nur im Feed sichtbar",
+                                text = when {
+                                    !isAddressSelected -> "Wähle zuerst eine echte Adresse aus der Liste"
+                                    isEventPinned -> "Wird auf der Karte & in Entdecken markiert"
+                                    else -> "Nur im Feed sichtbar"
+                                },
                                 style = MaterialTheme.typography.labelSmall,
-                                color = if (isEventPinned) PurplePrimaryLight else MaterialTheme.colorScheme.onSurfaceVariant
+                                color = when {
+                                    isEventPinned -> PurplePrimaryLight
+                                    else -> MaterialTheme.colorScheme.onSurfaceVariant
+                                }
                             )
                         }
                     }
                     Switch(
                         checked = isEventPinned,
-                        onCheckedChange = { onToggleEventPinned() },
+                        onCheckedChange = { if (isAddressSelected) onToggleEventPinned() },
+                        enabled = isAddressSelected,
                         colors = SwitchDefaults.colors(
                             checkedThumbColor = Color.White,
                             checkedTrackColor = PurplePrimary
@@ -696,13 +937,11 @@ private fun PostComposerDialog(
     )
 }
 
-/**
- * Vollbild-Anzeige einer Story mit Erstellungszeitpunkt, Standort und Löschen-Option.
- */
 @Composable
 private fun StoryViewerDialog(
     story: StoryItemUi,
     onDeleteClick: () -> Unit,
+    onAuthorClick: () -> Unit,
     onDismiss: () -> Unit
 ) {
     Dialog(onDismissRequest = onDismiss) {
@@ -728,7 +967,7 @@ private fun StoryViewerDialog(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                // Top gradient scrim for readability
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -740,7 +979,7 @@ private fun StoryViewerDialog(
                             )
                         )
                 )
-                // Bottom gradient scrim for readability
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -754,7 +993,6 @@ private fun StoryViewerDialog(
                 )
             }
 
-            // Top Action Row: Author Info & Controls
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -763,17 +1001,30 @@ private fun StoryViewerDialog(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = story.userName,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable(onClick = onAuthorClick)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = story.userName,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Icon(
+                            imageVector = Icons.Filled.Person,
+                            contentDescription = "Profil ansehen",
+                            tint = PurplePrimaryLight,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Erstellungszeitpunkt (Uhrzeit) & Standort
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (story.createdAtFormatted.isNotBlank()) {
                             Icon(
@@ -815,25 +1066,25 @@ private fun StoryViewerDialog(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Story löschen Knopf
-                    IconButton(
-                        onClick = onDeleteClick,
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.55f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Delete,
-                            contentDescription = "Story löschen",
-                            tint = Color(0xFFFF5252),
-                            modifier = Modifier.size(18.dp)
-                        )
+
+                    if (story.isOwnStory) {
+                        IconButton(
+                            onClick = onDeleteClick,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color.Black.copy(alpha = 0.55f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "Story löschen",
+                                tint = Color(0xFFFF5252),
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    // Schließen Knopf
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier
@@ -854,9 +1105,6 @@ private fun StoryViewerDialog(
     }
 }
 
-/**
- * Bottom Sheet mit den Kommentaren eines Beitrags und Eingabefeld.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CommentSheet(
@@ -953,6 +1201,222 @@ private fun CommentSheet(
                     }
                 }
             )
+        }
+    }
+}
+
+@Composable
+fun UserSearchBarSection(
+    query: String,
+    onQueryChanged: (String) -> Unit,
+    onClear: () -> Unit,
+    isSearching: Boolean,
+    searchResults: List<SearchedUserUi>,
+    onUserClick: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+    ) {
+
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f),
+            border = BorderStroke(
+                width = 1.dp,
+                color = if (query.isNotBlank()) PurplePrimary else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Search,
+                    contentDescription = "Suche",
+                    tint = if (query.isNotBlank()) PurplePrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp)
+                )
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                Box(modifier = Modifier.weight(1f)) {
+                    if (query.isEmpty()) {
+                        Text(
+                            text = "Leute & Freunde suchen...",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        )
+                    }
+                    BasicTextField(
+                        value = query,
+                        onValueChange = onQueryChanged,
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.bodyMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        cursorBrush = SolidColor(PurplePrimary),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                if (isSearching) {
+                    CircularProgressIndicator(
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(20.dp),
+                        color = PurplePrimary
+                    )
+                } else if (query.isNotEmpty()) {
+                    IconButton(
+                        onClick = onClear,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "Suche leeren",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        if (query.isNotBlank()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            if (searchResults.isNotEmpty()) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = PurplePrimary.copy(alpha = 0.35f)
+                    ),
+                    shadowElevation = 4.dp
+                ) {
+                    Column(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            text = "Gefundene Profile (${searchResults.size})",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = PurplePrimary,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+
+                        searchResults.forEach { user ->
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .clickable { onUserClick(user.id) }
+                                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (!user.profilePictureUrl.isNullOrBlank()) {
+                                    AsyncImage(
+                                        model = user.profilePictureUrl,
+                                        contentDescription = user.username,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .border(1.5.dp, PurplePrimary, CircleShape)
+                                    )
+                                } else {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(
+                                                Brush.linearGradient(
+                                                    listOf(PurplePrimary, FuchsiaTertiary)
+                                                )
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            text = user.username.take(2).uppercase(),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color.White
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.width(12.dp))
+
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = "@${user.username}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                        if (user.isVerified) {
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Icon(
+                                                imageVector = Icons.Filled.Verified,
+                                                contentDescription = "Verifiziert",
+                                                tint = PurplePrimary,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                    if (!user.hometown.isNullOrBlank()) {
+                                        Text(
+                                            text = user.hometown,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+
+                                TextButton(
+                                    onClick = { onUserClick(user.id) },
+                                    colors = ButtonDefaults.textButtonColors(
+                                        contentColor = PurplePrimary
+                                    )
+                                ) {
+                                    Text("Profil", fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (!isSearching) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Kein Profil für \"$query\" gefunden",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
         }
     }
 }

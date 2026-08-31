@@ -52,6 +52,7 @@ import com.kliq.app.ui.screens.notifications.NotificationsScreen
 import com.kliq.app.ui.screens.onboarding.ConsumptionHabitsScreen
 import com.kliq.app.ui.screens.onboarding.IntentMatchingScreen
 import com.kliq.app.ui.screens.onboarding.ProfileCreationScreen
+import com.kliq.app.ui.screens.profile.EditProfileScreen
 import com.kliq.app.ui.screens.profile.OtherUserProfileScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
 import com.kliq.app.ui.screens.qr.QRScannerScreen
@@ -74,15 +75,10 @@ import com.kliq.app.ui.navigation.KliqScreenTransitions.tabExitTransition
 import com.kliq.app.viewmodel.AuthViewModel
 import com.kliq.app.viewmodel.ThemeViewModel
 
-
 val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
     error("No SnackbarHostState provided")
 }
 
-/**
- * Main scaffold composable that hosts the Bottom Navigation Bar
- * and the [NavHost] for all primary screens.
- */
 @Composable
 fun KliqMainScaffold(
     initialIntent: Intent? = null,
@@ -97,6 +93,7 @@ fun KliqMainScaffold(
     val themeState by themeViewModel.themeState.collectAsStateWithLifecycle()
     var isSettingsDialogVisible by remember { mutableStateOf(false) }
     var isAboutDialogVisible by remember { mutableStateOf(false) }
+    var isDeleteAccountDialogVisible by remember { mutableStateOf(false) }
     val navigationState by navigationViewModel.navigationState.collectAsStateWithLifecycle()
     val topBarState by topBarViewModel.uiState.collectAsStateWithLifecycle()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -108,7 +105,8 @@ fun KliqMainScaffold(
         CoreRoutes.AUTH_SELECTION,
         CoreRoutes.PHONE_LOGIN,
         CoreRoutes.REGISTER,
-        ProfileRoutes.QR_SCANNER
+        ProfileRoutes.QR_SCANNER,
+        ProfileRoutes.EDIT_PROFILE
     )
 
     if (currentRoute != navigationState.currentRoute) {
@@ -119,7 +117,6 @@ fun KliqMainScaffold(
         com.kliq.app.service.crash.CrashReportingLogger.setCustomKey("current_route", currentRoute)
         com.kliq.app.service.crash.CrashReportingLogger.logBreadcrumb("Navigated to $currentRoute")
     }
-
 
     LaunchedEffect(currentRoute) {
         topBarViewModel.updateTitleForRoute(currentRoute)
@@ -178,7 +175,7 @@ fun KliqMainScaffold(
                     when (action) {
                         TopBarMenuAction.Settings -> { isSettingsDialogVisible = true }
                         TopBarMenuAction.EditProfile -> {
-                            navController.navigate(NavigationRoute.Profile.route) {
+                            navController.navigate(ProfileRoutes.EDIT_PROFILE) {
                                 launchSingleTop = true
                             }
                         }
@@ -189,6 +186,9 @@ fun KliqMainScaffold(
                             navController.navigate(CoreRoutes.AUTH_SELECTION) {
                                 popUpTo(0) { inclusive = true }
                             }
+                        }
+                        TopBarMenuAction.DeleteAccount -> {
+                            isDeleteAccountDialogVisible = true
                         }
                     }
                 },
@@ -231,6 +231,50 @@ fun KliqMainScaffold(
         isVisible = isAboutDialogVisible,
         onDismiss = { isAboutDialogVisible = false }
     )
+
+    if (isDeleteAccountDialogVisible) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { isDeleteAccountDialogVisible = false },
+            title = {
+                androidx.compose.material3.Text(
+                    text = "Profil löschen?",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            },
+            text = {
+                androidx.compose.material3.Text(
+                    text = "Bist du dir sicher, dass du dein Profil unwiderruflich löschen möchtest? Alle deine Beiträge, Storys und Profildaten werden gelöscht.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.Button(
+                    onClick = {
+                        isDeleteAccountDialogVisible = false
+                        authViewModel.deleteAccount {
+                            navController.navigate(CoreRoutes.AUTH_SELECTION) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    androidx.compose.material3.Text("Profil löschen", color = MaterialTheme.colorScheme.onError)
+                }
+            },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = { isDeleteAccountDialogVisible = false }
+                ) {
+                    androidx.compose.material3.Text("Abbrechen")
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -305,6 +349,12 @@ private fun KliqNavHost(
                     navController.navigate(NavigationRoute.Home.route) {
                         popUpTo(CoreRoutes.AUTH_SELECTION) { inclusive = true }
                     }
+                },
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onNavigateToRegister = {
+                    navController.navigate(CoreRoutes.REGISTER)
                 }
             )
         }
@@ -332,7 +382,10 @@ private fun KliqNavHost(
                 onToggleMenu = onToggleMenu,
                 onDismissMenu = onDismissMenu,
                 onMenuAction = onMenuAction,
-                onNavigateToActivities = onNavigateToActivities
+                onNavigateToActivities = onNavigateToActivities,
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(userId))
+                }
             )
         }
         composable(NavigationRoute.Explore.route) {
@@ -351,7 +404,10 @@ private fun KliqNavHost(
                 onDismissMenu = onDismissMenu,
                 onMenuAction = onMenuAction,
                 onNavigateToClub = onNavigateToClub,
-                onNavigateToChat = onNavigateToChatDetail
+                onNavigateToChat = onNavigateToChatDetail,
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(userId))
+                }
             )
         }
         composable(NavigationRoute.Notifications.route) {
@@ -374,7 +430,26 @@ private fun KliqNavHost(
                         launchSingleTop = true
                     }
                 },
-                onNavigateToClub = onNavigateToClub
+                onNavigateToClub = onNavigateToClub,
+                onNavigateToEditProfile = {
+                    navController.navigate(ProfileRoutes.EDIT_PROFILE) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToOtherProfile = { otherId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(otherId))
+                }
+            )
+        }
+        composable(
+            route = ProfileRoutes.EDIT_PROFILE,
+            enterTransition = { detailPushEnterTransition() },
+            exitTransition = { detailPushExitTransition() },
+            popEnterTransition = { detailPopEnterTransition() },
+            popExitTransition = { detailPopExitTransition() }
+        ) {
+            EditProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(NavigationRoute.ProfileCreation.route) {
@@ -457,7 +532,10 @@ private fun KliqNavHost(
             val chatId = backStackEntry.arguments?.getString(ChatRoutes.ARG_CHAT_ID) ?: ""
             ChatDetailScreen(
                 chatId = chatId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(userId))
+                }
             )
         }
 
@@ -498,6 +576,9 @@ private fun KliqNavHost(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToChat = { targetUserId ->
                     navController.navigate(ChatRoutes.chatDetail("chat_$targetUserId"))
+                },
+                onNavigateToOtherProfile = { otherId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(otherId))
                 }
             )
         }
@@ -530,4 +611,3 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideExitTransitio
 ): ExitTransition {
     return tabExitTransition(slideRight)
 }
-

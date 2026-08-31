@@ -1,5 +1,6 @@
 package com.kliq.app.data.repository
 
+import com.kliq.app.data.generated.*
 import com.kliq.app.data.local.dao.ClubDao
 import com.kliq.app.data.local.dao.ReviewDao
 import com.kliq.app.data.local.entities.ReviewEntity
@@ -22,7 +23,9 @@ class ReviewRepositoryImpl @Inject constructor(
     private val reviewDao: ReviewDao,
     private val clubDao: ClubDao,
     private val antiSpamValidator: AntiSpamReviewValidator,
-    private val apiService: KliqApiService? = null
+    private val apiService: KliqApiService? = null,
+    private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null,
+    private val userDao: com.kliq.app.data.local.dao.UserDao? = null
 ) : ReviewRepository {
 
     override fun getReviewsForClub(clubId: String): Flow<List<Review>> {
@@ -63,6 +66,36 @@ class ReviewRepositoryImpl @Inject constructor(
 
     override suspend fun syncReviewsForClub(clubId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun syncReviewsForTargetUser(targetUserId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            kliqConnector?.let { connector ->
+                val response = connector.getReviewsForTargetUser.execute(targetUserId = targetUserId)
+                val remoteReviews = response.data.reviews.map { r ->
+                    ReviewEntity(
+                        id = r.id,
+                        reviewerUserId = r.reviewerUserId,
+                        targetUserId = targetUserId,
+                        rating = r.rating,
+                        text = r.text,
+                        timestamp = r.timestamp,
+                        verificationMethod = ReviewVerificationMethod.GPS_GEOFENCE_MATCH,
+                        isVerified = true,
+                        reviewerUsername = r.reviewerUsername,
+                        reviewerAvatarUrl = null
+                    )
+                }
+                if (remoteReviews.isNotEmpty()) {
+                    for (rev in remoteReviews) {
+                        reviewDao.insertReview(rev)
+                    }
+                }
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -119,10 +152,14 @@ class ReviewRepositoryImpl @Inject constructor(
         }
 
         val verification = antiSpamValidator.validateQrCodeScanToken(qrToken, targetId)
+        if (!verification.isVerified) {
+            return@withContext Result.failure(IllegalStateException("Ungültiger oder abgelaufener QR-Code."))
+        }
+
         val entity = ReviewEntity(
             id = UUID.randomUUID().toString(),
             reviewerUserId = reviewerUserId,
-            clubId = targetId,
+            targetUserId = targetId,
             rating = rating,
             text = text,
             timestamp = System.currentTimeMillis(),
@@ -145,6 +182,13 @@ class ReviewRepositoryImpl @Inject constructor(
         if (!antiSpamValidator.isRatingValid(rating)) {
             return@withContext Result.failure(IllegalArgumentException("Rating muss zwischen 1 und 5 Sternen liegen."))
         }
+        if (text.trim().isEmpty()) {
+            return@withContext Result.failure(IllegalArgumentException("Bitte schreibe einen Kommentar zu deiner Bewertung."))
+        }
+
+        val reviewerUser = userDao?.getUserByIdOneShot(reviewerUserId)
+        val reviewerName = reviewerUser?.username ?: "Kliq-User"
+        val reviewerAvatar = reviewerUser?.profilePictureUrl
 
         val entity = ReviewEntity(
             id = UUID.randomUUID().toString(),
@@ -153,13 +197,34 @@ class ReviewRepositoryImpl @Inject constructor(
             clubId = clubId,
             eventId = eventId,
             rating = rating,
-            text = text,
+            text = text.trim(),
             timestamp = System.currentTimeMillis(),
             verificationMethod = ReviewVerificationMethod.UNVERIFIED,
-            isVerified = false
+            isVerified = false,
+            reviewerUsername = reviewerName,
+            reviewerAvatarUrl = reviewerAvatar
         )
 
         reviewDao.insertReview(entity)
+
+        kliqConnector?.let { connector ->
+            try {
+                connector.createReview.execute(
+                    id = entity.id,
+                    reviewerUserId = reviewerUserId,
+                    rating = rating,
+                    text = entity.text,
+                    timestamp = entity.timestamp,
+                    reviewerUsername = reviewerName
+                ) {
+                    this.targetUserId = targetUserId
+                    this.clubId = clubId
+                    this.eventId = eventId
+                    this.reviewerAvatarUrl = reviewerAvatar
+                }
+            } catch (ignored: Exception) { }
+        }
+
         Result.success(entity.toDomain())
     }
 
@@ -171,15 +236,16 @@ class ReviewRepositoryImpl @Inject constructor(
         verificationMethod: ReviewVerificationMethod,
         qrToken: String?
     ): Result<Review> = withContext(Dispatchers.IO) {
-        if (text.isBlank() || text.length > 280) {
-            return@withContext Result.failure(IllegalArgumentException("Kommentar muss zwischen 1 und 280 Zeichen enthalten."))
+        if (text.isBlank() || text.length > 500) {
+            return@withContext Result.failure(IllegalArgumentException("Kommentar muss zwischen 1 und 500 Zeichen enthalten."))
         }
         if (!antiSpamValidator.isRatingValid(rating)) {
             return@withContext Result.failure(IllegalArgumentException("Rating muss zwischen 1 und 5 Sternen liegen."))
         }
-        if (verificationMethod == ReviewVerificationMethod.UNVERIFIED) {
-            return@withContext Result.failure(IllegalStateException("Sicherheits-Sperre: Kommentare dürfen nur bei verifizierter physischer Nähe (GPS) oder QR-Scan abgegeben werden."))
-        }
+
+        val reviewerUser = userDao?.getUserByIdOneShot(reviewerUserId)
+        val reviewerName = reviewerUser?.username ?: "Kliq-User"
+        val reviewerAvatar = reviewerUser?.profilePictureUrl
 
         val entity = ReviewEntity(
             id = UUID.randomUUID().toString(),
@@ -190,11 +256,28 @@ class ReviewRepositoryImpl @Inject constructor(
             timestamp = System.currentTimeMillis(),
             verificationMethod = verificationMethod,
             isVerified = true,
-            reviewerUsername = "Kliq-User",
-            reviewerAvatarUrl = null
+            reviewerUsername = reviewerName,
+            reviewerAvatarUrl = reviewerAvatar
         )
 
         reviewDao.insertReview(entity)
+
+        kliqConnector?.let { connector ->
+            try {
+                connector.createReview.execute(
+                    id = entity.id,
+                    reviewerUserId = reviewerUserId,
+                    rating = rating,
+                    text = entity.text,
+                    timestamp = entity.timestamp,
+                    reviewerUsername = reviewerName
+                ) {
+                    this.targetUserId = targetUserId
+                    this.reviewerAvatarUrl = reviewerAvatar
+                }
+            } catch (ignored: Exception) { }
+        }
+
         Result.success(entity.toDomain())
     }
 

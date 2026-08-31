@@ -76,7 +76,7 @@ class GeofenceRepositoryImpl @Inject constructor(
             }
 
             GeofenceTransitionType.DWELL, GeofenceTransitionType.UNKNOWN -> {
-                // Handle dwell or unknown transitions silently
+
             }
         }
     }

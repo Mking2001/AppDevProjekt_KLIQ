@@ -6,7 +6,7 @@ import androidx.room.Entity
 data class FriendEntity(
     val userId: String,
     val friendUserId: String,
-    val status: String = "ACCEPTED", // PENDING, ACCEPTED, REJECTED
+    val status: String = "ACCEPTED",
     val isQrVerified: Boolean = true,
     val createdAtTimestampMs: Long = System.currentTimeMillis()
 )

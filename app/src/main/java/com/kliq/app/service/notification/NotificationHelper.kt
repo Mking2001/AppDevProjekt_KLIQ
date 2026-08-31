@@ -82,13 +82,10 @@ class NotificationHelper @Inject constructor(
             val notificationManager = NotificationManagerCompat.from(context)
             notificationManager.notify(notificationId, builder.build())
         } catch (e: SecurityException) {
-            // Notification permission might not be granted by user yet
+
         }
     }
 
-    /**
-     * Zeigt eine allgemeine Benachrichtigung an (z. B. aus der Firebase-Konsole oder Broadcast-Nachrichten).
-     */
     fun showGeneralNotification(title: String, message: String) {
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -118,8 +115,7 @@ class NotificationHelper @Inject constructor(
             val notificationManager = NotificationManagerCompat.from(context)
             notificationManager.notify(notificationId, builder.build())
         } catch (e: SecurityException) {
-            // Notification permission might not be granted by user yet
+
         }
     }
 }
-

@@ -20,7 +20,7 @@ class ZoomableImageBoundaryUnitTest {
 
     @Test
     fun `calculateClampedOffset allows offset within boundary limits when zoomed in`() {
-        // Container 1000 x 2000, Scale 2.0x -> maxOffsetX = (1000 * 1) / 2 = 500, maxOffsetY = (2000 * 1) / 2 = 1000
+
         val (offsetX, offsetY) = calculateClampedOffset(
             scale = 2.0f,
             rawOffsetX = 300f,
@@ -34,7 +34,7 @@ class ZoomableImageBoundaryUnitTest {
 
     @Test
     fun `calculateClampedOffset clamps offset when pan exceeds boundary limits`() {
-        // Container 1000 x 2000, Scale 2.0x -> maxOffsetX = 500, maxOffsetY = 1000
+
         val (offsetX, offsetY) = calculateClampedOffset(
             scale = 2.0f,
             rawOffsetX = 9999f,
@@ -48,7 +48,7 @@ class ZoomableImageBoundaryUnitTest {
 
     @Test
     fun `calculateClampedOffset scales boundary limits linearly with zoom factor`() {
-        // Container 1000 x 1000, Scale 4.0x -> maxOffset = (1000 * 3) / 2 = 1500
+
         val (offsetX, offsetY) = calculateClampedOffset(
             scale = 4.0f,
             rawOffsetX = 2000f,

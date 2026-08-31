@@ -17,18 +17,6 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
 
-/**
- * Immutable UI State für den Explore-Screen.
- *
- * @param searchQuery Aktuelle Sucheingabe.
- * @param selectedCategory Index der ausgewählten Kategorie, null bedeutet keine Einschränkung.
- * @param minRating Mindestbewertung für die Ergebnisliste.
- * @param onlyFavorites Ob ausschließlich favorisierte Einträge angezeigt werden.
- * @param categories Verfügbare Filter-Kategorien.
- * @param discoverItems Gefilterte Ergebnisliste des Discovery-Grids.
- * @param isLoading Ob Daten geladen werden.
- * @param errorMessage Fehlermeldung für die Snackbar.
- */
 data class ExploreUiState(
     val searchQuery: String = "",
     val selectedCategory: Int? = null,
@@ -40,18 +28,10 @@ data class ExploreUiState(
     val errorMessage: String? = null
 ) {
     companion object {
-        val CATEGORIES = listOf("Trending", "Clubs", "Bars", "Pubs", "Events", "Restaurants")
+        val CATEGORIES = listOf("Trending", "Events", "Clubs", "Bars", "Pubs", "Lounges")
     }
 }
 
-/**
- * Darstellungsmodell eines Eintrags im Discovery-Grid.
- *
- * @param id Club- oder Event-ID, die für die Detailnavigation verwendet wird.
- * @param category Anzeigekategorie, gleichzeitig Filterkriterium.
- * @param isFavorite Ob der Eintrag als Favorit markiert ist.
- * @param isEvent Ob es sich um einen Event- statt Venue-Eintrag handelt.
- */
 data class DiscoverItemUi(
     val id: String,
     val title: String,
@@ -59,23 +39,20 @@ data class DiscoverItemUi(
     val category: String,
     val rating: Float = 0f,
     val region: String = "",
+    val imageUrl: String? = null,
     val creatorUserId: String? = null,
     val isFavorite: Boolean = false,
     val isOpenNow: Boolean = false,
+    val flameCount: Int = 0,
+    val isHypedToday: Boolean = false,
     val isEvent: Boolean = false
 )
 
-/**
- * ViewModel für den Explore-Screen.
- *
- * Bezieht Venues und Events reaktiv aus [ClubRepository] und [EventRepository].
- * Der Favoriten-Zustand wird über das Repository in Room geschrieben und ist
- * damit über Screens und App-Starts hinweg konsistent.
- */
 @HiltViewModel
 class ExploreViewModel @Inject constructor(
     private val clubRepository: ClubRepository,
-    private val eventRepository: EventRepository,
+    private val feedRepository: com.kliq.app.data.repository.FeedRepository,
+    private val eventRepository: EventRepository? = null,
     private val userRepository: UserRepository,
     private val currentUserProvider: CurrentUserProvider
 ) : ViewModel() {
@@ -91,17 +68,16 @@ class ExploreViewModel @Inject constructor(
         observeBlockedUsers()
     }
 
-    /**
-     * Führt Venues und Events zu einer Ergebnisliste zusammen.
-     * Beide Quellen liegen in Room, weshalb ein `combine` genügt und
-     * jede Änderung am Favoriten-Status unmittelbar sichtbar wird.
-     */
     private fun observeDiscoverContent() {
         viewModelScope.launch {
+            val currentUserId = currentUserProvider.userId()
             combine(
                 clubRepository.getAllClubs(),
-                eventRepository.getAllEvents()
-            ) { clubs, events ->
+                clubRepository.getHypedClubIdsToday(currentUserId),
+                feedRepository.getPinnedEvents()
+            ) { clubs, hypedIds, pinnedEvents ->
+                val hypedSet = hypedIds.toSet()
+
                 val clubItems = clubs.map { club ->
                     DiscoverItemUi(
                         id = club.id,
@@ -110,20 +86,29 @@ class ExploreViewModel @Inject constructor(
                         category = normalizeCategory(club.category),
                         rating = club.averageRating.toFloat(),
                         region = club.region.ifBlank { club.location.address },
+                        imageUrl = club.imageUrl.ifBlank { "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?auto=format&fit=crop&w=1200&q=80" },
                         isFavorite = club.isFavorite,
-                        isOpenNow = club.operatingHours.isOpenNow
+                        isOpenNow = club.operatingHours.isOpenNow,
+                        flameCount = club.flameCount,
+                        isHypedToday = hypedSet.contains(club.id),
+                        isEvent = club.category.contains("Event", ignoreCase = true)
                     )
                 }
 
-                val clubNamesById = clubs.associate { it.id to it.name }
-                val eventItems = events.map { event ->
+                val eventItems = pinnedEvents.filter { event -> clubs.none { it.id == event.id } }.map { post ->
                     DiscoverItemUi(
-                        id = event.clubId,
-                        title = event.title,
-                        subtitle = clubNamesById[event.clubId] ?: event.description.take(40),
+                        id = post.id,
+                        title = post.clubName ?: "Community Event",
+                        subtitle = post.contentText,
                         category = "Events",
-                        rating = clubs.find { it.id == event.clubId }?.averageRating?.toFloat() ?: 0f,
-                        region = clubs.find { it.id == event.clubId }?.region.orEmpty(),
+                        rating = 5.0f,
+                        region = post.locationAddress ?: "Klagenfurt",
+                        imageUrl = post.imageUrl?.ifBlank { null },
+                        creatorUserId = post.authorUserId,
+                        isFavorite = false,
+                        isOpenNow = true,
+                        flameCount = post.flameCount,
+                        isHypedToday = hypedSet.contains(post.id),
                         isEvent = true
                     )
                 }
@@ -134,7 +119,7 @@ class ExploreViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             isLoading = false,
-                            errorMessage = "Inhalte konnten nicht geladen werden: ${error.localizedMessage}"
+                            errorMessage = "Clubs & Events konnten nicht geladen werden: ${error.localizedMessage}"
                         )
                     }
                 }
@@ -157,18 +142,15 @@ class ExploreViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Bildet freie Kategoriebezeichnungen des Datensatzes auf die Filterleiste ab.
-     */
     private fun normalizeCategory(rawCategory: String): String {
         val value = rawCategory.trim().lowercase(Locale.GERMAN)
         return when {
             value.contains("club") -> "Clubs"
             value.contains("bar") -> "Bars"
             value.contains("pub") -> "Pubs"
+            value.contains("lounge") -> "Lounges"
             value.contains("restaurant") -> "Restaurants"
-            value.contains("event") -> "Events"
-            else -> "Trending"
+            else -> "Clubs"
         }
     }
 
@@ -191,16 +173,11 @@ class ExploreViewModel @Inject constructor(
         applyFilters()
     }
 
-    /** Schaltet den Filter auf ausschließlich favorisierte Einträge um. */
     fun onToggleFavoritesFilter() {
         _uiState.update { it.copy(onlyFavorites = !it.onlyFavorites) }
         applyFilters()
     }
 
-    /**
-     * Setzt oder entfernt die Favoriten-Markierung eines Venues.
-     * Events besitzen keinen eigenen Favoriten-Status und werden übersprungen.
-     */
     fun onToggleFavorite(itemId: String) {
         val item = allItems.find { it.id == itemId && !it.isEvent } ?: return
         viewModelScope.launch {
@@ -210,6 +187,14 @@ class ExploreViewModel @Inject constructor(
                         it.copy(errorMessage = "Favorit konnte nicht gespeichert werden: ${error.localizedMessage}")
                     }
                 }
+        }
+    }
+
+    fun onToggleHype(itemId: String) {
+        viewModelScope.launch {
+            val userId = currentUserProvider.userId()
+            clubRepository.toggleClubHype(itemId, userId)
+            feedRepository.togglePostHype(itemId, userId)
         }
     }
 
@@ -236,10 +221,19 @@ class ExploreViewModel @Inject constructor(
             matchesQuery && matchesRating && matchesCategory
         }
 
-        _uiState.update { it.copy(discoverItems = filtered) }
+        val sorted = if (selectedCategory == "Trending" || selectedCategory == null) {
+            filtered.sortedByDescending { it.flameCount }
+        } else {
+            filtered
+        }
+
+        _uiState.update { it.copy(discoverItems = sorted) }
     }
 
-    /** Setzt die Fehlermeldung zurück, nachdem sie angezeigt wurde. */
+    fun onErrorMessageDismissed() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
     fun onMessageShown() {
         _uiState.update { it.copy(errorMessage = null) }
     }

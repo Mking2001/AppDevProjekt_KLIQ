@@ -83,20 +83,17 @@ class OtherUserProfileUiIntegrationTest {
             }
         }
 
-        // 1. Basic User Header Verification
         composeTestRule.onNodeWithText("Sophie_Nightlife").assertIsDisplayed()
         composeTestRule.onNodeWithText("24 Jahre • ").assertIsDisplayed()
         composeTestRule.onNodeWithText("München").assertIsDisplayed()
         composeTestRule.onNodeWithText("Techno Fan 🎶 | Immer unterwegs in München 📍").assertIsDisplayed()
 
-        // 2. Search Intent & Lifestyle Indicators Verification
         composeTestRule.onNodeWithText("Suchabsicht").assertIsDisplayed()
         composeTestRule.onNodeWithText("Freunde & Dating (Beides)").assertIsDisplayed()
         composeTestRule.onNodeWithText("Lifestyle & Konsumgewohnheiten").assertIsDisplayed()
         composeTestRule.onNodeWithText("Gelegentlich").assertIsDisplayed()
         composeTestRule.onNodeWithText("Gesellschaftlich").assertIsDisplayed()
 
-        // 3. Reputation & Reviews Section Verification
         composeTestRule.onNodeWithText("Reputation & Bewertungen").assertIsDisplayed()
         composeTestRule.onNodeWithText("4,9").assertIsDisplayed()
         composeTestRule.onNodeWithText("15 Bewertungen").assertIsDisplayed()
@@ -163,18 +160,14 @@ class OtherUserProfileUiIntegrationTest {
             }
         }
 
-        // Click "Bewerten" button
         composeTestRule.onNodeWithText("Bewerten").performClick()
 
-        // Verify Bottom Sheet displays rating controls
         composeTestRule.onNodeWithText("Nutzer bewerten").assertIsDisplayed()
         composeTestRule.onNodeWithText("Kommentar schreiben (optional)...").assertIsDisplayed()
 
-        // Type comment and submit
         composeTestRule.onNodeWithText("Kommentar schreiben (optional)...").performTextInput("Super sympathischer Contact!")
         composeTestRule.onNodeWithText("Bewertung absenden").performClick()
 
-        // Verify successful submission updates review count in State
         assertTrue(viewModel.uiState.value.reviews.any { it.text == "Super sympathischer Contact!" })
     }
 
@@ -198,18 +191,15 @@ class OtherUserProfileUiIntegrationTest {
             }
         }
 
-        // Open options overflow menu
         composeTestRule.onNodeWithContentDescription("Optionen").performClick()
         composeTestRule.onNodeWithText("Profil melden").assertIsDisplayed()
 
-        // Click "Profil melden"
         composeTestRule.onNodeWithText("Profil melden").performClick()
         composeTestRule.onNodeWithText("Bitte wähle den Grund für die Meldung:").assertIsDisplayed()
         composeTestRule.onNodeWithText("Meldung absenden").performClick()
 
         assertTrue(viewModel.uiState.value.isReported)
 
-        // Block user
         composeTestRule.onNodeWithContentDescription("Optionen").performClick()
         composeTestRule.onNodeWithText("Nutzer blockieren").performClick()
 

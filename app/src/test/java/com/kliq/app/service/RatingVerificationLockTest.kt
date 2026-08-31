@@ -56,9 +56,6 @@ class RatingVerificationLockTest {
         Dispatchers.resetMain()
     }
 
-    /**
-     * Ablauf 1: Unverifizierter Bewertungsversuch (Sperre greift)
-     */
     @Test
     fun test1_unverifiedRatingSubmission_locksUiAndThrowsSecurityExceptionOnRepositoryCall() = runTest {
         val reviewerId = "user_alpha"
@@ -86,9 +83,6 @@ class RatingVerificationLockTest {
         assertEquals(0, fakeDao.insertedReviews.size)
     }
 
-    /**
-     * Ablauf 2: Erfolgreicher GPS-Match (Freischaltung via Nähe)
-     */
     @Test
     fun test2_successfulGpsMatch_unlocksUiAndPersistsRatingToDatabase() = runTest {
         val reviewerId = "user_alpha"
@@ -124,9 +118,6 @@ class RatingVerificationLockTest {
         assertEquals(ReviewVerificationMethod.GPS_GEOFENCE_MATCH, persisted.verificationMethod)
     }
 
-    /**
-     * Ablauf 3: Erfolgreicher QR-Scan (Freischaltung via Koppelung)
-     */
     @Test
     fun test3_successfulQrScan_instantlyUnlocksUiAndUpdatesRecord() = runTest {
         val reviewerId = "user_alpha"

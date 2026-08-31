@@ -9,9 +9,6 @@ import com.kliq.app.ui.theme.FuchsiaTertiary
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.TealSecondary
 
-/**
- * Visual representation of a segment in the High-Contrast Kliq Lila-Style gender chart bar.
- */
 data class GenderBarSegment(
     val gender: Gender,
     val label: String,
@@ -22,9 +19,6 @@ data class GenderBarSegment(
     val flexWeight: Float
 )
 
-/**
- * UI State container for Club Analytics, Live Visitor Capacity and Gender Aggregation.
- */
 data class ClubAnalyticsUiState(
     val isLoading: Boolean = false,
     val clubId: String = "",
@@ -35,8 +29,8 @@ data class ClubAnalyticsUiState(
     val maxCapacity: Int = 1500,
     val occupancyCategory: OccupancyCategory = OccupancyCategory.SCHWACH,
     val occupancyTrend: OccupancyTrend = OccupancyTrend.STABLE,
-    val isLive: Boolean = true,
-    val formattedLastUpdated: String = "LIVE • Vor wenigen Sekunden",
+    val isLive: Boolean = false,
+    val formattedLastUpdated: String = "Geschlossen • Keine Live-Daten außerhalb der Öffnungszeiten",
     val errorMessage: String? = null
 ) {
     val occupancyRate: Float
@@ -46,7 +40,7 @@ data class ClubAnalyticsUiState(
         get() = "$currentCapacityPercent%"
 
     val formattedVisitorCount: String
-        get() = "$totalLiveVisitors / $maxCapacity Gäste"
+        get() = if (isLive) "$totalLiveVisitors / $maxCapacity Gäste" else "0 / $maxCapacity Gäste (Geschlossen)"
     companion object {
         fun createSegments(genderRatio: GenderRatio): List<GenderBarSegment> {
             if (!genderRatio.hasSufficientData) return emptyList()

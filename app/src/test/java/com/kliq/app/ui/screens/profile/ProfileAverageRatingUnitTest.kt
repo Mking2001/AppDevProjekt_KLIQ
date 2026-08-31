@@ -108,7 +108,7 @@ class ProfileAverageRatingUnitTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        val expectedExactAverage = (5 + 4 + 4) / 3.0 // 4.333333333333333
+        val expectedExactAverage = (5 + 4 + 4) / 3.0
         assertEquals(expectedExactAverage, state.averageRating, 0.0001)
         assertEquals("4.3", state.formattedAverageRating)
         assertEquals(3, state.totalReviewsCount)
@@ -171,13 +171,21 @@ class ProfileAverageRatingUnitTest {
     private class FakeUserDao : UserDao {
         val users = mutableMapOf<String, UserEntity>()
         override fun getUserById(userId: String): Flow<UserEntity?> = flowOf(users[userId])
+        override fun getUsersByIds(userIds: List<String>): Flow<List<UserEntity>> = flowOf(userIds.mapNotNull { users[it] })
         override suspend fun getUserByIdOneShot(userId: String): UserEntity? = users[userId]
         override fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?> = flowOf(null)
         override suspend fun getUserPreferencesOneShot(userId: String): UserPreferencesEntity? = null
+        override suspend fun getUserByUsername(username: String): UserEntity? = users.values.find { it.username.equals(username, ignoreCase = true) }
+        override suspend fun getUserByEmail(email: String): UserEntity? = users.values.find { it.email.equals(email, ignoreCase = true) }
+        override suspend fun getUserByPhone(phoneNumber: String): UserEntity? = users.values.find { it.phoneNumber == phoneNumber }
         override suspend fun insertUser(user: UserEntity) { users[user.id] = user }
         override suspend fun insertUserPreferences(preferences: UserPreferencesEntity) {}
         override fun getVerifiedUsers(): Flow<List<UserEntity>> = flowOf(emptyList())
         override suspend fun updateUserVerificationStatus(userId: String, isVerified: Boolean) {}
+        override suspend fun deleteUserById(userId: String) { users.remove(userId) }
+        override suspend fun searchUsers(query: String): List<UserEntity> = emptyList()
+        override suspend fun getAllUsers(): List<UserEntity> = users.values.toList()
+        override suspend fun deleteUserPreferencesByUserId(userId: String) {}
         override suspend fun clearUsers() { users.clear() }
     }
 

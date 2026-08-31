@@ -7,9 +7,6 @@ import androidx.room.Query
 import com.kliq.app.data.local.entities.LocationEntity
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Data Access Object for persisting and querying background location history points.
- */
 @Dao
 interface LocationDao {
 
