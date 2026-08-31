@@ -124,67 +124,302 @@ fun ClubDetailScreen(
             }
         } else {
             uiState.club?.let { club ->
+                val isEvent = club.category.equals("Event", ignoreCase = true) || club.id.startsWith("post_")
+
+                if (isEvent) {
+                    EventDetailContent(
+                        club = club,
+                        innerPadding = innerPadding,
+                        onToggleHype = { viewModel.toggleHype() }
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                            .verticalScroll(rememberScrollState())
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(210.dp)
+                                .clip(RoundedCornerShape(18.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (club.imageUrl.isNotBlank()) {
+                                coil.compose.AsyncImage(
+                                    model = club.imageUrl,
+                                    contentDescription = club.name,
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            } else {
+                                Text(
+                                    text = club.name,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+
+                        LiveVisitorStatsCard(state = analyticsState)
+
+                        if (eventOfferState.events.isNotEmpty() || eventOfferState.offers.isNotEmpty()) {
+                            ClubEventOfferInfoBlock(
+                                state = eventOfferState,
+                                onOfferSelected = { eventOfferViewModel.selectOffer(it) },
+                                onEventSelected = { eventOfferViewModel.selectEvent(it) }
+                            )
+                        }
+
+                        club.activeEvent?.let { event ->
+                            EventSection(
+                                title = event.title,
+                                description = event.description,
+                                price = event.price
+                            )
+                        }
+
+                        ClubExternalInfoBlock(state = externalInfoState)
+                    }
+
+                    eventOfferState.selectedOffer?.let { offer ->
+                        ClubOfferDetailBottomSheet(
+                            offer = offer,
+                            onDismissRequest = { eventOfferViewModel.selectOffer(null) },
+                            onCodeCopied = { code -> eventOfferViewModel.onCodeCopied(code) },
+                            sheetState = sheetState
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun EventDetailContent(
+    club: Club,
+    innerPadding: PaddingValues,
+    onToggleHype: () -> Unit
+) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val eventAddress: String = club.location.address
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp)
+    ) {
+        // 1. Event Foto / Banner
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(
+                    androidx.compose.ui.graphics.Brush.linearGradient(
+                        colors = listOf(Color(0xFF8A2387), Color(0xFFE94057), Color(0xFFF27121))
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (club.imageUrl.isNotBlank()) {
+                coil.compose.AsyncImage(
+                    model = club.imageUrl,
+                    contentDescription = club.name,
+                    contentScale = androidx.compose.ui.layout.ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(20.dp)
                 ) {
+                    Icon(
+                        imageVector = Icons.Default.Event,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(54.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = club.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(12.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color.Black.copy(alpha = 0.65f))
+                    .padding(horizontal = 10.dp, vertical = 5.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Event,
+                        contentDescription = null,
+                        tint = Color(0xFFFF9800),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = "Fixiertes Event",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        }
+
+        // 2. Adresse & Kartenanzeige / Navigation
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(210.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                            .size(36.dp)
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        if (club.imageUrl.isNotBlank()) {
-                            coil.compose.AsyncImage(
-                                model = club.imageUrl,
-                                contentDescription = club.name,
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } else {
+                        Icon(
+                            imageVector = Icons.Default.Event,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Veranstaltungsort",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        if (eventAddress.isNotBlank()) {
                             Text(
-                                text = club.name,
-                                style = MaterialTheme.typography.titleMedium,
+                                text = eventAddress,
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
-
-                    LiveVisitorStatsCard(state = analyticsState)
-
-                    if (eventOfferState.events.isNotEmpty() || eventOfferState.offers.isNotEmpty()) {
-                        ClubEventOfferInfoBlock(
-                            state = eventOfferState,
-                            onOfferSelected = { eventOfferViewModel.selectOffer(it) },
-                            onEventSelected = { eventOfferViewModel.selectEvent(it) }
-                        )
-                    }
-
-                    club.activeEvent?.let { event ->
-                        EventSection(
-                            title = event.title,
-                            description = event.description,
-                            price = event.price
-                        )
-                    }
-
-                    ClubExternalInfoBlock(state = externalInfoState)
                 }
 
-                eventOfferState.selectedOffer?.let { offer ->
-                    ClubOfferDetailBottomSheet(
-                        offer = offer,
-                        onDismissRequest = { eventOfferViewModel.selectOffer(null) },
-                        onCodeCopied = { code -> eventOfferViewModel.onCodeCopied(code) },
-                        sheetState = sheetState
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Button(
+                    onClick = {
+                        try {
+                            val lat = club.location.latitude
+                            val lng = club.location.longitude
+                            val uri = if (lat != 0.0 && lng != 0.0) {
+                                android.net.Uri.parse("geo:$lat,$lng?q=$lat,$lng(${android.net.Uri.encode(club.name)})")
+                            } else {
+                                android.net.Uri.parse("geo:0,0?q=${android.net.Uri.encode(eventAddress)}")
+                            }
+                            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri)
+                            context.startActivity(intent)
+                        } catch (e: Exception) {
+                            android.widget.Toast.makeText(context, "Karten-App konnte nicht geöffnet werden.", android.widget.Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = "📍 In Google Maps öffnen / Route starten",
+                        fontWeight = FontWeight.Bold
                     )
                 }
+            }
+        }
+
+        // 3. Event-Beschreibung
+        val description = club.activeEvent?.description?.ifBlank { null }
+            ?: club.name
+        Card(
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier.fillMaxWidth(),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        ) {
+            Column(modifier = Modifier.padding(18.dp)) {
+                Text(
+                    text = "Event-Details",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = description,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        }
+
+        // 4. Flammen / Hype
+        Surface(
+            onClick = onToggleHype,
+            shape = RoundedCornerShape(18.dp),
+            color = if (club.isHypedToday) Color(0xFFFF5722).copy(alpha = 0.2f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            border = androidx.compose.foundation.BorderStroke(
+                1.dp,
+                if (club.isHypedToday) Color(0xFFFF5722) else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+            ),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Row(
+                modifier = Modifier.padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "🔥", style = MaterialTheme.typography.headlineSmall)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = if (club.isHypedToday) "Du hast dieses Event angezündet!" else "Event anheizen",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "${club.flameCount} Personen hypen dieses Event",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Text(
+                    text = "${club.flameCount} 🔥",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = if (club.isHypedToday) Color(0xFFFF5722) else MaterialTheme.colorScheme.primary
+                )
             }
         }
     }
