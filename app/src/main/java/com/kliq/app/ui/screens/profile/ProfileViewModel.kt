@@ -151,6 +151,10 @@ class ProfileViewModel @Inject constructor(
         observeReputation(targetUserId)
         observeReviews(targetUserId)
         observeUpcomingEvents()
+
+        viewModelScope.launch {
+            try { feedRepository.syncFeedPosts() } catch (ignored: Exception) { }
+        }
     }
 
     private fun observeUpcomingEvents() {

@@ -135,6 +135,15 @@ class HomeViewModel @Inject constructor(
         observeFeed()
         observeStories()
         observeCurrentUser()
+        syncFeed()
+    }
+
+    fun syncFeed() {
+        viewModelScope.launch {
+            try {
+                feedRepository.syncFeedPosts()
+            } catch (ignored: Exception) { }
+        }
     }
 
     private fun observeCurrentUser() {
@@ -323,8 +332,13 @@ class HomeViewModel @Inject constructor(
     }
 
     fun refreshFeed() {
-        _uiState.update { it.copy(isRefreshing = true) }
-        _uiState.update { it.copy(isRefreshing = false) }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+            try {
+                feedRepository.syncFeedPosts()
+            } catch (ignored: Exception) { }
+            _uiState.update { it.copy(isRefreshing = false) }
+        }
     }
 
     fun onStoryOpened(storyId: String) {

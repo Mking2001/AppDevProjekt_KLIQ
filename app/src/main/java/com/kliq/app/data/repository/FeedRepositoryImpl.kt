@@ -81,6 +81,7 @@ class FeedRepositoryImpl @Inject constructor(
             kliqConnector?.let { connector ->
                 val response = connector.getFeedPosts.execute()
                 val remotePosts = response.data.feedPosts.map { p ->
+                    val existing = feedDao.getFeedPostById(p.id)
                     FeedPostEntity(
                         id = p.id,
                         authorUserId = p.authorUserId,
@@ -93,19 +94,24 @@ class FeedRepositoryImpl @Inject constructor(
                         locationAddress = p.locationName,
                         latitude = null,
                         longitude = null,
-                        isEventPinned = p.isEventPinned ?: false,
+                        isEventPinned = p.isEventPinned,
                         isFollowersOnly = false,
                         createdAtMs = p.createdAtMs,
                         likeCount = p.likeCount,
-                        commentCount = p.commentCount
+                        isLikedByMe = existing?.isLikedByMe ?: false,
+                        commentCount = p.commentCount,
+                        flameCount = 0,
+                        flameDate = ""
                     )
                 }
                 if (remotePosts.isNotEmpty()) {
                     feedDao.insertFeedPosts(remotePosts)
                 }
+                timber.log.Timber.d("DataConnect: Synced %d feed posts from Cloud SQL", remotePosts.size)
             }
             Result.success(Unit)
         } catch (e: Exception) {
+            timber.log.Timber.e(e, "DataConnect: syncFeedPosts error: %s", e.message)
             Result.failure(e)
         }
     }

@@ -56,23 +56,11 @@ public interface GetFeedPostsQuery :
   
     val locationName: String?,
   
-    val locationAddress: String?,
-  
-    val latitude: Double?,
-  
-    val longitude: Double?,
-  
     val isEventPinned: Boolean,
-  
-    val isFollowersOnly: Boolean,
   
     val likeCount: Int,
   
     val commentCount: Int,
-  
-    val flameCount: Int,
-  
-    val flameDate: String?,
   
     val createdAtMs: Long,
   

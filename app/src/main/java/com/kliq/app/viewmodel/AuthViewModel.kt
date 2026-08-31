@@ -3,6 +3,7 @@ package com.kliq.app.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.kliq.app.data.repository.ChatRepository
+import com.kliq.app.data.repository.FeedRepository
 import com.kliq.app.data.repository.SessionRepository
 import com.kliq.app.data.repository.UserRepository
 import com.kliq.app.data.repository.UserRepositoryImpl
@@ -24,7 +25,8 @@ sealed class AuthUiState {
 class AuthViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
     private val userRepository: UserRepository? = null,
-    private val chatRepository: ChatRepository? = null
+    private val chatRepository: ChatRepository? = null,
+    private val feedRepository: FeedRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Loading)
@@ -63,14 +65,13 @@ class AuthViewModel @Inject constructor(
 
     private suspend fun syncFromCloud(userId: String) {
         try {
-
-            (userRepository as? UserRepositoryImpl)?.clearLocalCache()
-        } catch (ignored: Exception) { }
-        try {
             userRepository?.syncUserProfile(userId)
         } catch (ignored: Exception) { }
         try {
             chatRepository?.syncAllChats()
+        } catch (ignored: Exception) { }
+        try {
+            feedRepository?.syncFeedPosts()
         } catch (ignored: Exception) { }
     }
 

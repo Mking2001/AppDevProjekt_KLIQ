@@ -85,15 +85,9 @@ query GetFeedPosts @auth(level: PUBLIC) {
     clubId
     clubName
     locationName
-    locationAddress
-    latitude
-    longitude
     isEventPinned
-    isFollowersOnly
     likeCount
     commentCount
-    flameCount
-    flameDate
     createdAtMs
   }
 }
