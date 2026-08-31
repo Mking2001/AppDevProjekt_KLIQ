@@ -31,6 +31,7 @@ class ChatRepositoryImpl @Inject constructor(
     private val currentUserProvider: com.kliq.app.domain.CurrentUserProvider? = null,
     private val apiService: KliqApiService? = null,
     private val kliqConnector: com.kliq.app.data.generated.KliqConnectorConnector? = null,
+    private val notificationHelper: com.kliq.app.service.notification.NotificationHelper? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ChatRepository {
 
@@ -70,6 +71,10 @@ class ChatRepositoryImpl @Inject constructor(
         }.flowOn(ioDispatcher)
     }
 
+    override fun getTotalUnreadCount(): Flow<Int> {
+        return chatDao.getTotalUnreadCount().flowOn(ioDispatcher)
+    }
+
     override suspend fun createChatIfMissing(
         chatId: String,
         name: String,
@@ -101,6 +106,22 @@ class ChatRepositoryImpl @Inject constructor(
                 chatType = chatType
             )
             chatDao.insertChat(entity)
+
+            kliqConnector?.let { connector ->
+                try {
+                    connector.createChat.execute(
+                        id = chatId,
+                        name = name,
+                        chatType = chatType.name,
+                        lastMessageText = "",
+                        lastMessageTimestampMs = nowMs,
+                        avatarInitial = entity.avatarInitial
+                    ) {
+                        this.cityRegion = cityRegion
+                    }
+                } catch (ignored: Exception) { }
+            }
+
             Result.success(entity.toDomain())
         } catch (e: Exception) {
             Result.failure(e)
@@ -117,6 +138,185 @@ class ChatRepositoryImpl @Inject constructor(
         return chatDao.searchMessagesInChat(chatId, query).map { entities ->
             entities.map { it.toDomain() }
         }.flowOn(ioDispatcher)
+    }
+
+    override suspend fun syncAllChats(): Result<Unit> = withContext(ioDispatcher) {
+        val currentUserId = currentUserProvider?.userId() ?: ""
+        if (currentUserId.isNotBlank()) {
+            syncAllChatsAndMessages(currentUserId)
+        } else {
+            try {
+                kliqConnector?.let { connector ->
+                    val response = connector.getAllChats.execute()
+                    val remoteChats = response.data.chats.map { c ->
+                        val type = try { ChatType.valueOf(c.chatType) } catch (e: Exception) { ChatType.PUBLIC_CITY }
+                        ChatEntity(
+                            id = c.id,
+                            name = c.name,
+                            cityRegion = c.cityRegion,
+                            lastMessageText = c.lastMessageText,
+                            lastMessageTimestampMs = c.lastMessageTimestampMs,
+                            lastMessageTimestampIso = c.lastMessageTimestampIso,
+                            avatarInitial = c.avatarInitial,
+                            avatarUrl = c.avatarUrl,
+                            unreadCount = c.unreadCount,
+                            chatType = type,
+                            isOnline = c.isOnline,
+                            isPinned = c.isPinned,
+                            isMuted = c.isMuted,
+                            isArchived = c.isArchived
+                        )
+                    }
+                    if (remoteChats.isNotEmpty()) {
+                        chatDao.insertChats(remoteChats)
+                    }
+                }
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    override suspend fun syncAllChatsAndMessages(currentUserId: String): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            kliqConnector?.let { connector ->
+                val allChatsResponse = connector.getAllChats.execute()
+                val remoteChats = allChatsResponse.data.chats
+
+                for (cloudChat in remoteChats) {
+                    val chatType = try { ChatType.valueOf(cloudChat.chatType) } catch (e: Exception) { ChatType.PUBLIC_CITY }
+
+                    if (chatType == ChatType.PUBLIC_CITY) {
+                        val localExisting = chatDao.getChatById(cloudChat.id).first()
+                        val chatEntity = ChatEntity(
+                            id = cloudChat.id,
+                            name = cloudChat.name,
+                            cityRegion = cloudChat.cityRegion,
+                            lastMessageText = if (localExisting != null && localExisting.lastMessageText.isNotBlank()) localExisting.lastMessageText else cloudChat.lastMessageText,
+                            lastMessageTimestampMs = if (localExisting != null && localExisting.lastMessageTimestampMs > 0) localExisting.lastMessageTimestampMs else cloudChat.lastMessageTimestampMs,
+                            lastMessageTimestampIso = if (localExisting != null && localExisting.lastMessageTimestampIso.isNotBlank()) localExisting.lastMessageTimestampIso else cloudChat.lastMessageTimestampIso,
+                            avatarInitial = cloudChat.avatarInitial,
+                            avatarUrl = cloudChat.avatarUrl,
+                            unreadCount = localExisting?.unreadCount ?: 0,
+                            chatType = chatType,
+                            isOnline = cloudChat.isOnline,
+                            isPinned = localExisting?.isPinned ?: cloudChat.isPinned,
+                            isMuted = localExisting?.isMuted ?: cloudChat.isMuted,
+                            isArchived = localExisting?.isArchived ?: cloudChat.isArchived
+                        )
+                        chatDao.insertChat(chatEntity)
+
+                        val msgsResponse = connector.getMessagesByChat.execute(chatId = cloudChat.id)
+                        val msgs = msgsResponse.data.messages
+                        for (msg in msgs) {
+                            val localMsg = MessageEntity(
+                                id = msg.id,
+                                chatId = cloudChat.id,
+                                senderUserId = msg.senderUserId,
+                                senderName = msg.senderName,
+                                text = msg.text,
+                                timestampMs = msg.timestampMs,
+                                timestampIso = msg.timestampIso,
+                                mediaUrl = msg.mediaUrl,
+                                messageType = try { com.kliq.app.data.model.MessageType.valueOf(msg.messageType ?: "TEXT") } catch (e: Exception) { com.kliq.app.data.model.MessageType.TEXT },
+                                thumbnailUrl = msg.thumbnailUrl,
+                                caption = msg.caption,
+                                audioDurationMs = msg.audioDurationMs ?: 0L,
+                                status = try { MessageStatus.valueOf(msg.status) } catch (e: Exception) { MessageStatus.DELIVERED },
+                                isMine = msg.senderUserId == currentUserId
+                            )
+                            chatDao.insertMessage(localMsg)
+                        }
+                    } else {
+                        // Private 1-to-1 chat
+                        val msgsResponse = connector.getMessagesByChat.execute(chatId = cloudChat.id)
+                        val msgs = msgsResponse.data.messages
+                        if (msgs.isNotEmpty()) {
+                            val participants = msgs.map { it.senderUserId }.filter { it.isNotBlank() }.distinct()
+                            val isUserInvolved = participants.contains(currentUserId) || cloudChat.id.contains(currentUserId)
+
+                            if (isUserInvolved) {
+                                val otherParticipantId = participants.firstOrNull { it != currentUserId }
+                                    ?: cloudChat.id.removePrefix("chat_").removePrefix("priv_")
+
+                                val otherParticipantName = msgs.firstOrNull { it.senderUserId != currentUserId }?.senderName
+                                    ?: if (cloudChat.name != "Chat" && cloudChat.name != "Direktnachricht" && cloudChat.name != "Kliq Chat") cloudChat.name else "Kliq Nutzer"
+
+                                var unreadForMe = 0
+                                val localExistingMsgs = chatDao.getMessagesForChat(cloudChat.id).first()
+
+                                for (msg in msgs) {
+                                    val isMine = msg.senderUserId == currentUserId
+                                    val existingLocal = localExistingMsgs.find { it.id == msg.id }
+
+                                    val isUnread = !isMine && (existingLocal == null || existingLocal.status != MessageStatus.READ)
+                                    if (isUnread) {
+                                        unreadForMe++
+                                    }
+
+                                    val localMsg = MessageEntity(
+                                        id = msg.id,
+                                        chatId = cloudChat.id,
+                                        senderUserId = msg.senderUserId,
+                                        senderName = msg.senderName,
+                                        text = msg.text,
+                                        timestampMs = msg.timestampMs,
+                                        timestampIso = msg.timestampIso,
+                                        mediaUrl = msg.mediaUrl,
+                                        messageType = try { com.kliq.app.data.model.MessageType.valueOf(msg.messageType ?: "TEXT") } catch (e: Exception) { com.kliq.app.data.model.MessageType.TEXT },
+                                        thumbnailUrl = msg.thumbnailUrl,
+                                        caption = msg.caption,
+                                        audioDurationMs = msg.audioDurationMs ?: 0L,
+                                        status = if (existingLocal != null && existingLocal.status == MessageStatus.READ) MessageStatus.READ else try { MessageStatus.valueOf(msg.status) } catch (e: Exception) { MessageStatus.DELIVERED },
+                                        isMine = isMine
+                                    )
+                                    chatDao.insertMessage(localMsg)
+                                }
+
+                                val latestMsg = msgs.last()
+                                val localChat = chatDao.getChatById(cloudChat.id).first()
+                                val prevUnread = localChat?.unreadCount ?: 0
+
+                                val privateChatEntity = ChatEntity(
+                                    id = cloudChat.id,
+                                    name = otherParticipantName,
+                                    cityRegion = null,
+                                    lastMessageText = latestMsg.text,
+                                    lastMessageTimestampMs = latestMsg.timestampMs,
+                                    lastMessageTimestampIso = latestMsg.timestampIso,
+                                    avatarInitial = otherParticipantName.take(1).uppercase().ifBlank { "U" },
+                                    avatarUrl = cloudChat.avatarUrl,
+                                    unreadCount = unreadForMe,
+                                    chatType = ChatType.PRIVATE,
+                                    isOnline = true,
+                                    isPinned = localChat?.isPinned ?: false,
+                                    isMuted = localChat?.isMuted ?: false,
+                                    isArchived = localChat?.isArchived ?: false
+                                )
+                                chatDao.insertChat(privateChatEntity)
+
+                                // Notification trigger for new unread messages
+                                if (unreadForMe > prevUnread && latestMsg.senderUserId != currentUserId) {
+                                    notificationHelper?.showChatNotification(
+                                        com.kliq.app.data.model.ChatPushPayload(
+                                            chatId = cloudChat.id,
+                                            senderId = latestMsg.senderUserId,
+                                            senderName = latestMsg.senderName,
+                                            previewText = latestMsg.text,
+                                            notificationType = com.kliq.app.data.model.PushNotificationType.DIRECT_MESSAGE
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override suspend fun syncChatMessages(chatId: String): Result<Unit> = withContext(ioDispatcher) {
@@ -256,9 +456,16 @@ class ChatRepositoryImpl @Inject constructor(
                 com.kliq.app.data.model.MessageType.VOICE -> "🎤 Sprachnachricht"
                 else -> text
             }
+            val existingChat = chatDao.getChatById(chatId).first()
+            val formattedPreview = if (existingChat?.chatType == com.kliq.app.data.model.ChatType.PUBLIC_CITY) {
+                val displayName = if (senderName.isNotBlank()) senderName else "Nutzer"
+                "$displayName: $previewText"
+            } else {
+                previewText
+            }
             chatDao.updateChatLastMessage(
                 chatId = chatId,
-                text = previewText,
+                text = formattedPreview,
                 timestampMs = nowMs,
                 timestampIso = nowIso,
                 unreadIncrement = 0

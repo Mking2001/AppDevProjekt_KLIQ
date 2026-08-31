@@ -236,10 +236,16 @@ object KlagenfurtSeedData {
         UserEntity(
             id = CURRENT_USER_ID,
             username = CURRENT_USER_NAME,
-            email = "demo@kliq-demo.at",
+            email = "alex@kliq-demo.at",
             age = 24,
-            hometown = "Klagenfurt, Österreich",
+            hometown = "Klagenfurt",
             bio = "Nightlife am Wörthersee. Immer auf der Suche nach guter Musik und neuen Locations.",
+            profilePictureUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+            photos = listOf(
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+                "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
+                "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=800&q=80"
+            ),
             phoneNumber = "+43 660 0000000",
             isVerified = true,
             updatedAtTimestampMs = nowMs,
@@ -306,85 +312,35 @@ object KlagenfurtSeedData {
     // Chats und Nachrichten
     // =====================================================================
 
-    /** Liefert den Stadt-Gruppenchat sowie zwei Direktkonversationen. */
-    fun chats(nowMs: Long = System.currentTimeMillis()): List<ChatEntity> = listOf(
-        ChatEntity(
-            id = CITY_CHAT_ID,
-            name = "Klagenfurt",
-            cityRegion = CITY_NAME,
+    /** Liefert den Stadt-Gruppenchat für eine bestimmte Stadt. */
+    fun chatForCity(cityName: String, nowMs: Long = System.currentTimeMillis()): ChatEntity {
+        val normalized = cityName.trim()
+        val (id, initial) = when (normalized.lowercase()) {
+            "klagenfurt", "klagenfurt am wörthersee" -> "pub_klagenfurt" to "K"
+            "villach" -> "pub_villach" to "V"
+            "graz" -> "pub_graz" to "G"
+            "wien", "vienna" -> "pub_wien" to "W"
+            "salzburg" -> "pub_salzburg" to "S"
+            "innsbruck" -> "pub_innsbruck" to "I"
+            "linz" -> "pub_linz" to "L"
+            else -> "pub_${normalized.lowercase().replace(" ", "_").replace("ä", "ae").replace("ö", "oe").replace("ü", "ue")}" to normalized.take(1).uppercase()
+        }
+        return ChatEntity(
+            id = id,
+            name = normalized,
+            cityRegion = normalized,
             lastMessageText = "",
             lastMessageTimestampMs = nowMs,
             lastMessageTimestampIso = formatMsToIso(nowMs),
-            avatarInitial = "K",
-            unreadCount = 0,
-            chatType = ChatType.PUBLIC_CITY
-        ),
-        ChatEntity(
-            id = "pub_villach",
-            name = "Villach",
-            cityRegion = "Villach",
-            lastMessageText = "",
-            lastMessageTimestampMs = nowMs,
-            lastMessageTimestampIso = formatMsToIso(nowMs),
-            avatarInitial = "V",
-            unreadCount = 0,
-            chatType = ChatType.PUBLIC_CITY
-        ),
-        ChatEntity(
-            id = "pub_graz",
-            name = "Graz",
-            cityRegion = "Graz",
-            lastMessageText = "",
-            lastMessageTimestampMs = nowMs,
-            lastMessageTimestampIso = formatMsToIso(nowMs),
-            avatarInitial = "G",
-            unreadCount = 0,
-            chatType = ChatType.PUBLIC_CITY
-        ),
-        ChatEntity(
-            id = "pub_wien",
-            name = "Wien",
-            cityRegion = "Wien",
-            lastMessageText = "",
-            lastMessageTimestampMs = nowMs,
-            lastMessageTimestampIso = formatMsToIso(nowMs),
-            avatarInitial = "W",
-            unreadCount = 0,
-            chatType = ChatType.PUBLIC_CITY
-        ),
-        ChatEntity(
-            id = "pub_salzburg",
-            name = "Salzburg",
-            cityRegion = "Salzburg",
-            lastMessageText = "",
-            lastMessageTimestampMs = nowMs,
-            lastMessageTimestampIso = formatMsToIso(nowMs),
-            avatarInitial = "S",
-            unreadCount = 0,
-            chatType = ChatType.PUBLIC_CITY
-        ),
-        ChatEntity(
-            id = "pub_innsbruck",
-            name = "Innsbruck",
-            cityRegion = "Innsbruck",
-            lastMessageText = "",
-            lastMessageTimestampMs = nowMs,
-            lastMessageTimestampIso = formatMsToIso(nowMs),
-            avatarInitial = "I",
-            unreadCount = 0,
-            chatType = ChatType.PUBLIC_CITY
-        ),
-        ChatEntity(
-            id = "pub_linz",
-            name = "Linz",
-            cityRegion = "Linz",
-            lastMessageText = "",
-            lastMessageTimestampMs = nowMs,
-            lastMessageTimestampIso = formatMsToIso(nowMs),
-            avatarInitial = "L",
+            avatarInitial = initial,
             unreadCount = 0,
             chatType = ChatType.PUBLIC_CITY
         )
+    }
+
+    /** Liefert den Standard-Stadt-Gruppenchat (Klagenfurt). */
+    fun chats(nowMs: Long = System.currentTimeMillis()): List<ChatEntity> = listOf(
+        chatForCity(CITY_NAME, nowMs)
     )
 
     /** Liefert den Nachrichtenverlauf (keine Phantom-Nachrichten mehr). */

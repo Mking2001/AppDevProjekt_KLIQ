@@ -311,6 +311,40 @@ extend type Chat {
 }
 extend type Club {
   """
+  ✨ List `ClubHype` objects in a one-to-many relationship (where `ClubHype`.`club` is this object).
+  """
+  clubHypes_on_club(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ClubHype_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ClubHype_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ClubHype_Having
+  ): [ClubHype!]! @fdc_generated(from: "ClubHype.club", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `ClubOffer` objects in a one-to-many relationship (where `ClubOffer`.`club` is this object).
   """
   clubOffers_on_club(
@@ -561,6 +595,24 @@ extend type Club {
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "Club.femalePercentage", purpose: QUERY_COUNT)
   """
+  ✨ Count the number of rows in the `Club` table where the `flameCount` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  flameCount_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Club.flameCount", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `Club` table where the `flameDate` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  flameDate_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "Club.flameDate", purpose: QUERY_COUNT)
+  """
   ✨ Count the number of rows in the `Club` table where the `geofenceRadiusMeters` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """
   geofenceRadiusMeters_count(
@@ -741,6 +793,15 @@ extend type Club {
     distinct: Boolean = false
   ): Int @fdc_generated(from: "Club.femalePercentage", purpose: QUERY_SUM)
   """
+  ✨ Sum the `flameCount` field in the `Club` table.
+  """
+  flameCount_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int @fdc_generated(from: "Club.flameCount", purpose: QUERY_SUM)
+  """
   ✨ Sum the `geofenceRadiusMeters` field in the `Club` table.
   """
   geofenceRadiusMeters_sum(
@@ -822,6 +883,15 @@ extend type Club {
     distinct: Boolean = false
   ): Float @fdc_generated(from: "Club.femalePercentage", purpose: QUERY_AVG)
   """
+  ✨ Average the `flameCount` field in the `Club` table.
+  """
+  flameCount_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "Club.flameCount", purpose: QUERY_AVG)
+  """
   ✨ Average the `geofenceRadiusMeters` field in the `Club` table.
   """
   geofenceRadiusMeters_avg(
@@ -888,6 +958,10 @@ extend type Club {
   """
   femalePercentage_min: Int @fdc_generated(from: "Club.femalePercentage", purpose: QUERY_MIN)
   """
+  ✨ Minimum of the `flameCount` field in the `Club` table.
+  """
+  flameCount_min: Int @fdc_generated(from: "Club.flameCount", purpose: QUERY_MIN)
+  """
   ✨ Minimum of the `geofenceRadiusMeters` field in the `Club` table.
   """
   geofenceRadiusMeters_min: Float @fdc_generated(from: "Club.geofenceRadiusMeters", purpose: QUERY_MIN)
@@ -924,6 +998,10 @@ extend type Club {
   """
   femalePercentage_max: Int @fdc_generated(from: "Club.femalePercentage", purpose: QUERY_MAX)
   """
+  ✨ Maximum of the `flameCount` field in the `Club` table.
+  """
+  flameCount_max: Int @fdc_generated(from: "Club.flameCount", purpose: QUERY_MAX)
+  """
   ✨ Maximum of the `geofenceRadiusMeters` field in the `Club` table.
   """
   geofenceRadiusMeters_max: Float @fdc_generated(from: "Club.geofenceRadiusMeters", purpose: QUERY_MAX)
@@ -951,6 +1029,82 @@ extend type Club {
   A generated field that is used for caching results in SDKs.
   """
   _id: ID! @fdc_generated(from: "Club.id", purpose: ENTITY_ID)
+}
+extend type ClubHype {
+  """
+  Implicit metadata field that cannot be written. It provides extra information about query results.
+  """
+  _metadata: _Metadata @fdc_generated(from: "ClubHype", purpose: METADATA_FIELD)
+  """
+  ✨ Count the number of rows in the `ClubHype` table.
+  """
+  _count: Int! @fdc_generated(from: "ClubHype.", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ClubHype` table where the `clubId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  clubId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ClubHype.clubId", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ClubHype` table where the `createdAtMs` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  createdAtMs_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ClubHype.createdAtMs", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ClubHype` table where the `dateString` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  dateString_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ClubHype.dateString", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `ClubHype` table where the `userId` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  userId_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "ClubHype.userId", purpose: QUERY_COUNT)
+  """
+  ✨ Sum the `createdAtMs` field in the `ClubHype` table.
+  """
+  createdAtMs_sum(
+    """
+    Set to true to sum the distinct values.
+    """
+    distinct: Boolean = false
+  ): Int64 @fdc_generated(from: "ClubHype.createdAtMs", purpose: QUERY_SUM)
+  """
+  ✨ Average the `createdAtMs` field in the `ClubHype` table.
+  """
+  createdAtMs_avg(
+    """
+    Set to true to average the distinct values.
+    """
+    distinct: Boolean = false
+  ): Float @fdc_generated(from: "ClubHype.createdAtMs", purpose: QUERY_AVG)
+  """
+  ✨ Minimum of the `createdAtMs` field in the `ClubHype` table.
+  """
+  createdAtMs_min: Int64 @fdc_generated(from: "ClubHype.createdAtMs", purpose: QUERY_MIN)
+  """
+  ✨ Maximum of the `createdAtMs` field in the `ClubHype` table.
+  """
+  createdAtMs_max: Int64 @fdc_generated(from: "ClubHype.createdAtMs", purpose: QUERY_MAX)
+  """
+  A generated field that is used for caching results in SDKs.
+  """
+  _id: ID! @fdc_generated(from: "ClubHype.clubId,userId,dateString", purpose: ENTITY_ID)
 }
 extend type ClubOffer {
   """
@@ -3069,6 +3223,40 @@ extend type Story {
 }
 extend type User {
   """
+  ✨ List `ClubHype` objects in a one-to-many relationship (where `ClubHype`.`user` is this object).
+  """
+  clubHypes_on_user(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ClubHype_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ClubHype_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ClubHype_Having
+  ): [ClubHype!]! @fdc_generated(from: "ClubHype.user", purpose: QUERY_MULTIPLE_ONE_TO_MANY)
+  """
   ✨ List `DirectMessage` objects in a one-to-many relationship (where `DirectMessage`.`receiver` is this object).
   """
   directMessages_on_receiver(
@@ -3510,6 +3698,15 @@ extend type User {
     """
     distinct: Boolean = false
   ): Int! @fdc_generated(from: "User.lastName", purpose: QUERY_COUNT)
+  """
+  ✨ Count the number of rows in the `User` table where the `password` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
+  """
+  password_count(
+    """
+    Set to true to count the number of distinct values.
+    """
+    distinct: Boolean = false
+  ): Int! @fdc_generated(from: "User.password", purpose: QUERY_COUNT)
   """
   ✨ Count the number of rows in the `User` table where the `phoneNumber` field is non-null. Pass the `distinct` argument to instead count the number of distinct values.
   """

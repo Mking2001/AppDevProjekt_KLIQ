@@ -131,6 +131,7 @@ class UserRatingAggregationTest {
     private class FakeUserDao : UserDao {
         val users = mutableMapOf<String, UserEntity>()
         override fun getUserById(userId: String): Flow<UserEntity?> = flowOf(users[userId])
+        override fun getUsersByIds(userIds: List<String>): Flow<List<UserEntity>> = flowOf(userIds.mapNotNull { users[it] })
         override suspend fun getUserByIdOneShot(userId: String): UserEntity? = users[userId]
         override fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?> = flowOf(null)
         override suspend fun getUserPreferencesOneShot(userId: String): UserPreferencesEntity? = null

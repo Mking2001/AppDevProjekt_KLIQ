@@ -1,5 +1,6 @@
 package com.kliq.app.data.repository
 
+import com.kliq.app.data.generated.*
 import com.kliq.app.data.local.dao.FeedDao
 import com.kliq.app.data.local.entities.FeedCommentEntity
 import com.kliq.app.data.local.entities.FeedPostEntity
@@ -24,6 +25,7 @@ import javax.inject.Singleton
 @Singleton
 class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,
+    private val kliqConnector: KliqConnectorConnector? = null,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : FeedRepository {
 
@@ -31,6 +33,41 @@ class FeedRepositoryImpl @Inject constructor(
         return feedDao.getFeedPosts()
             .map { entities -> entities.map { it.toDomain() } }
             .flowOn(ioDispatcher)
+    }
+
+    override fun getFeedPostsByAuthor(authorUserId: String): Flow<List<FeedPost>> {
+        return feedDao.getFeedPostsByAuthor(authorUserId)
+            .map { entities -> entities.map { it.toDomain() } }
+            .flowOn(ioDispatcher)
+    }
+
+    override suspend fun syncFeedPosts(): Result<Unit> = withContext(ioDispatcher) {
+        try {
+            kliqConnector?.let { connector ->
+                val response = connector.getFeedPosts.execute()
+                val remotePosts = response.data.feedPosts.map { p ->
+                    FeedPostEntity(
+                        id = p.id,
+                        authorUserId = p.authorUserId,
+                        authorName = p.authorName,
+                        authorAvatarUrl = p.authorAvatarUrl,
+                        contentText = p.contentText,
+                        imageUrl = p.imageUrl,
+                        clubId = p.clubId,
+                        clubName = p.clubName,
+                        createdAtMs = p.createdAtMs,
+                        likeCount = p.likeCount,
+                        commentCount = p.commentCount
+                    )
+                }
+                if (remotePosts.isNotEmpty()) {
+                    feedDao.insertFeedPosts(remotePosts)
+                }
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     override fun getStories(): Flow<List<Story>> {

@@ -372,6 +372,7 @@ fun ChatDetailScreen(
                     description = if (chatUiState.chatType == ChatType.PUBLIC_CITY) "Öffentlicher Stadt- und Gruppenchat" else "Gruppe",
                     avatarUrl = null,
                     memberCount = presenceUiState.totalMembersCount.coerceAtLeast(presenceUiState.totalOnlineCount).coerceAtLeast(1),
+                    canAddMembers = chatUiState.chatType != ChatType.PUBLIC_CITY,
                     onAddMemberClick = {
                         showGroupInfo = false
                         presenceViewModel.toggleParticipantSheet()

@@ -1,11 +1,17 @@
 package com.kliq.app.ui.screens.notifications
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kliq.app.data.repository.ReviewRepository
+import com.kliq.app.data.repository.SocialRepository
+import com.kliq.app.domain.CurrentUserProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -13,25 +19,25 @@ import javax.inject.Inject
  *
  * @param selectedTabIndex Index des ausgewählten Filter-Tabs.
  * @param tabs Verfügbare Filter-Tabs.
- * @param notifications Platzhalter-Benachrichtigungen.
+ * @param notifications Echte Benachrichtigungen aus der Datenbank.
  * @param unreadCount Anzahl ungelesener Benachrichtigungen.
  */
 data class NotificationsUiState(
     val selectedTabIndex: Int = 0,
-    val tabs: List<String> = emptyList(),
+    val tabs: List<String> = listOf("Alle", "Bewertungen", "Freunde"),
     val notifications: List<NotificationItemUi> = emptyList(),
     val unreadCount: Int = 0
 )
 
 /**
- * Platzhalter-Datenklasse für eine Benachrichtigung.
+ * Datenklasse für eine Aktivität / Benachrichtigung.
  */
 data class NotificationItemUi(
     val id: String,
     val text: String,
     val timeAgo: String,
     val isUnread: Boolean,
-    val type: NotificationType = NotificationType.LIKE
+    val type: NotificationType = NotificationType.COMMENT
 )
 
 /**
@@ -43,57 +49,107 @@ enum class NotificationType {
 
 /**
  * ViewModel für den Notifications/Aktivität-Screen.
- * Verwaltet Benachrichtigungs-Liste und Filter-Tab-State.
- *
- * Folgt strikt dem MVVM-Pattern:
- * - Kein Compose/Android-Import
- * - Immutable State via StateFlow
+ * Lädt echte Aktivitäten (Bewertungen, Freundschaften) aus den Repositories.
  */
 @HiltViewModel
-class NotificationsViewModel @Inject constructor() : ViewModel() {
+class NotificationsViewModel @Inject constructor(
+    private val reviewRepository: ReviewRepository,
+    private val socialRepository: SocialRepository,
+    private val currentUserProvider: CurrentUserProvider
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(NotificationsUiState())
     val uiState: StateFlow<NotificationsUiState> = _uiState.asStateFlow()
 
+    private var allNotifications: List<NotificationItemUi> = emptyList()
+
     init {
-        loadMockData()
+        observeRealActivities()
     }
 
     /**
-     * Lädt Platzhalter-Daten für die visuelle Darstellung.
+     * Lädt echte Benachrichtigungen basierend auf Bewertungen und Kontakten.
      */
-    private fun loadMockData() {
-        val notifications = listOf(
-            NotificationItemUi("1", "Anna M. hat deinen Beitrag geliked", "Vor 5 Min.", true, NotificationType.LIKE),
-            NotificationItemUi("2", "Max K. hat kommentiert: \"Mega!\"", "Vor 15 Min.", true, NotificationType.COMMENT),
-            NotificationItemUi("3", "Lisa W. folgt dir jetzt", "Vor 30 Min.", true, NotificationType.FOLLOW),
-            NotificationItemUi("4", "Tom S. hat dein Foto geliked", "Vor 1 Std.", false, NotificationType.LIKE),
-            NotificationItemUi("5", "Sarah B. hat kommentiert", "Vor 2 Std.", false, NotificationType.COMMENT),
-            NotificationItemUi("6", "Jonas M. folgt dir jetzt", "Vor 3 Std.", false, NotificationType.FOLLOW),
-            NotificationItemUi("7", "Event \"Techno Night\" startet bald", "Vor 4 Std.", false, NotificationType.EVENT),
-            NotificationItemUi("8", "Mia R. hat deinen Beitrag geliked", "Gestern", false, NotificationType.LIKE)
-        )
+    private fun observeRealActivities() {
+        viewModelScope.launch {
+            val currentUserId = currentUserProvider.userId()
+
+            combine(
+                reviewRepository.getReviewsForTargetUser(currentUserId),
+                socialRepository.getFriendsForUser(currentUserId)
+            ) { reviews, friends ->
+                val list = mutableListOf<NotificationItemUi>()
+
+                reviews.forEach { r ->
+                    val reviewerName = if (r.reviewerUsername.isNotBlank()) r.reviewerUsername else "Jemand"
+                    list.add(
+                        NotificationItemUi(
+                            id = "rev_${r.id}",
+                            text = "$reviewerName hat dir eine ${r.rating}-Sterne Bewertung hinterlassen: „${r.text}“",
+                            timeAgo = formatTimestamp(r.timestamp),
+                            isUnread = false,
+                            type = NotificationType.COMMENT
+                        )
+                    )
+                }
+
+                friends.forEach { f ->
+                    list.add(
+                        NotificationItemUi(
+                            id = "fr_${f.friendUserId}",
+                            text = "Du bist jetzt mit einem neuen Kliq-Kontakt vernetzt.",
+                            timeAgo = formatTimestamp(f.createdAtTimestampMs),
+                            isUnread = false,
+                            type = NotificationType.FOLLOW
+                        )
+                    )
+                }
+
+                list.sortedByDescending { it.id }
+            }.collect { items ->
+                allNotifications = items
+                applyFilter()
+            }
+        }
+    }
+
+    private fun formatTimestamp(timestampMs: Long): String {
+        if (timestampMs <= 0L) return "Vor kurzem"
+        val diff = System.currentTimeMillis() - timestampMs
+        val minutes = diff / (1000 * 60)
+        val hours = minutes / 60
+        val days = hours / 24
+
+        return when {
+            minutes < 1 -> "Gerade eben"
+            minutes < 60 -> "Vor $minutes Min."
+            hours < 24 -> "Vor $hours Std."
+            days == 1L -> "Gestern"
+            else -> "Vor $days Tagen"
+        }
+    }
+
+    private fun applyFilter() {
+        val selectedIndex = _uiState.value.selectedTabIndex
+        val filtered = when (selectedIndex) {
+            1 -> allNotifications.filter { it.type == NotificationType.COMMENT }
+            2 -> allNotifications.filter { it.type == NotificationType.FOLLOW }
+            else -> allNotifications
+        }
 
         _uiState.update { state ->
             state.copy(
-                tabs = listOf("Alle", "Likes", "Kommentare", "Follows"),
-                notifications = notifications,
-                unreadCount = notifications.count { it.isUnread }
+                notifications = filtered,
+                unreadCount = filtered.count { it.isUnread }
             )
         }
     }
 
-    /**
-     * Stub für Tab-Filter-Auswahl.
-     * @param index Index des ausgewählten Tabs.
-     */
     fun onFilterTabSelected(index: Int) {
         _uiState.update { it.copy(selectedTabIndex = index) }
+        applyFilter()
     }
 
-    /**
-     * Stub zum Markieren aller als gelesen.
-     */
     fun onMarkAllRead() {
         _uiState.update { state ->
             state.copy(
@@ -103,10 +159,6 @@ class NotificationsViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    /**
-     * Stub für Klick auf eine Benachrichtigung.
-     * @param notificationId ID der angeklickten Benachrichtigung.
-     */
     fun onNotificationClicked(notificationId: String) {
         _uiState.update { state ->
             state.copy(
@@ -118,6 +170,5 @@ class NotificationsViewModel @Inject constructor() : ViewModel() {
                 }
             )
         }
-        // TODO: Navigation zum relevanten Content
     }
 }

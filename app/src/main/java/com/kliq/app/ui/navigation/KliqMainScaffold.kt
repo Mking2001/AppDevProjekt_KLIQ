@@ -52,6 +52,7 @@ import com.kliq.app.ui.screens.notifications.NotificationsScreen
 import com.kliq.app.ui.screens.onboarding.ConsumptionHabitsScreen
 import com.kliq.app.ui.screens.onboarding.IntentMatchingScreen
 import com.kliq.app.ui.screens.onboarding.ProfileCreationScreen
+import com.kliq.app.ui.screens.profile.EditProfileScreen
 import com.kliq.app.ui.screens.profile.OtherUserProfileScreen
 import com.kliq.app.ui.screens.profile.ProfileScreen
 import com.kliq.app.ui.screens.qr.QRScannerScreen
@@ -109,7 +110,8 @@ fun KliqMainScaffold(
         CoreRoutes.AUTH_SELECTION,
         CoreRoutes.PHONE_LOGIN,
         CoreRoutes.REGISTER,
-        ProfileRoutes.QR_SCANNER
+        ProfileRoutes.QR_SCANNER,
+        ProfileRoutes.EDIT_PROFILE
     )
 
     if (currentRoute != navigationState.currentRoute) {
@@ -179,7 +181,7 @@ fun KliqMainScaffold(
                     when (action) {
                         TopBarMenuAction.Settings -> { isSettingsDialogVisible = true }
                         TopBarMenuAction.EditProfile -> {
-                            navController.navigate(NavigationRoute.Profile.route) {
+                            navController.navigate(ProfileRoutes.EDIT_PROFILE) {
                                 launchSingleTop = true
                             }
                         }
@@ -431,7 +433,26 @@ private fun KliqNavHost(
                         launchSingleTop = true
                     }
                 },
-                onNavigateToClub = onNavigateToClub
+                onNavigateToClub = onNavigateToClub,
+                onNavigateToEditProfile = {
+                    navController.navigate(ProfileRoutes.EDIT_PROFILE) {
+                        launchSingleTop = true
+                    }
+                },
+                onNavigateToOtherProfile = { otherId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(otherId))
+                }
+            )
+        }
+        composable(
+            route = ProfileRoutes.EDIT_PROFILE,
+            enterTransition = { detailPushEnterTransition() },
+            exitTransition = { detailPushExitTransition() },
+            popEnterTransition = { detailPopEnterTransition() },
+            popExitTransition = { detailPopExitTransition() }
+        ) {
+            EditProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(NavigationRoute.ProfileCreation.route) {
@@ -558,6 +579,9 @@ private fun KliqNavHost(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToChat = { targetUserId ->
                     navController.navigate(ChatRoutes.chatDetail("chat_$targetUserId"))
+                },
+                onNavigateToOtherProfile = { otherId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(otherId))
                 }
             )
         }

@@ -42,13 +42,23 @@ object DatabaseMigrationManager {
         }
     }
 
+    val MIGRATION_22_23 = object : Migration(22, 23) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            try {
+                db.execSQL("ALTER TABLE users ADD COLUMN photos TEXT NOT NULL DEFAULT ''")
+            } catch (e: Exception) {
+                Log.w(TAG, "MIGRATION_22_23 photos: ${e.message}")
+            }
+        }
+    }
+
     fun buildDatabase(context: Context): KliqDatabase {
         return Room.databaseBuilder(
             context,
             KliqDatabase::class.java,
             DATABASE_NAME
         )
-        .addMigrations(MIGRATION_20_21, MIGRATION_21_22)
+        .addMigrations(MIGRATION_20_21, MIGRATION_21_22, MIGRATION_22_23)
         .fallbackToDestructiveMigration()
         .fallbackToDestructiveMigrationOnDowngrade()
         .addCallback(object : RoomDatabase.Callback() {

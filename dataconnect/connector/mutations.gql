@@ -579,3 +579,54 @@ mutation TrackUserLocation($id: String!, $latitude: Float!, $longitude: Float!, 
     speed: $speed
   })
 }
+
+# ===== ACCOUNT CASCADE DELETE Mutations =====
+# These mutations delete all data associated with a user account.
+
+mutation DeleteUserPhotos($userId: String!) @auth(level: PUBLIC) {
+  userPhoto_deleteMany(where: { userId: { eq: $userId } })
+}
+
+mutation DeleteUserPosts($authorUserId: String!) @auth(level: PUBLIC) {
+  feedPost_deleteMany(where: { authorUserId: { eq: $authorUserId } })
+}
+
+mutation DeleteUserComments($authorUserId: String!) @auth(level: PUBLIC) {
+  feedComment_deleteMany(where: { authorUserId: { eq: $authorUserId } })
+}
+
+mutation DeleteUserStories($authorUserId: String!) @auth(level: PUBLIC) {
+  story_deleteMany(where: { authorUserId: { eq: $authorUserId } })
+}
+
+mutation DeleteUserReviews($reviewerUserId: String!) @auth(level: PUBLIC) {
+  review_deleteMany(where: { reviewerUserId: { eq: $reviewerUserId } })
+}
+
+mutation DeleteUserFriendships($userId: String!) @auth(level: PUBLIC) {
+  friend_deleteMany(where: { userId: { eq: $userId } })
+}
+
+mutation DeleteUserFriendshipsReverse($friendUserId: String!) @auth(level: PUBLIC) {
+  friend_deleteMany(where: { friendUserId: { eq: $friendUserId } })
+}
+
+mutation DeleteUserVisitedLogs($userId: String!) @auth(level: PUBLIC) {
+  visitedLog_deleteMany(where: { userId: { eq: $userId } })
+}
+
+mutation DeleteUserBlockedEntries($userId: String!) @auth(level: PUBLIC) {
+  blockedUser_deleteMany(where: { userId: { eq: $userId } })
+}
+
+mutation DeleteUserBlockedEntriesReverse($blockedUserId: String!) @auth(level: PUBLIC) {
+  blockedUser_deleteMany(where: { blockedUserId: { eq: $blockedUserId } })
+}
+
+mutation DeleteUserPostLikes($userId: String!) @auth(level: PUBLIC) {
+  feedPostLike_deleteMany(where: { userId: { eq: $userId } })
+}
+
+mutation DeleteUserPreference($userId: String!) @auth(level: PUBLIC) {
+  userPreference_delete(key: { userId: $userId })
+}

@@ -166,6 +166,7 @@ object ClubRoutes {
  * Routen für Benutzer-Profile, Scanner und Details.
  */
 object ProfileRoutes {
+    const val EDIT_PROFILE = "profile/edit"
     const val OTHER_USER_PROFILE = "profile/other/{userId}"
     const val QR_SCANNER = "profile/qr_scanner"
 

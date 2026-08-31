@@ -18,6 +18,12 @@ interface FeedDao {
     @Query("SELECT * FROM feed_posts ORDER BY createdAtMs DESC")
     fun getFeedPosts(): Flow<List<FeedPostEntity>>
 
+    @Query("SELECT * FROM feed_posts WHERE authorUserId = :userId ORDER BY createdAtMs DESC")
+    fun getFeedPostsByAuthor(userId: String): Flow<List<FeedPostEntity>>
+
+    @Query("SELECT COUNT(*) FROM feed_posts WHERE authorUserId = :userId")
+    fun getFeedPostCountByAuthor(userId: String): Flow<Int>
+
     @Query("SELECT COUNT(*) FROM feed_posts")
     suspend fun countFeedPosts(): Int
 
@@ -77,4 +83,24 @@ interface FeedDao {
 
     @Query("DELETE FROM feed_comments WHERE id LIKE 'cmt_kf_%'")
     suspend fun deleteMockComments()
+
+    // === Cascade-Delete für Account-Löschung ===
+    @Query("DELETE FROM feed_posts WHERE authorUserId = :userId")
+    suspend fun deletePostsByAuthor(userId: String)
+
+    @Query("DELETE FROM feed_comments WHERE authorUserId = :userId")
+    suspend fun deleteCommentsByAuthor(userId: String)
+
+    @Query("DELETE FROM stories WHERE authorUserId = :userId")
+    suspend fun deleteStoriesByAuthor(userId: String)
+
+    // === Room-Cache komplett leeren (bei Login) ===
+    @Query("DELETE FROM feed_posts")
+    suspend fun deleteAllPosts()
+
+    @Query("DELETE FROM feed_comments")
+    suspend fun deleteAllComments()
+
+    @Query("DELETE FROM stories")
+    suspend fun deleteAllStories()
 }

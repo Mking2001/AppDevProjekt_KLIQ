@@ -11,6 +11,7 @@ data class UserEntity(
     val age: Int? = null,
     val hometown: String? = null,
     val profilePictureUrl: String? = null,
+    val photos: List<String> = emptyList(),
     val bio: String? = null,
     val phoneNumber: String? = null,
     val isVerified: Boolean = false,

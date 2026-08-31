@@ -27,6 +27,15 @@ extend type Mutation {
     data: Club_Data!
   ): Club_KeyOutput! @fdc_generated(from: "Club", purpose: INSERT_SINGLE)
   """
+  ✨ Insert a single `ClubHype` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  clubHype_insert(
+    """
+    Data object to insert into the table.
+    """
+    data: ClubHype_Data!
+  ): ClubHype_KeyOutput! @fdc_generated(from: "ClubHype", purpose: INSERT_SINGLE)
+  """
   ✨ Insert a single `ClubOffer` into the table and return its key. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
   clubOffer_insert(
@@ -188,6 +197,15 @@ extend type Mutation {
     """
     data: [Club_Data!]!
   ): [Club_KeyOutput!]! @fdc_generated(from: "Club", purpose: INSERT_MULTIPLE)
+  """
+  ✨ Insert `ClubHype` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
+  """
+  clubHype_insertMany(
+    """
+    List of data objects to insert into the table.
+    """
+    data: [ClubHype_Data!]!
+  ): [ClubHype_KeyOutput!]! @fdc_generated(from: "ClubHype", purpose: INSERT_MULTIPLE)
   """
   ✨ Insert `ClubOffer` objects into the table and return their keys. Columns not specified in `data` will receive defaults (e.g. `null`).
   """
@@ -351,6 +369,15 @@ extend type Mutation {
     data: Club_Data!
   ): Club_KeyOutput! @fdc_generated(from: "Club", purpose: UPSERT_SINGLE)
   """
+  ✨ Insert or update a single `ClubHype` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ClubHype`.
+  """
+  clubHype_upsert(
+    """
+    Data object to insert or update if it already exists.
+    """
+    data: ClubHype_Data!
+  ): ClubHype_KeyOutput! @fdc_generated(from: "ClubHype", purpose: UPSERT_SINGLE)
+  """
   ✨ Insert or update a single `ClubOffer` into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ClubOffer`.
   """
   clubOffer_upsert(
@@ -512,6 +539,15 @@ extend type Mutation {
     """
     data: [Club_Data!]!
   ): [Club_KeyOutput!]! @fdc_generated(from: "Club", purpose: UPSERT_MULTIPLE)
+  """
+  ✨ Insert or update `ClubHype` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ClubHype`.
+  """
+  clubHype_upsertMany(
+    """
+    List of data objects to insert or update if it already exists.
+    """
+    data: [ClubHype_Data!]!
+  ): [ClubHype_KeyOutput!]! @fdc_generated(from: "ClubHype", purpose: UPSERT_MULTIPLE)
   """
   ✨ Insert or update `ClubOffer` objects into the table, based on the primary key. Returns the key of the newly inserted or existing updated `ClubOffer`.
   """
@@ -724,6 +760,25 @@ extend type Mutation {
     """
     data: Club_Data!
   ): Club_KeyOutput @fdc_generated(from: "Club", purpose: UPDATE_SINGLE)
+  """
+  ✨ Update a single `ClubHype` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ClubHype` or `null` if not found.
+  """
+  clubHype_update(
+    """
+    The key used to identify the object.
+    """
+    key: ClubHype_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ClubHype_FirstRow
+
+    """
+    Data object containing fields to be updated.
+    """
+    data: ClubHype_Data!
+  ): ClubHype_KeyOutput @fdc_generated(from: "ClubHype", purpose: UPDATE_SINGLE)
   """
   ✨ Update a single `ClubOffer` based on `id`, `key` or `first`, setting columns specified in `data`. Returns the key of the updated `ClubOffer` or `null` if not found.
   """
@@ -1187,6 +1242,25 @@ extend type Mutation {
     data: Club_Data!
   ): Int! @fdc_generated(from: "Club", purpose: UPDATE_MULTIPLE)
   """
+  ✨ Update `ClubHype` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
+  """
+  clubHype_updateMany(
+    """
+    Filter condition to specify which rows to update.
+    """
+    where: ClubHype_Filter
+
+    """
+    Set to true to update all rows.
+    """
+    all: Boolean = false
+
+    """
+    Data object containing fields to update.
+    """
+    data: ClubHype_Data!
+  ): Int! @fdc_generated(from: "ClubHype", purpose: UPDATE_MULTIPLE)
+  """
   ✨ Update `ClubOffer` objects matching `where` conditions (or `all`, if true) according to `data`. Returns the number of rows updated.
   """
   clubOffer_updateMany(
@@ -1533,6 +1607,20 @@ extend type Mutation {
     """
     first: Club_FirstRow
   ): Club_KeyOutput @fdc_generated(from: "Club", purpose: DELETE_SINGLE)
+  """
+  ✨ Delete a single `ClubHype` based on `id`, `key` or `first` and return its key (or `null` if not found).
+  """
+  clubHype_delete(
+    """
+    The key used to identify the object.
+    """
+    key: ClubHype_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ClubHype_FirstRow
+  ): ClubHype_KeyOutput @fdc_generated(from: "ClubHype", purpose: DELETE_SINGLE)
   """
   ✨ Delete a single `ClubOffer` based on `id`, `key` or `first` and return its key (or `null` if not found).
   """
@@ -1905,6 +1993,20 @@ extend type Mutation {
     """
     all: Boolean = false
   ): Int! @fdc_generated(from: "Club", purpose: DELETE_MULTIPLE)
+  """
+  ✨ Delete `ClubHype` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
+  """
+  clubHype_deleteMany(
+    """
+    Filter condition to specify which rows to delete.
+    """
+    where: ClubHype_Filter
+
+    """
+    Set to true to delete all rows.
+    """
+    all: Boolean = false
+  ): Int! @fdc_generated(from: "ClubHype", purpose: DELETE_MULTIPLE)
   """
   ✨ Delete `ClubOffer` objects matching `where` conditions (or `all`, if true). Returns the number of rows deleted.
   """

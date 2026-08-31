@@ -1,11 +1,17 @@
 package com.kliq.app.ui.navigation
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.kliq.app.data.repository.ChatRepository
+import com.kliq.app.data.repository.SessionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -17,10 +23,40 @@ import javax.inject.Inject
  * navigation state preservation across screen rotations.
  */
 @HiltViewModel
-class NavigationViewModel @Inject constructor() : ViewModel() {
+class NavigationViewModel @Inject constructor(
+    private val chatRepository: ChatRepository,
+    private val sessionRepository: SessionRepository? = null
+) : ViewModel() {
 
     private val _navigationState = MutableStateFlow(NavigationState())
     val navigationState: StateFlow<NavigationState> = _navigationState.asStateFlow()
+
+    init {
+        observeUnreadMessages()
+        startPeriodicMessageSync()
+    }
+
+    private fun observeUnreadMessages() {
+        viewModelScope.launch {
+            chatRepository.getTotalUnreadCount().collect { count ->
+                _navigationState.update { it.copy(notificationBadgeCount = count) }
+            }
+        }
+    }
+
+    private fun startPeriodicMessageSync() {
+        viewModelScope.launch {
+            while (isActive) {
+                val userId = sessionRepository?.getUserId() ?: ""
+                if (userId.isNotBlank()) {
+                    try {
+                        chatRepository.syncAllChatsAndMessages(userId)
+                    } catch (ignored: Exception) { }
+                }
+                delay(3000L)
+            }
+        }
+    }
 
     /**
      * Called by the UI when a bottom bar tab is tapped.

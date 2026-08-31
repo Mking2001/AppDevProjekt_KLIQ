@@ -170,8 +170,13 @@ fun ChatListItem(
                 overflow = TextOverflow.Ellipsis
             )
             Spacer(modifier = Modifier.height(2.dp))
+            val previewDisplay = if (item.chatType == ChatType.PUBLIC_CITY && !item.lastMessage.senderName.isNullOrBlank() && !item.lastMessage.text.startsWith("${item.lastMessage.senderName}:")) {
+                "${item.lastMessage.senderName}: ${item.lastMessage.text}"
+            } else {
+                item.lastMessage.text
+            }
             Text(
-                text = item.lastMessage.text,
+                text = previewDisplay,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -1082,13 +1087,11 @@ fun ChatDateDivider(
 
 @Composable
 fun CityChatHeaderBanner(
-    activeCityChat: com.kliq.app.data.model.ChatListItem?,
+    suggestedCity: com.kliq.app.data.util.CityChatConfig?,
     onSwitchCityClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val cityTitle = activeCityChat?.title ?: "Berlin - Tonight"
-    val onlineCount = activeCityChat?.onlineMembersCount ?: 248
-    val distanceText = activeCityChat?.distanceKm?.let { String.format("%.1f km entfernt", it) } ?: "GPS-aktiv"
+    if (suggestedCity == null) return
 
     androidx.compose.material3.Card(
         modifier = modifier
@@ -1096,12 +1099,12 @@ fun CityChatHeaderBanner(
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
         colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f)
         ),
         border = androidx.compose.foundation.BorderStroke(
             width = 1.dp,
             brush = Brush.linearGradient(
-                colors = listOf(PurplePrimaryLight.copy(alpha = 0.6f), PurplePrimary.copy(alpha = 0.2f))
+                colors = listOf(PurplePrimaryLight.copy(alpha = 0.7f), PurplePrimary.copy(alpha = 0.3f))
             )
         )
     ) {
@@ -1132,17 +1135,15 @@ fun CityChatHeaderBanner(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = cityTitle,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    Text(
+                        text = "Du bist in ${suggestedCity.cityRegion}",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = "⚡ $onlineCount Feiernde online • $distanceText",
+                        text = "Zu „${suggestedCity.cityRegion}“ wechseln?",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.primary,
                         fontWeight = FontWeight.Medium
@@ -1150,11 +1151,18 @@ fun CityChatHeaderBanner(
                 }
             }
 
-            androidx.compose.material3.TextButton(onClick = onSwitchCityClick) {
+            androidx.compose.material3.Button(
+                onClick = onSwitchCityClick,
+                colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                    containerColor = PurplePrimary
+                ),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(10.dp),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+            ) {
                 Text(
                     text = "Wechseln",
                     style = MaterialTheme.typography.labelMedium,
-                    color = PurplePrimaryLight,
+                    color = Color.White,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -1646,6 +1654,7 @@ fun GroupInfoSheet(
     avatarUrl: String?,
     memberCount: Int,
     members: List<com.kliq.app.data.local.entities.UserEntity> = emptyList(),
+    canAddMembers: Boolean = true,
     onAddMemberClick: () -> Unit = {},
     onLeaveGroupClick: () -> Unit = {},
     onDismiss: () -> Unit
@@ -1711,21 +1720,23 @@ fun GroupInfoSheet(
                 modifier = Modifier.padding(top = 4.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            if (canAddMembers) {
+                Spacer(modifier = Modifier.height(16.dp))
 
-            // Action: Add members
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(DarkSurfaceVariant)
-                    .clickable { onAddMemberClick() }
-                    .padding(14.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, tint = PurplePrimaryLight)
-                Spacer(modifier = Modifier.width(12.dp))
-                Text("Mitglieder hinzufügen", fontWeight = FontWeight.SemiBold, color = Color.White)
+                // Action: Add members
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(DarkSurfaceVariant)
+                        .clickable { onAddMemberClick() }
+                        .padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, tint = PurplePrimaryLight)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text("Mitglieder hinzufügen", fontWeight = FontWeight.SemiBold, color = Color.White)
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

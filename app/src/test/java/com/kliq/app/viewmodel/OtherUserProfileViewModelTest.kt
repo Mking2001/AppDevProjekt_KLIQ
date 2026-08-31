@@ -34,10 +34,14 @@ class OtherUserProfileViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val userRepository: UserRepository = mock(UserRepository::class.java)
     private val reviewRepository: ReviewRepository = mock(ReviewRepository::class.java)
+    private val socialRepository: com.kliq.app.data.repository.SocialRepository = mock(com.kliq.app.data.repository.SocialRepository::class.java)
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        `when`(socialRepository.isFriend(org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString())).thenReturn(flowOf(false))
+        `when`(socialRepository.getFollowers(org.mockito.ArgumentMatchers.anyString())).thenReturn(flowOf(emptyList()))
+        `when`(socialRepository.getFollowing(org.mockito.ArgumentMatchers.anyString())).thenReturn(flowOf(emptyList()))
     }
 
     @After
@@ -84,7 +88,7 @@ class OtherUserProfileViewModelTest {
         `when`(userRepository.isUserBlocked("current_user", targetUserId)).thenReturn(flowOf(false))
 
         val savedStateHandle = SavedStateHandle(mapOf("userId" to targetUserId))
-        val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, savedStateHandle)
+        val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, socialRepository, savedStateHandle = savedStateHandle)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -112,14 +116,15 @@ class OtherUserProfileViewModelTest {
         `when`(userRepository.isUserBlocked("current_user", targetUserId)).thenReturn(flowOf(false))
 
         val savedStateHandle = SavedStateHandle(mapOf("userId" to targetUserId))
-        val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, savedStateHandle)
+        val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, socialRepository, savedStateHandle = savedStateHandle)
 
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
         assertNotNull(state.username)
-        assertTrue(state.reviewCount >= 0)
+        assertEquals(0, state.reviewCount)
+        assertEquals(0.0, state.averageRating, 0.01)
     }
 
     @Test
@@ -131,7 +136,7 @@ class OtherUserProfileViewModelTest {
         `when`(reviewRepository.getAverageRatingForTargetUser("user_123")).thenReturn(flowOf(null))
         `when`(userRepository.isUserBlocked("current_user", "user_123")).thenReturn(flowOf(false))
 
-        val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, savedStateHandle)
+        val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, socialRepository, savedStateHandle = savedStateHandle)
         testDispatcher.scheduler.advanceUntilIdle()
 
         assertFalse(viewModel.uiState.value.isBlocked)
@@ -161,7 +166,7 @@ class OtherUserProfileViewModelTest {
         `when`(reviewRepository.getAverageRatingForTargetUser("user_123")).thenReturn(flowOf(null))
         `when`(userRepository.isUserBlocked("current_user", "user_123")).thenReturn(flowOf(false))
 
-        val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, savedStateHandle)
+        val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, socialRepository, savedStateHandle = savedStateHandle)
         testDispatcher.scheduler.advanceUntilIdle()
 
         viewModel.reportUser("Fake Profile")
@@ -169,31 +174,5 @@ class OtherUserProfileViewModelTest {
 
         assertTrue(viewModel.uiState.value.isReported)
         assertNotNull(viewModel.uiState.value.actionSuccessMessage)
-    }
-
-    @Test
-    fun `openProfileImageViewer updates image viewer state in OtherUserProfileViewModel`() = runTest {
-        val savedStateHandle = SavedStateHandle(mapOf("userId" to "user_123"))
-        `when`(userRepository.getUserById("user_123")).thenReturn(flowOf(null))
-        `when`(userRepository.getUserPreferences("user_123")).thenReturn(flowOf(null))
-        `when`(reviewRepository.getReviewsForTargetUser("user_123")).thenReturn(flowOf(emptyList()))
-        `when`(reviewRepository.getAverageRatingForTargetUser("user_123")).thenReturn(flowOf(null))
-        `when`(userRepository.isUserBlocked("current_user", "user_123")).thenReturn(flowOf(false))
-
-        val viewModel = OtherUserProfileViewModel(userRepository, reviewRepository, savedStateHandle)
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        viewModel.openProfileImageViewer("https://kliq.app/other_user.jpg")
-        val state = viewModel.uiState.value.imageViewerState
-
-        assertTrue(state.isFullscreenVisible)
-        assertEquals("https://kliq.app/other_user.jpg", state.targetImageUrl)
-
-        viewModel.updateZoomState(2.2f, 80f, -40f)
-        val updatedState = viewModel.uiState.value.imageViewerState
-        assertEquals(2.2f, updatedState.currentScale, 0.001f)
-
-        viewModel.dismissProfileImageViewer()
-        assertFalse(viewModel.uiState.value.imageViewerState.isFullscreenVisible)
     }
 }

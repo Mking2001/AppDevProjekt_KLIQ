@@ -121,7 +121,13 @@ class IntentMatchingViewModelTest {
             age: Int,
             hometown: String,
             bio: String,
-            profilePictureUrl: String?
+            profilePictureUrl: String?,
+            photos: List<String>,
+            email: String?,
+            phoneNumber: String?,
+            searchIntent: SearchIntent?,
+            smokingHabit: com.kliq.app.data.model.SmokingHabit?,
+            drinkingHabit: com.kliq.app.data.model.DrinkingHabit?
         ) {}
 
         override suspend fun requestOtp(countryCode: String, phoneNumber: String): Result<Boolean> = Result.success(true)

@@ -66,16 +66,25 @@ class KliqDatabaseSeeder @Inject constructor(
 
     private suspend fun seedChats() {
         val nowMs = System.currentTimeMillis()
-        val cityChats = KlagenfurtSeedData.chats(nowMs)
-        chatDao.insertChats(cityChats)
+        val user = userDao.getUserByIdOneShot(KlagenfurtSeedData.CURRENT_USER_ID)
+        val hometown = user?.hometown?.ifBlank { null } ?: KlagenfurtSeedData.CITY_NAME
+        val homeChat = KlagenfurtSeedData.chatForCity(hometown, nowMs)
+        chatDao.insertChat(homeChat)
+
+        // Ensure user is not auto-joined to all other Austrian city chats
+        val allOtherCityIds = listOf("pub_villach", "pub_graz", "pub_wien", "pub_salzburg", "pub_innsbruck", "pub_linz", "pub_klagenfurt")
+            .filter { it != homeChat.id }
+        allOtherCityIds.forEach { chatId ->
+            chatDao.deleteChatById(chatId)
+            chatDao.deleteMessagesForChat(chatId)
+        }
 
         // Delete legacy phantom/mock chats and messages
         chatDao.deleteChatById("priv_lena")
         chatDao.deleteChatById("priv_david")
         chatDao.deleteMessagesForChat("priv_lena")
         chatDao.deleteMessagesForChat("priv_david")
-        chatDao.deleteMessagesForChat(KlagenfurtSeedData.CITY_CHAT_ID)
-        Log.d(TAG, "Stadt-Chats initialisiert und Phantom-Daten bereinigt")
+        Log.d(TAG, "Stadt-Chat für Heimatstadt '$hometown' initialisiert und Phantom-Daten bereinigt")
     }
 
     private suspend fun seedFeed() {

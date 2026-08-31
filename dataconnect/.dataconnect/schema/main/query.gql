@@ -62,6 +62,20 @@ extend type Query {
     first: Club_FirstRow
   ): Club @fdc_generated(from: "Club", purpose: QUERY_SINGLE)
   """
+  ✨ Look up a single `ClubHype` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
+  """
+  clubHype(
+    """
+    The key used to identify the object.
+    """
+    key: ClubHype_Key
+
+    """
+    Fetch the first row based on the filters and ordering.
+    """
+    first: ClubHype_FirstRow
+  ): ClubHype @fdc_generated(from: "ClubHype", purpose: QUERY_SINGLE)
+  """
   ✨ Look up a single `ClubOffer` based on `id`, `key` or `first` and return selected fields (or `null` if not found).
   """
   clubOffer(
@@ -493,6 +507,40 @@ extend type Query {
     """
     having: Club_Having
   ): [Club!]! @fdc_generated(from: "Club", purpose: QUERY_MULTIPLE)
+  """
+  ✨ List `ClubHype` objects in the table and return selected fields, optionally filtered by `where` conditions
+  """
+  clubHypes(
+    """
+    Filter condition to narrow down the query results.
+    """
+    where: ClubHype_Filter
+
+    """
+    Order the query results by specific fields.
+    """
+    orderBy: [ClubHype_Order!]
+
+    """
+    Number of rows to skip before starting to return the results.
+    """
+    offset: Int
+
+    """
+    Maximum number of rows to return (defaults to 100 rows).
+    """
+    limit: Int = 100
+
+    """
+    Set to true to return distinct results.
+    """
+    distinct: Boolean = false
+
+    """
+    Filter condition to apply to the groups of aggregate queries.
+    """
+    having: ClubHype_Having
+  ): [ClubHype!]! @fdc_generated(from: "ClubHype", purpose: QUERY_MULTIPLE)
   """
   ✨ List `ClubOffer` objects in the table and return selected fields, optionally filtered by `where` conditions
   """

@@ -2,8 +2,10 @@ package com.kliq.app.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.kliq.app.data.repository.ChatRepository
 import com.kliq.app.data.repository.SessionRepository
 import com.kliq.app.data.repository.UserRepository
+import com.kliq.app.data.repository.UserRepositoryImpl
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +29,8 @@ sealed class AuthUiState {
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
-    private val userRepository: UserRepository? = null
+    private val userRepository: UserRepository? = null,
+    private val chatRepository: ChatRepository? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Loading)
@@ -43,6 +46,7 @@ class AuthViewModel @Inject constructor(
             val isValid = sessionRepository.checkAndValidateSession()
             if (isValid) {
                 val userId = sessionRepository.getUserId() ?: "user_default"
+                syncFromCloud(userId)
                 _uiState.value = AuthUiState.Authenticated(userId)
             } else {
                 _uiState.value = AuthUiState.Unauthenticated
@@ -54,8 +58,26 @@ class AuthViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
             sessionRepository.saveSession(token, userId)
+            syncFromCloud(userId)
             _uiState.value = AuthUiState.Authenticated(userId)
         }
+    }
+
+    /**
+     * Clears the entire local Room cache and re-syncs profile + chats from Cloud SQL.
+     * Prevents stale data from old / deleted accounts from persisting locally.
+     */
+    private suspend fun syncFromCloud(userId: String) {
+        try {
+            // Clear local cache to avoid old account data leaking
+            (userRepository as? UserRepositoryImpl)?.clearLocalCache()
+        } catch (ignored: Exception) { }
+        try {
+            userRepository?.syncUserProfile(userId)
+        } catch (ignored: Exception) { }
+        try {
+            chatRepository?.syncAllChats()
+        } catch (ignored: Exception) { }
     }
 
     fun logout() {

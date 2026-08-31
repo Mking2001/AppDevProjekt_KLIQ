@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.flowOf
 interface UserRepository {
     fun getUserById(userId: String): Flow<UserEntity?>
     fun getUser(userId: String): Flow<UserEntity?> = getUserById(userId)
+    fun getUsersByIds(userIds: List<String>): Flow<List<UserEntity>> = flowOf(emptyList())
     fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?>
     fun getUserReputationSummary(userId: String): Flow<UserReputationSummary> =
         flowOf(UserReputationSummary(targetUserId = userId))
@@ -30,7 +31,13 @@ interface UserRepository {
         age: Int,
         hometown: String,
         bio: String,
-        profilePictureUrl: String? = null
+        profilePictureUrl: String? = null,
+        photos: List<String> = emptyList(),
+        email: String? = null,
+        phoneNumber: String? = null,
+        searchIntent: SearchIntent? = null,
+        smokingHabit: SmokingHabit? = null,
+        drinkingHabit: DrinkingHabit? = null
     ) {}
     suspend fun updateProfilePicture(userId: String, pictureUrl: String) {}
     suspend fun requestOtp(countryCode: String, phoneNumber: String): Result<Boolean>

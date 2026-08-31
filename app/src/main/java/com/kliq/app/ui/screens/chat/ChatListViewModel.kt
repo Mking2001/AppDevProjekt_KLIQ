@@ -31,7 +31,9 @@ data class ChatListUiState(
     val selectedTab: ChatType = ChatType.PUBLIC_CITY,
     val searchQuery: String = "",
     val isSearchActive: Boolean = false,
-    val activeGpsCityChat: ChatListItem? = null,
+    val activeCity: CityChatConfig = CityChatLocationMapper.SUPPORTED_CITIES.first(),
+    val suggestedForeignCity: CityChatConfig? = null,
+    val showCitySwitchSuggestion: Boolean = false,
     val isCitySwitcherOpen: Boolean = false,
     val isCreateGroupDialogOpen: Boolean = false,
     val groupImageUri: String? = null,
@@ -62,10 +64,52 @@ class ChatListViewModel @Inject constructor(
     private var activeChats: List<ChatListItem> = emptyList()
     private var archivedChats: List<ChatListItem> = emptyList()
     private var blockedUserIds: Set<String> = emptySet()
+    private var currentGpsCity: CityChatConfig? = null
+    private var manualSelectedCity: CityChatConfig? = null
 
     init {
+        observeUserProfile()
         observeChats()
         observeLocationUpdates()
+        syncChatsFromCloud()
+    }
+
+    private fun syncChatsFromCloud() {
+        viewModelScope.launch {
+            try {
+                chatRepository.syncAllChats()
+            } catch (ignored: Exception) { }
+        }
+    }
+
+    private fun observeUserProfile() {
+        viewModelScope.launch {
+            val currentUserId = currentUserProvider.userId()
+            userRepository.getUserById(currentUserId).collect { user ->
+                val hometown = user?.hometown?.ifBlank { null } ?: "Klagenfurt"
+                val homeCityConfig = CityChatLocationMapper.resolveCityByName(hometown)
+
+                val targetCity = manualSelectedCity ?: homeCityConfig
+                val isDifferent = currentGpsCity != null &&
+                        !currentGpsCity!!.cityRegion.equals(targetCity.cityRegion, ignoreCase = true)
+
+                _uiState.update { state ->
+                    state.copy(
+                        activeCity = targetCity,
+                        suggestedForeignCity = if (isDifferent) currentGpsCity else null,
+                        showCitySwitchSuggestion = isDifferent
+                    )
+                }
+
+                chatRepository.createChatIfMissing(
+                    chatId = targetCity.id,
+                    name = targetCity.title,
+                    chatType = ChatType.PUBLIC_CITY,
+                    cityRegion = targetCity.cityRegion,
+                    avatarInitial = targetCity.avatarInitial
+                )
+            }
+        }
     }
 
     /**
@@ -146,8 +190,11 @@ class ChatListViewModel @Inject constructor(
             }
         }
 
+        val activeCityRegion = _uiState.value.activeCity.cityRegion
         val filteredPublic = activeChats.filter {
-            it.chatType == ChatType.PUBLIC_CITY && matchesQuery(it)
+            it.chatType == ChatType.PUBLIC_CITY &&
+            it.cityRegion.equals(activeCityRegion, ignoreCase = true) &&
+            matchesQuery(it)
         }
         val filteredPrivate = activeChats.filter {
             it.chatType == ChatType.PRIVATE && !isFromBlockedUser(it) && matchesQuery(it)
@@ -233,37 +280,23 @@ class ChatListViewModel @Inject constructor(
     }
 
     /**
-     * Ordnet dem Nutzer anhand der GPS-Position den nächstgelegenen Stadt-Chat zu
-     * und legt diesen bei Bedarf in der Datenbank an.
+     * Prüft anhand der GPS-Position, ob sich der Nutzer in einer anderen Stadt befindet.
+     * Nur wenn eine Abweichung zur aktiven Stadt vorliegt, wird ein Wechsel vorgeschlagen.
      */
     private fun observeLocationUpdates() {
         viewModelScope.launch {
             locationRepository.locationUpdates.collect { location ->
+                if (location == null) return@collect
                 val resolvedConfig = CityChatLocationMapper.resolveCityForLocation(location)
-                val distance = if (location != null) {
-                    CityChatLocationMapper.calculateDistanceInKm(
-                        location.latitude, location.longitude,
-                        resolvedConfig.latitude, resolvedConfig.longitude
+                currentGpsCity = resolvedConfig
+
+                _uiState.update { state ->
+                    val isDifferent = !resolvedConfig.cityRegion.equals(state.activeCity.cityRegion, ignoreCase = true)
+                    state.copy(
+                        suggestedForeignCity = if (isDifferent) resolvedConfig else null,
+                        showCitySwitchSuggestion = isDifferent
                     )
-                } else {
-                    null
                 }
-
-                val gpsAssignedItem = CityChatLocationMapper.buildCityChatListItem(
-                    config = resolvedConfig,
-                    distanceKm = distance,
-                    isGpsAssigned = true
-                )
-
-                chatRepository.createChatIfMissing(
-                    chatId = resolvedConfig.id,
-                    name = resolvedConfig.title,
-                    chatType = ChatType.PUBLIC_CITY,
-                    cityRegion = resolvedConfig.cityRegion,
-                    avatarInitial = resolvedConfig.avatarInitial
-                )
-
-                _uiState.update { it.copy(activeGpsCityChat = gpsAssignedItem) }
             }
         }
     }
@@ -280,11 +313,7 @@ class ChatListViewModel @Inject constructor(
      * Wechselt manuell in einen anderen Stadt-Chat und legt ihn bei Bedarf an.
      */
     fun selectCityChat(config: CityChatConfig) {
-        val newItem = CityChatLocationMapper.buildCityChatListItem(
-            config = config,
-            distanceKm = null,
-            isGpsAssigned = false
-        )
+        manualSelectedCity = config
 
         viewModelScope.launch {
             chatRepository.createChatIfMissing(
@@ -296,9 +325,13 @@ class ChatListViewModel @Inject constructor(
             )
         }
 
-        _uiState.update {
-            it.copy(
-                activeGpsCityChat = newItem,
+        _uiState.update { state ->
+            val isDifferentFromGps = currentGpsCity != null &&
+                    !currentGpsCity!!.cityRegion.equals(config.cityRegion, ignoreCase = true)
+            state.copy(
+                activeCity = config,
+                suggestedForeignCity = if (isDifferentFromGps) currentGpsCity else null,
+                showCitySwitchSuggestion = isDifferentFromGps,
                 isCitySwitcherOpen = false
             )
         }

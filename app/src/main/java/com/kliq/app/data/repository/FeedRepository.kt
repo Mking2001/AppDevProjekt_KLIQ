@@ -14,6 +14,12 @@ interface FeedRepository {
     /** Reaktiver Strom aller Feed-Beiträge, absteigend nach Erstellungszeit. */
     fun getFeedPosts(): Flow<List<FeedPost>>
 
+    /** Reaktiver Strom aller Feed-Beiträge eines bestimmten Nutzers. */
+    fun getFeedPostsByAuthor(authorUserId: String): Flow<List<FeedPost>>
+
+    /** Synchronisiert Feed-Beiträge aus Data Connect. */
+    suspend fun syncFeedPosts(): Result<Unit>
+
     /** Reaktiver Strom aller Storys, ungesehene zuerst. */
     fun getStories(): Flow<List<Story>>
 

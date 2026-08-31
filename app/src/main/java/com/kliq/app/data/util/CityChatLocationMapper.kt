@@ -101,6 +101,24 @@ object CityChatLocationMapper {
         return closestCity
     }
 
+    fun resolveCityByName(cityName: String?): CityChatConfig {
+        if (cityName.isNullOrBlank()) return SUPPORTED_CITIES.first()
+        val trimmed = cityName.trim()
+        return SUPPORTED_CITIES.find {
+            it.cityRegion.equals(trimmed, ignoreCase = true) ||
+            trimmed.contains(it.cityRegion, ignoreCase = true) ||
+            it.cityRegion.contains(trimmed, ignoreCase = true)
+        } ?: CityChatConfig(
+            id = "pub_${trimmed.lowercase().replace(" ", "_").replace("ä", "ae").replace("ö", "oe").replace("ü", "ue")}",
+            title = "$trimmed - Tonight",
+            cityRegion = trimmed,
+            latitude = 46.6236,
+            longitude = 14.3084,
+            avatarInitial = trimmed.take(1).uppercase(),
+            defaultOnlineCount = 1
+        )
+    }
+
     fun calculateDistanceInKm(
         lat1: Double, lon1: Double,
         lat2: Double, lon2: Double

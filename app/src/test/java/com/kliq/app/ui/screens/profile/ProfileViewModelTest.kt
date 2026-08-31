@@ -120,8 +120,73 @@ class ProfileViewModelTest {
         assertEquals(1.0f, state.currentScale, 0.001f)
     }
 
+    @Test
+    fun `profile has 4 tabs including Bewertungen`() {
+        val tabs = viewModel.uiState.value.tabs
+        assertEquals(4, tabs.size)
+        assertEquals(listOf("Beiträge", "Events", "Historie", "Bewertungen"), tabs)
+    }
+
+    @Test
+    fun `multi photo viewer opens navigates and dismisses correctly`() = runTest {
+        val testUser = UserEntity(
+            id = "current_user",
+            username = "alex_night",
+            email = "alex@kliq.app",
+            photos = listOf("photo1.jpg", "photo2.jpg", "photo3.jpg")
+        )
+        fakeUserRepository.emitUser(testUser)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.openMultiPhotoViewer(0)
+        assertTrue(viewModel.uiState.value.isMultiPhotoViewerVisible)
+        assertEquals(0, viewModel.uiState.value.activePhotoViewerIndex)
+
+        viewModel.nextPhoto()
+        assertEquals(1, viewModel.uiState.value.activePhotoViewerIndex)
+
+        viewModel.nextPhoto()
+        assertEquals(2, viewModel.uiState.value.activePhotoViewerIndex)
+
+        viewModel.nextPhoto()
+        assertEquals(2, viewModel.uiState.value.activePhotoViewerIndex)
+
+        viewModel.previousPhoto()
+        assertEquals(1, viewModel.uiState.value.activePhotoViewerIndex)
+
+        viewModel.dismissMultiPhotoViewer()
+        assertFalse(viewModel.uiState.value.isMultiPhotoViewerVisible)
+    }
+
+    @Test
+    fun `photo slot click and remove updates edit photos state`() {
+        viewModel.onPhotoSlotClicked(2)
+        assertEquals(2, viewModel.uiState.value.selectedPhotoSlotIndex)
+
+        viewModel.onRemovePhoto(0)
+        assertTrue(viewModel.uiState.value.editPhotos.isEmpty())
+    }
+
+    @Test
+    fun `saveProfile saves updated profile and preferences`() = runTest {
+        viewModel.onEditNameChanged("Max Mustermann")
+        viewModel.onEditBioChanged("Club lover")
+        viewModel.onEditLocationChanged("Wien")
+        viewModel.onEditAgeChanged(22)
+        viewModel.onEditSearchIntentChanged(com.kliq.app.data.model.SearchIntent.DATING)
+        viewModel.onEditSmokingHabitChanged(com.kliq.app.data.model.SmokingHabit.OCCASIONALLY)
+        viewModel.onEditDrinkingHabitChanged(com.kliq.app.data.model.DrinkingHabit.SOCIAL)
+
+        viewModel.onSaveProfile()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isProfileSavedSuccessfully)
+        assertEquals("Profil gespeichert.", viewModel.uiState.value.infoMessage)
+    }
+
     private class FakeUserRepository : UserRepository {
         private val userFlow = MutableStateFlow<UserEntity?>(null)
+        private val prefFlow = MutableStateFlow<com.kliq.app.data.local.entities.UserPreferencesEntity?>(null)
 
         fun emitUser(user: UserEntity?) {
             userFlow.value = user
@@ -129,10 +194,10 @@ class ProfileViewModelTest {
 
         override fun getUserById(userId: String): Flow<UserEntity?> = userFlow
         override fun getUser(userId: String): Flow<UserEntity?> = userFlow
-        override fun getUserPreferences(userId: String): Flow<com.kliq.app.data.local.entities.UserPreferencesEntity?> = MutableStateFlow(null)
+        override fun getUserPreferences(userId: String): Flow<com.kliq.app.data.local.entities.UserPreferencesEntity?> = prefFlow
         override suspend fun syncUserProfile(userId: String): Result<Unit> = Result.success(Unit)
         override suspend fun saveUser(user: UserEntity) { userFlow.value = user }
-        override suspend fun saveUserPreferences(preferences: com.kliq.app.data.local.entities.UserPreferencesEntity) {}
+        override suspend fun saveUserPreferences(preferences: com.kliq.app.data.local.entities.UserPreferencesEntity) { prefFlow.value = preferences }
         override suspend fun saveSearchIntent(userId: String, intent: com.kliq.app.data.model.SearchIntent) {}
         override suspend fun saveProfile(
             userId: String,
@@ -140,8 +205,25 @@ class ProfileViewModelTest {
             age: Int,
             hometown: String,
             bio: String,
-            profilePictureUrl: String?
-        ) {}
+            profilePictureUrl: String?,
+            photos: List<String>,
+            email: String?,
+            phoneNumber: String?,
+            searchIntent: com.kliq.app.data.model.SearchIntent?,
+            smokingHabit: com.kliq.app.data.model.SmokingHabit?,
+            drinkingHabit: com.kliq.app.data.model.DrinkingHabit?
+        ) {
+            userFlow.value = UserEntity(
+                id = userId,
+                username = username,
+                email = email ?: "test@kliq.app",
+                age = age,
+                hometown = hometown,
+                bio = bio,
+                profilePictureUrl = profilePictureUrl,
+                photos = photos
+            )
+        }
 
         override suspend fun updateProfilePicture(userId: String, pictureUrl: String) {
             userFlow.value = userFlow.value?.copy(profilePictureUrl = pictureUrl)

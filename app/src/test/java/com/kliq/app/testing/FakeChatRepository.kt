@@ -62,6 +62,9 @@ class FakeChatRepository(
     override fun getChatById(chatId: String): Flow<ChatConversation?> =
         chats.map { list -> list.find { it.id == chatId } }
 
+    override fun getTotalUnreadCount(): Flow<Int> =
+        chats.map { list -> list.filterNot { it.isArchived }.sumOf { it.unreadCount } }
+
     override suspend fun createChatIfMissing(
         chatId: String,
         name: String,
@@ -92,6 +95,10 @@ class FakeChatRepository(
         messages.map { list ->
             list.filter { it.chatId == chatId && it.text.contains(query, ignoreCase = true) }
         }
+
+    override suspend fun syncAllChats(): Result<Unit> = Result.success(Unit)
+
+    override suspend fun syncAllChatsAndMessages(currentUserId: String): Result<Unit> = Result.success(Unit)
 
     override suspend fun syncChatMessages(chatId: String): Result<Unit> = Result.success(Unit)
 

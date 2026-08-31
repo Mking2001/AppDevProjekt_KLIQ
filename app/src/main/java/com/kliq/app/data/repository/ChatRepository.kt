@@ -20,6 +20,9 @@ interface ChatRepository {
     /** Liefert die Metadaten eines einzelnen Chats oder null, wenn er nicht existiert. */
     fun getChatById(chatId: String): Flow<ChatConversation?>
 
+    /** Liefert die Gesamtzahl aller ungelesenen Nachrichten über alle aktiven Chats. */
+    fun getTotalUnreadCount(): Flow<Int>
+
     /**
      * Legt einen Chat an, falls unter der ID noch keiner existiert.
      * Wird beim Einstieg in einen Chat aus einem Nutzerprofil oder Deep Link benoetigt.
@@ -36,6 +39,8 @@ interface ChatRepository {
 
     fun getMessagesForChat(chatId: String): Flow<List<ChatMessage>>
     fun searchMessagesInChat(chatId: String, query: String): Flow<List<ChatMessage>>
+    suspend fun syncAllChats(): Result<Unit>
+    suspend fun syncAllChatsAndMessages(currentUserId: String): Result<Unit>
     suspend fun syncChatMessages(chatId: String): Result<Unit>
     suspend fun sendTextMessage(
         chatId: String,

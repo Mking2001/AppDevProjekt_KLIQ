@@ -262,10 +262,12 @@ fun ChatListScreen(
                 }
             }
 
-            if (uiState.selectedTab == ChatType.PUBLIC_CITY) {
+            if (uiState.selectedTab == ChatType.PUBLIC_CITY && uiState.showCitySwitchSuggestion && uiState.suggestedForeignCity != null) {
                 com.kliq.app.ui.components.CityChatHeaderBanner(
-                    activeCityChat = uiState.activeGpsCityChat ?: uiState.publicChats.firstOrNull(),
-                    onSwitchCityClick = viewModel::openCitySwitcher
+                    suggestedCity = uiState.suggestedForeignCity,
+                    onSwitchCityClick = {
+                        uiState.suggestedForeignCity?.let { viewModel.selectCityChat(it) }
+                    }
                 )
             }
 
