@@ -1,42 +1,42 @@
-# 🍸 KLIQ — Nightlife, Club-Radar & Social Network für Android
+#  KLIQ — Nightlife, Club-Radar & Social Network für Android
 
-Willkommen bei **KLIQ**! Wir kennen es alle: Es ist Freitag- oder Samstagabend, man sitzt mit Freunden zusammen und die ewige Frage taucht auf: *„Wo gehen wir heute feiern? Wo ist wirklich was los und wo steht man sich nur die Beine in den Bauch?“*
+ Wir kennen es alle: Es ist Freitag- oder Samstagabend, man sitzt mit Freunden zusammen und die ewige Frage taucht auf: *„Wo gehen wir heute feiern? Wo ist wirklich was los und wo steht man sich nur die Beine in den Bauch?“*
 
 Genau dafür haben wir **KLIQ** gebaut. KLIQ ist eine moderne, native Android-App (100% Kotlin & Jetpack Compose), die Nachtschwärmer, Clubs, Bars und Events in Echtzeit zusammenbringt. Keine veralteten Flyer, keine toten WhatsApp-Gruppen – stattdessen Live-Auslastung, GPS-verifizierte Bewertungen, ein aktiver Nightlife-Feed, private Chats und ein Hype-System, das zeigt, wo die Nacht brennt.
 
 ---
 
-## ✨ Was macht KLIQ besonders? (Highlights & Features)
+##  Was macht KLIQ besonders? (Highlights & Features)
 
-### 🔥 1. Live-Club-Radar & Hype-Meter
+###  1. Live-Club-Radar & Hype-Meter
 - **Live-Auslastung & Besucherzahlen**: Sieh auf einen Blick, wie voll ein Club aktuell ist (in Prozent und geschätzten Live-Besuchern).
 - **Gender-Distribution**: Statistiken zur Gäste-Zusammensetzung (Männer-/Frauenanteil).
 - **Daily Flames (Club-Hype)**: Gib deinem Lieblingsclub täglich eine Flamme. Clubs mit dem größten Hype steigen im Ranking ganz nach oben!
 - **Echtzeit-Öffnungszeiten**: Dynamischer Status (*Offen*, *Schließt bald*, *Geschlossen*) basierend auf dem aktuellen Wochentag und der Uhrzeit.
 
-### 🗺️ 2. Interaktive Karte & Geofencing
+###  2. Interaktive Karte & Geofencing
 - **Google Maps mit Custom Markern**: Speziell gerenderte, speicheroptimierte Marker zeigen Clubs, Bars und Lounges mit farblicher Auslastungskennzeichnung.
 - **GPS-Geofencing**: Automatische Erkennung, wenn du dich in der Nähe eines Clubs befindest (z.B. 150m–200m Radius).
 - **Event-Pinning & Adresssuche**: Du veranstaltest eine eigene Spontan-Party oder Afterhour? Platziere dein Event mit Adresssuche direkt auf der Karte!
 - **Akkusparendes Tracking**: Durch unseren `AdaptiveLocationController` wird die GPS-Abtastung je nach Bewegungsstatus dynamisch gedrosselt – damit der Akku die ganze Nacht durchhält.
 
-### 📸 3. Social Feed, 24h-Stories & Vernetzung
+###  3. Social Feed, 24h-Stories & Vernetzung
 - **Nightlife-Feed**: Teile Fotos, Eindrücke und Check-Ins mit der Community. Unterstützt Likes, Kommentare und Club-Geotags.
 - **24h-Stories**: Teile Momentaufnahmen – wahlweise öffentlich oder exklusiv für deine Freunde.
 - **Live-User-Suche**: Finde Freunde und bekannte Gesichter direkt über die integrierte Schnellsuchleiste.
 
-### 💬 4. Messenger & Public City Chats
-- **Public City Chat**: Tausche dich im öffentlichen Stadt-Chat (z.B. *Klagenfurt City Chat*) mit anderen Partygängern über Line-Ups, Specials oder Einlasszeiten aus.
+###  4. Messenger & Public City Chats
+- **Public City Chat**: Tausche dich im öffentlichen Stadt-Chat mit anderen Partygängern über Line-Ups, Specials oder Einlasszeiten aus.
 - **Gruppen-Chats**: Erstelle eigene Gruppen im vertrauten Messenger-Style.
 - **Echtzeit-1:1-Direktnachrichten**: Ende-zu-Ende verschlüsselt (AES-256-GCM) für maximale Privatsphäre.
 - **Rich Media & Audio**: Fotos aus Kamera/Galerie sowie Sprachnachrichten (Voice Notes).
 - **Status & Interaktion**: Lesebestätigungen (Häkchen), Online-Status und intuitive Swipe-Aktionen (Pin, Stummschalten, Löschen).
 
-### ⭐ 5. Ehrliche, GPS-verifizierte Bewertungen
+###  5. Ehrliche, GPS-verifizierte Bewertungen
 - **Schluss mit Fake-Reviews**: Eine Club-Bewertung kann nur abgeben werden, wer sich tatsächlich physisch vor Ort befindet (GPS-Proximity-Check) oder den Club nachweislich besucht hat.
 - **Community-Moderation**: Bewerte Reviews als hilfreich oder melde unpassende Einträge.
 
-### 🤝 6. Profil & QR-Code-Vernetzung
+###  6. Profil & QR-Code-Vernetzung
 - **4-Slot Fotogalerie**: Zeige deine besten Party-Momente mit Story-artiger Vollbildvorschau.
 - **QR-Code Scanner (CameraX + ML Kit)**: Nie wieder umständlich Telefonnummern abtippen – einfach den persönlichen QR-Code vor Ort scannen und sofort befreundet sein.
 - **Lifestyle & Party-Präferenzen**: Halte deine Musikvorlieben, Ausgeh-Intents (Freunde, Dating, Party) und Gewohnheiten im Profil fest.
@@ -44,7 +44,7 @@ Genau dafür haben wir **KLIQ** gebaut. KLIQ ist eine moderne, native Android-Ap
 
 ---
 
-## 🛠️ Tech Stack & Architektur
+##  Tech Stack & Architektur
 
 Bei der Entwicklung von KLIQ haben wir großen Wert auf moderne Android-Standards, saubere Architektur (MVVM + Clean Architecture) und hohe Performance gelegt:
 
@@ -63,7 +63,7 @@ Bei der Entwicklung von KLIQ haben wir großen Wert auf moderne Android-Standard
 
 ---
 
-## 📂 Projektstruktur
+##  Projektstruktur
 
 ```text
 AppDevProjekt_Vibe/
@@ -100,14 +100,14 @@ AppDevProjekt_Vibe/
 
 ---
 
-## 🚀 Erste Schritte & Lokales Setup
+##  Erste Schritte & Lokales Setup
 
 Möchtest du das Projekt lokal bauen oder weiterentwickeln? Folge einfach diesen Schritten:
 
 ### 1. Voraussetzungen
-- **Android Studio** (Hedgehog 2023.1.1 oder neuer empfohlen)
-- **JDK 17** (in Android Studio unter *Settings > Build, Execution, Deployment > Build Tools > Gradle* eingestellt)
-- **Android SDK**: `minSdk = 26` (Android 8.0 Oreo), `targetSdk = 34` (Android 14)
+- **Android Studio** 
+- **JDK 17** 
+- **Android SDK**: `minSdk = 26` , `targetSdk = 34` 
 - Ein physisches Android-Gerät oder ein Emulator mit Google Play Services.
 
 ### 2. Repository klonen
@@ -117,13 +117,13 @@ cd AppDevProjekt_KLIQ
 ```
 
 ### 3. API-Keys konfigurieren (`local.properties`)
-Erstelle im Projekt-Hauptverzeichnis eine Datei namens `local.properties` (falls nicht vorhanden) und trage deinen Google Maps API Key ein:
+Erstelle im Projekt-Hauptverzeichnis eine Datei namens `local.properties`  und trage deinen Google Maps API Key ein:
 
 ```properties
 sdk.dir=/Dein/Pfad/Zum/Android/Sdk
 MAPS_API_KEY=AIzaSyDeinEchterGoogleMapsApiKeyHier
 ```
-*(Hinweis: Für reine lokale UI-Tests ohne Kartendarstellung greift ein Fallback-Key, für die volle Google Maps Funktionalität wird ein gültiger Key benötigt).*
+
 
 ### 4. Firebase Anbindung
 - Stelle sicher, dass die `google-services.json` im Ordner `/app` hinterlegt ist.
@@ -137,7 +137,7 @@ MAPS_API_KEY=AIzaSyDeinEchterGoogleMapsApiKeyHier
 
 ---
 
-## 🧪 Tests & Qualitätssicherung
+## Tests & Qualitätssicherung
 
 Wir haben für die Kernkomponenten automatisierte Unit- und Integrationstests geschrieben:
 
@@ -157,17 +157,4 @@ Wir haben für die Kernkomponenten automatisierte Unit- und Integrationstests ge
 
 ---
 
-## 🔮 Roadmap & Zukünftige Ideen
 
-- [ ] **VIP-Gästelisten & Fast-Lane Tickets**: Club-Tickets direkt in der App kaufen und per QR-Code an der Tür einlösen.
-- [ ] **Erweiterung auf weitere Städte**: Ausbau der Datenbasis über Kärnten hinaus (Graz, Wien, Salzburg, etc.).
-- [ ] **DJ & Lineup Timetables**: Benachrichtigungen, sobald der Lieblings-DJ auflegt.
-- [ ] **Live-Stories mit Sound**: Audio-Clips direkt aus den Clubs in den 24h-Stories streamen.
-
----
-
-## 👨‍💻 Mitwirkende
-
-Entwickelt mit Leidenschaft für gutes Nachtleben und sauberen Code im Rahmen des Android App Development Projekts.
-
-Feedback, Feature-Vorschläge oder gefundene Bugs? Gerne einfach ein Issue eröffnen oder einen Pull Request erstellen! 🚀
