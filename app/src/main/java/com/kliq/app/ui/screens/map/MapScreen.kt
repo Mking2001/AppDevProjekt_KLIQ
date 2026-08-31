@@ -111,6 +111,7 @@ fun MapScreen(
     onMenuAction: (TopBarMenuAction) -> Unit,
     onNavigateToClub: (String) -> Unit = {},
     onNavigateToChat: (String) -> Unit = {},
+    onNavigateToUserProfile: (String) -> Unit = {},
     viewModel: MapViewModel = hiltViewModel(),
     permissionViewModel: PermissionViewModel = hiltViewModel()
 ) {
@@ -536,6 +537,7 @@ fun MapScreen(
             isVisible = uiState.selectedUser != null,
             onDismiss = { viewModel.onUserQuickViewDismissed() },
             onSendMessage = { userId -> onNavigateToChat("chat_$userId") },
+            onViewProfile = onNavigateToUserProfile,
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 .statusBarsPadding()

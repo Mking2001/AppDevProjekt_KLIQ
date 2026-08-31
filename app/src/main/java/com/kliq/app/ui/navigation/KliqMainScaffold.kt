@@ -404,7 +404,10 @@ private fun KliqNavHost(
                 onDismissMenu = onDismissMenu,
                 onMenuAction = onMenuAction,
                 onNavigateToClub = onNavigateToClub,
-                onNavigateToChat = onNavigateToChatDetail
+                onNavigateToChat = onNavigateToChatDetail,
+                onNavigateToUserProfile = { userId ->
+                    navController.navigate(ProfileRoutes.otherUserProfile(userId))
+                }
             )
         }
         composable(NavigationRoute.Notifications.route) {
