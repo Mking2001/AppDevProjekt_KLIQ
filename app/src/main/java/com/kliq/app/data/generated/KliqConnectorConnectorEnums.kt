@@ -1,4 +1,3 @@
-
 @file:Suppress(
   "KotlinRedundantDiagnosticSuppress",
   "PropertyName",
@@ -11,5 +10,3 @@
 )
 
 package com.kliq.app.data.generated
-
-

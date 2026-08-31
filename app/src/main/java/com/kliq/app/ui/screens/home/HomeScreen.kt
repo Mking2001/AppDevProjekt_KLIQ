@@ -93,20 +93,6 @@ import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.util.ensureMinTouchTarget
 import com.kliq.app.util.talkBackDescription
 
-/**
- * Home-Feed-Screen mit Story-Leiste, scrollbarem Feed und Beitrags-Editor.
- *
- * Alle Interaktionen laufen über das [HomeViewModel] und werden in der lokalen
- * Datenbank persistiert: Story-Aufrufe setzen den Gesehen-Status, Likes und
- * Kommentare werden gespeichert, neue Beiträge erscheinen an der Spitze des Feeds.
- *
- * @param topBarState Aktueller Top-Bar UI-State.
- * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
- * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
- * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
- * @param onNavigateToChat Navigation zur Chat-Übersicht.
- * @param viewModel Hilt-injiziertes [HomeViewModel].
- */
 @Composable
 fun HomeScreen(
     topBarState: TopBarUiState,
@@ -303,9 +289,6 @@ fun HomeScreen(
     }
 }
 
-/**
- * Horizontale Story-Leiste. Erstes Element ist die eigene Story (Instagram-Style).
- */
 @Composable
 private fun StoryRow(
     myStory: StoryItemUi?,
@@ -321,7 +304,7 @@ private fun StoryRow(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 1. Deine Story (Instagram-Style)
+
         item(key = "my_own_story_item") {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -337,7 +320,7 @@ private fun StoryRow(
                     modifier = Modifier.size(64.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Profilbild-Kreis
+
                     Box(
                         modifier = Modifier
                             .size(64.dp)
@@ -384,7 +367,6 @@ private fun StoryRow(
                         }
                     }
 
-                    // Plus-Badge (+)
                     Box(
                         modifier = Modifier
                             .size(22.dp)
@@ -427,7 +409,6 @@ private fun StoryRow(
             }
         }
 
-        // 2. Storys von anderen Nutzern
         items(stories, key = { it.id }) { story ->
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -500,9 +481,6 @@ private fun StoryRow(
     }
 }
 
-/**
- * Hinweis, wenn noch keine Beiträge vorliegen.
- */
 @Composable
 private fun EmptyFeedHint() {
     Column(
@@ -527,9 +505,6 @@ private fun EmptyFeedHint() {
     }
 }
 
-/**
- * Dialog zum Erstellen eines neuen Beitrags mit Bild, Ort und Event-Pin.
- */
 @Composable
 private fun PostComposerDialog(
     text: String,
@@ -573,7 +548,6 @@ private fun PostComposerDialog(
                     enabled = !isPublishing
                 )
 
-                // Bild-Vorschau oder Hinzufügen-Button
                 if (!imageUri.isNullOrBlank()) {
                     Box(
                         modifier = Modifier
@@ -628,7 +602,6 @@ private fun PostComposerDialog(
                     }
                 }
 
-                // Standort-Eingabe (optional)
                 OutlinedTextField(
                     value = location,
                     onValueChange = onLocationChange,
@@ -642,7 +615,6 @@ private fun PostComposerDialog(
                     enabled = !isPublishing
                 )
 
-                // Auf Karte fixieren (Event) Button / Switch
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -722,9 +694,6 @@ private fun PostComposerDialog(
     )
 }
 
-/**
- * Vollbild-Anzeige einer Story mit Erstellungszeitpunkt, Standort und Löschen-Option.
- */
 @Composable
 private fun StoryViewerDialog(
     story: StoryItemUi,
@@ -755,7 +724,7 @@ private fun StoryViewerDialog(
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
-                // Top gradient scrim for readability
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -767,7 +736,7 @@ private fun StoryViewerDialog(
                             )
                         )
                 )
-                // Bottom gradient scrim for readability
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -781,7 +750,6 @@ private fun StoryViewerDialog(
                 )
             }
 
-            // Top Action Row: Author Info & Controls
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -790,7 +758,7 @@ private fun StoryViewerDialog(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                // Klick auf Ersteller-Info öffnet dessen Profil
+
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -814,7 +782,6 @@ private fun StoryViewerDialog(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    // Erstellungszeitpunkt (Uhrzeit) & Standort
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (story.createdAtFormatted.isNotBlank()) {
                             Icon(
@@ -856,7 +823,7 @@ private fun StoryViewerDialog(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Story löschen Knopf - NUR für die eigene Story sichtbar!
+
                     if (story.isOwnStory) {
                         IconButton(
                             onClick = onDeleteClick,
@@ -875,7 +842,6 @@ private fun StoryViewerDialog(
                         Spacer(modifier = Modifier.width(8.dp))
                     }
 
-                    // Schließen Knopf
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier
@@ -896,9 +862,6 @@ private fun StoryViewerDialog(
     }
 }
 
-/**
- * Bottom Sheet mit den Kommentaren eines Beitrags und Eingabefeld.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CommentSheet(
@@ -999,9 +962,6 @@ private fun CommentSheet(
     }
 }
 
-/**
- * Prominente Suchleiste und Live-Ergebnisliste zur Nutzersuche im Home-Screen.
- */
 @Composable
 fun UserSearchBarSection(
     query: String,
@@ -1017,7 +977,7 @@ fun UserSearchBarSection(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
     ) {
-        // Suchleiste (groß, gut lesbar und stylish)
+
         Surface(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
@@ -1085,7 +1045,6 @@ fun UserSearchBarSection(
             }
         }
 
-        // Live-Suchergebnisse
         if (query.isNotBlank()) {
             Spacer(modifier = Modifier.height(8.dp))
             if (searchResults.isNotEmpty()) {

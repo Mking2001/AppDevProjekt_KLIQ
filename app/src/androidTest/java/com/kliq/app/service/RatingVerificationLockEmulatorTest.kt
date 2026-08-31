@@ -59,11 +59,6 @@ class RatingVerificationLockEmulatorTest {
         Dispatchers.resetMain()
     }
 
-    /**
-     * Test-Szenario Ablauf 1: Unverifizierter Bewertungsversuch (Sperre greift)
-     * - Nutzer ruft Profil auf ohne QR-Scan oder Geofence-Eintrag.
-     * - Erwartung: UI ist gesperrt (`isRatingLocked = true`). Programmatischer DB-Schreibversuch wirft IllegalStateException.
-     */
     @Test
     fun test1_unverifiedRatingSubmission_locksUiAndThrowsSecurityExceptionOnRepositoryCall() = runTest {
         val reviewerId = "user_alpha"
@@ -91,11 +86,6 @@ class RatingVerificationLockEmulatorTest {
         assertEquals(0, fakeDao.insertedReviews.size)
     }
 
-    /**
-     * Test-Szenario Ablauf 2: Erfolgreicher GPS-Match (Freischaltung via Nähe)
-     * - Beide Nutzer waren gleichzeitig in derselben Club-Location eingecheckt (`activeClubState`).
-     * - Erwartung: RatingViewModel erkennt den Status, schaltet die UI frei und speichert den Datensatz mit GPS_GEOFENCE_MATCH.
-     */
     @Test
     fun test2_successfulGpsMatch_unlocksUiAndPersistsRatingToDatabase() = runTest {
         val reviewerId = "user_alpha"
@@ -131,11 +121,6 @@ class RatingVerificationLockEmulatorTest {
         assertEquals(ReviewVerificationMethod.GPS_GEOFENCE_MATCH, persisted.verificationMethod)
     }
 
-    /**
-     * Test-Szenario Ablauf 3: Erfolgreicher QR-Scan (Freischaltung via Koppelung)
-     * - Erfolgreicher Scan des persönlichen User-QR-Codes (`KLIQ_PASS_...`).
-     * - Erwartung: Sperre wird sofort aufgehoben, Eingabe akzeptiert und Datensatz in DB aktualisiert.
-     */
     @Test
     fun test3_successfulQrScan_instantlyUnlocksUiAndUpdatesRecord() = runTest {
         val reviewerId = "user_alpha"

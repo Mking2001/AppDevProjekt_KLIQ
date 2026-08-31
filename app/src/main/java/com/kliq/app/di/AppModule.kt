@@ -74,7 +74,7 @@ object AppModule {
     @Singleton
     fun provideApiService(): KliqApiService {
         return Retrofit.Builder()
-            .baseUrl("https://api.kliq-nightlife.com/") // Placeholder URL
+            .baseUrl("https://api.kliq-nightlife.com/")
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(KliqApiService::class.java)
@@ -139,9 +139,6 @@ object AppModule {
         return impl
     }
 
-    // =========================================================================
-    // Firebase Data Connect (SQL Connect)
-    // =========================================================================
     @Provides
     @Singleton
     fun provideKliqConnector(): KliqConnectorConnector? {
@@ -152,4 +149,3 @@ object AppModule {
         }
     }
 }
-

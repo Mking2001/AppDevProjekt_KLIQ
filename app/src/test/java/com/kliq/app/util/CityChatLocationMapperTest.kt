@@ -6,10 +6,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Prüft die GPS-Zuordnung der Stadt-Gruppenchats für den Zielmarkt
- * Klagenfurt und die umliegenden unterstützten Städte.
- */
 class CityChatLocationMapperTest {
 
     @Test
@@ -51,8 +47,8 @@ class CityChatLocationMapperTest {
     @Test
     fun testDistanceCalculationInKm() {
         val dist = CityChatLocationMapper.calculateDistanceInKm(
-            46.6236, 14.3084, // Klagenfurt
-            47.0707, 15.4395  // Graz
+            46.6236, 14.3084,
+            47.0707, 15.4395
         )
         assertTrue("Erwartet 90 bis 130 km, war $dist", dist > 90.0 && dist < 130.0)
     }

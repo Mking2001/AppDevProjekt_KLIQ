@@ -27,10 +27,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 
-/**
- * Prüft, dass die Chat-Übersicht ihre Inhalte vollständig aus dem
- * ChatRepository bezieht und Schreibvorgänge dorthin delegiert.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatListViewModelTest {
 

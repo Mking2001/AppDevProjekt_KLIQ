@@ -1,8 +1,5 @@
 package com.kliq.app.ui.screens.auth
 
-/**
- * UI-Zustand für den direkten Login mit Benutzername / E-Mail / Telefonnummer und Passwort.
- */
 data class PhoneLoginUiState(
     val identifier: String = "",
     val identifierError: String? = null,

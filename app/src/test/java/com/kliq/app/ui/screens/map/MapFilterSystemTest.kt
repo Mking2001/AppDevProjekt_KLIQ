@@ -20,10 +20,6 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 
-/**
- * Unit tests validating [MapViewModel] location filter modes (ALL, PUBLIC_ONLY, PRIVATE_ONLY),
- * marker visibility StateFlow reactivity, privacy location sharing enforcement, and category combinations.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapFilterSystemTest {
 
@@ -117,7 +113,7 @@ class MapFilterSystemTest {
     fun testPrivacyEnforcement_userWithDisabledLocationSharing_isExcludedFromUserMarkers() {
         val state = viewModel.uiState.value
         val hiddenUser = state.userMarkers.find { it.userId == "u4" }
-        // User u4 has isLocationSharingEnabled = false and must not be present in userMarkers
+
         assertTrue(hiddenUser == null)
         assertTrue(state.userMarkers.all { it.isLocationSharingEnabled })
     }
@@ -125,7 +121,7 @@ class MapFilterSystemTest {
     @Test
     fun testCombinedFilter_publicOnlyWithCategoryFilter_filtersCategoryCorrectly() {
         viewModel.onLocationFilterModeSelected(MapLocationFilterMode.PUBLIC_ONLY)
-        viewModel.onFilterSelected(3) // "Events" filter
+        viewModel.onFilterSelected(3)
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value

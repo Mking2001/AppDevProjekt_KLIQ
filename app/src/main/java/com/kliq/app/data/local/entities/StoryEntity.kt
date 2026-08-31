@@ -4,11 +4,6 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/**
- * Room-Entity für eine Story-Kachel der Home-Story-Leiste.
- * Der Gesehen-Zustand wird persistiert, damit der Gradient-Rahmen
- * nach dem Öffnen dauerhaft verschwindet.
- */
 @Entity(
     tableName = "stories",
     indices = [Index(value = ["createdAtMs"])]

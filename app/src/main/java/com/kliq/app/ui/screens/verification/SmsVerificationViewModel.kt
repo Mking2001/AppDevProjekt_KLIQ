@@ -14,14 +14,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * ViewModel für den SMS-Verifizierungs-Screen.
- *
- * Verwaltet die Code-Eingabe, den Verifizierungs-Flow (Idle → Loading → Success/Error)
- * und den Countdown-Timer für das erneute Senden des Codes.
- *
- * Die Telefonnummer wird als Navigation-Argument aus dem SavedStateHandle bezogen.
- */
 @HiltViewModel
 class SmsVerificationViewModel @Inject constructor(
     private val verificationService: SmsVerificationService,
@@ -34,7 +26,6 @@ class SmsVerificationViewModel @Inject constructor(
         private const val RESEND_COOLDOWN_SECONDS = 30
     }
 
-    /** Telefonnummer aus dem Navigation-Argument. */
     val phoneNumber: String = savedStateHandle.get<String>(PHONE_NUMBER_KEY) ?: ""
 
     private val _verificationState = MutableStateFlow<VerificationUiState>(VerificationUiState.Idle)
@@ -49,13 +40,10 @@ class SmsVerificationViewModel @Inject constructor(
     private var timerJob: Job? = null
 
     init {
-        // Beim Öffnen des Screens direkt den ersten Code senden
+
         sendInitialCode()
     }
 
-    /**
-     * Sendet den ersten Verifizierungscode und startet den Resend-Timer.
-     */
     private fun sendInitialCode() {
         viewModelScope.launch {
             verificationService.sendVerificationCode(phoneNumber)
@@ -63,30 +51,19 @@ class SmsVerificationViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Aktualisiert die Code-Eingabe. Filtert alles außer Ziffern heraus
-     * und löst bei vollständiger 6-stelliger Eingabe automatisch die
-     * Verifizierung aus.
-     */
     fun onCodeChanged(code: String) {
         val filtered = code.filter { it.isDigit() }.take(CODE_LENGTH)
         _enteredCode.value = filtered
 
-        // Fehlerzustand zurücksetzen wenn der Nutzer tippt
         if (_verificationState.value is VerificationUiState.Error) {
             _verificationState.value = VerificationUiState.Idle
         }
 
-        // Automatische Verifizierung bei 6 Ziffern
         if (filtered.length == CODE_LENGTH) {
             verifyCode()
         }
     }
 
-    /**
-     * Startet die Code-Verifizierung gegen den Service.
-     * Setzt den State auf Loading und anschließend auf Success oder Error.
-     */
     fun verifyCode() {
         val code = _enteredCode.value
         if (code.length != CODE_LENGTH) return
@@ -102,16 +79,12 @@ class SmsVerificationViewModel @Inject constructor(
                     _verificationState.value = VerificationUiState.Error(
                         error.message ?: "Verifizierung fehlgeschlagen"
                     )
-                    // Code zurücksetzen damit der Nutzer es erneut versuchen kann
+
                     _enteredCode.value = ""
                 }
         }
     }
 
-    /**
-     * Fordert einen neuen Verifizierungscode an und startet den Timer neu.
-     * Nur möglich wenn der Cooldown abgelaufen ist.
-     */
     fun resendCode() {
         if (!_resendTimerState.value.canResend) return
 
@@ -131,10 +104,6 @@ class SmsVerificationViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Startet den 30-Sekunden-Countdown für den Resend-Button.
-     * Cancelt ggf. einen bereits laufenden Timer.
-     */
     private fun startResendTimer() {
         timerJob?.cancel()
         timerJob = viewModelScope.launch {

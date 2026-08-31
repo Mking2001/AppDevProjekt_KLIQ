@@ -1,4 +1,3 @@
-
 @file:Suppress(
   "KotlinRedundantDiagnosticSuppress",
   "PropertyName",
@@ -12,8 +11,6 @@
 
 package com.kliq.app.data.generated
 
-
-
 public interface CancelEventMutation :
     com.google.firebase.dataconnect.generated.GeneratedMutation<
       KliqConnectorConnector,
@@ -21,29 +18,24 @@ public interface CancelEventMutation :
       CancelEventMutation.Variables
     >
 {
-  
+
     @kotlinx.serialization.Serializable
   public data class Variables(
-  
-    val id: String,
-  
-  ) {
-    
-    
-  }
-  
 
-  
+    val id: String,
+
+  ) {
+
+  }
+
     @kotlinx.serialization.Serializable
   public data class Data(
-  
+
     val event_update: EventKey?,
-  
+
   ) {
-    
-    
+
   }
-  
 
   public companion object {
     public val operationName: String = "CancelEvent"
@@ -57,41 +49,32 @@ public interface CancelEventMutation :
 }
 
 public fun CancelEventMutation.ref(
-  
+
     id: String,
 
-  
-  
 ): com.google.firebase.dataconnect.MutationRef<
     CancelEventMutation.Data,
     CancelEventMutation.Variables
   > =
   ref(
-    
+
       CancelEventMutation.Variables(
         id=id,
-  
+
       )
-    
+
   )
 
 public suspend fun CancelEventMutation.execute(
 
-  
-    
       id: String,
-
-  
 
   ): com.google.firebase.dataconnect.MutationResult<
     CancelEventMutation.Data,
     CancelEventMutation.Variables
   > =
   ref(
-    
+
       id=id,
-  
-    
+
   ).execute()
-
-

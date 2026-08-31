@@ -44,29 +44,24 @@ import com.kliq.app.domain.usecase.CalculateUserDistanceUseCase
 import com.kliq.app.util.UserDistanceFormatter
 import kotlinx.coroutines.delay
 
-/**
- * Interactive Live Simulation Card component for verifying motion signal feeds
- * and real-time distance updates between two test users.
- */
 @Composable
 fun UserDistanceMotionSimulationCard(
     modifier: Modifier = Modifier,
     useCase: CalculateUserDistanceUseCase = remember { CalculateUserDistanceUseCase() },
     formatter: UserDistanceFormatter = remember { UserDistanceFormatter.default }
 ) {
-    // Target user fixed position (Berlin Alexanderplatz)
+
     val targetLat = 52.521918
     val targetLng = 13.413215
 
-    // Motion track coordinates (approaching target)
     val motionSteps = remember {
         listOf(
-            Pair(52.5419, 13.4132), // ~2.2 km
-            Pair(52.5350, 13.4132), // ~1.5 km
-            Pair(52.5280, 13.4132), // ~670 m
-            Pair(52.5235, 13.4132), // ~175 m
-            Pair(52.5222, 13.4132), // ~30 m
-            Pair(52.521918, 13.413215) // 0 m
+            Pair(52.5419, 13.4132),
+            Pair(52.5350, 13.4132),
+            Pair(52.5280, 13.4132),
+            Pair(52.5235, 13.4132),
+            Pair(52.5222, 13.4132),
+            Pair(52.521918, 13.413215)
         )
     }
 

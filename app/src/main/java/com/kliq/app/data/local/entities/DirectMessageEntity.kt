@@ -6,9 +6,6 @@ import androidx.room.PrimaryKey
 import com.kliq.app.data.model.MessageStatus
 import com.kliq.app.data.model.MessageType
 
-/**
- * DB-Entity fuer 1-zu-1 Direktnachrichten zwischen zwei Nutzern.
- */
 @Entity(
     tableName = "direct_messages",
     indices = [

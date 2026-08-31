@@ -16,14 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
-/**
- * In-Memory-Test-Double des [ChatRepository].
- *
- * Ersetzt Room in Unit-Tests und verhält sich wie die echte Implementierung:
- * Schreibvorgänge verändern den Zustand, Leseflüsse geben die Änderungen aus.
- * Dadurch prüfen die Tests das tatsächliche Verhalten und nicht nur
- * die Aufrufreihenfolge einzelner Methoden.
- */
 class FakeChatRepository(
     initialChats: List<ChatConversation> = emptyList(),
     initialMessages: List<ChatMessage> = emptyList()
@@ -32,13 +24,10 @@ class FakeChatRepository(
     private val chats = MutableStateFlow(initialChats)
     private val messages = MutableStateFlow(initialMessages)
 
-    /** Zählt Aufrufe von [markChatAsRead] je Chat-ID. */
     val markedAsReadChatIds = mutableListOf<String>()
 
-    /** Protokolliert Archivierungsaufrufe als Paar aus Chat-ID und Zielzustand. */
     val archiveCalls = mutableListOf<Pair<String, Boolean>>()
 
-    /** Protokolliert gelöschte Chat-IDs. */
     val deletedChatIds = mutableListOf<String>()
 
     private var messageCounter = 0
@@ -225,10 +214,6 @@ class FakeChatRepository(
         chats.value = chats.value.filterNot { it.id == chatId }
         messages.value = messages.value.filterNot { it.chatId == chatId }
     }
-
-    // -----------------------------------------------------------------
-    // Direktnachrichten-Pfad: in diesen Tests nicht verwendet
-    // -----------------------------------------------------------------
 
     override fun getDirectMessages(currentUserId: String, targetUserId: String): Flow<List<DirectMessage>> =
         flowOf(emptyList())

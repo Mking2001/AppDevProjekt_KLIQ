@@ -27,10 +27,6 @@ import androidx.compose.ui.unit.dp
 import com.kliq.app.ui.screens.map.VenueItemUi
 import com.kliq.app.ui.theme.KliqAnimations
 
-/**
- * High-contrast popup card displaying selected club details, active live events,
- * rating, capacity indicator, and navigation quick actions.
- */
 @Composable
 fun MapQuickViewCard(
     venue: VenueItemUi?,
@@ -108,7 +104,7 @@ fun MapQuickViewCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Rating Badge
+
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             KliqIcon(
                                 imageVector = Icons.Filled.Star,
@@ -126,7 +122,6 @@ fun MapQuickViewCard(
                             )
                         }
 
-                        // Capacity Badge
                         if (currentVenue.currentCapacityPercent > 0) {
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
@@ -143,7 +138,6 @@ fun MapQuickViewCard(
                         }
                     }
 
-                    // Live Visitor & Gender Ratio Section
                     if (currentVenue.totalLiveVisitors > 0 || currentVenue.malePercentage > 0 || currentVenue.femalePercentage > 0) {
                         Spacer(modifier = Modifier.height(10.dp))
                         Surface(
@@ -218,7 +212,6 @@ fun MapQuickViewCard(
                         }
                     }
 
-                    // Active Event Display
                     currentVenue.activeEventTitle?.let { eventTitle ->
                         Spacer(modifier = Modifier.height(12.dp))
                         Surface(

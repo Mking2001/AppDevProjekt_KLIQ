@@ -4,11 +4,6 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-/**
- * Room-Entity für einen Beitrag im Home-Feed.
- * Beiträge werden lokal persistiert, damit selbst erstellte Posts und
- * Like-Zustände einen Screen- oder Prozesswechsel überleben.
- */
 @Entity(
     tableName = "feed_posts",
     indices = [Index(value = ["createdAtMs"]), Index(value = ["authorUserId"])]

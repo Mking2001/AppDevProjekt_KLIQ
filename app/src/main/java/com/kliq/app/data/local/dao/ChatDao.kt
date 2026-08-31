@@ -93,7 +93,6 @@ interface ChatDao {
     @Query("DELETE FROM messages WHERE chatId = :chatId")
     suspend fun deleteMessagesForChat(chatId: String)
 
-    // === Room-Cache komplett leeren (bei Login) ===
     @Query("DELETE FROM chats")
     suspend fun deleteAllChats()
 

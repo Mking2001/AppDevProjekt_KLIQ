@@ -24,15 +24,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Automatisierter E2E UI-Test für das Sterne-Rating-System (Kapitel 5.2).
- *
- * Test-Abdeckung:
- *   1. Initialer Zustand (0 Sterne, Absende-Button deaktiviert)
- *   2. Gesten- & Interaktions-Test (3 Sterne -> 5 Sterne Umschalten)
- *   3. Text-Eingabe & Erfolgs-State (Loading -> Success Banner)
- *   4. Error-Handling (Fehlermeldungs-Banner bei Repository-Fehler)
- */
 @RunWith(AndroidJUnit4::class)
 class StarRatingSystemE2ETest {
 
@@ -56,16 +47,13 @@ class StarRatingSystemE2ETest {
             }
         }
 
-        // Validate Header & Prompt Text
         composeTestRule.onNodeWithText("Bewertung abgeben").assertIsDisplayed()
         composeTestRule.onNodeWithText("Bitte wähle eine Sterne-Bewertung (1 bis 5)").assertIsDisplayed()
 
-        // Validate 5 stars exist
         for (i in 1..5) {
             composeTestRule.onNodeWithContentDescription("Stern $i von 5").assertIsDisplayed()
         }
 
-        // Validate Button Disabled State
         composeTestRule
             .onNodeWithText("Stern auswählen zum Absenden")
             .assertIsDisplayed()
@@ -89,11 +77,9 @@ class StarRatingSystemE2ETest {
             }
         }
 
-        // Tap 3rd star
         composeTestRule.onNodeWithContentDescription("Stern 3 von 5").performClick()
         assertEquals(3, currentRating)
 
-        // Tap 5th star
         composeTestRule.onNodeWithContentDescription("Stern 5 von 5").performClick()
         assertEquals(5, currentRating)
     }
@@ -119,27 +105,22 @@ class StarRatingSystemE2ETest {
             }
         }
 
-        // 1. Select 4 stars
         composeTestRule.onNodeWithContentDescription("Stern 4 von 5").performClick()
         assertEquals(4, uiState.rating)
 
-        // 2. Enter review text
         val testComment = "Absolut geniale Stimmung im Club!"
         composeTestRule
             .onNodeWithText("Schreibe einen optionalen Erfahrungsbericht...")
             .performTextInput(testComment)
         assertEquals(testComment, uiState.reviewText)
 
-        // 3. Verify submit button is now enabled
         val submitButton = composeTestRule.onNodeWithText("Bewertung absenden")
         submitButton.assertIsDisplayed().assertIsEnabled()
 
-        // 4. Click Submit
         submitButton.performClick()
         assertTrue(submitted)
         assertTrue(uiState.status is RatingSubmitStatus.Submitting)
 
-        // 5. Transition to Success State
         uiState = uiState.copy(
             status = RatingSubmitStatus.Success(
                 Review(
@@ -151,7 +132,6 @@ class StarRatingSystemE2ETest {
             )
         )
 
-        // 6. Verify Success Banner
         composeTestRule.onNodeWithText("Vielen Dank für deine Bewertung!").assertIsDisplayed()
         composeTestRule.onNodeWithText("Fertig").assertIsDisplayed().assertIsEnabled()
     }
@@ -177,10 +157,8 @@ class StarRatingSystemE2ETest {
             }
         }
 
-        // Trigger Submit
         composeTestRule.onNodeWithText("Bewertung absenden").performClick()
 
-        // Verify Error Message Display
         composeTestRule.onNodeWithText("Fehler beim Senden der Bewertung.").assertIsDisplayed()
     }
 }

@@ -29,7 +29,7 @@ interface ClubDao {
     fun searchClubs(query: String): Flow<List<ClubEntity>>
 
     @Query("""
-        SELECT * FROM clubs 
+        SELECT * FROM clubs
         WHERE (:query = '' OR LOWER(name) LIKE '%' || LOWER(:query) || '%' OR LOWER(externalSearchTags) LIKE '%' || LOWER(:query) || '%' OR LOWER(category) LIKE '%' || LOWER(:query) || '%' OR LOWER(region) LIKE '%' || LOWER(:query) || '%' OR LOWER(city) LIKE '%' || LOWER(:query) || '%')
         AND (:region = '' OR LOWER(region) LIKE '%' || LOWER(:region) || '%' OR LOWER(city) LIKE '%' || LOWER(:region) || '%')
         AND (:category = '' OR LOWER(category) LIKE '%' || LOWER(:category) || '%' OR LOWER(externalSearchTags) LIKE '%' || LOWER(:category) || '%')
@@ -62,7 +62,6 @@ interface ClubDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertEvents(events: List<EventEntity>)
 
-    // Club Hypes (Daily Flames)
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertClubHype(hype: com.kliq.app.data.local.entities.ClubHypeEntity)
 

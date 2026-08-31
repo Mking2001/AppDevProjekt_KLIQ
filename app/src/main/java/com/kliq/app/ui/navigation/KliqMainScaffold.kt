@@ -75,15 +75,10 @@ import com.kliq.app.ui.navigation.KliqScreenTransitions.tabExitTransition
 import com.kliq.app.viewmodel.AuthViewModel
 import com.kliq.app.viewmodel.ThemeViewModel
 
-
 val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState> {
     error("No SnackbarHostState provided")
 }
 
-/**
- * Main scaffold composable that hosts the Bottom Navigation Bar
- * and the [NavHost] for all primary screens.
- */
 @Composable
 fun KliqMainScaffold(
     initialIntent: Intent? = null,
@@ -122,7 +117,6 @@ fun KliqMainScaffold(
         com.kliq.app.service.crash.CrashReportingLogger.setCustomKey("current_route", currentRoute)
         com.kliq.app.service.crash.CrashReportingLogger.logBreadcrumb("Navigated to $currentRoute")
     }
-
 
     LaunchedEffect(currentRoute) {
         topBarViewModel.updateTitleForRoute(currentRoute)
@@ -614,4 +608,3 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideExitTransitio
 ): ExitTransition {
     return tabExitTransition(slideRight)
 }
-

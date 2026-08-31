@@ -25,14 +25,6 @@ import org.mockito.Mockito.`when`
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.system.measureTimeMillis
 
-/**
- * Performance- und Stresstest-Szenario zur Validierung des Map-Marker-Tunings (Kapitel 9.6).
- *
- * Test-Schwerpunkte:
- * 1. Mock-Data Stress-Test mit 500+ gemischten Markern (Clubs, Events, verifizierte User).
- * 2. Frame-Rate & Jank-Analyse bei rapiden Wisch- und Zoomgesten (250ms Debouncing, ANR-Freiheit).
- * 3. Lifecycle- & Memory-Check bei schnellem Screen-Wechsel (Map, Chat, Profil).
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class MapMarkerStressTest {
 
@@ -53,10 +45,6 @@ class MapMarkerStressTest {
         MapClusterManager.clearCache()
     }
 
-    /**
-     * Test-Setup 1: Mock-Data Stress-Test mit 500+ gemischten Markern im Ballungsraum Berlin.
-     * Validiert Clustering-Durchsatz, Speicherbedarf und Cache-Trefferquote.
-     */
     @Test
     fun testMockDataStress_500MixedMarkers_urbanDensityClustering() = runTest(testDispatcher) {
         val mixedClubs = generate500UrbanVenues()
@@ -72,10 +60,8 @@ class MapMarkerStressTest {
         assertEquals(500, uiState.nearbyVenues.size)
         assertEquals(500, uiState.clubMarkers.size)
 
-        // Bei Default-Zoom (15.0f) werden Pins als SingleNodes ohne Clustering-Overhead bereitgestellt
         assertEquals(500, uiState.clusteredMarkers.size)
 
-        // Zoom auf Stadtebene (12.0f) triggert räumliches Clustering
         viewModel.onCameraMoved(52.5200, 13.4050, 12.0f)
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -83,7 +69,6 @@ class MapMarkerStressTest {
         assertTrue("Cluster müssen generiert werden", clusteredState.isNotEmpty())
         assertTrue("Clustering muss Pins zusammenfassen (${clusteredState.size} < 500)", clusteredState.size < 500)
 
-        // Benchmark: Berechne Cluster erneut für 500 Pins (Cold vs. Warm)
         MapClusterManager.clearCache()
         val coldTimeMs = measureTimeMillis {
             val coldClusters = MapClusterManager.clusterVenues(uiState.nearbyVenues, 11.5f)
@@ -95,16 +80,10 @@ class MapMarkerStressTest {
             assertTrue(warmClusters.isNotEmpty())
         }
 
-        // Durchsatzkriterien
         assertTrue("Cold-Berechnung für 500 Pins muss unter 200ms liegen (Ist: $coldTimeMs ms)", coldTimeMs < 200)
         assertTrue("Warm-Cache-Lookup muss unter 20ms liegen (Ist: $warmTimeMs ms)", warmTimeMs < 20)
     }
 
-    /**
-     * Test-Setup 2: Frame-Rate & Jank-Analyse bei schnellen Wisch- und Zoomgesten.
-     * Simuliert 40 rapide Kamera-Bewegungen innerhalb von 400ms und prüft,
-     * dass das 250ms-Debouncing teure Neuberechnungen auf das Intervall-Ende drosselt.
-     */
     @Test
     fun testFrameRateAndJank_rapidPanAndZoom_cameraDebouncePreventsMainThreadBlock() = runTest(testDispatcher) {
         val mixedClubs = generate500UrbanVenues()
@@ -118,7 +97,6 @@ class MapMarkerStressTest {
 
         val recalculationCounter = AtomicInteger(0)
 
-        // Simuliere 40 Wischgesten-Frames (Pinch & Pan) in 10ms-Schritten
         for (i in 1..40) {
             val latOffset = (i * 0.0005)
             val lngOffset = (i * 0.0005)
@@ -129,60 +107,45 @@ class MapMarkerStressTest {
             recalculationCounter.incrementAndGet()
         }
 
-        // Nach 400ms schneller Bewegung hat das Debounce noch nicht gefeuert
         assertEquals(40, recalculationCounter.get())
 
-        // Bewege Zeit über das 250ms Debounce-Fenster hinaus
         testDispatcher.scheduler.advanceTimeBy(300)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Kamera-Endposition ist stabil und Marker sind aktuell
         val finalPos = viewModel.uiState.value.cameraPosition
         assertTrue(finalPos.zoom >= 14.0f)
         assertTrue(viewModel.uiState.value.clusteredMarkers.isNotEmpty())
     }
 
-    /**
-     * Test-Setup 3: Lifecycle- & Memory-Check bei schnellem Screen-Wechsel.
-     * Simuliert 20x schnelles Verlassen und Wiederbetreten der Kartenansicht
-     * (Map ➔ Chat ➔ Profil ➔ Map), um Retain Cycles und Bitmap-Lecks auszuschließen.
-     */
     @Test
     fun testLifecycleAndMemory_rapidScreenSwitching_preventsRetainCyclesAndBitmapLeaks() = runTest(testDispatcher) {
         val testClubs = generate500UrbanVenues().take(50)
         `when`(mockClubRepository.getAllClubs()).thenReturn(flowOf(testClubs))
 
         for (cycle in 1..20) {
-            // 1. MapScreen betreten: ViewModel instanziieren
+
             val mapVm = MapViewModel(
                 clubRepository = mockClubRepository,
                 defaultDispatcher = testDispatcher
             )
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // 2. Interaktionen ausführen (Marker rendern & filtern)
-            mapVm.onFilterSelected(1) // Clubs Filter
+            mapVm.onFilterSelected(1)
             mapVm.onCameraMoved(52.5112, 13.4430, 15.5f)
             testDispatcher.scheduler.advanceUntilIdle()
 
-            // 3. Navigation zu Chat / Profil (MapScreen verlässt Komposition)
             val onClearedMethod = MapViewModel::class.java.getDeclaredMethod("onCleared")
             onClearedMethod.isAccessible = true
             onClearedMethod.invoke(mapVm)
         }
 
-        // Cache wurde durch onCleared() ordnungsgemäß bereinigt
         assertEquals(0, MarkerBitmapHelper.cacheSize())
 
-        // Re-Population nach Screen-Wiedereintritt
         MarkerBitmapHelper.prewarmCache()
         assertTrue("Pre-Warmed Cache muss gefüllt sein", MarkerBitmapHelper.cacheSize() > 0)
         assertTrue("Cache-Größe muss im 256-Limit bleiben", MarkerBitmapHelper.cacheSize() <= 256)
     }
 
-    /**
-     * Test-Setup 4: Verifikation der 60-FPS Frame-Budget-Grenze (< 16.6ms) bei Marker-Bitmap-Lookups.
-     */
     @Test
     fun testFrameBudget_markerBitmapRetrieval_completesUnderOneMillisecond() {
         MarkerBitmapHelper.prewarmCache()
@@ -196,15 +159,11 @@ class MapMarkerStressTest {
             }
         }
 
-        // 500 Bitmap-Lookups müssen in weniger als 10ms erfolgen (Durchschnitt < 0.02ms pro Marker)
         assertTrue("500 Cache-Lookups dauerten $lookupDurationMs ms (Budget < 20ms)", lookupDurationMs < 20)
     }
 
-    // ==========================================
-    // Hilfsmethode zur Erzeugung von 500 Mock-Pins
-    // ==========================================
     private fun generate500UrbanVenues(): List<Club> {
-        val baseLat = 52.5200 // Berlin Mitte
+        val baseLat = 52.5200
         val baseLng = 13.4050
         val categories = listOf("Club", "Bar", "Event", "Restaurant", "Lounge")
 

@@ -69,13 +69,6 @@ import com.kliq.app.ui.theme.PurpleContainer
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-/**
- * Onboarding screen for Intent-Matching preference selection.
- *
- * Implements high-contrast dark theme styling (Purple/Dark-Mode), interactive selection cards
- * for matching intentions ("Freunde", "Dating / Liebe", "Beides"), real-time state validation,
- * and seamless binding to the user profile repository.
- */
 @Composable
 fun IntentMatchingScreen(
     viewModel: IntentMatchingViewModel = hiltViewModel(),
@@ -113,7 +106,7 @@ fun IntentMatchingScreen(
                     .padding(horizontal = 24.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                // Step Indicator Badge
+
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = PurpleContainer.copy(alpha = 0.6f),
@@ -130,7 +123,6 @@ fun IntentMatchingScreen(
                     )
                 }
 
-                // Screen Header
                 Text(
                     text = "Was suchst du bei Kliq?",
                     style = MaterialTheme.typography.headlineMedium.copy(
@@ -153,7 +145,6 @@ fun IntentMatchingScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Selection Cards Stack
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -182,7 +173,6 @@ fun IntentMatchingScreen(
 
                 Spacer(modifier = Modifier.height(40.dp))
 
-                // Validation Status Info
                 AnimatedVisibility(
                     visible = !uiState.isSelectionValid,
                     enter = fadeIn(),
@@ -197,7 +187,6 @@ fun IntentMatchingScreen(
                     )
                 }
 
-                // Action Button
                 Button(
                     onClick = { viewModel.saveIntent() },
                     enabled = uiState.isSelectionValid && !uiState.isLoading,
@@ -302,7 +291,7 @@ private fun IntentOptionCard(
                 .fillMaxWidth()
                 .padding(20.dp)
         ) {
-            // Icon Badge
+
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -320,7 +309,6 @@ private fun IntentOptionCard(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Text Info
             Column(
                 modifier = Modifier.weight(1f)
             ) {
@@ -343,7 +331,6 @@ private fun IntentOptionCard(
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            // Selection Checkmark Badge
             if (isSelected) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,

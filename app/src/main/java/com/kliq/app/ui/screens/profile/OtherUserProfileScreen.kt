@@ -252,7 +252,6 @@ fun OtherUserProfileScreen(
                         }
                     }
 
-                    // Header mit Bild, Name, Alter, Sterne & Action-Buttons
                     item {
                         OtherUserProfileHeaderSection(
                             uiState = uiState,
@@ -263,7 +262,6 @@ fun OtherUserProfileScreen(
                         )
                     }
 
-                    // Instagram-Style Statistikleiste: Beiträge | Follower | Gefolgt
                     item {
                         InstagramStatsBar(
                             postCount = uiState.postCount,
@@ -275,12 +273,10 @@ fun OtherUserProfileScreen(
                         )
                     }
 
-                    // Biografie & Lifestyle-Badges
                     item {
                         BiografieAndBadgesSection(uiState = uiState)
                     }
 
-                    // Instagram-Style Tabs: Beiträge & Bewertungen
                     item {
                         ProfileTabSection(
                             selectedTab = uiState.selectedTab,
@@ -290,7 +286,6 @@ fun OtherUserProfileScreen(
                         )
                     }
 
-                    // Tab Content
                     when (uiState.selectedTab) {
                         ProfileTab.POSTS -> {
                             if (uiState.posts.isEmpty()) {
@@ -298,7 +293,7 @@ fun OtherUserProfileScreen(
                                     EmptyPostsPlaceholder(username = uiState.username)
                                 }
                             } else {
-                                // 3-spaltiges Instagram-Grid
+
                                 val postChunks = uiState.posts.chunked(3)
                                 items(postChunks) { rowPosts ->
                                     Row(
@@ -313,7 +308,7 @@ fun OtherUserProfileScreen(
                                                 )
                                             }
                                         }
-                                        // Auffüllen für 3 Spalten
+
                                         for (i in 0 until (3 - rowPosts.size)) {
                                             Spacer(modifier = Modifier.weight(1f))
                                         }
@@ -336,7 +331,6 @@ fun OtherUserProfileScreen(
                 }
             }
 
-            // Rating Bottom Sheet
             if (uiState.isRatingSheetVisible) {
                 UserRatingBottomSheet(
                     targetUsername = uiState.username,
@@ -348,7 +342,6 @@ fun OtherUserProfileScreen(
                 )
             }
 
-            // Report Dialog
             if (uiState.isReportDialogVisible) {
                 ReportUserModalDialog(
                     targetUsername = uiState.username,
@@ -359,7 +352,6 @@ fun OtherUserProfileScreen(
                 )
             }
 
-            // Follower / Following Liste Bottom Sheet
             if (uiState.activeFollowListDialog != null) {
                 FollowListBottomSheet(
                     type = uiState.activeFollowListDialog!!,
@@ -372,7 +364,6 @@ fun OtherUserProfileScreen(
                 )
             }
 
-            // Post Detail Modal
             if (uiState.selectedPostForDetail != null) {
                 PostDetailDialog(
                     post = uiState.selectedPostForDetail!!,
@@ -381,7 +372,6 @@ fun OtherUserProfileScreen(
                 )
             }
 
-            // Multi-Photo Story Viewer Modal (bis zu 4 Bilder)
             MultiPhotoStoryViewerDialog(
                 isVisible = uiState.isPhotoViewerVisible,
                 photos = uiState.photos.ifEmpty { listOfNotNull(uiState.profilePictureUrl) },
@@ -575,7 +565,6 @@ private fun PostGridItem(
             }
         }
 
-        // Like-Badge unten links
         if (post.likeCount > 0) {
             Surface(
                 modifier = Modifier
@@ -697,7 +686,7 @@ private fun PostDetailDialog(
             border = androidx.compose.foundation.BorderStroke(1.dp, DarkOutline)
         ) {
             Column(modifier = Modifier.fillMaxWidth()) {
-                // Dialog Header
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -749,7 +738,6 @@ private fun PostDetailDialog(
                     }
                 }
 
-                // Post Image (if present)
                 if (!post.imageUrl.isNullOrBlank()) {
                     AsyncImage(
                         model = post.imageUrl,
@@ -761,7 +749,6 @@ private fun PostDetailDialog(
                     )
                 }
 
-                // Content Text
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
                         text = post.contentText,
@@ -969,7 +956,7 @@ private fun OtherUserProfileHeaderSection(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Linke Spalte: Profilbild + Name/Alter + Sterne (wie Mockup)
+
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.weight(1f)
@@ -1003,7 +990,6 @@ private fun OtherUserProfileHeaderSection(
                         )
                     }
 
-                    // Intent / Matching Badge
                     val intentIcon = when (uiState.searchIntent) {
                         SearchIntent.DATING -> Icons.Default.Favorite
                         SearchIntent.FRIENDS -> Icons.Default.Group
@@ -1034,7 +1020,6 @@ private fun OtherUserProfileHeaderSection(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Name & Alter (z.B. "Alex 19")
                 val displayNameAge = if (uiState.age != null) {
                     "${uiState.username} ${uiState.age}"
                 } else {
@@ -1052,7 +1037,6 @@ private fun OtherUserProfileHeaderSection(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Sterne-Bewertung (0.0 = 5 leere Sterne)
                 StarRatingBar(rating = uiState.averageRating, starSize = 18.dp)
 
                 Spacer(modifier = Modifier.height(2.dp))
@@ -1065,13 +1049,12 @@ private fun OtherUserProfileHeaderSection(
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // Rechte Spalte: Action-Buttons (Nachricht, Bewerten mit Schloss, Folgen/Entfolgen)
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 horizontalAlignment = Alignment.End
             ) {
-                // Nachricht Button
+
                 Button(
                     onClick = onSendMessageClick,
                     modifier = Modifier
@@ -1092,7 +1075,6 @@ private fun OtherUserProfileHeaderSection(
                     Text("Nachricht", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
 
-                // Bewerten Button (mit Schloss-Indikator wenn gesperrt)
                 if (uiState.alreadyReviewed) {
                     OutlinedButton(
                         onClick = onRateUserClick,
@@ -1158,7 +1140,6 @@ private fun OtherUserProfileHeaderSection(
                     }
                 }
 
-                // Folgen / Entfolgen Button
                 if (uiState.isFriend) {
                     OutlinedButton(
                         onClick = onFollowToggleClick,
@@ -1236,7 +1217,6 @@ private fun BiografieAndBadgesSection(uiState: OtherUserProfileUiState) {
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Habit Badges (wie im Mockup: "Säufer", "PartyRaucher")
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -1299,7 +1279,7 @@ private fun ReviewItemCard(review: Review) {
                 .padding(14.dp),
             verticalAlignment = Alignment.Top
         ) {
-            // Reviewer Avatar
+
             Box(
                 modifier = Modifier
                     .size(44.dp)

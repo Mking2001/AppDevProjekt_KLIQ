@@ -17,18 +17,6 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 import javax.inject.Inject
 
-/**
- * Immutable UI State für den Explore-Screen.
- *
- * @param searchQuery Aktuelle Sucheingabe.
- * @param selectedCategory Index der ausgewählten Kategorie, null bedeutet keine Einschränkung.
- * @param minRating Mindestbewertung für die Ergebnisliste.
- * @param onlyFavorites Ob ausschließlich favorisierte Einträge angezeigt werden.
- * @param categories Verfügbare Filter-Kategorien.
- * @param discoverItems Gefilterte Ergebnisliste des Discovery-Grids.
- * @param isLoading Ob Daten geladen werden.
- * @param errorMessage Fehlermeldung für die Snackbar.
- */
 data class ExploreUiState(
     val searchQuery: String = "",
     val selectedCategory: Int? = null,
@@ -44,14 +32,6 @@ data class ExploreUiState(
     }
 }
 
-/**
- * Darstellungsmodell eines Eintrags im Discovery-Grid.
- *
- * @param id Club-ID, die für die Detailnavigation verwendet wird.
- * @param category Anzeigekategorie, gleichzeitig Filterkriterium.
- * @param isFavorite Ob der Eintrag als Favorit markiert ist.
- * @param isEvent Ob es sich um einen Event- statt Venue-Eintrag handelt.
- */
 data class DiscoverItemUi(
     val id: String,
     val title: String,
@@ -68,13 +48,6 @@ data class DiscoverItemUi(
     val isEvent: Boolean = false
 )
 
-/**
- * ViewModel für den Explore-Screen.
- *
- * Bezieht echte Venues (Clubs & Bars) reaktiv aus [ClubRepository].
- * Der Favoriten-Zustand wird über das Repository in Room geschrieben und ist
- * damit über Screens und App-Starts hinweg konsistent.
- */
 @HiltViewModel
 class ExploreViewModel @Inject constructor(
     private val clubRepository: ClubRepository,
@@ -94,10 +67,6 @@ class ExploreViewModel @Inject constructor(
         observeBlockedUsers()
     }
 
-    /**
-     * Lädt ausschließlich reale Clubs und Bars und kombiniert diese mit
-     * den täglichen Flammen/Hypes des Nutzers.
-     */
     private fun observeDiscoverContent() {
         viewModelScope.launch {
             val currentUserId = currentUserProvider.userId()
@@ -150,9 +119,6 @@ class ExploreViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Bildet freie Kategoriebezeichnungen des Datensatzes auf die Filterleiste ab.
-     */
     private fun normalizeCategory(rawCategory: String): String {
         val value = rawCategory.trim().lowercase(Locale.GERMAN)
         return when {
@@ -184,15 +150,11 @@ class ExploreViewModel @Inject constructor(
         applyFilters()
     }
 
-    /** Schaltet den Filter auf ausschließlich favorisierte Einträge um. */
     fun onToggleFavoritesFilter() {
         _uiState.update { it.copy(onlyFavorites = !it.onlyFavorites) }
         applyFilters()
     }
 
-    /**
-     * Setzt oder entfernt die Favoriten-Markierung eines Venues.
-     */
     fun onToggleFavorite(itemId: String) {
         val item = allItems.find { it.id == itemId && !it.isEvent } ?: return
         viewModelScope.launch {
@@ -205,9 +167,6 @@ class ExploreViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Toggelt die tägliche Flamme (Hype) für einen Club.
-     */
     fun onToggleHype(clubId: String) {
         viewModelScope.launch {
             val userId = currentUserProvider.userId()

@@ -43,7 +43,7 @@ class ClubEventOfferRepositoryImpl @Inject constructor(
     }
 
     override suspend fun refreshClubEventsAndOffers(clubId: String) = withContext(Dispatchers.IO) {
-        // Keine erfundenen Dummy-Events oder Gutscheincodes einfügen
+
     }
 
     private fun ClubOfferEntity.toDomain(): ClubOffer {

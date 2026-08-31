@@ -1,8 +1,5 @@
 package com.kliq.app.ui.screens.onboarding
 
-/**
- * UI State for the Profile Creation screen in the Onboarding flow.
- */
 data class ProfileCreationUiState(
     val username: String = "",
     val usernameError: String? = null,

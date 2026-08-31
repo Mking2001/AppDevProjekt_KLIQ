@@ -23,9 +23,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import org.mockito.Mockito.mock
 
-/**
- * Test-Double des [FeedRepository] mit steuerbarem Beitragsbestand.
- */
 class FakeFeedRepository(
     initialPosts: List<FeedPost> = emptyList(),
     initialStories: List<Story> = emptyList()
@@ -118,9 +115,6 @@ class FakeFeedRepository(
     }
 }
 
-/**
- * Test-Double des [EventRepository] ohne Inhalte.
- */
 class EmptyEventRepository : EventRepository {
     override fun getAllEvents(): Flow<List<Event>> = flowOf(emptyList())
     override fun getEventsForClub(clubId: String): Flow<List<Event>> = flowOf(emptyList())
@@ -130,14 +124,10 @@ class EmptyEventRepository : EventRepository {
     override suspend fun saveEvents(events: List<Event>) = Unit
 }
 
-/**
- * Test-Double des [ClubRepository] mit steuerbarem Venue-Bestand.
- */
 class FakeClubRepository(initialClubs: List<Club> = emptyList()) : ClubRepository {
 
     private val clubs = MutableStateFlow(initialClubs)
 
-    /** Protokolliert Favoriten-Umschaltungen als Paar aus Club-ID und Vorzustand. */
     val favoriteToggles = mutableListOf<Pair<String, Boolean>>()
 
     override fun getAllClubs(): Flow<List<Club>> = clubs
@@ -183,9 +173,6 @@ class FakeClubRepository(initialClubs: List<Club> = emptyList()) : ClubRepositor
     override fun getHypedClubIdsToday(userId: String): Flow<List<String>> = flowOf(emptyList())
 }
 
-/**
- * Test-Double des [SocialRepository] ohne Kontakte.
- */
 class EmptySocialRepository : SocialRepository {
     override fun getFriendsForUser(userId: String): Flow<List<FriendEntity>> = flowOf(emptyList())
     override fun getFollowers(userId: String): Flow<List<FriendEntity>> = flowOf(emptyList())
@@ -206,9 +193,6 @@ class EmptySocialRepository : SocialRepository {
         Result.success(Unit)
 }
 
-/**
- * Test-Double des [ReviewRepository] ohne Bewertungen.
- */
 class EmptyReviewRepository : com.kliq.app.data.repository.ReviewRepository {
     override fun getReviewsForClub(clubId: String): Flow<List<com.kliq.app.data.model.Review>> = flowOf(emptyList())
     override fun getVerifiedReviewsForClub(clubId: String): Flow<List<com.kliq.app.data.model.Review>> = flowOf(emptyList())
@@ -252,12 +236,6 @@ class EmptyReviewRepository : com.kliq.app.data.repository.ReviewRepository {
     ): Result<com.kliq.app.data.model.Review> = Result.failure(NotImplementedError())
 }
 
-/**
- * Erzeugt ein [ProfileViewModel] mit leeren Standard-Abhängigkeiten.
- *
- * Tests, die nur Profildaten, Bewertungen oder den QR-Code prüfen, müssen so
- * lediglich [userRepository] und [qrCodeService] bereitstellen.
- */
 fun createTestProfileViewModel(
     userRepository: UserRepository,
     qrCodeService: QrCodeService,

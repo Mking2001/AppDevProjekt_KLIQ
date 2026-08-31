@@ -55,7 +55,7 @@ class ClubEventModelIntegrationTest {
 
     @Test
     fun testClubAndEventLocalPersistence() = runBlocking {
-        // 1. Instanziieren und lokales Speichern eines Club-Objekts
+
         val clubId = "club_berghain_001"
         val clubEntity = ClubEntity(
             id = clubId,
@@ -83,7 +83,6 @@ class ClubEventModelIntegrationTest {
         assertEquals(300.0, retrievedClub?.geofenceRadiusMeters ?: 0.0, 0.001)
         assertTrue(retrievedClub?.isFavorite == true)
 
-        // 2. Instanziieren und Speichern des zugehörigen Event-Objekts
         val eventId = "evt_klubnacht_2026"
         val eventEntity = EventEntity(
             id = eventId,
@@ -109,7 +108,7 @@ class ClubEventModelIntegrationTest {
 
     @Test
     fun testExternalApiSearchMappingAndDatabaseSync() = runBlocking {
-        // Simulieren externer API-Suchergebnisse (Internet-Suche Integration)
+
         val offerDto = ExternalSpecialOfferDto(
             offerId = "ext_off_10",
             title = "Students 2-for-1",
@@ -148,14 +147,12 @@ class ClubEventModelIntegrationTest {
             totalResults = 1
         )
 
-        // Mapping externer DTOs in lokale Entitäten & Speichern in Room
         val mappedClubEntity = apiResponse.clubs[0].toEntity(isFavorite = false)
         val mappedEventEntity = apiResponse.events[0].toEntity()
 
         clubDao.insertClub(mappedClubEntity)
         eventDao.insertEvent(mappedEventEntity)
 
-        // Verifizieren der Datenbank-Integration
         val dbClub = clubDao.getClubById("ext_club_watergate").first()
         assertNotNull(dbClub)
         assertEquals("Watergate Club", dbClub?.name)
@@ -165,7 +162,6 @@ class ClubEventModelIntegrationTest {
         assertEquals(1, dbEvents.size)
         assertEquals("Watergate Night", dbEvents[0].title)
 
-        // Verifizieren des Mappings in das High-Contrast UI-Modell
         val domainClub = apiResponse.clubs[0].toDomain(isFavorite = true)
         val uiState = domainClub.toHighContrastUiState(userLat = 52.5010, userLon = 13.4440)
         assertEquals("Watergate Club", uiState.name)
@@ -183,7 +179,6 @@ class ClubEventModelIntegrationTest {
         )
         val geofenceRadiusMeters = 300.0
 
-        // Benutzer innerhalb des Radius (~100m Entfernung)
         val userLatInside = 52.5118
         val userLonInside = 13.4435
         val distanceInsideMeters = calculateDistanceMeters(
@@ -191,7 +186,6 @@ class ClubEventModelIntegrationTest {
         )
         assertTrue("Benutzer sollte innerhalb des Geofencing-Radius liegen", distanceInsideMeters <= geofenceRadiusMeters)
 
-        // Benutzer außerhalb des Radius (~5 km Entfernung)
         val userLatOutside = 52.5400
         val userLonOutside = 13.4000
         val distanceOutsideMeters = calculateDistanceMeters(

@@ -59,13 +59,12 @@ class ReviewIntegrationTest {
 
     @Test
     fun testReviewInstantiationAndLocalDatabasePersistence() = runBlocking {
-        // 1. Instanziieren von User und Club in der Datenbank
+
         val reviewerId = "user_rev_1"
         val clubId = "club_berghain_1"
         userDao.insertUser(UserEntity(reviewerId, "techno_fan", "techno@kliq.de", null, null))
         clubDao.insertClub(ClubEntity(id = clubId, name = "Berghain / Panorama Bar"))
 
-        // 2. Instanziieren und lokales Speichern eines Review-Objekts (5 Sterne)
         val reviewId = "rev_persisted_101"
         val reviewEntity = ReviewEntity(
             id = reviewId,
@@ -80,7 +79,6 @@ class ReviewIntegrationTest {
         )
         reviewDao.insertReview(reviewEntity)
 
-        // 3. Auslesen aus der Room-Datenbank und Verifikation der Werte
         val dbReviews = reviewDao.getReviewsForClub(clubId).first()
         assertEquals(1, dbReviews.size)
 
@@ -99,8 +97,7 @@ class ReviewIntegrationTest {
         val reviewerId = "user_gps_tester"
         val clubId = "club_tresor_berlin"
         userDao.insertUser(UserEntity(reviewerId, "gps_tester", "gps@kliq.de", null, null))
-        
-        // Club mit GPS-Koordinaten in der Datenbank anlegen
+
         clubDao.insertClub(
             ClubEntity(
                 id = clubId,
@@ -111,7 +108,6 @@ class ReviewIntegrationTest {
             )
         )
 
-        // Testfall A: Erfolgreicher GPS-Match (Benutzer ~100m entfernt -> Verifiziert = true)
         val resultMatch = reviewRepository.submitReviewWithGpsCheck(
             reviewerUserId = reviewerId,
             clubId = clubId,
@@ -130,7 +126,6 @@ class ReviewIntegrationTest {
         assertTrue(uiStateVerified.verificationBadgeText.contains("VERIFIZIERT"))
         assertEquals(ReviewHighContrastPalette.VerifiedNeonGreen, uiStateVerified.verificationBadgeColorHex)
 
-        // Testfall B: Fehlgeschlagene Standorterkennung (Benutzer ~5km entfernt -> Verifiziert = false)
         val resultMismatch = reviewRepository.submitReviewWithGpsCheck(
             reviewerUserId = reviewerId,
             clubId = clubId,
@@ -160,7 +155,6 @@ class ReviewIntegrationTest {
         userDao.insertUser(UserEntity(targetUserId, "bouncer_steve", "steve@kliq.de", null, null))
         clubDao.insertClub(ClubEntity(id = clubId, name = "Watergate"))
 
-        // Unverifiziertes Peer-Review für ein Target-User (z.B. Türsteher/Host) in einem Club
         val resultPeerReview = reviewRepository.submitUnverifiedReview(
             reviewerUserId = reviewerId,
             clubId = clubId,
@@ -177,7 +171,6 @@ class ReviewIntegrationTest {
         assertEquals(clubId, peerReview.clubId)
         assertEquals(4, peerReview.rating)
 
-        // Verifikation der Zuordnung über DAO-Queries
         val reviewsForTargetUser = reviewDao.getReviewsForTargetUser(targetUserId).first()
         assertEquals(1, reviewsForTargetUser.size)
         assertEquals(reviewerId, reviewsForTargetUser[0].reviewerUserId)

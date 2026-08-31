@@ -11,10 +11,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Implementation of [SessionRepository] providing persistent encrypted session
- * storage operations backed by [SessionStorage].
- */
 @Singleton
 class SessionRepositoryImpl @Inject constructor(
     private val sessionStorage: SessionStorage,

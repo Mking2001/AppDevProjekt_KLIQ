@@ -108,4 +108,3 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun bindAccessibilityRepository(impl: com.kliq.app.data.repository.AccessibilityRepositoryImpl): com.kliq.app.data.repository.AccessibilityRepository
 }
-

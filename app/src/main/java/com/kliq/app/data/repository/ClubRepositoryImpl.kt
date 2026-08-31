@@ -82,7 +82,7 @@ class ClubRepositoryImpl @Inject constructor(
         return clubDao.getAllClubs().map { entities ->
             val clubs = entities.map { it.toDomain() }
             val regionCounts = mutableMapOf<String, Int>()
-            
+
             for (club in clubs) {
                 val regionName = when {
                     club.region.isNotBlank() -> club.region
@@ -93,7 +93,7 @@ class ClubRepositoryImpl @Inject constructor(
                     regionCounts[regionName] = (regionCounts[regionName] ?: 0) + 1
                 }
             }
-            
+
             regionCounts.map { (name, count) ->
                 RegionSearchResult(
                     regionName = name,
@@ -240,7 +240,6 @@ class ClubRepositoryImpl @Inject constructor(
 
             clubDao.updateFlameCount(clubId, newFlames, today)
 
-            // Cloud SQL sync
             kliqConnector?.let { connector ->
                 try {
                     if (newIsHyped) {

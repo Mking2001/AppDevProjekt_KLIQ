@@ -19,9 +19,6 @@ import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Room-basierte Implementierung des [FeedRepository].
- */
 @Singleton
 class FeedRepositoryImpl @Inject constructor(
     private val feedDao: FeedDao,

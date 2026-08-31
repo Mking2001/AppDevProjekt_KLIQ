@@ -25,11 +25,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Emulator UI Test for Chapter 8.3: Accessibility Checks & TalkBack Optimizations.
- * Verifies accessibility content descriptions, TalkBack semantics, high-contrast dark theme,
- * dynamic text scaling (1.5x, 2.0x), and focus traversal ordering across central UI components.
- */
 @RunWith(AndroidJUnit4::class)
 class AccessibilityChecksEmulatorTest {
 

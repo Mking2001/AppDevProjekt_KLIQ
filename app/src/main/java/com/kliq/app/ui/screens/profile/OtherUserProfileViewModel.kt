@@ -64,7 +64,6 @@ class OtherUserProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null, userId = userId) }
 
-            // Sync fresh profile, reviews, feed & social from Cloud SQL
             try { userRepository.syncUserProfile(userId) } catch (ignored: Exception) { }
             try { reviewRepository.syncReviewsForTargetUser(userId) } catch (ignored: Exception) { }
             try { feedRepository?.syncFeedPosts() } catch (ignored: Exception) { }
@@ -96,7 +95,6 @@ class OtherUserProfileViewModel @Inject constructor(
                         listOfNotNull(userEntity.profilePictureUrl)
                     }
 
-                    // Review eligibility:
                     val samePlaceVisit = try {
                         val myVisits = visitedLogRepository?.getVisitedLogsForUser(currentUserId)?.first() ?: emptyList()
                         val targetVisits = visitedLogRepository?.getVisitedLogsForUser(userId)?.first() ?: emptyList()
@@ -157,7 +155,6 @@ class OtherUserProfileViewModel @Inject constructor(
             }
         }
 
-        // Observe author's posts
         feedRepository?.getFeedPostsByAuthor(userId)?.let { postsFlow ->
             viewModelScope.launch {
                 postsFlow.collect { postList ->
@@ -171,7 +168,6 @@ class OtherUserProfileViewModel @Inject constructor(
             }
         }
 
-        // Observe Followers
         viewModelScope.launch {
             socialRepository.getFollowers(userId).collect { followers ->
                 val followerUserIds = followers.map { it.userId }
@@ -189,7 +185,6 @@ class OtherUserProfileViewModel @Inject constructor(
             }
         }
 
-        // Observe Following
         viewModelScope.launch {
             socialRepository.getFollowing(userId).collect { following ->
                 val followingUserIds = following.map { it.friendUserId }
@@ -476,4 +471,3 @@ class OtherUserProfileViewModel @Inject constructor(
         }
     }
 }
-

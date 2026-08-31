@@ -20,9 +20,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit tests for [NavigationViewModel] transition state logic and MVVM decoupling.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class NavigationViewModelTest {
 

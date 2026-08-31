@@ -18,16 +18,6 @@ import com.kliq.app.ui.navigation.TopBarMenuAction
 import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.viewmodel.ClubSearchViewModel
 
-/**
- * Haupt-Screen für die Suchfunktion von Clubs und Regionen (Kapitel 7.4).
- *
- * @param topBarState Aktueller TopBar UI-Zustand.
- * @param onToggleMenu Callback zum Umschalten des TopBar Menüs.
- * @param onDismissMenu Callback zum Schließen des Menüs.
- * @param onMenuAction Callback bei Menüauswahl.
- * @param onNavigateToClub Callback zur Navigation zur Club-Detailansicht.
- * @param viewModel Hilt-injiziertes [ClubSearchViewModel].
- */
 @Composable
 fun ClubSearchScreen(
     topBarState: TopBarUiState,
@@ -51,20 +41,18 @@ fun ClubSearchScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Live-Suchleiste
+
             ClubSearchBar(
                 query = uiState.searchQuery,
                 onQueryChange = { viewModel.onQueryChanged(it) },
                 onClearClick = { viewModel.clearSearch() }
             )
 
-            // Filter Badges Row
             ClubSearchFilterBadges(
                 activeFilter = uiState.activeFilter,
                 onFilterSelected = { viewModel.onFilterChanged(it) }
             )
 
-            // Zustandshandling: Loading, Empty oder Ergebnisse
             when {
                 uiState.isLoading -> {
                     ClubSearchLoadingState()
@@ -73,9 +61,9 @@ fun ClubSearchScreen(
                 uiState.clubResults.isEmpty() && uiState.regionResults.isEmpty() -> {
                     ClubSearchEmptyState(
                         title = if (uiState.searchQuery.isBlank()) "Suche starten" else "Keine Clubs in dieser Region gefunden",
-                        description = if (uiState.searchQuery.isBlank()) 
+                        description = if (uiState.searchQuery.isBlank())
                             "Gib den Namen eines Clubs, eine Stadt oder ein Musik-Genre ein."
-                        else 
+                        else
                             "Keine passenden Treffer für '${uiState.searchQuery}'. Versuche nach einer anderen Region oder einem Genre zu suchen."
                     )
                 }

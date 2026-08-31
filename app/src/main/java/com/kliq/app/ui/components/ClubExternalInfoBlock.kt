@@ -60,7 +60,7 @@ fun ClubExternalInfoBlock(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header: Title & Live Status Badge
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -101,7 +101,6 @@ fun ClubExternalInfoBlock(
 
             HorizontalDivider(color = Color.White.copy(alpha = 0.1f))
 
-            // Address & Navigation Section
             if (state.address.isNotBlank()) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -142,7 +141,6 @@ fun ClubExternalInfoBlock(
                 }
             }
 
-            // Opening Hours Section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -229,7 +227,6 @@ fun ClubExternalInfoBlock(
                 }
             }
 
-            // External Links & Action Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)

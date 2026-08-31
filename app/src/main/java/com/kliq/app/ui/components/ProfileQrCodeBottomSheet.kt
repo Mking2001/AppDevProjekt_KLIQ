@@ -66,7 +66,6 @@ fun ProfileQrCodeBottomSheet(
 
     val context = LocalContext.current
 
-    // Automatische Helligkeitsanhebung auf Maximum in dunklen Club-Umgebungen
     DisposableEffect(Unit) {
         val activity = context.findActivity()
         val originalBrightness = activity?.window?.attributes?.screenBrightness
@@ -132,7 +131,6 @@ fun ProfileQrCodeBottomSheet(
                 }
             }
 
-            // Helligkeits-Boost Status Banner
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -161,7 +159,6 @@ fun ProfileQrCodeBottomSheet(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // High-Contrast QR Code Display Container
             Box(
                 modifier = Modifier
                     .size(260.dp)

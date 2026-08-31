@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Central Kliq High-Contrast Theme Color Tokens
 val ColorKliqPurplePrimary = Color(0xFF6B46C1)
 val ColorKliqPurpleLight = Color(0xFF805AD5)
 val ColorKliqPurpleDarkBg = Color(0xFF2D1B4E)
@@ -41,15 +40,6 @@ val ColorKliqTextWhite = Color(0xFFFFFFFF)
 val ColorKliqTextMuted = Color(0xFFCBD5E1)
 val ColorKliqAccentPink = Color(0xFFEC4899)
 
-/**
- * Reusable High-Contrast Primary CTA Button for Kliq Application.
- *
- * @param text Button label text.
- * @param onClick Callback triggered on click.
- * @param modifier Modifier for layout constraints.
- * @param enabled State of user interaction.
- * @param isLoading State of asynchronous operation showing spinner.
- */
 @Composable
 fun KliqPrimaryButton(
     text: String,
@@ -89,9 +79,6 @@ fun KliqPrimaryButton(
     }
 }
 
-/**
- * Reusable High-Contrast Secondary Outlined Button for Kliq Application.
- */
 @Composable
 fun KliqSecondaryButton(
     text: String,
@@ -119,9 +106,6 @@ fun KliqSecondaryButton(
     }
 }
 
-/**
- * Reusable Glassmorphic Dark Container Card for Kliq UI screens.
- */
 @Composable
 fun KliqSurfaceCard(
     modifier: Modifier = Modifier,
@@ -144,9 +128,6 @@ fun KliqSurfaceCard(
     }
 }
 
-/**
- * Reusable Category or Filter Header Chip for Map and Explore screens.
- */
 @Composable
 fun KliqHeaderChip(
     text: String,

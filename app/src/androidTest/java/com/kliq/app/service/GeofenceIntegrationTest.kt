@@ -57,13 +57,12 @@ class GeofenceIntegrationTest {
             action = GeofenceBroadcastReceiver.ACTION_GEOFENCE_EVENT
         }
 
-        // Verify receiver action matching
         assertEquals(GeofenceBroadcastReceiver.ACTION_GEOFENCE_EVENT, intent.action)
     }
 
     @Test
     fun testEndToEndGeofenceTransitionWorkflow() = runTest {
-        // Step 1: User enters club radius
+
         geofenceRepository.handleGeofenceTransition("integration_club_1", GeofenceTransitionType.ENTER)
 
         val activeState = geofenceRepository.activeClubState.value
@@ -77,7 +76,6 @@ class GeofenceIntegrationTest {
         assertEquals("integration_club_1", history[0].clubId)
         assertTrue(history[0].isVerifiedVisit)
 
-        // Step 2: User exits club radius
         geofenceRepository.handleGeofenceTransition("integration_club_1", GeofenceTransitionType.EXIT)
 
         val updatedState = geofenceRepository.activeClubState.value

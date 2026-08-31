@@ -5,9 +5,6 @@ import com.kliq.app.ui.theme.FuchsiaTertiary
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.TealSecondary
 
-/**
- * Categorization levels for live club occupancy/visitor capacity.
- */
 enum class OccupancyCategory(
     val displayName: String,
     val description: String,
@@ -45,9 +42,6 @@ enum class OccupancyCategory(
     }
 }
 
-/**
- * Occupancy trend directions indicating visitor traffic movement.
- */
 enum class OccupancyTrend(
     val label: String,
     val symbol: String

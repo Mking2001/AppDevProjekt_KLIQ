@@ -8,22 +8,10 @@ import kotlinx.coroutines.flow.map
 import java.util.Locale
 import javax.inject.Inject
 
-/**
- * Domain UseCase encapsulateing club venue retrieval, distance calculation relative
- * to current user location, and category filtering (Clean Architecture).
- */
 class GetClubsWithDistanceUseCase @Inject constructor(
     private val clubRepository: ClubRepository
 ) {
 
-    /**
-     * Executes fetching clubs, computing distance, and filtering by category name.
-     *
-     * @param userLat Current user GPS latitude.
-     * @param userLng Current user GPS longitude.
-     * @param filterCategory Selected category name ("Alle", "Clubs", "Bars", "Events", "Restaurants").
-     * @return Reactive Flow of formatted [VenueItemUi] objects.
-     */
     operator fun invoke(
         userLat: Double = 52.5200,
         userLng: Double = 13.4050,

@@ -5,10 +5,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit-Tests zur Verifizierung des PII-Datenschutzes (Personally Identifiable Information)
- * im [PiiSanitizer] (Kapitel 9.4).
- */
 class PiiSanitizerTest {
 
     @Test

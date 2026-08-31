@@ -8,7 +8,7 @@ import org.mockito.Mockito.mock
 class MainViewModelTest {
 
     private val repository: UserRepository = mock(UserRepository::class.java)
-    
+
     @Test
     fun viewModelIsInitialized() {
         val viewModel = MainViewModel(repository)

@@ -2,15 +2,6 @@ package com.kliq.app.data.model
 
 import kotlin.math.roundToInt
 
-/**
- * Domain model representing privacy-compliant aggregated gender proportions for a location.
- *
- * @property malePercentage Calculated proportion of male visitors (0.0 to 100.0).
- * @property femalePercentage Calculated proportion of female visitors (0.0 to 100.0).
- * @property diversePercentage Calculated proportion of diverse/other visitors (0.0 to 100.0).
- * @property totalVisitorsCount Total count of verified check-ins aggregated.
- * @property hasSufficientData True if total visitor count meets the minimum privacy threshold.
- */
 data class GenderRatio(
     val malePercentage: Float = 0f,
     val femalePercentage: Float = 0f,

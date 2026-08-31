@@ -236,7 +236,6 @@ fun ChatListItem(
     )
 }
 
-
 @Composable
 fun VoiceMessageBubble(
     message: ChatMessage,
@@ -1283,7 +1282,7 @@ fun ImagePreviewSendDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Top Bar
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1310,7 +1309,6 @@ fun ImagePreviewSendDialog(
                     Spacer(modifier = Modifier.size(48.dp))
                 }
 
-                // Image Preview
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -1339,7 +1337,6 @@ fun ImagePreviewSendDialog(
                     }
                 }
 
-                // Caption and Send Controls
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1385,9 +1382,6 @@ fun ImagePreviewSendDialog(
     }
 }
 
-/**
- * Dialog zum Erstellen einer neuen Gruppe im WhatsApp-Stil.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateGroupDialog(
@@ -1428,7 +1422,7 @@ fun CreateGroupDialog(
                     .fillMaxSize()
                     .padding(20.dp)
             ) {
-                // Header
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -1447,7 +1441,6 @@ fun CreateGroupDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Group Avatar Picker & Name Row
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
@@ -1498,7 +1491,6 @@ fun CreateGroupDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Group Description
                 OutlinedTextField(
                     value = groupDescription,
                     onValueChange = { if (it.length <= 120) groupDescription = it },
@@ -1515,7 +1507,6 @@ fun CreateGroupDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Member Selection Section
                 Text(
                     text = "Mitglieder hinzufügen (${selectedUserIds.size} ausgewählt)",
                     style = MaterialTheme.typography.titleSmall,
@@ -1540,7 +1531,6 @@ fun CreateGroupDialog(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Member List
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
@@ -1615,7 +1605,6 @@ fun CreateGroupDialog(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Action Buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End,
@@ -1643,9 +1632,6 @@ fun CreateGroupDialog(
     }
 }
 
-/**
- * WhatsApp-ähnliche Gruppen-Info-Ansicht.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupInfoSheet(
@@ -1670,7 +1656,7 @@ fun GroupInfoSheet(
                 .padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Large Group Avatar
+
             Box(
                 modifier = Modifier
                     .size(90.dp)
@@ -1723,7 +1709,6 @@ fun GroupInfoSheet(
             if (canAddMembers) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Action: Add members
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1741,7 +1726,6 @@ fun GroupInfoSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Member list
             if (members.isNotEmpty()) {
                 Text(
                     text = "Teilnehmer",
@@ -1786,7 +1770,6 @@ fun GroupInfoSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Leave / Delete Group Button
             Button(
                 onClick = {
                     onDismiss()

@@ -14,14 +14,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * Immutable UI State für den Notifications-Screen.
- *
- * @param selectedTabIndex Index des ausgewählten Filter-Tabs.
- * @param tabs Verfügbare Filter-Tabs.
- * @param notifications Echte Benachrichtigungen aus der Datenbank.
- * @param unreadCount Anzahl ungelesener Benachrichtigungen.
- */
 data class NotificationsUiState(
     val selectedTabIndex: Int = 0,
     val tabs: List<String> = listOf("Alle", "Bewertungen", "Freunde"),
@@ -29,9 +21,6 @@ data class NotificationsUiState(
     val unreadCount: Int = 0
 )
 
-/**
- * Datenklasse für eine Aktivität / Benachrichtigung.
- */
 data class NotificationItemUi(
     val id: String,
     val text: String,
@@ -40,17 +29,10 @@ data class NotificationItemUi(
     val type: NotificationType = NotificationType.COMMENT
 )
 
-/**
- * Typ einer Benachrichtigung für Filter-Zuordnung.
- */
 enum class NotificationType {
     LIKE, COMMENT, FOLLOW, EVENT
 }
 
-/**
- * ViewModel für den Notifications/Aktivität-Screen.
- * Lädt echte Aktivitäten (Bewertungen, Freundschaften) aus den Repositories.
- */
 @HiltViewModel
 class NotificationsViewModel @Inject constructor(
     private val reviewRepository: ReviewRepository,
@@ -67,9 +49,6 @@ class NotificationsViewModel @Inject constructor(
         observeRealActivities()
     }
 
-    /**
-     * Lädt echte Benachrichtigungen basierend auf Bewertungen und Kontakten.
-     */
     private fun observeRealActivities() {
         viewModelScope.launch {
             val currentUserId = currentUserProvider.userId()

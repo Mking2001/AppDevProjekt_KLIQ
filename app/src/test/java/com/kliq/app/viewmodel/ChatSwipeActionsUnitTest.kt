@@ -30,10 +30,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 
-/**
- * Prüft die Swipe-Aktionen der Chat-Liste: Löschen, Archivieren und
- * Wiederherstellen wirken über das Repository und spiegeln sich im State.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatSwipeActionsUnitTest {
 

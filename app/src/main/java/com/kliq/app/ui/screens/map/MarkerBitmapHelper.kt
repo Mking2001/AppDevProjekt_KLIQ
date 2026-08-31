@@ -11,11 +11,6 @@ import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import java.util.Locale
 
-/**
- * High-performance bitmap generator and LRU memory cache for map markers.
- * Optimized for 60 FPS interactions with zero runtime allocations on recomposition,
- * supporting Kliq's high-contrast dark mode (purple/neon design system).
- */
 object MarkerBitmapHelper {
 
     private const val CACHE_SIZE = 256
@@ -26,14 +21,13 @@ object MarkerBitmapHelper {
     }
     private val cacheLock = Any()
 
-    // High-contrast Purple / Neon Design System Palette
-    private const val COLOR_PRIMARY_PURPLE = 0xFF7C3AED.toInt()       // Vibrant Kliq Purple
-    private const val COLOR_PRIMARY_PURPLE_DARK = 0xFF5B21B6.toInt()  // Deep Purple Accent
-    private const val COLOR_PURPLE_DARK_BG = 0xFF1E1035.toInt()       // Ultra-Dark Purple Background
-    private const val COLOR_EVENT_BADGE = 0xFFEC4899.toInt()          // Neon Pink Active Event Badge
-    private const val COLOR_ONLINE_GREEN = 0xFF10B981.toInt()         // Neon Emerald Online Indicator
-    private const val COLOR_OFFLINE_GRAY = 0xFF64748B.toInt()         // Slate Gray Offline Indicator
-    private const val COLOR_CLUSTER_GLOW = 0x667C3AED.toInt()         // Translucent Purple Cluster Halo
+    private const val COLOR_PRIMARY_PURPLE = 0xFF7C3AED.toInt()
+    private const val COLOR_PRIMARY_PURPLE_DARK = 0xFF5B21B6.toInt()
+    private const val COLOR_PURPLE_DARK_BG = 0xFF1E1035.toInt()
+    private const val COLOR_EVENT_BADGE = 0xFFEC4899.toInt()
+    private const val COLOR_ONLINE_GREEN = 0xFF10B981.toInt()
+    private const val COLOR_OFFLINE_GRAY = 0xFF64748B.toInt()
+    private const val COLOR_CLUSTER_GLOW = 0x667C3AED.toInt()
 
     internal var descriptorFactory: (Bitmap?) -> BitmapDescriptor? = { bitmap ->
         try {
@@ -58,9 +52,6 @@ object MarkerBitmapHelper {
         }
     }
 
-    /**
-     * Generates or retrieves a cached custom bitmap descriptor for a club venue marker.
-     */
     fun getClubMarkerBitmap(
         category: String,
         hasActiveEvent: Boolean
@@ -80,9 +71,6 @@ object MarkerBitmapHelper {
         return descriptor
     }
 
-    /**
-     * Generates or retrieves a cached custom bitmap descriptor for a user profile marker.
-     */
     fun getUserMarkerBitmap(
         username: String,
         isOnline: Boolean
@@ -103,9 +91,6 @@ object MarkerBitmapHelper {
         return descriptor
     }
 
-    /**
-     * Generates or retrieves a cached custom bitmap descriptor for a cluster node marker.
-     */
     fun getClusterMarkerBitmap(
         count: Int,
         primaryCategory: String = "Club"
@@ -125,10 +110,6 @@ object MarkerBitmapHelper {
         return descriptor
     }
 
-    /**
-     * Pre-warms the cache with standard categories and cluster buckets to eliminate
-     * initial frame drops during map load.
-     */
     fun prewarmCache() {
         try {
             val categories = listOf("Club", "Bar", "Event", "Restaurant", "Lounge")
@@ -141,7 +122,7 @@ object MarkerBitmapHelper {
                 getClusterMarkerBitmap(count, "Club")
             }
         } catch (e: Throwable) {
-            // Ignored in unit testing environments without Robolectric/Android graphics
+
         }
     }
 
@@ -154,11 +135,9 @@ object MarkerBitmapHelper {
 
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-            // Drop shadow under pin tip
             paint.color = Color.argb(70, 0, 0, 0)
             canvas.drawOval(RectF(30f, 142f, 90f, 158f), paint)
 
-            // Main pin teardrop path
             val path = Path().apply {
                 moveTo(60f, 145f)
                 cubicTo(15f, 95f, 10f, 65f, 10f, 50f)
@@ -167,23 +146,19 @@ object MarkerBitmapHelper {
                 close()
             }
 
-            // Fill main neon purple pin body
             paint.color = COLOR_PRIMARY_PURPLE
             paint.style = Paint.Style.FILL
             canvas.drawPath(path, paint)
 
-            // Outer high-contrast border stroke
             paint.color = Color.WHITE
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = 4f
             canvas.drawPath(path, paint)
 
-            // Inner dark circle canvas background
             paint.style = Paint.Style.FILL
             paint.color = COLOR_PURPLE_DARK_BG
             canvas.drawCircle(60f, 60f, 32f, paint)
 
-            // Draw category icon / symbol text
             paint.color = Color.WHITE
             paint.textSize = 28f
             paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
@@ -199,7 +174,6 @@ object MarkerBitmapHelper {
             val textY = 60f - ((paint.descent() + paint.ascent()) / 2)
             canvas.drawText(iconSymbol, 60f, textY, paint)
 
-            // Active Event indicator badge on top right
             if (hasActiveEvent) {
                 paint.style = Paint.Style.FILL
                 paint.color = COLOR_EVENT_BADGE
@@ -225,27 +199,22 @@ object MarkerBitmapHelper {
 
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-            // Soft drop shadow
             paint.color = Color.argb(60, 0, 0, 0)
             canvas.drawCircle(60f, 64f, 48f, paint)
 
-            // Background ultra dark purple circle
             paint.color = COLOR_PURPLE_DARK_BG
             paint.style = Paint.Style.FILL
             canvas.drawCircle(60f, 60f, 46f, paint)
 
-            // Outer Kliq neon purple ring
             paint.color = COLOR_PRIMARY_PURPLE
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = 7f
             canvas.drawCircle(60f, 60f, 46f, paint)
 
-            // White inner ring border
             paint.color = Color.WHITE
             paint.strokeWidth = 2f
             canvas.drawCircle(60f, 60f, 42f, paint)
 
-            // Draw initial letter
             paint.style = Paint.Style.FILL
             paint.color = Color.WHITE
             paint.textSize = 40f
@@ -255,7 +224,6 @@ object MarkerBitmapHelper {
             val textY = 60f - ((paint.descent() + paint.ascent()) / 2)
             canvas.drawText(initial, 60f, textY, paint)
 
-            // Online status dot indicator
             val statusColor = if (isOnline) COLOR_ONLINE_GREEN else COLOR_OFFLINE_GRAY
             paint.color = statusColor
             canvas.drawCircle(92f, 92f, 12f, paint)
@@ -279,22 +247,18 @@ object MarkerBitmapHelper {
 
             val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-            // Outer translucent glowing halo
             paint.color = COLOR_CLUSTER_GLOW
             paint.style = Paint.Style.FILL
             canvas.drawCircle(65f, 65f, 60f, paint)
 
-            // Inner solid neon purple circle
             paint.color = COLOR_PRIMARY_PURPLE
             canvas.drawCircle(65f, 65f, 48f, paint)
 
-            // High contrast white border
             paint.color = Color.WHITE
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = 4f
             canvas.drawCircle(65f, 65f, 48f, paint)
 
-            // Centered count text
             paint.style = Paint.Style.FILL
             paint.color = Color.WHITE
             paint.textSize = 36f
@@ -311,26 +275,17 @@ object MarkerBitmapHelper {
         }
     }
 
-    /**
-     * Clears all cached bitmap descriptors.
-     */
     fun clearCache() {
         synchronized(cacheLock) {
             bitmapDescriptorCache.clear()
         }
     }
 
-    /**
-     * Returns the current number of cached bitmap descriptors.
-     */
     fun cacheSize(): Int {
         synchronized(cacheLock) {
             return bitmapDescriptorCache.size
         }
     }
 
-    /**
-     * Legacy getter alias for current cache size.
-     */
     fun getCacheSize(): Int = cacheSize()
 }

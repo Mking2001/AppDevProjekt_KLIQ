@@ -20,10 +20,6 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.util.Locale
 
-/**
- * Automated motion simulation test suite verifying continuous distance recalculations
- * as users move relative to each other.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class UserDistanceMotionSimulationTest {
 
@@ -58,16 +54,13 @@ class UserDistanceMotionSimulationTest {
 
     @Test
     fun testLiveMotionSimulation_userApproaching_distanceDecreasesContinuously() {
-        // Zielperson Lena (usr_lena) steht fest an der Strandbar Loretto (46.6162, 14.2696).
-        // Der aktuelle Nutzer bewegt sich in 5 Schritten von 2,45 km auf 0 m heran.
-        // Die Breitengrad-Differenzen entsprechen dem ursprünglichen Berlin-Testfall,
-        // da ein Breitengrad unabhängig vom Standort ca. 111,32 km entspricht.
+
         val steps = listOf(
-            Pair(46.6382, 14.2696), // ~2.45 km entfernt
-            Pair(46.6282, 14.2696), // ~1.33 km entfernt
-            Pair(46.6207, 14.2696), // ~500 m entfernt
-            Pair(46.61755, 14.2696), // ~150 m entfernt
-            Pair(46.6162, 14.2696)   // 0 m (exakte Übereinstimmung)
+            Pair(46.6382, 14.2696),
+            Pair(46.6282, 14.2696),
+            Pair(46.6207, 14.2696),
+            Pair(46.61755, 14.2696),
+            Pair(46.6162, 14.2696)
         )
 
         val recordedDistances = mutableListOf<Pair<Double?, String>>()
@@ -80,7 +73,6 @@ class UserDistanceMotionSimulationTest {
             recordedDistances.add(Pair(lena.distanceMeters, lena.formattedDistance))
         }
 
-        // Verify that distances strictly decrease across steps
         for (i in 0 until recordedDistances.size - 1) {
             val currentDist = recordedDistances[i].first
             val nextDist = recordedDistances[i + 1].first
@@ -89,7 +81,6 @@ class UserDistanceMotionSimulationTest {
             assertTrue("Distance should decrease: $currentDist -> $nextDist", nextDist!! < currentDist!!)
         }
 
-        // Verify formatted strings at key milestones
         assertEquals("2.4 km", recordedDistances[0].second)
         assertEquals("1.3 km", recordedDistances[1].second)
         assertEquals("500 m", recordedDistances[2].second)

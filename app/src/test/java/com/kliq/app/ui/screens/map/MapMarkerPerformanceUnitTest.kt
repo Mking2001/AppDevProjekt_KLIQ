@@ -28,13 +28,6 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.robolectric.RobolectricTestRunner
 
-/**
- * Unit tests validating Chapter 9.6 Map Marker Performance Tuning requirements:
- * - MVVM Separation of Concerns (raw club domain models vs marker UI states).
- * - Marker clustering performance with high-density markers.
- * - LRU caching for high-contrast purple/neon marker icons.
- * - Asynchronous background dispatcher data transformations and 250ms camera debouncing.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class MapMarkerPerformanceUnitTest {
@@ -120,7 +113,7 @@ class MapMarkerPerformanceUnitTest {
     @Test
     fun testMarkerBitmapLruCache_cachesCustomBitmapsAcrossRecompositions() {
         val initialCacheSize = MarkerBitmapHelper.cacheSize()
-        assertTrue(initialCacheSize > 0) // Pre-warmed cache
+        assertTrue(initialCacheSize > 0)
 
         val descriptor1 = MarkerBitmapHelper.getClubMarkerBitmap("Club", hasActiveEvent = true)
         val descriptor2 = MarkerBitmapHelper.getClubMarkerBitmap("Club", hasActiveEvent = true)
@@ -128,7 +121,7 @@ class MapMarkerPerformanceUnitTest {
         assertSame(descriptor1, descriptor2)
 
         val userDescriptor1 = MarkerBitmapHelper.getUserMarkerBitmap("Alex", isOnline = true)
-        val userDescriptor2 = MarkerBitmapHelper.getUserMarkerBitmap("Adam", isOnline = true) // Same initial 'A'
+        val userDescriptor2 = MarkerBitmapHelper.getUserMarkerBitmap("Adam", isOnline = true)
 
         assertSame(userDescriptor1, userDescriptor2)
     }
@@ -154,15 +147,13 @@ class MapMarkerPerformanceUnitTest {
 
     @Test
     fun testCameraMovementDebouncing_throttlesCalculationsUntilIdle() {
-        // Fast panning movements
+
         viewModel.onCameraMoved(52.5200, 13.4000, 12.0f)
         viewModel.onCameraMoved(52.5220, 13.4020, 12.0f)
         viewModel.onCameraMoved(52.5250, 13.4050, 12.0f)
 
-        // Advance by only 100ms (less than 250ms debounce threshold)
         testDispatcher.scheduler.advanceTimeBy(100)
 
-        // Advance past debounce threshold (250ms+)
         testDispatcher.scheduler.advanceTimeBy(200)
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -174,7 +165,7 @@ class MapMarkerPerformanceUnitTest {
 
     @Test
     fun testLocationFilterModes_updatesClusteringAndPrivacyCorrectly() {
-        // Mode: PUBLIC_ONLY
+
         viewModel.onLocationFilterModeSelected(MapLocationFilterMode.PUBLIC_ONLY)
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -184,7 +175,6 @@ class MapMarkerPerformanceUnitTest {
         assertTrue(state.clubMarkers.isNotEmpty())
         assertTrue(state.userMarkers.isEmpty())
 
-        // Mode: PRIVATE_ONLY
         viewModel.onLocationFilterModeSelected(MapLocationFilterMode.PRIVATE_ONLY)
         testDispatcher.scheduler.advanceUntilIdle()
 
@@ -195,7 +185,6 @@ class MapMarkerPerformanceUnitTest {
         assertTrue(state.clusteredMarkers.isEmpty())
         assertTrue(state.userMarkers.isNotEmpty())
 
-        // Mode: ALL
         viewModel.onLocationFilterModeSelected(MapLocationFilterMode.ALL)
         testDispatcher.scheduler.advanceUntilIdle()
 

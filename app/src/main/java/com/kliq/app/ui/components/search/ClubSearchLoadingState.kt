@@ -20,10 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 
-/**
- * Loading-State Komponente im Kliq High-Contrast Design.
- * Zeigt Lade-Platzhalter und Indikatoren während der reaktiven Suche.
- */
 @Composable
 fun ClubSearchLoadingState(
     modifier: Modifier = Modifier
@@ -51,7 +47,6 @@ fun ClubSearchLoadingState(
             )
         }
 
-        // Shimmer / Placeholder Skeleton Cards
         repeat(3) {
             Box(
                 modifier = Modifier

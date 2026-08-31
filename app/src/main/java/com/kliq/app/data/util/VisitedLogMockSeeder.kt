@@ -6,9 +6,6 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Mock Seeder utility for populating local Room database with sample club visit entries.
- */
 @Singleton
 class VisitedLogMockSeeder @Inject constructor(
     private val visitedLogDao: VisitedLogDao

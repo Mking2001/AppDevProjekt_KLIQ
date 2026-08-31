@@ -4,9 +4,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 
-/**
- * Unit tests verifying animation duration constants and transition specifications in [KliqScreenTransitions].
- */
 class KliqScreenTransitionsTest {
 
     @Test

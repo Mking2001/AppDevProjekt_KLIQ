@@ -20,11 +20,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 
-/**
- * Animated Favorite Heart Toggle Button for Kliq dark mode UI.
- * Uses high-contrast Kliq Purple Accent (#8A2BE2) for the active state
- * and a spring scaling animation when toggling state.
- */
 @Composable
 fun AnimatedFavoriteButton(
     isFavorite: Boolean,

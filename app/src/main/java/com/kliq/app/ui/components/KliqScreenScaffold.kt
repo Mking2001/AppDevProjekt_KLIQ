@@ -18,21 +18,6 @@ import androidx.compose.ui.draw.alpha
 import com.kliq.app.ui.navigation.KliqTopBar
 import com.kliq.app.ui.navigation.TopBarMenuAction
 
-/**
- * Wiederverwendbares Screen-Scaffold für alle Haupt-Screens.
- * Stellt eine konsistente Top-App-Bar mit globalem Menü,
- * Fade-in-Animation und den Lila/Dark-Mode Background bereit.
- *
- * @param title Titel für die Top-App-Bar.
- * @param isMenuExpanded Ob das Overflow-Menü aktuell geöffnet ist.
- * @param onToggleMenu Callback zum Umschalten des Menüs.
- * @param onDismissMenu Callback zum Schließen des Menüs.
- * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
- * @param actions Optionale Screen-spezifische Action-Icons rechts in der Top-Bar.
- * @param showTopBar Ob die Top-App-Bar angezeigt werden soll.
- * @param floatingActionButton Optionaler FAB.
- * @param content Screen-Inhalt mit innerPadding.
- */
 @Composable
 fun KliqScreenScaffold(
     title: String,
@@ -47,7 +32,7 @@ fun KliqScreenScaffold(
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
-    // Fade-in Animation beim Screen-Eintritt
+
     var visible by remember { mutableStateOf(false) }
     val alpha by animateFloatAsState(
         targetValue = if (visible) 1f else 0f,

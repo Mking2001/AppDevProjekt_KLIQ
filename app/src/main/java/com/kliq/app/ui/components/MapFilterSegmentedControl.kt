@@ -40,18 +40,6 @@ import com.kliq.app.ui.theme.DarkOutline
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-/**
- * Floating Segmented Filter Control for switching between Map Location Modes:
- * - Alle (All markers)
- * - Öffentlich (Public Event Venues & Clubs)
- * - Private Standorte (User locations with active location sharing)
- *
- * Designed with Kliq Dark-Mode High-Contrast purple aesthetics.
- *
- * @param selectedMode Currently active [MapLocationFilterMode].
- * @param onModeSelected Callback triggered when a filter mode is tapped.
- * @param modifier Optional [Modifier].
- */
 import com.kliq.app.util.accessibilityHeading
 import com.kliq.app.util.ensureMinTouchTarget
 import androidx.compose.ui.semantics.Role
@@ -61,18 +49,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.stateDescription
 
-/**
- * Floating Segmented Filter Control for switching between Map Location Modes:
- * - Alle (All markers)
- * - Öffentlich (Public Event Venues & Clubs)
- * - Private Standorte (User locations with active location sharing)
- *
- * Designed with Kliq Dark-Mode High-Contrast purple aesthetics.
- *
- * @param selectedMode Currently active [MapLocationFilterMode].
- * @param onModeSelected Callback triggered when a filter mode is tapped.
- * @param modifier Optional [Modifier].
- */
 @Composable
 fun MapFilterSegmentedControl(
     selectedMode: MapLocationFilterMode,
@@ -134,9 +110,6 @@ fun MapFilterSegmentedControl(
     }
 }
 
-/**
- * Individual Segmented Button supporting high contrast active states and smooth color transitions.
- */
 @Composable
 private fun FilterSegmentButton(
     text: String,
@@ -206,4 +179,3 @@ private fun FilterSegmentButton(
         }
     }
 }
-

@@ -71,7 +71,7 @@ class GeofenceViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             val clubs = clubRepository.getAllClubs().firstOrNull() ?: emptyList()
-            
+
             val result = geofenceManager.updateGeofencesForLocation(userLat, userLon, clubs, maxGeofences)
             result.onSuccess { count ->
                 geofenceRepository.updateRegisteredGeofenceCount(count)

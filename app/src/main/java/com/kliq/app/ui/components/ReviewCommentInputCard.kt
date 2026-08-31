@@ -98,7 +98,6 @@ fun ReviewCommentInputCard(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Sterneauswahl
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -129,7 +128,6 @@ fun ReviewCommentInputCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Eingabefeld
             OutlinedTextField(
                 value = commentText,
                 onValueChange = { onCommentTextChange(it) },
@@ -157,7 +155,6 @@ fun ReviewCommentInputCard(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Zeichenzähler & Button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

@@ -1,8 +1,5 @@
 package com.kliq.app.data.model
 
-/**
- * Domain model representing a historical club visit by a user.
- */
 data class VisitedLog(
     val id: String,
     val userId: String,

@@ -23,12 +23,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Instrumented Emulator UI Test for Chapter 8.1: Long-Press Gesture for Map Marker Quick-View.
- * Validates long-press gesture recognition, haptic feedback trigger, purple dark-mode overlay rendering,
- * data integrity (location name, GPS distance, live visitor count, gender ratio, star rating),
- * and quick-view dismissal flow.
- */
 @RunWith(AndroidJUnit4::class)
 class MapLongPressQuickViewEmulatorTest {
 
@@ -68,16 +62,12 @@ class MapLongPressQuickViewEmulatorTest {
             }
         }
 
-        // 1. Initial State: Quick-View Card is not displayed
         composeTestRule.onNodeWithText("Berghain / Panorama Bar").assertDoesNotExist()
 
-        // 2. Simulate Long-Press Event (Press-and-Hold for 600ms)
         selectedVenueState = sampleVenue
 
-        // 3. Verify Quick-View Card appears in purple Dark-Mode style
         composeTestRule.onNodeWithText("Berghain / Panorama Bar").assertIsDisplayed()
 
-        // 4. Verify Data Integrity of essential fields from MapViewModel
         composeTestRule.onNodeWithText("Club • 0.3 km").assertIsDisplayed()
         composeTestRule.onNodeWithText("4.9").assertIsDisplayed()
         composeTestRule.onNodeWithText("380 Besucher live").assertIsDisplayed()
@@ -101,14 +91,11 @@ class MapLongPressQuickViewEmulatorTest {
             }
         }
 
-        // Verify Quick-View Card is active
         composeTestRule.onNodeWithText("Berghain / Panorama Bar").assertIsDisplayed()
         assertNotNull(selectedVenueState)
 
-        // Simulate dismiss action by clicking the close icon ("Schließen")
         composeTestRule.onNodeWithContentDescription("Schließen").performClick()
 
-        // Verify Quick-View Card is dismissed and state cleared
         assertNull(selectedVenueState)
         composeTestRule.onNodeWithText("Berghain / Panorama Bar").assertDoesNotExist()
     }

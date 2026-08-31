@@ -35,12 +35,6 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
-/**
- * Darstellungsmodell eines Events im Profil-Tab "Events".
- *
- * @param clubId Ziel der Detailnavigation.
- * @param dateLabel Vorformatierte Datums- und Zeitangabe.
- */
 data class ProfileEventUi(
     val id: String,
     val clubId: String,
@@ -50,9 +44,6 @@ data class ProfileEventUi(
     val price: String
 )
 
-/**
- * Darstellungsmodell eines eigenen Beitrags im Profil-Tab "Beiträge".
- */
 data class ProfilePostUi(
     val id: String,
     val contentText: String,
@@ -97,7 +88,6 @@ data class ProfileUiState(
     val tabs: List<String> = listOf("Beiträge", "Events", "Historie", "Bewertungen"),
     val isOwnProfile: Boolean = true,
 
-    // Profil-Bearbeitung (EditProfileScreen & Dialog)
     val isEditDialogVisible: Boolean = false,
     val editName: String = "",
     val editBio: String = "",
@@ -114,27 +104,17 @@ data class ProfileUiState(
     val isSavingProfile: Boolean = false,
     val isProfileSavedSuccessfully: Boolean = false,
 
-    // QR-Code Zustände (Kapitel 5.6)
     val isQrModalVisible: Boolean = false,
     val qrCodeBitmap: Bitmap? = null,
     val isGeneratingQrCode: Boolean = false,
     val qrPayloadText: String? = null,
 
-    // Multi-Foto Carousel / Story-Viewer Zustand
     val isMultiPhotoViewerVisible: Boolean = false,
     val activePhotoViewerIndex: Int = 0,
 
-    // Pinch-to-Zoom Image Viewer Zustand (Kapitel 8.3)
     val imageViewerState: ProfileImageViewerState = ProfileImageViewerState()
 )
 
-/**
- * ViewModel für den Profil-Screen.
- *
- * Profildaten, eigene Beiträge und die Freundesliste werden reaktiv aus der
- * lokalen Datenbank bezogen. Änderungen aus dem Bearbeiten-Dialog/Screen werden über
- * [UserRepository.saveProfile] persistiert und über den Room-Flow zurückgespielt.
- */
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val userRepository: UserRepository,
@@ -150,10 +130,8 @@ class ProfileViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
-    /** Alter des Nutzers, wird beim Speichern unverändert übernommen, sofern nicht im Edit geändert. */
     private var currentUserAge: Int = 0
 
-    /** Formatierung der Event-Termine im Profil-Tab. */
     private val eventDateFormat = SimpleDateFormat("EEE, dd. MMM, HH:mm", Locale.GERMAN)
 
     init {
@@ -175,10 +153,6 @@ class ProfileViewModel @Inject constructor(
         observeUpcomingEvents()
     }
 
-    /**
-     * Lädt die kommende Event-Agenda für den Profil-Tab "Events".
-     * Es werden nur Events von gelikten / favorisierten Clubs angezeigt.
-     */
     private fun observeUpcomingEvents() {
         viewModelScope.launch {
             combine(
@@ -389,10 +363,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    // =====================================================================
-    // Multi-Foto Carousel / Story-Viewer
-    // =====================================================================
-
     fun openMultiPhotoViewer(initialIndex: Int = 0) {
         val photos = _uiState.value.photos.ifEmpty { listOfNotNull(_uiState.value.profilePictureUrl) }
         val safeIndex = initialIndex.coerceIn(0, (photos.size - 1).coerceAtLeast(0))
@@ -424,11 +394,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    // =====================================================================
-    // Profil bearbeiten
-    // =====================================================================
-
-    /** Öffnet den Bearbeiten-Dialog, vorbelegt mit den aktuellen Profildaten. */
     fun onEditProfile() {
         val state = _uiState.value
         _uiState.update {
@@ -450,7 +415,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    /** Schließt den Bearbeiten-Dialog und verwirft die Eingaben. */
     fun onEditDialogDismissed() {
         _uiState.update { it.copy(isEditDialogVisible = false) }
     }
@@ -541,10 +505,6 @@ class ProfileViewModel @Inject constructor(
         _uiState.update { it.copy(editDrinkingHabit = habit) }
     }
 
-    /**
-     * Speichert die geänderten Profildaten in der lokalen Datenbank.
-     * Der Anzeigename darf nicht leer sein.
-     */
     fun onSaveProfile(onSuccess: () -> Unit = {}) {
         val state = _uiState.value
         val name = state.editName.trim()
@@ -595,10 +555,6 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    // =====================================================================
-    // QR-Code
-    // =====================================================================
-
     fun showQrCodeModal() {
         _uiState.update { it.copy(isQrModalVisible = true, isGeneratingQrCode = true) }
         val targetId = _uiState.value.userId
@@ -629,10 +585,6 @@ class ProfileViewModel @Inject constructor(
     fun dismissQrCodeModal() {
         _uiState.update { it.copy(isQrModalVisible = false) }
     }
-
-    // =====================================================================
-    // Profilbild
-    // =====================================================================
 
     fun onImageSelected(context: Context, uri: Uri) {
         viewModelScope.launch {
@@ -686,14 +638,9 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    /** Setzt Fehler- und Bestätigungsmeldungen zurück. */
     fun onMessageShown() {
         _uiState.update { it.copy(errorMessage = null, infoMessage = null) }
     }
-
-    // =====================================================================
-    // Bild-Vollbildanzeige
-    // =====================================================================
 
     fun openProfileImageViewer(targetUrl: String? = null) {
         val urlToDisplay = targetUrl ?: _uiState.value.profilePictureUrl

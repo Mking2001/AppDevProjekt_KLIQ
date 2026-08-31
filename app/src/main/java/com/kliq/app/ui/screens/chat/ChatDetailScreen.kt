@@ -80,10 +80,6 @@ import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.viewmodel.GroupPresenceViewModel
 import java.io.File
 
-/**
- * ChatDetailScreen - Unterstützt Stadt-Gruppenchats, WhatsApp-ähnliche Gruppenverwaltung,
- * Direktnachrichten, Sprachnachrichten, Kamera-/Galerie-Versand und Profil-Navigation.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailScreen(
@@ -107,7 +103,6 @@ fun ChatDetailScreen(
     val chatType = chatUiState.chatType
     val chatTitle = chatUiState.conversationName
 
-    // Gallery Picker Launcher
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -116,7 +111,6 @@ fun ChatDetailScreen(
         }
     }
 
-    // Camera Capture Launcher
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { bitmap: Bitmap? ->
@@ -340,7 +334,6 @@ fun ChatDetailScreen(
                 }
             }
 
-            // Attachment Sheet
             if (chatUiState.isAttachmentSheetVisible) {
                 AttachmentOptionsSheet(
                     onOptionGallery = {
@@ -353,7 +346,6 @@ fun ChatDetailScreen(
                 )
             }
 
-            // Image Preview Dialog before Sending
             chatUiState.selectedImageUri?.let { imageUri ->
                 ImagePreviewSendDialog(
                     imageUri = imageUri,
@@ -365,7 +357,6 @@ fun ChatDetailScreen(
                 )
             }
 
-            // Group Info Sheet (WhatsApp Style)
             if (showGroupInfo) {
                 GroupInfoSheet(
                     title = chatTitle,
@@ -385,7 +376,6 @@ fun ChatDetailScreen(
                 )
             }
 
-            // Who's Online Participant Sheet (Public Group Chat)
             if (presenceUiState.isParticipantSheetExpanded) {
                 GroupPresenceParticipantSheet(
                     title = if (presenceUiState.chatTitle.isNotBlank()) presenceUiState.chatTitle else chatTitle,
@@ -400,7 +390,6 @@ fun ChatDetailScreen(
                 )
             }
 
-            // Block Confirmation Dialog
             if (chatUiState.isBlockConfirmationDialogVisible) {
                 AlertDialog(
                     onDismissRequest = { chatViewModel.closeBlockConfirmationDialog() },
@@ -423,7 +412,6 @@ fun ChatDetailScreen(
                 )
             }
 
-            // Report Dialog
             if (chatUiState.isReportDialogVisible) {
                 val reportOptions = listOf("Belästigung", "Spam / Werbung", "Unangemessene Inhalte", "Fake-Profil", "Sonstiges")
                 AlertDialog(

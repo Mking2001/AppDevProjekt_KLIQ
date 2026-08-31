@@ -1,4 +1,3 @@
-
 @file:Suppress(
   "KotlinRedundantDiagnosticSuppress",
   "PropertyName",
@@ -12,8 +11,6 @@
 
 package com.kliq.app.data.generated
 
-
-
 public interface UnblockUserMutation :
     com.google.firebase.dataconnect.generated.GeneratedMutation<
       KliqConnectorConnector,
@@ -21,31 +18,26 @@ public interface UnblockUserMutation :
       UnblockUserMutation.Variables
     >
 {
-  
+
     @kotlinx.serialization.Serializable
   public data class Variables(
-  
-    val userId: String,
-  
-    val blockedUserId: String,
-  
-  ) {
-    
-    
-  }
-  
 
-  
+    val userId: String,
+
+    val blockedUserId: String,
+
+  ) {
+
+  }
+
     @kotlinx.serialization.Serializable
   public data class Data(
-  
+
     val blockedUser_delete: BlockedUserKey?,
-  
+
   ) {
-    
-    
+
   }
-  
 
   public companion object {
     public val operationName: String = "UnblockUser"
@@ -59,41 +51,32 @@ public interface UnblockUserMutation :
 }
 
 public fun UnblockUserMutation.ref(
-  
+
     userId: String,blockedUserId: String,
 
-  
-  
 ): com.google.firebase.dataconnect.MutationRef<
     UnblockUserMutation.Data,
     UnblockUserMutation.Variables
   > =
   ref(
-    
+
       UnblockUserMutation.Variables(
         userId=userId,blockedUserId=blockedUserId,
-  
+
       )
-    
+
   )
 
 public suspend fun UnblockUserMutation.execute(
 
-  
-    
       userId: String,blockedUserId: String,
-
-  
 
   ): com.google.firebase.dataconnect.MutationResult<
     UnblockUserMutation.Data,
     UnblockUserMutation.Variables
   > =
   ref(
-    
+
       userId=userId,blockedUserId=blockedUserId,
-  
-    
+
   ).execute()
-
-

@@ -1,4 +1,3 @@
-
 @file:Suppress(
   "KotlinRedundantDiagnosticSuppress",
   "PropertyName",
@@ -12,8 +11,6 @@
 
 package com.kliq.app.data.generated
 
-
-
 public interface VoteReviewHelpfulMutation :
     com.google.firebase.dataconnect.generated.GeneratedMutation<
       KliqConnectorConnector,
@@ -21,31 +18,26 @@ public interface VoteReviewHelpfulMutation :
       VoteReviewHelpfulMutation.Variables
     >
 {
-  
+
     @kotlinx.serialization.Serializable
   public data class Variables(
-  
-    val id: String,
-  
-    val helpfulVotesCount: Int,
-  
-  ) {
-    
-    
-  }
-  
 
-  
+    val id: String,
+
+    val helpfulVotesCount: Int,
+
+  ) {
+
+  }
+
     @kotlinx.serialization.Serializable
   public data class Data(
-  
+
     val review_update: ReviewKey?,
-  
+
   ) {
-    
-    
+
   }
-  
 
   public companion object {
     public val operationName: String = "VoteReviewHelpful"
@@ -59,41 +51,32 @@ public interface VoteReviewHelpfulMutation :
 }
 
 public fun VoteReviewHelpfulMutation.ref(
-  
+
     id: String,helpfulVotesCount: Int,
 
-  
-  
 ): com.google.firebase.dataconnect.MutationRef<
     VoteReviewHelpfulMutation.Data,
     VoteReviewHelpfulMutation.Variables
   > =
   ref(
-    
+
       VoteReviewHelpfulMutation.Variables(
         id=id,helpfulVotesCount=helpfulVotesCount,
-  
+
       )
-    
+
   )
 
 public suspend fun VoteReviewHelpfulMutation.execute(
 
-  
-    
       id: String,helpfulVotesCount: Int,
-
-  
 
   ): com.google.firebase.dataconnect.MutationResult<
     VoteReviewHelpfulMutation.Data,
     VoteReviewHelpfulMutation.Variables
   > =
   ref(
-    
+
       id=id,helpfulVotesCount=helpfulVotesCount,
-  
-    
+
   ).execute()
-
-

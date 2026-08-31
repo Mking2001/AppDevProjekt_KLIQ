@@ -14,9 +14,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * UI State fuer das 1-zu-1 Private Messaging.
- */
 data class PrivateChatUiState(
     val currentUserId: String = "",
     val receiverId: String = "",
@@ -30,9 +27,6 @@ data class PrivateChatUiState(
     val errorMessage: String? = null
 )
 
-/**
- * ViewModel fuer die 1-zu-1 Chat-Logik nach MVVM.
- */
 @HiltViewModel
 class PrivateChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository
@@ -43,9 +37,6 @@ class PrivateChatViewModel @Inject constructor(
 
     private var messageSubscriptionJob: Job? = null
 
-    /**
-     * Initialisiert den Konversations-State zwischen zwei Nutzern.
-     */
     fun initConversation(
         currentUserId: String,
         receiverId: String,
@@ -87,16 +78,10 @@ class PrivateChatViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Reagiert auf Texteingabe-Aenderungen in der UI.
-     */
     fun onInputChanged(text: String) {
         _uiState.update { it.copy(currentInput = text) }
     }
 
-    /**
-     * Sendet eine 1-zu-1 Direktnachricht an den Empfaenger.
-     */
     fun sendMessage(
         receiverId: String = _uiState.value.receiverId,
         text: String = _uiState.value.currentInput
@@ -124,9 +109,6 @@ class PrivateChatViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Sendet eine 1-zu-1 Sprachnachricht an den Empfaenger.
-     */
     fun sendVoiceMessage(
         receiverId: String = _uiState.value.receiverId,
         audioUrl: String,
@@ -162,18 +144,12 @@ class PrivateChatViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Verarbeitet eingehende Nachrichten in Echtzeit.
-     */
     fun handleIncomingMessage(message: DirectMessage) {
         viewModelScope.launch {
             chatRepository.receiveDirectMessage(message)
         }
     }
 
-    /**
-     * Markiert die Konversation als gelesen.
-     */
     fun markAsRead(
         senderId: String = _uiState.value.receiverId,
         receiverId: String = _uiState.value.currentUserId
@@ -184,9 +160,6 @@ class PrivateChatViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Umschalten der End-to-End Verschluesselung.
-     */
     fun toggleEncryption(enabled: Boolean) {
         _uiState.update { it.copy(isEncryptedSession = enabled) }
     }

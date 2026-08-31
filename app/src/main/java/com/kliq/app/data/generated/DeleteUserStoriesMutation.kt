@@ -1,4 +1,3 @@
-
 @file:Suppress(
   "KotlinRedundantDiagnosticSuppress",
   "PropertyName",
@@ -12,8 +11,6 @@
 
 package com.kliq.app.data.generated
 
-
-
 public interface DeleteUserStoriesMutation :
     com.google.firebase.dataconnect.generated.GeneratedMutation<
       KliqConnectorConnector,
@@ -21,29 +18,24 @@ public interface DeleteUserStoriesMutation :
       DeleteUserStoriesMutation.Variables
     >
 {
-  
+
     @kotlinx.serialization.Serializable
   public data class Variables(
-  
-    val authorUserId: String,
-  
-  ) {
-    
-    
-  }
-  
 
-  
+    val authorUserId: String,
+
+  ) {
+
+  }
+
     @kotlinx.serialization.Serializable
   public data class Data(
-  
+
     val story_deleteMany: Int,
-  
+
   ) {
-    
-    
+
   }
-  
 
   public companion object {
     public val operationName: String = "DeleteUserStories"
@@ -57,41 +49,32 @@ public interface DeleteUserStoriesMutation :
 }
 
 public fun DeleteUserStoriesMutation.ref(
-  
+
     authorUserId: String,
 
-  
-  
 ): com.google.firebase.dataconnect.MutationRef<
     DeleteUserStoriesMutation.Data,
     DeleteUserStoriesMutation.Variables
   > =
   ref(
-    
+
       DeleteUserStoriesMutation.Variables(
         authorUserId=authorUserId,
-  
+
       )
-    
+
   )
 
 public suspend fun DeleteUserStoriesMutation.execute(
 
-  
-    
       authorUserId: String,
-
-  
 
   ): com.google.firebase.dataconnect.MutationResult<
     DeleteUserStoriesMutation.Data,
     DeleteUserStoriesMutation.Variables
   > =
   ref(
-    
+
       authorUserId=authorUserId,
-  
-    
+
   ).execute()
-
-

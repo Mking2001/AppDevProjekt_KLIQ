@@ -1,4 +1,3 @@
-
 @file:Suppress(
   "KotlinRedundantDiagnosticSuppress",
   "PropertyName",
@@ -12,8 +11,6 @@
 
 package com.kliq.app.data.generated
 
-
-
 public interface DeleteUserFriendshipsReverseMutation :
     com.google.firebase.dataconnect.generated.GeneratedMutation<
       KliqConnectorConnector,
@@ -21,29 +18,24 @@ public interface DeleteUserFriendshipsReverseMutation :
       DeleteUserFriendshipsReverseMutation.Variables
     >
 {
-  
+
     @kotlinx.serialization.Serializable
   public data class Variables(
-  
-    val friendUserId: String,
-  
-  ) {
-    
-    
-  }
-  
 
-  
+    val friendUserId: String,
+
+  ) {
+
+  }
+
     @kotlinx.serialization.Serializable
   public data class Data(
-  
+
     val friend_deleteMany: Int,
-  
+
   ) {
-    
-    
+
   }
-  
 
   public companion object {
     public val operationName: String = "DeleteUserFriendshipsReverse"
@@ -57,41 +49,32 @@ public interface DeleteUserFriendshipsReverseMutation :
 }
 
 public fun DeleteUserFriendshipsReverseMutation.ref(
-  
+
     friendUserId: String,
 
-  
-  
 ): com.google.firebase.dataconnect.MutationRef<
     DeleteUserFriendshipsReverseMutation.Data,
     DeleteUserFriendshipsReverseMutation.Variables
   > =
   ref(
-    
+
       DeleteUserFriendshipsReverseMutation.Variables(
         friendUserId=friendUserId,
-  
+
       )
-    
+
   )
 
 public suspend fun DeleteUserFriendshipsReverseMutation.execute(
 
-  
-    
       friendUserId: String,
-
-  
 
   ): com.google.firebase.dataconnect.MutationResult<
     DeleteUserFriendshipsReverseMutation.Data,
     DeleteUserFriendshipsReverseMutation.Variables
   > =
   ref(
-    
+
       friendUserId=friendUserId,
-  
-    
+
   ).execute()
-
-

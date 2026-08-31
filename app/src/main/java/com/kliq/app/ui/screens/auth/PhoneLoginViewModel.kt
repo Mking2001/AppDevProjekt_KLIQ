@@ -11,10 +11,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * ViewModel zur Verwaltung des Formularstatus und der Validierungslogik
- * für den Login mit Benutzername, E-Mail oder Telefonnummer + Passwort.
- */
 @HiltViewModel
 class PhoneLoginViewModel @Inject constructor(
     private val userRepository: UserRepository

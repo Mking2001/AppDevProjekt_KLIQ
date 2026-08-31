@@ -58,4 +58,3 @@ data class OtherUserProfileUiState(
     val actionSuccessMessage: String? = null,
     val imageViewerState: ProfileImageViewerState = ProfileImageViewerState()
 )
-

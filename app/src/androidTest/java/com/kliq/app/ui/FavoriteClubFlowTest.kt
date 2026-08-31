@@ -23,11 +23,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/**
- * Instrumented UI & Flow Test for Chapter 7.7: Club Favorites System.
- * Tests heart icon toggle animations, visual state transitions,
- * process-restart Room persistence simulation, and favorite list rendering.
- */
 @RunWith(AndroidJUnit4::class)
 class FavoriteClubFlowTest {
 
@@ -47,14 +42,11 @@ class FavoriteClubFlowTest {
             }
         }
 
-        // 1. Initial State: Unfavorited ("Zu Favoriten hinzufügen")
         composeTestRule.onNodeWithContentDescription("Zu Favoriten hinzufügen").assertIsDisplayed()
         assertFalse(isFavoriteState)
 
-        // 2. Perform Click on Favorite Icon
         composeTestRule.onNodeWithContentDescription("Zu Favoriten hinzufügen").performClick()
 
-        // 3. Verify State updated to Favorited ("Aus Favoriten entfernen")
         composeTestRule.onNodeWithContentDescription("Aus Favoriten entfernen").assertIsDisplayed()
         assertTrue(isFavoriteState)
     }
@@ -91,7 +83,6 @@ class FavoriteClubFlowTest {
             }
         }
 
-        // Verify favorited club persists after re-render and displays in favorites list
         composeTestRule.onNodeWithText("Watergate").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Aus Favoriten entfernen").assertIsDisplayed()
     }

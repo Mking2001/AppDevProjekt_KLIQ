@@ -49,7 +49,6 @@ interface UserDao {
     @Query("SELECT * FROM users ORDER BY username ASC LIMIT 50")
     suspend fun getAllUsers(): List<UserEntity>
 
-    // Preferences
     @Query("SELECT * FROM user_preferences WHERE userId = :userId")
     fun getUserPreferences(userId: String): Flow<UserPreferencesEntity?>
 

@@ -27,11 +27,6 @@ import com.kliq.app.ui.theme.ErrorRed
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.util.HapticFeedbackUtils
 
-/**
- * Reusable wrapper that adds swipe-to-action behavior to any list item in Kliq.
- * Swiping EndToStart (Swipe Left) triggers [onArchive] with Purple (#8A2BE2) background.
- * Swiping StartToEnd (Swipe Right) triggers [onDelete] with Red background and confirmation safety check.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SwipeableActionRow(
@@ -47,7 +42,7 @@ fun SwipeableActionRow(
                 SwipeToDismissBoxValue.StartToEnd -> {
                     com.kliq.app.util.HapticFeedbackUtils.triggerPattern(view, com.kliq.app.util.HapticFeedbackPattern.HEAVY_CLICK)
                     onDelete()
-                    false // Return false so item stays rendered until confirmed in dialog
+                    false
                 }
                 SwipeToDismissBoxValue.EndToStart -> {
                     com.kliq.app.util.HapticFeedbackUtils.triggerPattern(view, com.kliq.app.util.HapticFeedbackPattern.LIGHT_CLICK)
@@ -66,13 +61,13 @@ fun SwipeableActionRow(
         enableDismissFromEndToStart = true,
         backgroundContent = {
             val direction = dismissState.dismissDirection
-            
+
             val color by animateColorAsState(
                 targetValue = when (dismissState.targetValue) {
                     SwipeToDismissBoxValue.Settled -> Color.Transparent
-                    SwipeToDismissBoxValue.StartToEnd -> ErrorRed // Rot für Löschen
-                    SwipeToDismissBoxValue.EndToStart -> PurplePrimary // Kliq Lila für Archivieren
-                }, 
+                    SwipeToDismissBoxValue.StartToEnd -> ErrorRed
+                    SwipeToDismissBoxValue.EndToStart -> PurplePrimary
+                },
                 label = "swipe_color"
             )
 
@@ -81,7 +76,7 @@ fun SwipeableActionRow(
                 SwipeToDismissBoxValue.EndToStart -> Alignment.CenterEnd
                 SwipeToDismissBoxValue.Settled -> Alignment.Center
             }
-            
+
             val icon = when (direction) {
                 SwipeToDismissBoxValue.StartToEnd -> Icons.Default.Delete
                 SwipeToDismissBoxValue.EndToStart -> Icons.Default.Archive
@@ -115,4 +110,3 @@ fun SwipeableActionRow(
         }
     )
 }
-

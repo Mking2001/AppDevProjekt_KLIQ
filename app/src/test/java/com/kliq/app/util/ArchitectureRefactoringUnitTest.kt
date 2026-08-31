@@ -23,10 +23,6 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import java.lang.reflect.Modifier
 
-/**
- * Unit-Tests zur Verifikation des Architektur-Refactorings (Kapitel 9.5),
- * der UseCase-Modularisierung und der schreibgeschützten StateFlow-Kapselung in ViewModels.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ArchitectureRefactoringUnitTest {
 
@@ -42,10 +38,6 @@ class ArchitectureRefactoringUnitTest {
         Dispatchers.resetMain()
     }
 
-    /**
-     * Prüft, dass der [GetClubsWithDistanceUseCase] Entfernungen korrekt berechnet
-     * und Kategorie-Filter ("Clubs", "Bars", "Events") im Domain-Layer anwendet.
-     */
     @Test
     fun testGetClubsWithDistanceUseCase_calculatesDistancesAndFilters() = kotlinx.coroutines.test.runTest {
         val mockClubRepo = mock(ClubRepository::class.java)
@@ -71,36 +63,26 @@ class ArchitectureRefactoringUnitTest {
 
         val useCase = GetClubsWithDistanceUseCase(mockClubRepo)
 
-        // 1. Abfrage aller Venues
         val allResult = useCase(userLat = 52.5200, userLng = 13.4050, filterCategory = "Alle").first()
         assertEquals(2, allResult.size)
         assertNotNull(allResult.find { it.name == "Berghain" }?.distance)
 
-        // 2. Abfrage nur "Clubs"
         val clubsResult = useCase(userLat = 52.5200, userLng = 13.4050, filterCategory = "Clubs").first()
         assertEquals(1, clubsResult.size)
         assertEquals("Berghain", clubsResult.first().name)
     }
 
-    /**
-     * Prüft via Reflektion, dass ViewModels (wie [MapViewModel] und [LocationTrackingViewModel])
-     * ihre internen MutableStateFlows als `private` kapseln und nach außen ausschließlich
-     * schreibgeschützte `StateFlow` Interfaces bereitstellen.
-     */
     @Test
     fun testViewModelStateFlowEncapsulation_readOnlyStreams() {
         val mapViewModelClass = MapViewModel::class.java
         val locationViewModelClass = LocationTrackingViewModel::class.java
 
-        // Prüfe, dass `_uiState` in MapViewModel private ist
         val mapPrivateField = mapViewModelClass.getDeclaredField("_uiState")
         assertTrue(Modifier.isPrivate(mapPrivateField.modifiers))
 
-        // Prüfe, dass `uiState` schreibgeschützt ist (StateFlow)
         val mapPublicField = mapViewModelClass.getDeclaredField("uiState")
         assertEquals(kotlinx.coroutines.flow.StateFlow::class.java, mapPublicField.type)
 
-        // Prüfe `_uiState` in LocationTrackingViewModel
         val locationPrivateField = locationViewModelClass.getDeclaredField("_uiState")
         assertTrue(Modifier.isPrivate(locationPrivateField.modifiers))
     }

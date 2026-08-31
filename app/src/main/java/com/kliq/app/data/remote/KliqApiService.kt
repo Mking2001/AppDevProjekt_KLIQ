@@ -26,7 +26,7 @@ data class BlockUserRequestDto(
 interface KliqApiService {
     @GET("users/{id}")
     suspend fun getUserProfile(@Path("id") userId: String): UserEntity
-    
+
     @GET("search/discover")
     suspend fun searchExternalClubsAndEvents(
         @Query("q") query: String,

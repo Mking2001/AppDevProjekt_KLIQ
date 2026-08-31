@@ -229,7 +229,7 @@ class ChatRepositoryImpl @Inject constructor(
                             chatDao.insertMessage(localMsg)
                         }
                     } else {
-                        // Private 1-to-1 chat
+
                         val msgsResponse = connector.getMessagesByChat.execute(chatId = cloudChat.id)
                         val msgs = msgsResponse.data.messages
                         if (msgs.isNotEmpty()) {
@@ -296,7 +296,6 @@ class ChatRepositoryImpl @Inject constructor(
                                 )
                                 chatDao.insertChat(privateChatEntity)
 
-                                // Notification trigger for new unread messages
                                 if (unreadForMe > prevUnread && latestMsg.senderUserId != currentUserId) {
                                     notificationHelper?.showChatNotification(
                                         com.kliq.app.data.model.ChatPushPayload(
@@ -491,7 +490,7 @@ class ChatRepositoryImpl @Inject constructor(
                         }
                     }
                 } catch (ignored: Exception) {
-                    // Graceful fallback for offline / mock mode
+
                 }
             }
 
@@ -579,7 +578,7 @@ class ChatRepositoryImpl @Inject constructor(
                         this.mediaUrl = mediaUrl
                     }
                 } catch (ignored: Exception) {
-                    // Graceful fallback for offline mode
+
                 }
             }
 

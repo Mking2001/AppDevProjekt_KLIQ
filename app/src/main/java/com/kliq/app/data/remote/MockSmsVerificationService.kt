@@ -2,14 +2,6 @@ package com.kliq.app.data.remote
 
 import kotlinx.coroutines.delay
 
-/**
- * Mock-Implementierung des [SmsVerificationService] für die lokale
- * Entwicklung und Unit-Tests. Simuliert Netzwerk-Latenz und validiert
- * gegen einen fest hinterlegten Test-Code.
- *
- * Akzeptierter Code: "123456"
- * Simulierte Latenz: 1000ms pro Aufruf
- */
 class MockSmsVerificationService : SmsVerificationService {
 
     companion object {
@@ -26,7 +18,6 @@ class MockSmsVerificationService : SmsVerificationService {
             )
         }
 
-        // Mock: Code wird immer erfolgreich "gesendet"
         return Result.success(Unit)
     }
 

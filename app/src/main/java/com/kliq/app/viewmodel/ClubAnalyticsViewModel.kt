@@ -16,9 +16,6 @@ import javax.inject.Inject
 import com.kliq.app.data.model.OccupancyCategory
 import com.kliq.app.data.model.OccupancyTrend
 
-/**
- * ViewModel responsible for managing and aggregating club visitor analytics, occupancy metrics, and gender ratios.
- */
 @HiltViewModel
 class ClubAnalyticsViewModel @Inject constructor(
     private val clubRepository: ClubRepository
@@ -51,7 +48,7 @@ class ClubAnalyticsViewModel @Inject constructor(
                 val maxCapacity = 1500
 
                 if (!isOpen) {
-                    // Club ist geschlossen: Keine Live-Auslastung anzeigen
+
                     ClubAnalyticsUiState(
                         isLoading = false,
                         clubId = clubId,
@@ -67,7 +64,7 @@ class ClubAnalyticsViewModel @Inject constructor(
                         errorMessage = null
                     )
                 } else {
-                    // Club ist geöffnet: Reale Check-ins berechnen (0 falls niemand eingecheckt ist)
+
                     val capacityPercent = if (visitorCount > 0) {
                         ((visitorCount.toFloat() / maxCapacity) * 100).toInt().coerceIn(0, 100)
                     } else {

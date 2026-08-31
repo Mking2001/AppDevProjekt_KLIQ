@@ -60,10 +60,6 @@ import com.kliq.app.ui.theme.heading2
 import com.kliq.app.ui.theme.heading3
 import com.kliq.app.viewmodel.ThemeMode
 
-/**
- * Catalog Screen for testing and inspecting Custom Typography (Poppins)
- * and the unified Icon Styling System in different theme modes and states.
- */
 @Composable
 fun TypographyAndIconCatalogScreen(
     modifier: Modifier = Modifier
@@ -99,7 +95,6 @@ fun TypographyAndIconCatalogScreen(
                     )
                 }
 
-                // Theme Switcher Section
                 item {
                     Card(
                         shape = RoundedCornerShape(16.dp),
@@ -146,12 +141,10 @@ fun TypographyAndIconCatalogScreen(
                     }
                 }
 
-                // Typography Section
                 item {
                     TypographyCatalogSection()
                 }
 
-                // Icon Matrix Section
                 item {
                     IconMatrixCatalogSection()
                 }
@@ -273,7 +266,6 @@ private fun IconMatrixCatalogSection() {
                 color = MaterialTheme.colorScheme.primary
             )
 
-            // Icon Sizes Row
             Text(
                 text = "Icon Größen (Small: 16dp, Medium: 24dp, Large: 32dp, Display: 48dp)",
                 style = MaterialTheme.typography.titleMedium,
@@ -289,7 +281,6 @@ private fun IconMatrixCatalogSection() {
                 KliqIcon(imageVector = Icons.Default.Favorite, contentDescription = "Display Favorite Icon", size = KliqIconSize.DISPLAY, category = KliqIconCategory.ACTION)
             }
 
-            // Category Matrix: Active, Inactive, Disabled, Highlighted
             Text(
                 text = "Zustands-Matrix (Active, Inactive, Disabled, Highlighted)",
                 style = MaterialTheme.typography.titleMedium,
@@ -328,24 +319,24 @@ private fun IconStateRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Active
+
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 KliqIcon(imageVector = vector, contentDescription = "$title Active", isSelected = true, category = category)
                 Text(text = "Active", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            // Inactive
+
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 KliqIcon(imageVector = vector, contentDescription = "$title Inactive", isSelected = false, category = category)
                 Text(text = "Inactive", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            // Disabled
+
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(modifier = Modifier.alpha(0.38f)) {
                     KliqIcon(imageVector = vector, contentDescription = "$title Disabled", isSelected = false, category = category)
                 }
                 Text(text = "Disabled", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            // Highlighted Neon Lila
+
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 KliqIcon(imageVector = vector, contentDescription = "$title Neon Highlight", tint = PurplePrimaryLight, category = category)
                 Text(text = "Neon Lila", style = MaterialTheme.typography.labelSmall, color = PurplePrimaryLight)
@@ -354,7 +345,6 @@ private fun IconStateRow(
     }
 }
 
-// Preview Suite
 @Preview(name = "Dark Mode Preview", uiMode = Configuration.UI_MODE_NIGHT_YES, showBackground = true)
 @Composable
 fun TypographyAndIconCatalogDarkPreview() {

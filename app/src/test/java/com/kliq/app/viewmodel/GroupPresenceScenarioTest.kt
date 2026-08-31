@@ -43,7 +43,7 @@ class GroupPresenceScenarioTest {
 
     @Test
     fun step1_simulateUserJoinPublicCityChat() = runTest(testDispatcher) {
-        val chatId = "pub_1" // Berlin - Tonight
+        val chatId = "pub_1"
         viewModel.loadGroupPresence(chatId)
 
         val state = viewModel.uiState.value
@@ -75,13 +75,11 @@ class GroupPresenceScenarioTest {
         val initialOnlineCount = viewModel.uiState.value.totalOnlineCount
         assertTrue(initialOnlineCount > 0)
 
-        // Simulating status change of current user to AWAY
         viewModel.updateMyPresenceStatus(UserStatus.AWAY)
 
         val updatedState = viewModel.uiState.value
         assertEquals(UserStatus.AWAY, updatedState.myPresenceStatus)
 
-        // Verify repository reflects update without delay
         val summary = repository.observeGroupPresence(chatId).first()
         val currentUserMember = summary.members.find { it.userId == "current_user" }
         assertNotNull("current_user should be present in city presence summary", currentUserMember)
@@ -93,7 +91,6 @@ class GroupPresenceScenarioTest {
         val chatId = "pub_1"
         viewModel.loadGroupPresence(chatId)
 
-        // Filter for specific user
         viewModel.onSearchQueryChanged("Sophie")
         val filtered = viewModel.uiState.value.filteredMembers
 

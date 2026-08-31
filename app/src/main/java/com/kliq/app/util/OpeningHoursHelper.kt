@@ -13,7 +13,7 @@ object OpeningHoursHelper {
         currentDayOfWeek: String = getCurrentDayGermanName()
     ): LiveOpeningStatus {
         val todayScheduleText = operatingHours.weeklySchedule[currentDayOfWeek] ?: operatingHours.todayHours
-        
+
         if (todayScheduleText.isBlank() || todayScheduleText.equals("Geschlossen", ignoreCase = true)) {
             return LiveOpeningStatus.CLOSED
         }

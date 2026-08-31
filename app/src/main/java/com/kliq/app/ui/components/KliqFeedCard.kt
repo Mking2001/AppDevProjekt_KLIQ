@@ -49,24 +49,6 @@ import com.kliq.app.ui.theme.TealSecondary
 import com.kliq.app.util.ensureMinTouchTarget
 import com.kliq.app.util.talkBackDescription
 
-/**
- * Feed-Karte für die Beitragsanzeige im Hauptfeed.
- *
- * @param userName Anzeigename des Verfassers.
- * @param timeAgo Formatierte relative Zeitangabe (z.B. "vor 2 Std.").
- * @param contentText Haupttext des Beitrags.
- * @param modifier Optionaler Modifier für Layout-Anpassungen.
- * @param likeCount Anzahl der Likes.
- * @param isLiked Ob der aktuelle Nutzer den Beitrag geliked hat.
- * @param commentCount Anzahl der Kommentare.
- * @param clubName Optionaler Name der verknüpften Location.
- * @param imageUrl Optionale Bild-URL des Beitrags.
- * @param isOwnPost Ob der Beitrag vom aktuell angemeldeten Nutzer stammt.
- * @param onLikeClick Callback für den Like-Button.
- * @param onCommentClick Callback für den Kommentar-Button.
- * @param onShareClick Callback für den Teilen-Button.
- * @param onDeletePostClick Callback zum Löschen des Beitrags (nur für Ersteller).
- */
 @Composable
 fun KliqFeedCard(
     userName: String,
@@ -119,7 +101,6 @@ fun KliqFeedCard(
                     )
                 }
 
-                // Beitrag löschen (NUR wenn der aktuelle User der Ersteller ist!)
                 if (isOwnPost && onDeletePostClick != null) {
                     IconButton(
                         onClick = onDeletePostClick,
@@ -220,11 +201,6 @@ fun KliqFeedCard(
     }
 }
 
-/**
- * Motivbereich einer Feed-Karte.
- * Lädt ein Bild, wenn eine URL vorliegt, und rendert andernfalls
- * eine Fallback-Grafik mit Kliq-Farbverlauf und Location-Hinweis.
- */
 @Composable
 private fun FeedCardMedia(imageUrl: String?, clubName: String?) {
     if (imageUrl.isNullOrBlank() && clubName.isNullOrBlank()) {
@@ -276,7 +252,6 @@ private fun FeedCardMedia(imageUrl: String?, clubName: String?) {
         return
     }
 
-    // Only location tag without image
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))

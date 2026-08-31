@@ -4,9 +4,6 @@ import com.kliq.app.data.model.DrinkingHabit
 import com.kliq.app.data.model.SearchIntent
 import com.kliq.app.data.model.SmokingHabit
 
-/**
- * Status der Username-Verfügbarkeitsprüfung gegen Room und Firebase Cloud SQL.
- */
 sealed class UsernameCheckStatus {
     data object Idle : UsernameCheckStatus()
     data object Checking : UsernameCheckStatus()
@@ -15,9 +12,6 @@ sealed class UsernameCheckStatus {
     data class Invalid(val message: String) : UsernameCheckStatus()
 }
 
-/**
- * Status der E-Mail-Verfügbarkeitsprüfung.
- */
 sealed class EmailCheckStatus {
     data object Idle : EmailCheckStatus()
     data object Checking : EmailCheckStatus()
@@ -26,9 +20,6 @@ sealed class EmailCheckStatus {
     data class Invalid(val message: String) : EmailCheckStatus()
 }
 
-/**
- * Status der Telefonnummer-Verfügbarkeitsprüfung.
- */
 sealed class PhoneCheckStatus {
     data object Idle : PhoneCheckStatus()
     data object Checking : PhoneCheckStatus()
@@ -37,9 +28,6 @@ sealed class PhoneCheckStatus {
     data class Invalid(val message: String) : PhoneCheckStatus()
 }
 
-/**
- * UI State für den vollständigen Registrierungs-Flow.
- */
 data class RegisterUiState(
     val username: String = "",
     val usernameStatus: UsernameCheckStatus = UsernameCheckStatus.Idle,
@@ -64,11 +52,11 @@ data class RegisterUiState(
     val phoneNumber: String = "",
     val phoneStatus: PhoneCheckStatus = PhoneCheckStatus.Idle,
     val phoneNumberError: String? = null,
-    // Bis zu 4 Profilbilder (Hauptbild an Index 0 + bis zu 3 weitere)
+
     val photos: List<String> = emptyList(),
     val selectedPhotoSlotIndex: Int = 0,
     val profilePictureError: String? = null,
-    // Vorschau Modal
+
     val isPreviewModalOpen: Boolean = false,
     val previewPhotoIndex: Int = 0,
     val searchIntent: SearchIntent = SearchIntent.BOTH,

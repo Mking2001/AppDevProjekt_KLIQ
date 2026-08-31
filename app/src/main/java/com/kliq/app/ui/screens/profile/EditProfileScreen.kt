@@ -107,10 +107,6 @@ import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.ui.theme.TealSecondary
 import java.io.File
 
-/**
- * Screen zur Bearbeitung aller Profildaten, Lebensgewohnheiten und Fotos
- * im markenspezifischen KLIQ Dark/Neon-Design.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(
@@ -245,7 +241,7 @@ fun EditProfileScreen(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp)
         ) {
-            // 1. Profil Avatar & Name/Alter Kopfbereich
+
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -277,12 +273,10 @@ fun EditProfileScreen(
                 }
             }
 
-            // Trennlinie
             item {
                 Divider(color = DarkOutline.copy(alpha = 0.25f), thickness = 0.5.dp)
             }
 
-            // 2. 4 Foto-Slots
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
@@ -331,7 +325,6 @@ fun EditProfileScreen(
                                         contentScale = ContentScale.Crop
                                     )
 
-                                    // Slot-Nummer Badge
                                     Box(
                                         modifier = Modifier
                                             .align(Alignment.TopStart)
@@ -351,7 +344,6 @@ fun EditProfileScreen(
                                         )
                                     }
 
-                                    // Löschen Button
                                     Box(
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)
@@ -396,18 +388,16 @@ fun EditProfileScreen(
                 }
             }
 
-            // Trennlinie
             item {
                 Divider(color = DarkOutline.copy(alpha = 0.25f), thickness = 0.5.dp)
             }
 
-            // 3. Username & Heimatstadt nebeneinander
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Username
+
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Username:",
@@ -435,7 +425,6 @@ fun EditProfileScreen(
                         )
                     }
 
-                    // Heimatstadt
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Heimatstadt:",
@@ -485,7 +474,6 @@ fun EditProfileScreen(
                 }
             }
 
-            // 4. Auf der Suche nach (Segmented Control)
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
@@ -510,13 +498,12 @@ fun EditProfileScreen(
                 }
             }
 
-            // 5. Email & Telefonnummer nebeneinander
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    // Email
+
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Email:",
@@ -545,7 +532,6 @@ fun EditProfileScreen(
                         )
                     }
 
-                    // Telefonnummer
                     Column(modifier = Modifier.weight(1.1f)) {
                         Text(
                             text = "Telefonnummer:",
@@ -560,7 +546,7 @@ fun EditProfileScreen(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            // Ländervorwahl-Pill
+
                             Box(
                                 modifier = Modifier
                                     .height(56.dp)
@@ -580,7 +566,6 @@ fun EditProfileScreen(
                                 )
                             }
 
-                            // Nummer-Eingabe
                             OutlinedTextField(
                                 value = uiState.editPhoneNumber,
                                 onValueChange = viewModel::onEditPhoneNumberChanged,
@@ -603,12 +588,10 @@ fun EditProfileScreen(
                 }
             }
 
-            // Trennlinie
             item {
                 Divider(color = DarkOutline.copy(alpha = 0.25f), thickness = 0.5.dp)
             }
 
-            // 6. Rauchkonsum (Segmented Control)
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
@@ -632,7 +615,6 @@ fun EditProfileScreen(
                 }
             }
 
-            // 7. Alkoholkonsum (Segmented Control)
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
@@ -656,7 +638,6 @@ fun EditProfileScreen(
                 }
             }
 
-            // 8. Bio / Biografie
             item {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
@@ -687,7 +668,6 @@ fun EditProfileScreen(
                 }
             }
 
-            // 9. Speichern-Button
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
@@ -726,7 +706,6 @@ fun EditProfileScreen(
         }
     }
 
-    // Image Picker Bottom Sheet
     ProfileImagePickerBottomSheet(
         isVisible = showImagePickerSheet,
         onDismissRequest = { showImagePickerSheet = false },
@@ -740,7 +719,6 @@ fun EditProfileScreen(
         }
     )
 
-    // Fullscreen Zoom Overlay
     ZoomableImageOverlay(
         isVisible = uiState.imageViewerState.isFullscreenVisible,
         onDismiss = { viewModel.dismissProfileImageViewer() },
@@ -754,7 +732,6 @@ fun EditProfileScreen(
         }
     )
 
-    // Modal für Heimatstadt-Auswahl
     if (showCityPickerModal) {
         CitySelectionDialog(
             currentCity = uiState.editLocation,
@@ -766,7 +743,6 @@ fun EditProfileScreen(
         )
     }
 
-    // Modal für Ländervorwahl-Auswahl
     if (showCountryCodeModal) {
         CountryCodeSelectionDialog(
             currentCode = uiState.editCountryCode,
@@ -779,17 +755,11 @@ fun EditProfileScreen(
     }
 }
 
-/**
- * Hilfs-Datenklasse für Pill-Optionen.
- */
 data class PillOption<T>(
     val label: String,
     val value: T
 )
 
-/**
- * Segmented Pill Bar im KLIQ-Design.
- */
 @Composable
 fun <T> SegmentedPillBar(
     options: List<PillOption<T>>,
@@ -837,10 +807,6 @@ fun <T> SegmentedPillBar(
     }
 }
 
-/**
- * Dialog zur Auswahl der Heimatstadt aus den österreichischen/deutschen Städten
- * inklusive freier Texteingabe.
- */
 @Composable
 private fun CitySelectionDialog(
     currentCity: String,
@@ -943,9 +909,6 @@ private fun CitySelectionDialog(
     )
 }
 
-/**
- * Dialog zur Ländervorwahl-Auswahl.
- */
 @Composable
 private fun CountryCodeSelectionDialog(
     currentCode: String,

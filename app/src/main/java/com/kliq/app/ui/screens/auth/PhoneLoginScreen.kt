@@ -74,9 +74,6 @@ import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 import com.kliq.app.ui.theme.TealSecondary
 
-/**
- * Screen für den direkten Login mit Benutzername / E-Mail / Handynummer und Passwort.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhoneLoginScreen(
@@ -143,7 +140,7 @@ fun PhoneLoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Logo & Header
+
                 Box(
                     modifier = Modifier
                         .size(76.dp)
@@ -190,7 +187,6 @@ fun PhoneLoginScreen(
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // Form Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
@@ -208,7 +204,7 @@ fun PhoneLoginScreen(
                             .padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Benutzername / E-Mail / Telefonnummer
+
                         OutlinedTextField(
                             value = uiState.identifier,
                             onValueChange = viewModel::onIdentifierChanged,
@@ -229,7 +225,6 @@ fun PhoneLoginScreen(
                             colors = customLoginTextFieldColors()
                         )
 
-                        // Passwort
                         OutlinedTextField(
                             value = uiState.password,
                             onValueChange = viewModel::onPasswordChanged,
@@ -265,7 +260,6 @@ fun PhoneLoginScreen(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        // Login Button
                         Button(
                             onClick = {
                                 keyboardController?.hide()
@@ -308,7 +302,6 @@ fun PhoneLoginScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
-                // Registrierungs-Link
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center

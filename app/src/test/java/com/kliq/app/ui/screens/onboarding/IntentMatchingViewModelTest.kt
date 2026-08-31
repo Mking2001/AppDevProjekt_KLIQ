@@ -52,20 +52,18 @@ class IntentMatchingViewModelTest {
 
     @Test
     fun `selecting an intent option validates selection state`() {
-        // Select FRIENDS option
+
         viewModel.selectIntent(SearchIntent.FRIENDS)
         val state1 = viewModel.uiState.value
         assertEquals(SearchIntent.FRIENDS, state1.selectedIntent)
         assertTrue(state1.isSelectionValid)
         assertNull(state1.errorMessage)
 
-        // Select DATING option
         viewModel.selectIntent(SearchIntent.DATING)
         val state2 = viewModel.uiState.value
         assertEquals(SearchIntent.DATING, state2.selectedIntent)
         assertTrue(state2.isSelectionValid)
 
-        // Toggle DATING off by selecting it again
         viewModel.selectIntent(SearchIntent.DATING)
         val state3 = viewModel.uiState.value
         assertNull(state3.selectedIntent)
@@ -109,7 +107,7 @@ class IntentMatchingViewModelTest {
         override suspend fun syncUserProfile(userId: String): Result<Unit> = Result.success(Unit)
         override suspend fun saveUser(user: UserEntity) {}
         override suspend fun saveUserPreferences(preferences: UserPreferencesEntity) {}
-        
+
         override suspend fun saveSearchIntent(userId: String, intent: SearchIntent) {
             savedUserId = userId
             savedSearchIntent = intent

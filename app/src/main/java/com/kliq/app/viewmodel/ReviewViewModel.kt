@@ -32,10 +32,8 @@ data class ReviewUiState(
     val averageRating: Double = 0.0,
     val errorMessage: String? = null,
 
-    // Filter und Sortierung
     val filterState: ReviewFilterState = ReviewFilterState(),
 
-    // Kommentarsektions-Zustände (Kapitel 5.5)
     val commentInputText: String = "",
     val maxCommentLength: Int = 280,
     val selectedRating: Int = 5,

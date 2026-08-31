@@ -118,7 +118,6 @@ class ReviewCommentsSectionEmulatorTest {
         val overflowInput = "A".repeat(300)
         composeTestRule.onNodeWithText("Schreibe deinen verifizierten Erfahrungstext...").performTextInput(overflowInput)
 
-        // Verifiziere, dass maximal 280 Zeichen akzeptiert werden
         assertEquals(280, commentText.length)
         composeTestRule.onNodeWithText("0 / 280 Zeichen übrig").assertIsDisplayed()
     }

@@ -42,22 +42,6 @@ import com.kliq.app.ui.components.KliqIconSize
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-/**
- * Globale Top-App-Bar-Komponente der Kliq-App.
- * Zeigt den Screen-Titel zentriert, optionale Screen-spezifische
- * Action-Icons links und ein Overflow-Menü rechts.
- *
- * Die Bar verwendet das Lila/Dark-Mode High-Contrast-Design
- * mit einer Gradient-Akzentlinie am unteren Rand.
- *
- * @param title Angezeigter Titel in der Mitte der Bar.
- * @param isMenuExpanded Ob das Dropdown-Menü aktuell geöffnet ist.
- * @param onToggleMenu Callback zum Umschalten des Menü-Zustands.
- * @param onDismissMenu Callback zum Schließen des Menüs.
- * @param onMenuAction Callback wenn ein Menü-Eintrag ausgewählt wird.
- * @param actions Optionale Screen-spezifische Action-Icons (linke Seite).
- * @param modifier Optionaler [Modifier] für die Komponente.
- */
 import com.kliq.app.util.accessibilityHeading
 import com.kliq.app.util.ensureMinTouchTarget
 import com.kliq.app.util.talkBackDescription
@@ -101,7 +85,6 @@ fun KliqTopBar(
             )
         )
 
-        // Gradient-Akzentlinie unter der Top-Bar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -121,15 +104,6 @@ fun KliqTopBar(
     }
 }
 
-/**
- * Overflow-Menü-Button mit animierter Drehung und einem
- * Dropdown-Menü mit allen globalen Aktionen.
- *
- * @param isExpanded Ob das Dropdown aktuell sichtbar ist.
- * @param onToggle Callback zum Umschalten.
- * @param onDismiss Callback bei Außenklick.
- * @param onAction Callback bei Auswahl eines Menü-Eintrags.
- */
 @Composable
 private fun OverflowMenuButton(
     isExpanded: Boolean,

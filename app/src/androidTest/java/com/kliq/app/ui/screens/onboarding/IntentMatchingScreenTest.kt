@@ -36,24 +36,20 @@ class IntentMatchingScreenTest {
             }
         }
 
-        // Verify initial state: No option selected
         assertNull(viewModel.uiState.value.selectedIntent)
         composeTestRule.onNodeWithText("Was suchst du bei Kliq?").assertIsDisplayed()
         composeTestRule.onNodeWithText("Freunde").assertIsDisplayed()
         composeTestRule.onNodeWithText("Dating / Liebe").assertIsDisplayed()
         composeTestRule.onNodeWithText("Beides").assertIsDisplayed()
 
-        // Click "Freunde" option card
         composeTestRule.onNodeWithText("Freunde").performClick()
         assertEquals(SearchIntent.FRIENDS, viewModel.uiState.value.selectedIntent)
         assertTrue(viewModel.uiState.value.isSelectionValid)
 
-        // Click "Dating / Liebe" option card
         composeTestRule.onNodeWithText("Dating / Liebe").performClick()
         assertEquals(SearchIntent.DATING, viewModel.uiState.value.selectedIntent)
         assertTrue(viewModel.uiState.value.isSelectionValid)
 
-        // Click "Beides" option card
         composeTestRule.onNodeWithText("Beides").performClick()
         assertEquals(SearchIntent.BOTH, viewModel.uiState.value.selectedIntent)
         assertTrue(viewModel.uiState.value.isSelectionValid)
@@ -70,20 +66,15 @@ class IntentMatchingScreenTest {
             }
         }
 
-        // Initially confirm button is disabled because no option is selected
         composeTestRule.onNodeWithText("Auswahl bestätigen").assertIsNotEnabled()
 
-        // Select an option ("Freunde")
         composeTestRule.onNodeWithText("Freunde").performClick()
 
-        // Confirm button should now be enabled
         composeTestRule.onNodeWithText("Auswahl bestätigen").assertIsEnabled()
         composeTestRule.onNodeWithText("Auswahl bestätigen").assertHasClickAction()
 
-        // Toggle option off (click "Freunde" again)
         composeTestRule.onNodeWithText("Freunde").performClick()
 
-        // Confirm button is disabled again
         composeTestRule.onNodeWithText("Auswahl bestätigen").assertIsNotEnabled()
     }
 
@@ -102,15 +93,12 @@ class IntentMatchingScreenTest {
             }
         }
 
-        // Select "Beides"
         composeTestRule.onNodeWithText("Beides").performClick()
         composeTestRule.onNodeWithText("Auswahl bestätigen").assertIsEnabled()
 
-        // Perform click on confirm button
         composeTestRule.onNodeWithText("Auswahl bestätigen").performClick()
         composeTestRule.waitForIdle()
 
-        // Assert preference is saved in ViewModel and repository
         assertEquals(SearchIntent.BOTH, fakeRepo.savedSearchIntent)
         assertTrue(viewModel.uiState.value.isSaved)
         assertTrue(navigationTriggered)

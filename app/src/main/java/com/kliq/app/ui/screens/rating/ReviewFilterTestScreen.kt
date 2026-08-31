@@ -256,7 +256,7 @@ private fun generateMockReviews(): List<Review> {
             reviewerUsername = "Sarah M.",
             rating = 5,
             text = "Absolut genialer Club! Soundanlage ist Erstklasse und Einlass ging per QR verifiziert blitzschnell.",
-            timestamp = now - 1000 * 60 * 30, // 30 mins ago
+            timestamp = now - 1000 * 60 * 30,
             isVerified = true,
             verificationMethod = ReviewVerificationMethod.QR_CODE_SCAN
         ),
@@ -266,7 +266,7 @@ private fun generateMockReviews(): List<Review> {
             reviewerUsername = "Lukas B.",
             rating = 4,
             text = "Stimmung war gut, aber die Schlange an der Bar war etwas lang.",
-            timestamp = now - 1000 * 60 * 60 * 2, // 2 hours ago
+            timestamp = now - 1000 * 60 * 60 * 2,
             isVerified = true,
             verificationMethod = ReviewVerificationMethod.GPS_GEOFENCE_MATCH
         ),
@@ -276,7 +276,7 @@ private fun generateMockReviews(): List<Review> {
             reviewerUsername = "Anonymous Guest",
             rating = 1,
             text = "Türsteher waren unfreundlich und Musik war nicht mein Fall.",
-            timestamp = now - 1000 * 60 * 60 * 5, // 5 hours ago
+            timestamp = now - 1000 * 60 * 60 * 5,
             isVerified = false,
             verificationMethod = ReviewVerificationMethod.UNVERIFIED
         ),
@@ -286,7 +286,7 @@ private fun generateMockReviews(): List<Review> {
             reviewerUsername = "Elena K.",
             rating = 5,
             text = "Bester Techno Club der Stadt! Immer wieder gerne.",
-            timestamp = now - 1000 * 60 * 60 * 12, // 12 hours ago
+            timestamp = now - 1000 * 60 * 60 * 12,
             isVerified = true,
             verificationMethod = ReviewVerificationMethod.GPS_GEOFENCE_MATCH
         ),
@@ -296,7 +296,7 @@ private fun generateMockReviews(): List<Review> {
             reviewerUsername = "Maximilian T.",
             rating = 3,
             text = "Durchschnittlicher Abend. Preise sind ordentlich gestiegen.",
-            timestamp = now - 1000 * 60 * 60 * 24, // 1 day ago
+            timestamp = now - 1000 * 60 * 60 * 24,
             isVerified = false,
             verificationMethod = ReviewVerificationMethod.UNVERIFIED
         ),
@@ -306,7 +306,7 @@ private fun generateMockReviews(): List<Review> {
             reviewerUsername = "Mia R.",
             rating = 2,
             text = "Sehr überfüllt, kaum Platz zum Tanzen.",
-            timestamp = now - 1000 * 60 * 60 * 48, // 2 days ago
+            timestamp = now - 1000 * 60 * 60 * 48,
             isVerified = false,
             verificationMethod = ReviewVerificationMethod.UNVERIFIED
         )

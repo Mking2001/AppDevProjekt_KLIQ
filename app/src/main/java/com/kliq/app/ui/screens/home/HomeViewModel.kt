@@ -29,9 +29,6 @@ import java.util.Date
 import java.util.Locale
 import javax.inject.Inject
 
-/**
- * Immutable UI State für den Home-Screen.
- */
 data class HomeUiState(
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
@@ -62,9 +59,6 @@ data class HomeUiState(
     val isUserSearchActive: Boolean = false
 )
 
-/**
- * Darstellungsmodell eines gesuchten Nutzers.
- */
 data class SearchedUserUi(
     val id: String,
     val username: String,
@@ -74,9 +68,6 @@ data class SearchedUserUi(
     val isVerified: Boolean = false
 )
 
-/**
- * Darstellungsmodell eines Feed-Beitrags.
- */
 data class FeedItemUi(
     val id: String,
     val authorUserId: String = "",
@@ -92,9 +83,6 @@ data class FeedItemUi(
     val isOwnPost: Boolean = false
 )
 
-/**
- * Darstellungsmodell einer Story-Kachel.
- */
 data class StoryItemUi(
     val id: String,
     val authorUserId: String = "",
@@ -107,9 +95,6 @@ data class StoryItemUi(
     val isOwnStory: Boolean = false
 )
 
-/**
- * Darstellungsmodell eines Kommentars im Kommentar-Sheet.
- */
 data class CommentItemUi(
     val id: String,
     val authorName: String,
@@ -117,9 +102,6 @@ data class CommentItemUi(
     val timeAgo: String
 )
 
-/**
- * Darstellungsmodell eines Kontakts im Teilen-Dialog.
- */
 data class ShareContactUi(
     val id: String,
     val name: String,
@@ -127,9 +109,6 @@ data class ShareContactUi(
     val lastMessage: String = ""
 )
 
-/**
- * ViewModel für den Home-Feed.
- */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val feedRepository: FeedRepository,
@@ -243,7 +222,6 @@ class HomeViewModel @Inject constructor(
                     )
                 }
 
-                // Nur Storys von bestätigten Freunden oder Clubs anzeigen
                 val otherStories = stories
                     .filter { it.authorUserId != currentUserId && (friendIds.contains(it.authorUserId) || it.authorUserId.startsWith("club_")) }
                     .map { story ->
@@ -338,10 +316,6 @@ class HomeViewModel @Inject constructor(
         _uiState.update { it.copy(isRefreshing = false) }
     }
 
-    // =====================================================================
-    // Storys
-    // =====================================================================
-
     fun onStoryOpened(storyId: String) {
         val state = _uiState.value
         val story = if (state.myStory?.id == storyId) {
@@ -365,10 +339,6 @@ class HomeViewModel @Inject constructor(
     fun onStoryDismissed() {
         _uiState.update { it.copy(activeStory = null) }
     }
-
-    // =====================================================================
-    // Beitrags-Editor
-    // =====================================================================
 
     fun onCreatePost() {
         _uiState.update {
@@ -465,10 +435,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    // =====================================================================
-    // Likes und Kommentare
-    // =====================================================================
-
     fun onLikePost(postId: String) {
         viewModelScope.launch {
             feedRepository.toggleLike(postId).onFailure { error ->
@@ -537,10 +503,6 @@ class HomeViewModel @Inject constructor(
             }
         }
     }
-
-    // =====================================================================
-    // Teilen von Beiträgen
-    // =====================================================================
 
     fun onSharePostOpened(post: FeedItemUi) {
         _uiState.update {

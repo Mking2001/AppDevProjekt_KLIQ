@@ -36,7 +36,6 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.stateDescription
 import com.kliq.app.ui.theme.DarkOutline
 
-
 @Composable
 fun InteractiveStarRating(
     rating: Int,
@@ -45,7 +44,7 @@ fun InteractiveStarRating(
     maxStars: Int = 5,
     starSize: Dp = 36.dp,
     starSpacing: Dp = 8.dp,
-    activeColor: Color = Color(0xFFFFC107), // High-contrast Gold/Amber
+    activeColor: Color = Color(0xFFFFC107),
     inactiveColor: Color = DarkOutline,
     isReadOnly: Boolean = false
 ) {
@@ -159,4 +158,3 @@ fun InteractiveStarRating(
         }
     }
 }
-

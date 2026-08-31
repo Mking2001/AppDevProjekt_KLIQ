@@ -9,14 +9,6 @@ import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
-/**
- * Sealed class definiert die verfügbaren Aktionen im globalen
- * Overflow-Menü der Top-App-Bar. Jede Aktion kapselt ihr Label
- * und Icon für konsistente Darstellung über alle Screens hinweg.
- *
- * @param label Anzeigename der Menü-Aktion.
- * @param icon Icon-Vektor für die Menü-Zeile.
- */
 sealed class TopBarMenuAction(
     val label: String,
     val icon: ImageVector
@@ -52,7 +44,7 @@ sealed class TopBarMenuAction(
     )
 
     companion object {
-        /** Geordnete Liste aller Menü-Einträge */
+
         val allActions: List<TopBarMenuAction> = listOf(
             Settings, EditProfile, ToggleTheme, About, Logout, DeleteAccount
         )

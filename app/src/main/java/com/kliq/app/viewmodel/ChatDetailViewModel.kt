@@ -38,8 +38,8 @@ class ChatDetailViewModel @Inject constructor(
     val uiState: StateFlow<ChatDetailUiState> = _uiState.asStateFlow()
 
     fun loadChatDetails(chatId: String, currentUserId: String = "usr_current_user", currentUserName: String = "Ich") {
-        _uiState.update { 
-            it.copy(chatId = chatId, currentUserId = currentUserId, currentUserName = currentUserName, isLoading = true) 
+        _uiState.update {
+            it.copy(chatId = chatId, currentUserId = currentUserId, currentUserName = currentUserName, isLoading = true)
         }
 
         viewModelScope.launch {

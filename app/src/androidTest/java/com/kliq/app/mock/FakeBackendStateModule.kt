@@ -12,10 +12,6 @@ import com.kliq.app.data.model.SmokingHabit
 import com.kliq.app.data.model.User
 import com.kliq.app.data.model.UserStatus
 
-/**
- * Zentraler Hilfsdienst für simulierte Backend-Daten, State-Initialisierung
- * und Mock-Objekte für automatisierte End-to-End UI-Tests.
- */
 object FakeBackendStateModule {
 
     val mockTestUser = User(

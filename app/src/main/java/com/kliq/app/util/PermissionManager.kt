@@ -11,23 +11,15 @@ import com.kliq.app.data.model.LocationPermissionState
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Interface defining location permission management and settings deep-linking.
- */
 interface PermissionManager {
-    /** Evaluates the current system location permission state. */
+
     fun checkLocationPermission(context: Context): LocationPermissionState
 
-    /** Evaluates the background location permission (ACCESS_BACKGROUND_LOCATION). */
     fun checkBackgroundLocationPermission(context: Context): LocationPermissionState
 
-    /** Creates and launches an intent leading directly to the app's system settings page. */
     fun openAppSettings(context: Context)
 }
 
-/**
- * Default implementation of [PermissionManager] interacting with Android System APIs.
- */
 @Singleton
 class PermissionManagerImpl @Inject constructor() : PermissionManager {
 

@@ -75,12 +75,10 @@ class UserRepositoryImpl @Inject constructor(
             return@withContext Result.failure(IllegalArgumentException("Das Passwort muss mindestens 6 Zeichen lang sein."))
         }
 
-        // 1. Suche in lokaler Room-Datenbank
         var foundUser = userDao.getUserByUsername(trimmed)
             ?: userDao.getUserByEmail(trimmed)
             ?: userDao.getUserByPhone(trimmed)
 
-        // 2. Falls lokal nicht gefunden, in Cloud SQL suchen
         if (foundUser == null && kliqConnector != null) {
             try {
                 val usernameResult = kliqConnector.checkUsername.execute(username = trimmed)
@@ -155,7 +153,6 @@ class UserRepositoryImpl @Inject constructor(
             val finalEmail = email.trim().ifBlank { "${trimmedUsername.lowercase()}@kliq.app" }
             val primaryPhotoUrl = photos.firstOrNull { it.isNotBlank() } ?: profilePictureUrl.ifBlank { null }
 
-            // Calculate approximate age from birthDateMs
             val nowMs = System.currentTimeMillis()
             val ageYears = ((nowMs - birthDateMs) / (365.25 * 24 * 60 * 60 * 1000L)).toInt().coerceAtLeast(18)
 
@@ -174,10 +171,8 @@ class UserRepositoryImpl @Inject constructor(
                 password = password
             )
 
-            // 1. Save User in Room
             userDao.insertUser(newUser)
 
-            // 2. Save Preferences in Room
             val preferences = UserPreferencesEntity(
                 userId = userId,
                 searchIntent = searchIntent,
@@ -186,10 +181,8 @@ class UserRepositoryImpl @Inject constructor(
             )
             userDao.insertUserPreferences(preferences)
 
-            // 3. Save Session so user is authenticated
             sessionRepository?.saveSession(token = "jwt_$userId", userId = userId)
 
-            // 4. Sync to Firebase Data Connect Cloud SQL
             kliqConnector?.let { connector ->
                 try {
                     timber.log.Timber.d("DataConnect: Creating user %s (%s, %s)...", newUser.id, newUser.username, newUser.email)
@@ -230,7 +223,6 @@ class UserRepositoryImpl @Inject constructor(
                     timber.log.Timber.e(e, "DataConnect: Failed to upsert user preferences on Cloud SQL")
                 }
 
-                // Sync all gallery photos
                 photos.forEachIndexed { index, photoUrl ->
                     if (photoUrl.isNotBlank()) {
                         try {
@@ -281,10 +273,6 @@ class UserRepositoryImpl @Inject constructor(
         }.flowOn(ioDispatcher)
     }
 
-    /**
-     * Clears the entire local Room cache before re-syncing from Cloud SQL.
-     * Called on login / re-install to prevent stale data from old accounts.
-     */
     suspend fun clearLocalCache() = withContext(ioDispatcher) {
         try {
             chatDao?.deleteAllMessages()
@@ -351,7 +339,7 @@ class UserRepositoryImpl @Inject constructor(
                     timber.log.Timber.d("DataConnect: syncUserProfile: %s", e.message)
                 }
             }
-            // No apiService fallback — Cloud SQL is the single source of truth
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -368,7 +356,7 @@ class UserRepositoryImpl @Inject constructor(
                     email = user.email
                 )
             } catch (ignored: Exception) {
-                // Graceful fallback for offline mode
+
             }
         }
         Unit
@@ -429,7 +417,7 @@ class UserRepositoryImpl @Inject constructor(
                     email = updatedUser.email
                 )
             } catch (ignored: Exception) {
-                // Graceful fallback if user already exists
+
             }
             try {
                 connector.updateUserProfile.execute(id = updatedUser.id) {
@@ -441,7 +429,7 @@ class UserRepositoryImpl @Inject constructor(
                     this.phoneNumber = updatedUser.phoneNumber
                 }
             } catch (ignored: Exception) {
-                // Graceful fallback for offline mode
+
             }
         }
         Unit
@@ -567,7 +555,7 @@ class UserRepositoryImpl @Inject constructor(
                     )
                 )
             } catch (ignored: Exception) {
-                // Network error handled gracefully, local change takes effect immediately
+
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -581,7 +569,7 @@ class UserRepositoryImpl @Inject constructor(
             try {
                 apiService.unblockUser(currentUserId, targetUserId)
             } catch (ignored: Exception) {
-                // Graceful fallback
+
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -606,7 +594,7 @@ class UserRepositoryImpl @Inject constructor(
                     )
                 )
             } catch (ignored: Exception) {
-                // Graceful handling of offline/mock mode
+
             }
             Result.success(Unit)
         } catch (e: Exception) {
@@ -616,7 +604,7 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun deleteAccount(userId: String): Result<Unit> = withContext(ioDispatcher) {
         try {
-            // 1. Delete all user data from Cloud SQL (cascade)
+
             kliqConnector?.let { connector ->
                 try { connector.deleteUserPhotos.execute(userId = userId) } catch (ignored: Exception) { }
                 try { connector.deleteUserPosts.execute(authorUserId = userId) } catch (ignored: Exception) { }
@@ -634,17 +622,14 @@ class UserRepositoryImpl @Inject constructor(
                 timber.log.Timber.d("DataConnect: All data for user %s permanently deleted from Cloud SQL", userId)
             }
 
-            // 2. Delete all user data from local Room DB
             feedDao?.deletePostsByAuthor(userId)
             feedDao?.deleteCommentsByAuthor(userId)
             feedDao?.deleteStoriesByAuthor(userId)
             userDao.deleteUserById(userId)
             userDao.deleteUserPreferencesByUserId(userId)
 
-            // 3. Clear entire local cache (chats, messages, remaining feed data)
             clearLocalCache()
 
-            // 4. Clear session
             sessionRepository?.clearSession()
             timber.log.Timber.d("Account %s successfully deleted — all data purged", userId)
             Result.success(Unit)
@@ -658,10 +643,8 @@ class UserRepositoryImpl @Inject constructor(
         val trimmed = query.trim()
         if (trimmed.isBlank()) return@withContext emptyList()
 
-        // 1. Search locally in Room
         val localResults = userDao.searchUsers(trimmed).toMutableList()
 
-        // 2. Search in Cloud SQL
         if (kliqConnector != null) {
             try {
                 val cloudUsers = kliqConnector.listUsers.execute().data.users

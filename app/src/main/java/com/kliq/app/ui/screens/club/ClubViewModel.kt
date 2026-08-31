@@ -33,8 +33,8 @@ class ClubViewModel @Inject constructor(
 
     fun loadClubDetails(clubId: String) {
         if (clubId.isEmpty()) {
-            _uiState.update { 
-                it.copy(isLoading = false, errorMessage = "Club ID ist ungültig.") 
+            _uiState.update {
+                it.copy(isLoading = false, errorMessage = "Club ID ist ungültig.")
             }
             return
         }
@@ -42,7 +42,7 @@ class ClubViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             val userId = currentUserProvider?.userId() ?: "usr_current_user"
-            
+
             kotlinx.coroutines.flow.combine(
                 clubRepository.getClubById(clubId),
                 clubRepository.isClubHypedToday(clubId, userId)

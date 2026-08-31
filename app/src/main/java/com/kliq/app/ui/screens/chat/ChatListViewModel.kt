@@ -42,14 +42,6 @@ data class ChatListUiState(
     val error: String? = null
 )
 
-/**
- * ViewModel für die Chat-Übersicht.
- *
- * Die Chat-Liste wird ausschließlich aus dem [ChatRepository] gespeist. Archivieren,
- * Löschen und das Zurücksetzen des Ungelesen-Zählers schreiben in die Datenbank;
- * die Anzeige folgt dem Room-Flow. Damit bleibt die Liste konsistent zu den
- * tatsächlich gespeicherten Chats.
- */
 @HiltViewModel
 class ChatListViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
@@ -112,10 +104,6 @@ class ChatListViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Beobachtet aktive Chats, archivierte Chats und die Blockierliste gemeinsam,
-     * damit jede Änderung genau eine Neuberechnung der Anzeige auslöst.
-     */
     private fun observeChats() {
         viewModelScope.launch {
             val currentUserId = currentUserProvider.userId()
@@ -164,10 +152,6 @@ class ChatListViewModel @Inject constructor(
         applyFilters()
     }
 
-    /**
-     * Setzt den Ungelesen-Zähler eines Chats zurück, sobald er geöffnet wird.
-     * Das Badge verschwindet dadurch dauerhaft und nicht nur für die Sitzung.
-     */
     fun onChatOpened(chatId: String) {
         viewModelScope.launch {
             chatRepository.markChatAsRead(chatId)
@@ -258,10 +242,6 @@ class ChatListViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Stellt einen archivierten oder gelöschten Chat wieder her.
-     * Bei gelöschten Chats wird der Datensatz neu angelegt.
-     */
     fun onUndoDelete(item: ChatListItem) {
         viewModelScope.launch {
             chatRepository.createChatIfMissing(
@@ -279,10 +259,6 @@ class ChatListViewModel @Inject constructor(
         onUndoDelete(chat.toChatListItem())
     }
 
-    /**
-     * Prüft anhand der GPS-Position, ob sich der Nutzer in einer anderen Stadt befindet.
-     * Nur wenn eine Abweichung zur aktiven Stadt vorliegt, wird ein Wechsel vorgeschlagen.
-     */
     private fun observeLocationUpdates() {
         viewModelScope.launch {
             locationRepository.locationUpdates.collect { location ->
@@ -309,9 +285,6 @@ class ChatListViewModel @Inject constructor(
         _uiState.update { it.copy(isCitySwitcherOpen = false) }
     }
 
-    /**
-     * Wechselt manuell in einen anderen Stadt-Chat und legt ihn bei Bedarf an.
-     */
     fun selectCityChat(config: CityChatConfig) {
         manualSelectedCity = config
 

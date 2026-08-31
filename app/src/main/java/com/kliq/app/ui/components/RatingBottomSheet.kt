@@ -84,7 +84,7 @@ fun RatingBottomSheet(
                 .padding(bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header Section
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -116,7 +116,6 @@ fun RatingBottomSheet(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Rating Stars Section
             Text(
                 text = getRatingLabel(uiState.rating),
                 style = MaterialTheme.typography.labelLarge.copy(
@@ -138,7 +137,6 @@ fun RatingBottomSheet(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // Review Input Section
             OutlinedTextField(
                 value = uiState.reviewText,
                 onValueChange = onReviewTextChanged,
@@ -175,7 +173,6 @@ fun RatingBottomSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Error Feedback Banner
             AnimatedVisibility(
                 visible = uiState.status is RatingSubmitStatus.Error,
                 enter = fadeIn(),
@@ -207,7 +204,6 @@ fun RatingBottomSheet(
                 }
             }
 
-            // Success Feedback Banner
             AnimatedVisibility(
                 visible = uiState.status is RatingSubmitStatus.Success,
                 enter = fadeIn(),
@@ -237,7 +233,6 @@ fun RatingBottomSheet(
                 }
             }
 
-            // Action Button
             if (uiState.status is RatingSubmitStatus.Success) {
                 Button(
                     onClick = onDismissRequest,

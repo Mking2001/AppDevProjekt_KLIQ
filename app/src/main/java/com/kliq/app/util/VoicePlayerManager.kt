@@ -73,7 +73,7 @@ class VoicePlayerManager @Inject constructor() {
                 mediaPlayer?.pause()
             }
         } catch (e: Exception) {
-            // Ignore state exception
+
         }
     }
 
@@ -95,7 +95,7 @@ class VoicePlayerManager @Inject constructor() {
         try {
             mediaPlayer?.seekTo(positionMs.toInt())
         } catch (e: Exception) {
-            // Ignore state exception
+
         }
     }
 
@@ -107,7 +107,7 @@ class VoicePlayerManager @Inject constructor() {
                 release()
             }
         } catch (e: Exception) {
-            // Ignore
+
         } finally {
             mediaPlayer = null
             currentPlayingMessageId = null

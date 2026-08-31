@@ -13,23 +13,16 @@ enum class WcagComplianceLevel {
 
 object AccessibilityUtils {
 
-    /**
-     * Calculates the WCAG 2.1 contrast ratio between a foreground and background color.
-     * @return Contrast ratio (1.0 to 21.0)
-     */
     fun calculateContrastRatio(foreground: Color, background: Color): Double {
         val l1 = foreground.luminance()
         val l2 = background.luminance()
-        
+
         val lightest = maxOf(l1, l2)
         val darkest = minOf(l1, l2)
-        
+
         return (lightest + 0.05) / (darkest + 0.05)
     }
 
-    /**
-     * Evaluates the WCAG 2.1 compliance level for given colors and text size.
-     */
     fun verifyWcagCompliance(
         foreground: Color,
         background: Color,
@@ -46,18 +39,10 @@ object AccessibilityUtils {
         }
     }
 
-    /**
-     * Checks if a given size meets the minimum 48dp touch target size recommended by Material Design.
-     */
     fun meetsMinimumTouchTarget(sizeDp: Dp): Boolean {
         return sizeDp >= 48.dp
     }
 
-    /**
-     * Ensures minimum contrast ratio (WCAG AA normal text = 4.5:1).
-     * If contrast is too low, it returns a modified foreground color (either black or white)
-     * to guarantee readability against the given background.
-     */
     fun ensureMinimumContrast(foreground: Color, background: Color, targetRatio: Double = 4.5): Color {
         val currentRatio = calculateContrastRatio(foreground, background)
         if (currentRatio >= targetRatio) return foreground
@@ -66,27 +51,16 @@ object AccessibilityUtils {
         return if (bgLuminance > 0.5f) Color.Black else Color.White
     }
 
-    /**
-     * Calculates scaled text size based on accessibility font scale preference.
-     */
     fun calculateScaledSp(baseSpValue: Float, fontScale: Float): Float {
         return (baseSpValue * fontScale.coerceIn(0.8f, 2.0f))
     }
 
-    /**
-     * Checks if current font scale is considered large text / accessibility scale (>= 1.3x).
-     */
     fun isAccessibilityFontScaleActive(fontScale: Float): Boolean {
         return fontScale >= 1.3f
     }
 
-    /**
-     * Calculates adaptive minimum height for text containers to prevent clipping under large font scales.
-     */
     fun getAdaptiveMinContainerHeight(baseHeightDp: Dp, fontScale: Float): Dp {
         val safeScale = fontScale.coerceIn(1.0f, 2.0f)
         return (baseHeightDp.value * (1f + (safeScale - 1f) * 0.6f)).dp
     }
 }
-
-

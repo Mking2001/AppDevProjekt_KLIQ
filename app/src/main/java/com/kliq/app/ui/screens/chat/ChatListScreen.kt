@@ -82,7 +82,6 @@ fun ChatListScreen(
     val tabs = listOf("Öffentliche Stadt-Chats", "Private Nachrichten")
     val selectedTabIndex = if (uiState.selectedTab == ChatType.PUBLIC_CITY) 0 else 1
 
-    // Group Image Pickers
     val groupGalleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -387,7 +386,6 @@ fun ChatListScreen(
                 }
             }
 
-            // Create Group Dialog
             if (uiState.isCreateGroupDialogOpen) {
                 CreateGroupDialog(
                     availableUsers = uiState.availableUsers,

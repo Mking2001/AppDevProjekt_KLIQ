@@ -285,7 +285,7 @@ class RegisterViewModel @Inject constructor(
     fun onCountryCodeChanged(code: String) {
         _uiState.update { current ->
             val updated = current.copy(countryCode = code, isCountryCodeDropdownExpanded = false)
-            // Re-trigger phone availability check with new prefix
+
             checkPhoneAvailabilityAsync(updated.countryCode, updated.phoneNumber)
             updated.copy(isFormValid = calculateIsFormValid(updated))
         }
@@ -427,7 +427,6 @@ class RegisterViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
 
-            // Final check on username availability
             val isUserAvail = userRepository.checkUsernameAvailability(current.username.trim())
             if (!isUserAvail) {
                 _uiState.update {
@@ -441,7 +440,6 @@ class RegisterViewModel @Inject constructor(
                 return@launch
             }
 
-            // Final check on email availability
             val isEmailAvail = userRepository.checkEmailAvailability(current.email.trim())
             if (!isEmailAvail) {
                 _uiState.update {

@@ -21,10 +21,6 @@ data class CityChatConfig(
 
 object CityChatLocationMapper {
 
-    /**
-     * Unterstuetzte Stadt-Gruppenchats. Der Zielmarkt Klagenfurt steht an erster
-     * Stelle und dient gleichzeitig als Fallback, wenn keine GPS-Position vorliegt.
-     */
     val SUPPORTED_CITIES = listOf(
         CityChatConfig(
             id = "pub_klagenfurt",

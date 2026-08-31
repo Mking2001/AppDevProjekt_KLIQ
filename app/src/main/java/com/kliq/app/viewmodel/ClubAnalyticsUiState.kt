@@ -9,9 +9,6 @@ import com.kliq.app.ui.theme.FuchsiaTertiary
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.TealSecondary
 
-/**
- * Visual representation of a segment in the High-Contrast Kliq Lila-Style gender chart bar.
- */
 data class GenderBarSegment(
     val gender: Gender,
     val label: String,
@@ -22,9 +19,6 @@ data class GenderBarSegment(
     val flexWeight: Float
 )
 
-/**
- * UI State container for Club Analytics, Live Visitor Capacity and Gender Aggregation.
- */
 data class ClubAnalyticsUiState(
     val isLoading: Boolean = false,
     val clubId: String = "",

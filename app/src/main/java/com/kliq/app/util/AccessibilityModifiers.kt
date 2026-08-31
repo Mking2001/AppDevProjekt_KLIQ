@@ -11,9 +11,6 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/**
- * Convenience modifier extensions for Jetpack Compose UI accessibility.
- */
 fun Modifier.accessibilityHeading(): Modifier = this.semantics {
     heading()
 }

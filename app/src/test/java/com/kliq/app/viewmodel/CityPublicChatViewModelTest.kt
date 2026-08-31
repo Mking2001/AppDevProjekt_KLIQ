@@ -27,10 +27,6 @@ import org.mockito.Mockito.`when`
 import org.mockito.Mockito.anyString
 import org.mockito.Mockito.mock
 
-/**
- * Prüft die GPS-gestützte Zuordnung des Stadt-Gruppenchats sowie den
- * manuellen Stadtwechsel. Zielmarkt ist Klagenfurt.
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CityPublicChatViewModelTest {
 

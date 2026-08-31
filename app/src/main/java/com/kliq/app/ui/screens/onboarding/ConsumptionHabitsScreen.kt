@@ -69,12 +69,6 @@ import com.kliq.app.ui.theme.PurpleContainer
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.PurplePrimaryLight
 
-/**
- * Onboarding screen for collecting user consumption habits (smoking & drinking).
- *
- * Implements high-contrast dark theme styling, accessible toggle cards, state validation,
- * and clean MVVM architecture bound to [ConsumptionHabitsViewModel].
- */
 @Composable
 fun ConsumptionHabitsScreen(
     viewModel: ConsumptionHabitsViewModel = hiltViewModel(),
@@ -112,7 +106,7 @@ fun ConsumptionHabitsScreen(
                     .padding(horizontal = 24.dp, vertical = 32.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                // Step Indicator Badge
+
                 Surface(
                     shape = RoundedCornerShape(16.dp),
                     color = PurpleContainer.copy(alpha = 0.6f),
@@ -129,7 +123,6 @@ fun ConsumptionHabitsScreen(
                     )
                 }
 
-                // Header Title & Subtitle
                 Text(
                     text = "Rauchen & Trinken",
                     style = MaterialTheme.typography.headlineMedium.copy(
@@ -152,7 +145,6 @@ fun ConsumptionHabitsScreen(
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // Smoking Habits Category
                 Text(
                     text = "Rauchverhalten",
                     style = MaterialTheme.typography.titleMedium.copy(
@@ -181,7 +173,6 @@ fun ConsumptionHabitsScreen(
 
                 Spacer(modifier = Modifier.height(28.dp))
 
-                // Drinking Habits Category
                 Text(
                     text = "Trinkverhalten",
                     style = MaterialTheme.typography.titleMedium.copy(
@@ -210,7 +201,6 @@ fun ConsumptionHabitsScreen(
 
                 Spacer(modifier = Modifier.height(32.dp))
 
-                // Validation Status Info
                 AnimatedVisibility(
                     visible = !uiState.isSelectionValid,
                     enter = fadeIn(),
@@ -225,7 +215,6 @@ fun ConsumptionHabitsScreen(
                     )
                 }
 
-                // Action Button
                 Button(
                     onClick = { viewModel.saveConsumptionHabits() },
                     enabled = uiState.isSelectionValid && !uiState.isLoading,

@@ -68,10 +68,6 @@ private val WarningAmber = Color(0xFFFFAB00)
 private val EcoCyan = Color(0xFF00E5FF)
 private val HighAccuracyOrange = Color(0xFFFF6D00)
 
-/**
- * High-Contrast Kliq Jetpack Compose Card UI component for managing background live location tracking
- * with stepped adaptive power modes (High-Accuracy, Balanced Ambient, Idle Passive).
- */
 @Composable
 fun BackgroundLocationTrackingCard(
     uiState: LocationTrackingUiState,
@@ -108,7 +104,7 @@ fun BackgroundLocationTrackingCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // Header Row: Icon, Title, Live Status Badge, Switch Toggle
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -186,7 +182,6 @@ fun BackgroundLocationTrackingCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Stepped Tracking Mode Selector Segmented Controls
             Text(
                 text = "Ortungsmodus & Batterie-Strategie",
                 color = Color.LightGray,
@@ -227,7 +222,6 @@ fun BackgroundLocationTrackingCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Burst Active Countdown Badge Banner
             AnimatedVisibility(visible = uiState.isBurstActive) {
                 Box(
                     modifier = Modifier
@@ -276,7 +270,6 @@ fun BackgroundLocationTrackingCard(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Permission Warning Banner if ACCESS_BACKGROUND_LOCATION is restricted
             if (!isGranted) {
                 Box(
                     modifier = Modifier
@@ -327,7 +320,6 @@ fun BackgroundLocationTrackingCard(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Location Fix Coordinates & Telemetry Box
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -347,7 +339,6 @@ fun BackgroundLocationTrackingCard(
                             fontWeight = FontWeight.Medium
                         )
 
-                        // Power Optimization Badge
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             val badgeColor = if (uiState.isStationary) EcoCyan else PurpleAccent
                             val badgeIcon = if (uiState.isStationary) Icons.Default.BatterySaver else Icons.AutoMirrored.Filled.DirectionsWalk
@@ -398,7 +389,6 @@ fun BackgroundLocationTrackingCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Action Row: GPS Boost trigger + Clear History
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,

@@ -54,9 +54,6 @@ import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.ui.theme.TealSecondary
 import com.kliq.app.viewmodel.ClubAnalyticsUiState
 
-/**
- * High-Contrast Lila/Dark-Mode Jetpack Compose Component for Live Visitor Statistics & Occupancy.
- */
 @Composable
 fun LiveVisitorStatsCard(
     state: ClubAnalyticsUiState,
@@ -101,7 +98,7 @@ fun LiveVisitorStatsCard(
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header Row: Title + Pulsing Live Badge
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -130,7 +127,6 @@ fun LiveVisitorStatsCard(
                 }
             }
 
-            // Occupancy Highlight Block
             Surface(
                 shape = RoundedCornerShape(16.dp),
                 color = DarkSurfaceVariant,
@@ -165,7 +161,6 @@ fun LiveVisitorStatsCard(
 
                     Spacer(modifier = Modifier.height(14.dp))
 
-                    // Progress Bar
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -191,7 +186,6 @@ fun LiveVisitorStatsCard(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    // Description Note
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -212,7 +206,6 @@ fun LiveVisitorStatsCard(
                 }
             }
 
-            // Stats Sub-Bar: Trend & Visitor Ratio
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -250,7 +243,6 @@ fun LiveVisitorStatsCard(
                 }
             }
 
-            // Optional Gender Ratio Breakdown if data is present
             if (state.segments.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(

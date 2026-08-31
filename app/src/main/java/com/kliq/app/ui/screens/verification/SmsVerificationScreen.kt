@@ -71,17 +71,6 @@ import kotlinx.coroutines.delay
 
 private const val OTP_LENGTH = 6
 
-/**
- * SMS-Verifizierungs-Screen mit 6-stelligem OTP-Eingabefeld.
- *
- * Zeigt den Verifikationscode-Eingabebereich mit animierten Eingabefeldern,
- * einem Countdown-Timer für den erneuten Versand und visuellem Feedback
- * bei Fehleingaben (Shake-Animation) sowie Erfolgszustand.
- *
- * @param onVerificationSuccess Callback bei erfolgreicher Verifizierung.
- * @param onNavigateBack Callback für die Zurück-Navigation.
- * @param viewModel Hilt-injiziertes [SmsVerificationViewModel].
- */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun SmsVerificationScreen(
@@ -100,7 +89,6 @@ fun SmsVerificationScreen(
 
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // Navigation bei erfolgreicher Verifizierung nach kurzem visuellen Delay
     LaunchedEffect(verificationState) {
         if (verificationState is VerificationUiState.Success) {
             keyboardController?.hide()
@@ -112,7 +100,6 @@ fun SmsVerificationScreen(
         }
     }
 
-    // Shake-Offset für Fehler-Animation (horizontales Schütteln)
     val shakeOffset = remember { Animatable(0f) }
     LaunchedEffect(verificationState) {
         if (verificationState is VerificationUiState.Error) {
@@ -124,7 +111,6 @@ fun SmsVerificationScreen(
         }
     }
 
-    // Auto-Focus beim Screen-Eintritt
     val focusRequester = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         delay(300L)
@@ -139,7 +125,7 @@ fun SmsVerificationScreen(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Zurück-Button
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -157,7 +143,6 @@ fun SmsVerificationScreen(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Header
         Text(
             text = "Code eingeben",
             style = MaterialTheme.typography.headlineMedium,
@@ -167,7 +152,6 @@ fun SmsVerificationScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Beschreibungstext mit hervorgehobener Telefonnummer
         Text(
             text = "Wir haben einen 6-stelligen Code an",
             style = MaterialTheme.typography.bodyMedium,
@@ -190,7 +174,6 @@ fun SmsVerificationScreen(
 
         Spacer(modifier = Modifier.height(40.dp))
 
-        // OTP-Eingabefeld
         OtpInputRow(
             code = enteredCode,
             onCodeChanged = viewModel::onCodeChanged,
@@ -204,7 +187,6 @@ fun SmsVerificationScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Ladeindikator
         AnimatedVisibility(
             visible = isLoading,
             enter = fadeIn(animationSpec = tween(200)),
@@ -219,7 +201,6 @@ fun SmsVerificationScreen(
             )
         }
 
-        // Fehlermeldung
         AnimatedVisibility(
             visible = isError,
             enter = slideInVertically(
@@ -252,7 +233,6 @@ fun SmsVerificationScreen(
             }
         }
 
-        // Erfolgsmeldung
         AnimatedVisibility(
             visible = isSuccess,
             enter = scaleIn(
@@ -282,7 +262,6 @@ fun SmsVerificationScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Code erneut senden
         ResendCodeSection(
             timerState = resendTimerState,
             onResendClick = viewModel::resendCode
@@ -290,15 +269,6 @@ fun SmsVerificationScreen(
     }
 }
 
-// ---------------------------------------------------------------------------
-// OTP-Eingabebereich
-// ---------------------------------------------------------------------------
-
-/**
- * Reihe aus 6 OTP-Ziffernfeldern mit unsichtbarem [BasicTextField] für die
- * native Tastatureingabe. Die visuelle Darstellung erfolgt über einzelne
- * [OtpDigitBox]-Composables mit animierten Rahmen und Cursor.
- */
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun OtpInputRow(
@@ -314,7 +284,7 @@ private fun OtpInputRow(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     Box(modifier = modifier) {
-        // Visuelle Ziffern-Boxen (bestimmt die Größe des Containers)
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -332,7 +302,6 @@ private fun OtpInputRow(
             }
         }
 
-        // Unsichtbares TextField fängt Tastatureingaben ab
         BasicTextField(
             value = code,
             onValueChange = onCodeChanged,
@@ -354,11 +323,6 @@ private fun OtpInputRow(
     }
 }
 
-/**
- * Einzelne OTP-Ziffernbox mit animierter Rahmenfarbe, blinkender
- * Cursor-Animation im fokussierten Zustand, und Farbwechsel bei
- * Fehler- bzw. Erfolgszustand.
- */
 @Composable
 private fun OtpDigitBox(
     digit: Char?,
@@ -381,7 +345,6 @@ private fun OtpDigitBox(
 
     val borderWidth = if (isFocused || isError || isSuccess) 2.dp else 1.dp
 
-    // Blinkender Cursor im aktiven Eingabefeld
     val infiniteTransition = rememberInfiniteTransition(label = "cursorBlink")
     val cursorAlpha by infiniteTransition.animateFloat(
         initialValue = 1f,
@@ -423,14 +386,6 @@ private fun OtpDigitBox(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Resend-Code Sektion
-// ---------------------------------------------------------------------------
-
-/**
- * Zeigt entweder den aktiven "Code erneut senden"-Button oder
- * den deaktivierten Countdown-Text mit verbleibenden Sekunden.
- */
 @Composable
 private fun ResendCodeSection(
     timerState: ResendTimerState,

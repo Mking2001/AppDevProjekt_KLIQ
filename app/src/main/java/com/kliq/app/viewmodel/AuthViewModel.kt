@@ -13,9 +13,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * UI State for authentication and persistent auto-login checks.
- */
 sealed class AuthUiState {
     data object Loading : AuthUiState()
     data class Authenticated(val userId: String) : AuthUiState()
@@ -23,9 +20,6 @@ sealed class AuthUiState {
     data class Error(val message: String) : AuthUiState()
 }
 
-/**
- * ViewModel managing authentication state and auto-login evaluation.
- */
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val sessionRepository: SessionRepository,
@@ -63,13 +57,9 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Clears the entire local Room cache and re-syncs profile + chats from Cloud SQL.
-     * Prevents stale data from old / deleted accounts from persisting locally.
-     */
     private suspend fun syncFromCloud(userId: String) {
         try {
-            // Clear local cache to avoid old account data leaking
+
             (userRepository as? UserRepositoryImpl)?.clearLocalCache()
         } catch (ignored: Exception) { }
         try {

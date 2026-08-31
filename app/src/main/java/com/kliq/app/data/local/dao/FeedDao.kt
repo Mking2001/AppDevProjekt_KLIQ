@@ -9,9 +9,6 @@ import com.kliq.app.data.local.entities.FeedPostEntity
 import com.kliq.app.data.local.entities.StoryEntity
 import kotlinx.coroutines.flow.Flow
 
-/**
- * DAO für Home-Feed-Beiträge, Kommentare und Storys.
- */
 @Dao
 interface FeedDao {
 
@@ -84,7 +81,6 @@ interface FeedDao {
     @Query("DELETE FROM feed_comments WHERE id LIKE 'cmt_kf_%'")
     suspend fun deleteMockComments()
 
-    // === Cascade-Delete für Account-Löschung ===
     @Query("DELETE FROM feed_posts WHERE authorUserId = :userId")
     suspend fun deletePostsByAuthor(userId: String)
 
@@ -94,7 +90,6 @@ interface FeedDao {
     @Query("DELETE FROM stories WHERE authorUserId = :userId")
     suspend fun deleteStoriesByAuthor(userId: String)
 
-    // === Room-Cache komplett leeren (bei Login) ===
     @Query("DELETE FROM feed_posts")
     suspend fun deleteAllPosts()
 

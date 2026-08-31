@@ -73,4 +73,3 @@ class AccessibilityUtilsTest {
         assertEquals(76.8f, scaledHeight.value, 0.1f)
     }
 }
-

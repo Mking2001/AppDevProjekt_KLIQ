@@ -176,7 +176,7 @@ fun RegisterScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // 1. Profilbilder Bereich (Reihe mit 4 Slots + Vorschau-Möglichkeit)
+
             SectionCard(title = "Profilbilder (Bis zu 4 Fotos)*") {
                 Text(
                     text = "Foto 1 ist dein Hauptbild. Klicke auf ein Bild oder die Vorschau, um dein Profil zu testen.",
@@ -185,7 +185,6 @@ fun RegisterScreen(
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                // 4 Foto-Slots nebeneinander
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -226,7 +225,6 @@ fun RegisterScreen(
                                     contentScale = ContentScale.Crop
                                 )
 
-                                // Slot-Nummer Badge (Top-Left)
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopStart)
@@ -243,7 +241,6 @@ fun RegisterScreen(
                                     )
                                 }
 
-                                // Löschen Button (Top-Right)
                                 Box(
                                     modifier = Modifier
                                         .align(Alignment.TopEnd)
@@ -294,7 +291,6 @@ fun RegisterScreen(
                     }
                 }
 
-                // Vorschau Button
                 if (uiState.photos.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedButton(
@@ -321,9 +317,8 @@ fun RegisterScreen(
                 }
             }
 
-            // 2. Benutzername, E-Mail & Name
             SectionCard(title = "Benutzerdaten*") {
-                // Benutzername
+
                 OutlinedTextField(
                     value = uiState.username,
                     onValueChange = viewModel::onUsernameChanged,
@@ -382,7 +377,6 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // E-Mail-Adresse mit Live-Verfügbarkeitsprüfung
                 OutlinedTextField(
                     value = uiState.email,
                     onValueChange = viewModel::onEmailChanged,
@@ -442,7 +436,6 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Vorname & Nachname
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -470,7 +463,6 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Telefonnummer mit wählbarer Ländervorwahl & Live-Verfügbarkeitsprüfung
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -589,7 +581,6 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Heimatstadt mit Autocomplete für österreichische Großstädte
                 Column(modifier = Modifier.fillMaxWidth()) {
                     OutlinedTextField(
                         value = uiState.hometown,
@@ -621,7 +612,6 @@ fun RegisterScreen(
                         colors = customTextFieldColors()
                     )
 
-                    // Autocomplete-Vorschläge
                     if (uiState.isHometownDropdownExpanded && uiState.hometownSuggestions.isNotEmpty()) {
                         Card(
                             modifier = Modifier
@@ -665,7 +655,6 @@ fun RegisterScreen(
                 }
             }
 
-            // 3. Geschlecht (Pflicht)
             SectionCard(title = "Geschlecht*") {
                 SegmentedPillBar(
                     label = "",
@@ -679,7 +668,6 @@ fun RegisterScreen(
                 )
             }
 
-            // 4. Geburtsdatum (18+ Validierung)
             SectionCard(title = "Geburtsdatum (Mindestalter 18 Jahre)*") {
                 val calendar = Calendar.getInstance()
                 val initialYear = calendar.get(Calendar.YEAR) - 20
@@ -732,9 +720,8 @@ fun RegisterScreen(
                 }
             }
 
-            // 5. Rauch- & Alkoholkonsum (Segmented Bars im einheitlichen KLIQ-Design)
             SectionCard(title = "Lifestyle & Gewohnheiten*") {
-                // Rauchkonsum
+
                 SegmentedPillBar(
                     label = "Rauchkonsum:",
                     options = listOf(
@@ -748,7 +735,6 @@ fun RegisterScreen(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                // Alkoholkonsum
                 SegmentedPillBar(
                     label = "Alkoholkonsum:",
                     options = listOf(
@@ -761,7 +747,6 @@ fun RegisterScreen(
                 )
             }
 
-            // 6. Such-Präferenz ("Was suchst du?") - Im gleichen 3-Felder Querbalken-Design
             SectionCard(title = "Nach was suchst du?*") {
                 SegmentedPillBar(
                     label = "Such-Präferenz:",
@@ -775,7 +760,6 @@ fun RegisterScreen(
                 )
             }
 
-            // 7. Bio (Optional)
             SectionCard(title = "Über dich (Bio - Optional)") {
                 OutlinedTextField(
                     value = uiState.bio,
@@ -789,7 +773,6 @@ fun RegisterScreen(
                 )
             }
 
-            // 8. Passwort & Passwort wiederholen
             SectionCard(title = "Sicherheit & Passwort*") {
                 OutlinedTextField(
                     value = uiState.password,
@@ -848,7 +831,6 @@ fun RegisterScreen(
                 )
             }
 
-            // 9. Registrieren Button
             Button(
                 onClick = viewModel::onRegister,
                 enabled = uiState.isFormValid && !uiState.isLoading,
@@ -888,7 +870,6 @@ fun RegisterScreen(
         }
     }
 
-    // 10. Profil-Vorschau Dialog (Story-Style mit Klick links/rechts und Schließen-Kreuz)
     if (uiState.isPreviewModalOpen && uiState.photos.isNotEmpty()) {
         val totalPhotos = uiState.photos.size
         val currentPhotoIndex = uiState.previewPhotoIndex.coerceIn(0, totalPhotos - 1)
@@ -905,7 +886,7 @@ fun RegisterScreen(
                 color = Color.Black
             ) {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    // Haupt-Hintergrundbild
+
                     AsyncImage(
                         model = currentPhotoUrl,
                         contentDescription = "Profilbild ${currentPhotoIndex + 1}",
@@ -913,9 +894,8 @@ fun RegisterScreen(
                         contentScale = ContentScale.Crop
                     )
 
-                    // Touch-Zonen: Links (zurück) und Rechts (weiter)
                     Row(modifier = Modifier.fillMaxSize()) {
-                        // Linke Zone (45% breite): Zurück
+
                         Box(
                             modifier = Modifier
                                 .weight(0.45f)
@@ -928,10 +908,8 @@ fun RegisterScreen(
                                 }
                         )
 
-                        // Mittlerer Puffer (10%)
                         Spacer(modifier = Modifier.weight(0.1f))
 
-                        // Rechte Zone (45% breite): Weiter
                         Box(
                             modifier = Modifier
                                 .weight(0.45f)
@@ -945,7 +923,6 @@ fun RegisterScreen(
                         )
                     }
 
-                    // Obere Leiste: Story-Balken + Header mit Name & Schließen-Button 'X'
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -956,7 +933,7 @@ fun RegisterScreen(
                             )
                             .padding(horizontal = 16.dp, vertical = 20.dp)
                     ) {
-                        // Story-Balken Indikatoren
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -976,7 +953,6 @@ fun RegisterScreen(
                             }
                         }
 
-                        // Header-Zeile mit User-Info und 'X'-Knopf oben rechts
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1003,7 +979,6 @@ fun RegisterScreen(
                                 )
                             }
 
-                            // 'X' oben rechts zum Schließen
                             IconButton(
                                 onClick = { viewModel.closePreviewModal() },
                                 modifier = Modifier
@@ -1021,7 +996,6 @@ fun RegisterScreen(
                         }
                     }
 
-                    // Untere Info-Karte (Was andere User sehen)
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -1033,7 +1007,7 @@ fun RegisterScreen(
                             )
                             .padding(horizontal = 20.dp, vertical = 24.dp)
                     ) {
-                        // Badges: Lifestyle & Such-Präferenz
+
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)

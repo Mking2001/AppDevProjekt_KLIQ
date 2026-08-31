@@ -14,14 +14,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * ViewModel responsible for managing the main bottom navigation state and screen transitions.
- * Follows MVVM by exposing an immutable [NavigationState] via [StateFlow]
- * and providing intent-based actions for the UI layer.
- *
- * The ViewModel survives configuration changes, ensuring seamless
- * navigation state preservation across screen rotations.
- */
 @HiltViewModel
 class NavigationViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
@@ -58,12 +50,6 @@ class NavigationViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Called by the UI when a bottom bar tab is tapped.
-     * Updates current/previous routes and configures tab switch transition.
-     *
-     * @param route The route string of the selected tab.
-     */
     fun onTabSelected(route: String) {
         _navigationState.update { currentState ->
             if (currentState.currentRoute == route) {
@@ -79,13 +65,6 @@ class NavigationViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Called when navigating to a new destination.
-     * Automatically classifies the transition type based on origin and target routes.
-     *
-     * @param targetRoute The target navigation route.
-     * @param explicitType Optional explicit override for transition type.
-     */
     fun onNavigateToRoute(targetRoute: String, explicitType: ScreenTransitionType? = null) {
         _navigationState.update { currentState ->
             val computedType = explicitType ?: determineTransitionType(currentState.currentRoute, targetRoute)
@@ -98,40 +77,22 @@ class NavigationViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Explicitly sets the active screen transition type.
-     */
     fun setTransitionType(type: ScreenTransitionType) {
         _navigationState.update { it.copy(transitionType = type) }
     }
 
-    /**
-     * Signals that a screen transition animation has started.
-     */
     fun onTransitionStart() {
         _navigationState.update { it.copy(isTransitioning = true) }
     }
 
-    /**
-     * Signals that a screen transition animation has completed.
-     */
     fun onTransitionEnd() {
         _navigationState.update { it.copy(isTransitioning = false) }
     }
 
-    /**
-     * Updates the notification badge count.
-     * Called from a repository or use-case layer when unread count changes.
-     *
-     * @param count The number of unread notifications.
-     */
     fun updateNotificationBadge(count: Int) {
         _navigationState.update { it.copy(notificationBadgeCount = count.coerceAtLeast(0)) }
     }
 
-    /**
-     * Determines the optimal transition type based on origin and target route patterns.
-     */
     fun determineTransitionType(fromRoute: String, toRoute: String): ScreenTransitionType {
         return when {
             toRoute == CoreRoutes.SPLASH || toRoute == CoreRoutes.PHONE_LOGIN || fromRoute == CoreRoutes.SPLASH -> {
@@ -158,4 +119,3 @@ class NavigationViewModel @Inject constructor(
     }
 
 }
-

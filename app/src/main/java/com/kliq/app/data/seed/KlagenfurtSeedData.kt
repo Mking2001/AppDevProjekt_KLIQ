@@ -20,30 +20,17 @@ import com.kliq.app.util.OpeningHoursHelper
 import java.time.LocalTime
 import java.util.Calendar
 
-/**
- * Demonstrationsdatensatz für den Zielmarkt Klagenfurt am Wörthersee.
- *
- * Die Einträge dienen ausschließlich der lokalen Vorbefüllung der Room-Datenbank,
- * solange kein produktives Backend angebunden ist. Öffnungszeiten, Bewertungen,
- * Auslastungswerte und Besucherzahlen sind frei gewählte Demonstrationswerte und
- * keine Angaben über tatsächliche Betriebe. Die Koordinaten liegen im Stadtgebiet
- * Klagenfurt und am Wörthersee-Ostufer, damit Entfernungsberechnung, Geofencing
- * und Kartendarstellung realistische Ergebnisse liefern.
- */
 object KlagenfurtSeedData {
 
     const val CITY_NAME = "Klagenfurt"
     const val REGION_NAME = "Kärnten"
 
-    /** Zentrum Klagenfurt als Standard-Kameraposition und Referenzpunkt. */
     const val CITY_LATITUDE = 46.6247
     const val CITY_LONGITUDE = 14.3053
 
-    /** ID des lokalen Demo-Nutzers, unter der die App ohne Anmeldung arbeitet. */
     const val CURRENT_USER_ID = "current_user"
     const val CURRENT_USER_NAME = "Alexandros K."
 
-    /** ID des Stadt-Gruppenchats für Klagenfurt. */
     const val CITY_CHAT_ID = "pub_klagenfurt"
 
     private val gson = Gson()
@@ -52,15 +39,6 @@ object KlagenfurtSeedData {
     private const val HOUR_MS = 60L * MINUTE_MS
     private const val DAY_MS = 24L * HOUR_MS
 
-    // =====================================================================
-    // Clubs, Bars und Event-Locations (Klagenfurt)
-    // =====================================================================
-
-    /**
-     * Liefert den vollständigen Venue-Datensatz für Klagenfurt (5 Clubs & Bars).
-     *
-     * @param nowMs Referenzzeit zur Bestimmung des Geöffnet-Status.
-     */
     fun clubs(nowMs: Long = System.currentTimeMillis()): List<ClubEntity> = listOf(
         buildClub(
             id = "club_eventstage",
@@ -210,28 +188,10 @@ object KlagenfurtSeedData {
         )
     )
 
-    // =====================================================================
-    // Events und Aktionen
-    // =====================================================================
-
-    /**
-     * Liefert die Event-Agenda (standardmäßig leer, keine erfundenen Dummys).
-     */
     fun events(nowMs: Long = System.currentTimeMillis()): List<EventEntity> = emptyList()
 
-    /**
-     * Liefert Club-Aktionen (standardmäßig leer, keine erfundenen Gutscheincodes).
-     */
     fun clubOffers(nowMs: Long = System.currentTimeMillis()): List<ClubOfferEntity> = emptyList()
 
-    // =====================================================================
-    // Nutzerprofile
-    // =====================================================================
-
-    /**
-     * Liefert die Nutzerprofile des Demo-Datensatzes.
-     * Der erste Eintrag ist das Profil des lokalen Nutzers.
-     */
     fun users(nowMs: Long = System.currentTimeMillis()): List<UserEntity> = listOf(
         UserEntity(
             id = CURRENT_USER_ID,
@@ -308,11 +268,6 @@ object KlagenfurtSeedData {
         )
     )
 
-    // =====================================================================
-    // Chats und Nachrichten
-    // =====================================================================
-
-    /** Liefert den Stadt-Gruppenchat für eine bestimmte Stadt. */
     fun chatForCity(cityName: String, nowMs: Long = System.currentTimeMillis()): ChatEntity {
         val normalized = cityName.trim()
         val (id, initial) = when (normalized.lowercase()) {
@@ -338,35 +293,18 @@ object KlagenfurtSeedData {
         )
     }
 
-    /** Liefert den Standard-Stadt-Gruppenchat (Klagenfurt). */
     fun chats(nowMs: Long = System.currentTimeMillis()): List<ChatEntity> = listOf(
         chatForCity(CITY_NAME, nowMs)
     )
 
-    /** Liefert den Nachrichtenverlauf (keine Phantom-Nachrichten mehr). */
     fun messages(nowMs: Long = System.currentTimeMillis()): List<MessageEntity> = emptyList()
 
-    // =====================================================================
-    // Home-Feed
-    // =====================================================================
-
-    /** Liefert die Beiträge des Home-Feeds. */
     fun feedPosts(nowMs: Long = System.currentTimeMillis()): List<FeedPostEntity> = emptyList()
 
-    /** Liefert die Kommentare zu den Beiträgen aus [feedPosts]. */
     fun feedComments(nowMs: Long = System.currentTimeMillis()): List<FeedCommentEntity> = emptyList()
 
-    /** Liefert die Storys der Home-Story-Leiste. */
     fun stories(nowMs: Long = System.currentTimeMillis()): List<StoryEntity> = emptyList()
 
-    // =====================================================================
-    // Interne Hilfsfunktionen
-    // =====================================================================
-
-    /**
-     * Baut eine [ClubEntity] und serialisiert den Wochenplan in das
-     * von `ClubRepositoryImpl` erwartete JSON-Format.
-     */
     private fun buildClub(
         id: String,
         name: String,

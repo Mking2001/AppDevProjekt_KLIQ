@@ -56,7 +56,7 @@ class ClubFavoriteRepositoryTest {
     @Test
     fun toggleFavorite_invokesDaoUpdateWithInvertedState() = runTest(testDispatcher) {
         val clubId = "club_berghain"
-        
+
         repository.toggleFavorite(clubId, currentFavoriteState = false)
         testDispatcher.scheduler.advanceUntilIdle()
 

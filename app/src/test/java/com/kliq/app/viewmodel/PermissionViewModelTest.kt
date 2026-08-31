@@ -12,10 +12,6 @@ import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
-/**
- * Unit tests for [PermissionViewModel] validating reactive location permission state handling,
- * rationale dialog triggers, and system settings deep-linking.
- */
 class PermissionViewModelTest {
 
     private val permissionManager: PermissionManager = mock(PermissionManager::class.java)

@@ -13,17 +13,6 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Befüllt die lokale Room-Datenbank beim ersten Start mit dem
- * Klagenfurt-Demonstrationsdatensatz aus [KlagenfurtSeedData].
- *
- * Der Seeder ist idempotent: Jeder Bereich wird nur geschrieben, wenn er leer ist.
- * Selbst erstellte Beiträge, gesetzte Favoriten und gesendete Nachrichten bleiben
- * dadurch über App-Starts hinweg erhalten.
- *
- * Sobald ein produktives Backend angebunden ist, entfällt der Aufruf in
- * `KliqApplication` ohne weitere Anpassungen an der Repository-Schicht.
- */
 @Singleton
 class KliqDatabaseSeeder @Inject constructor(
     private val clubDao: ClubDao,
@@ -34,11 +23,6 @@ class KliqDatabaseSeeder @Inject constructor(
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
 
-    /**
-     * Prüft alle Bereiche und schreibt fehlende Demo-Daten.
-     * Fehler werden protokolliert und nicht weitergeworfen, damit ein
-     * Seeding-Problem den App-Start nicht blockiert.
-     */
     suspend fun seedIfEmpty() = withContext(ioDispatcher) {
         try {
             seedUsers()
@@ -71,7 +55,6 @@ class KliqDatabaseSeeder @Inject constructor(
         val homeChat = KlagenfurtSeedData.chatForCity(hometown, nowMs)
         chatDao.insertChat(homeChat)
 
-        // Ensure user is not auto-joined to all other Austrian city chats
         val allOtherCityIds = listOf("pub_villach", "pub_graz", "pub_wien", "pub_salzburg", "pub_innsbruck", "pub_linz", "pub_klagenfurt")
             .filter { it != homeChat.id }
         allOtherCityIds.forEach { chatId ->
@@ -79,7 +62,6 @@ class KliqDatabaseSeeder @Inject constructor(
             chatDao.deleteMessagesForChat(chatId)
         }
 
-        // Delete legacy phantom/mock chats and messages
         chatDao.deleteChatById("priv_lena")
         chatDao.deleteChatById("priv_david")
         chatDao.deleteMessagesForChat("priv_lena")
@@ -88,7 +70,7 @@ class KliqDatabaseSeeder @Inject constructor(
     }
 
     private suspend fun seedFeed() {
-        // Clean out all legacy mock posts, comments, and stories
+
         feedDao.deleteMockStories()
         feedDao.deleteMockPosts()
         feedDao.deleteMockComments()

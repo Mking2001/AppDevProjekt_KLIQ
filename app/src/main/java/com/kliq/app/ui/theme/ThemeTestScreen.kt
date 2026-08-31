@@ -55,13 +55,12 @@ fun ThemeTestScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Primary Color Showcases
             ColorShowcaseCard(
                 title = "Primary",
                 color = MaterialTheme.colorScheme.primary,
                 onColor = MaterialTheme.colorScheme.onPrimary
             )
-            
+
             ColorShowcaseCard(
                 title = "Secondary",
                 color = MaterialTheme.colorScheme.secondary,
@@ -73,7 +72,7 @@ fun ThemeTestScreen() {
                 color = MaterialTheme.colorScheme.tertiary,
                 onColor = MaterialTheme.colorScheme.onTertiary
             )
-            
+
             ColorShowcaseCard(
                 title = "Error",
                 color = MaterialTheme.colorScheme.error,
@@ -82,7 +81,6 @@ fun ThemeTestScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Typography Showcase
             Card(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -104,9 +102,8 @@ fun ThemeTestScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Shapes & Interactive Component Showcase
             Button(
-                onClick = { /* Do nothing */ },
+                onClick = {  },
                 shape = MaterialTheme.shapes.small,
                 modifier = Modifier.fillMaxWidth()
             ) {

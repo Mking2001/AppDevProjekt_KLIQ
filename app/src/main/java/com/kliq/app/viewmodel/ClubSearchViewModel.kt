@@ -21,11 +21,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * ViewModel zur Steuerung der reaktiven Club- und Regionen-Suche (Kapitel 7.4).
- * Implementiert Debouncing (300ms) und reaktives Flow-Combining für performante
- * Datenbank- und Backend-Abfragen inklusive Umkreissuche per GPS.
- */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ClubSearchViewModel @Inject constructor(
@@ -106,25 +101,16 @@ class ClubSearchViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Aktualisiert den Suchtext in der Suchleiste.
-     */
     fun onQueryChanged(newQuery: String) {
         _uiState.update { it.copy(searchQuery = newQuery) }
         _queryFlow.value = newQuery
     }
 
-    /**
-     * Wechselt den aktiven Suchfilter-Badge.
-     */
     fun onFilterChanged(newFilter: SearchFilterType) {
         _uiState.update { it.copy(activeFilter = newFilter) }
         _filterFlow.value = newFilter
     }
 
-    /**
-     * Setzt oder entfernt den Regions-Filter.
-     */
     fun selectRegion(regionName: String?) {
         _uiState.update {
             val newRegion = if (it.selectedRegion == regionName) null else regionName
@@ -133,9 +119,6 @@ class ClubSearchViewModel @Inject constructor(
         _queryFlow.value = _uiState.value.searchQuery
     }
 
-    /**
-     * Setzt oder entfernt den Genre-Filter.
-     */
     fun selectGenre(genre: String?) {
         _uiState.update {
             val newGenre = if (it.selectedGenre == genre) null else genre
@@ -144,9 +127,6 @@ class ClubSearchViewModel @Inject constructor(
         _queryFlow.value = _uiState.value.searchQuery
     }
 
-    /**
-     * Leert die Suchleiste und setzt Filter zurück.
-     */
     fun clearSearch() {
         _uiState.update {
             it.copy(
@@ -159,9 +139,6 @@ class ClubSearchViewModel @Inject constructor(
         _queryFlow.value = ""
     }
 
-    /**
-     * Setzt die aktuellen GPS-Koordinaten des Benutzers für die Umkreissuche.
-     */
     fun setUserLocation(latitude: Double, longitude: Double) {
         _uiState.update {
             it.copy(
@@ -173,9 +150,6 @@ class ClubSearchViewModel @Inject constructor(
         _locationFlow.value = Pair(latitude, longitude)
     }
 
-    /**
-     * Toggelt den Favoriten-Status eines Clubs.
-     */
     fun toggleFavorite(clubId: String, currentFavorite: Boolean) {
         viewModelScope.launch {
             clubRepository.toggleFavorite(clubId, currentFavorite)

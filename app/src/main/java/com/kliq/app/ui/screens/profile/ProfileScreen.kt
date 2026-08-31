@@ -239,7 +239,6 @@ fun ProfileScreen(
                 modifier = Modifier.align(Alignment.BottomCenter)
             )
 
-            // Follower / Following Liste Bottom Sheet
             if (uiState.activeFollowListDialog != null) {
                 OwnFollowListBottomSheet(
                     type = uiState.activeFollowListDialog!!,
@@ -256,7 +255,6 @@ fun ProfileScreen(
         }
     }
 
-    // Story-Style Multi-Photo Viewer
     val allUserPhotos = if (uiState.photos.isNotEmpty()) {
         uiState.photos.filter { it.isNotBlank() }
     } else {
@@ -347,7 +345,6 @@ private fun ProfileHeader(
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Bio linksbündig mit "Bio: " Präfix
         if (uiState.bio.isNotBlank()) {
             Spacer(modifier = Modifier.height(10.dp))
             Row(
@@ -684,10 +681,6 @@ private fun ProfileTabRow(
     }
 }
 
-/**
- * Rendert den Inhalt des aktuell gewählten Profil-Tabs.
- * (4 Tabs: Beiträge, Events, Historie, Bewertungen)
- */
 @Composable
 private fun ProfileTabContent(
     uiState: ProfileUiState,
@@ -706,9 +699,6 @@ private fun ProfileTabContent(
     }
 }
 
-/**
- * Liste der eigenen Beitraege im Tab "Beitraege".
- */
 @Composable
 private fun OwnPostsList(posts: List<ProfilePostUi>) {
     if (posts.isEmpty()) {
@@ -779,10 +769,6 @@ private fun OwnPostsList(posts: List<ProfilePostUi>) {
     }
 }
 
-/**
- * Kommende Event-Agenda im Tab "Events".
- * Zeigt nur favorisierte / gelikte Events an.
- */
 @Composable
 private fun EventsList(
     events: List<ProfileEventUi>,
@@ -851,9 +837,6 @@ private fun EventsList(
     }
 }
 
-/**
- * Tab "Bewertungen": Zeigt die Bewertungen und Durchschnittsnote des Nutzers an.
- */
 @Composable
 private fun ReviewsList(
     reviews: List<Review>,
@@ -869,7 +852,7 @@ private fun ReviewsList(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        // Bewertungsübersicht-Karte
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1002,7 +985,6 @@ private fun ReviewsList(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // Sterne
                     Row {
                         for (i in 1..5) {
                             Icon(
@@ -1028,10 +1010,6 @@ private fun ReviewsList(
     }
 }
 
-/**
- * Story-Style Multi-Foto Viewer für bis zu 4 Profilbilder.
- * Navigation durch Tippen auf die linke/rechte Bildschirmhälfte oder Navigations-Pfeile.
- */
 @Composable
 fun MultiPhotoStoryViewerDialog(
     isVisible: Boolean,
@@ -1061,7 +1039,7 @@ fun MultiPhotoStoryViewerDialog(
                 .fillMaxSize()
                 .background(Color.Black)
         ) {
-            // Aktuelles Bild im Vollbild
+
             if (!currentPhoto.isNullOrBlank()) {
                 AsyncImage(
                     model = currentPhoto,
@@ -1084,7 +1062,6 @@ fun MultiPhotoStoryViewerDialog(
                 }
             }
 
-            // Touch-Navigationsbereiche (Linke & Rechte Hälfte zum Weiterblättern)
             Row(modifier = Modifier.fillMaxSize()) {
                 Box(
                     modifier = Modifier
@@ -1106,14 +1083,13 @@ fun MultiPhotoStoryViewerDialog(
                 )
             }
 
-            // Kopfbereich: Story-Balken & Schließen-Button
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .statusBarsPadding()
                     .padding(horizontal = 16.dp, vertical = 12.dp)
             ) {
-                // Story-Fortschrittsbalken
+
                 if (photos.size > 1) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -1164,7 +1140,6 @@ fun MultiPhotoStoryViewerDialog(
                 }
             }
 
-            // Linker und rechter Navigationspfeil
             if (currentIndex > 0) {
                 IconButton(
                     onClick = onPrevious,
@@ -1203,7 +1178,6 @@ fun MultiPhotoStoryViewerDialog(
                 }
             }
 
-            // Fußbereich: Name & Alter Einblendung
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -1251,4 +1225,3 @@ private fun formatCount(count: Int): String {
         else -> count.toString()
     }
 }
-

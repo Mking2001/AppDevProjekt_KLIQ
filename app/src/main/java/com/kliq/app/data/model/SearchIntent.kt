@@ -1,8 +1,5 @@
 package com.kliq.app.data.model
 
-/**
- * Enum defining user matching intentions during onboarding and search preference configuration.
- */
 enum class SearchIntent(
     val title: String,
     val description: String

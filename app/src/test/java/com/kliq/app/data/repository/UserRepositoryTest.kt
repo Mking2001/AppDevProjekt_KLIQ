@@ -66,8 +66,7 @@ class UserRepositoryTest {
 
     @Test
     fun testSyncUserProfileUpdatesRoomDatabaseCache() = runTest {
-        // Without a kliqConnector, syncUserProfile is a no-op (succeeds without changes).
-        // Cloud SQL is the single source of truth — no apiService fallback.
+
         val syncResult = userRepository.syncUserProfile("usr_sync_202")
         assertTrue(syncResult.isSuccess)
     }

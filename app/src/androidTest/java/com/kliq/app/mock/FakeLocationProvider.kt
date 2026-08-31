@@ -11,10 +11,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flowOf
 
-/**
- * Deterministischer Fake-Standortdienst für Android UI-Tests.
- * Simuliert GPS-Updates (z. B. Berlin Alexanderplatz/Mitte) ohne echte Sensor-Abhängigkeit.
- */
 class FakeLocationProvider : LocationRepository {
 
     private val _locationUpdates = MutableStateFlow<LocationData?>(

@@ -5,32 +5,18 @@ import com.kliq.app.data.model.FeedPost
 import com.kliq.app.data.model.Story
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Repository für den Home-Feed. Kapselt Beiträge, Kommentare und Storys
- * gegen die lokale Room-Datenbank.
- */
 interface FeedRepository {
 
-    /** Reaktiver Strom aller Feed-Beiträge, absteigend nach Erstellungszeit. */
     fun getFeedPosts(): Flow<List<FeedPost>>
 
-    /** Reaktiver Strom aller Feed-Beiträge eines bestimmten Nutzers. */
     fun getFeedPostsByAuthor(authorUserId: String): Flow<List<FeedPost>>
 
-    /** Synchronisiert Feed-Beiträge aus Data Connect. */
     suspend fun syncFeedPosts(): Result<Unit>
 
-    /** Reaktiver Strom aller Storys, ungesehene zuerst. */
     fun getStories(): Flow<List<Story>>
 
-    /** Reaktiver Strom der Kommentare eines Beitrags. */
     fun getCommentsForPost(postId: String): Flow<List<FeedComment>>
 
-    /**
-     * Erstellt einen neuen Beitrag des aktuellen Nutzers.
-     *
-     * @return Der persistierte Beitrag oder ein Fehler, falls das Schreiben scheitert.
-     */
     suspend fun createPost(
         authorUserId: String,
         authorName: String,
@@ -40,14 +26,8 @@ interface FeedRepository {
         imageUrl: String? = null
     ): Result<FeedPost>
 
-    /**
-     * Schaltet den Like-Zustand eines Beitrags um und aktualisiert den Zähler.
-     *
-     * @return Der neue Like-Zustand oder ein Fehler, falls der Beitrag nicht existiert.
-     */
     suspend fun toggleLike(postId: String): Result<Boolean>
 
-    /** Fügt einen Kommentar hinzu und aktualisiert den Kommentarzähler des Beitrags. */
     suspend fun addComment(
         postId: String,
         authorUserId: String,
@@ -55,7 +35,6 @@ interface FeedRepository {
         text: String
     ): Result<FeedComment>
 
-    /** Erstellt eine neue Story des Nutzers. */
     suspend fun createStory(
         authorUserId: String,
         authorName: String,
@@ -65,12 +44,9 @@ interface FeedRepository {
         clubName: String? = null
     ): Result<Story> = Result.failure(NotImplementedError())
 
-    /** Markiert eine Story als gesehen. */
     suspend fun markStoryAsSeen(storyId: String)
 
-    /** Löscht eine Story aus der Datenbank. */
     suspend fun deleteStory(storyId: String): Result<Unit> = Result.success(Unit)
 
-    /** Entfernt einen Beitrag samt Kommentaren. */
     suspend fun deletePost(postId: String)
 }

@@ -83,7 +83,7 @@ fun ClubDetailScreen(
                 },
                 actions = {
                     uiState.club?.let { club ->
-                        // Flame Hype Button
+
                         Surface(
                             onClick = { viewModel.toggleHype() },
                             shape = RoundedCornerShape(12.dp),
@@ -323,17 +323,17 @@ private fun OperatingHoursSection(club: Club) {
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
-            
+
             val statusColor = if (club.operatingHours.isOpenNow) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
             val statusText = if (club.operatingHours.isOpenNow) "Jetzt Geöffnet" else "Geschlossen"
-            
+
             Text(
                 text = "$statusText (${club.operatingHours.todayHours})",
                 color = statusColor,
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodyMedium
             )
-            
+
             Spacer(modifier = Modifier.height(8.dp))
             club.operatingHours.weeklySchedule.forEach { (day, hours) ->
                 Row(

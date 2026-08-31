@@ -13,11 +13,6 @@ import org.robolectric.RobolectricTestRunner
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-/**
- * Unit tests for [MarkerBitmapHelper] validating custom bitmap descriptor creation
- * for club markers, user markers, cluster markers, LRU memory caching behavior,
- * cache pre-warming, and concurrent access.
- */
 @RunWith(RobolectricTestRunner::class)
 class MarkerBitmapHelperTest {
 
@@ -106,4 +101,3 @@ class MarkerBitmapHelperTest {
         assertTrue(MarkerBitmapHelper.cacheSize() > 0)
     }
 }
-

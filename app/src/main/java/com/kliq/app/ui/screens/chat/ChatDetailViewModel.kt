@@ -52,13 +52,6 @@ data class ChatDetailUiState(
     val errorMessage: String? = null
 )
 
-/**
- * ViewModel für den Chat-Detail-Screen.
- *
- * Nachrichten werden ausschließlich über das [ChatRepository] gelesen und geschrieben.
- * Der Nachrichtenverlauf liegt damit in der Room-Datenbank und überlebt das Verlassen
- * des Screens. Beim Öffnen eines Chats wird der Ungelesen-Zähler zurückgesetzt.
- */
 @HiltViewModel
 class ChatDetailViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
@@ -79,15 +72,6 @@ class ChatDetailViewModel @Inject constructor(
     private var blockObserverJob: Job? = null
     private var syncJob: Job? = null
 
-    /**
-     * Bindet den Screen an einen Chat. Legt den Chat an, falls er noch nicht existiert,
-     * beobachtet Metadaten und Nachrichtenverlauf und markiert den Chat als gelesen.
-     *
-     * Chat-Typ und Ersatztitel werden aus der ID abgeleitet, damit der Screen selbst
-     * keine Annahmen über den Chat treffen muss.
-     *
-     * @param chatId ID des Chats. Bei Einstieg aus einem Nutzerprofil hat sie die Form `chat_<userId>`.
-     */
     fun loadConversation(chatId: String) {
         if (chatId.isBlank()) return
 
@@ -229,36 +213,21 @@ class ChatDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Leitet den Chat-Typ aus der ID-Konvention ab. Stadt-Gruppenchats
-     * verwenden das Praefix `pub_`, alles andere gilt als Direktnachricht.
-     */
     private fun resolveChatType(chatId: String): ChatType =
         if (chatId.startsWith("pub_")) ChatType.PUBLIC_CITY else ChatType.PRIVATE
 
-    /**
-     * Ersatztitel, falls der Chat erstmalig angelegt wird und noch kein
-     * Datensatz mit Anzeigename vorliegt.
-     */
     private fun resolveFallbackTitle(chatId: String, chatType: ChatType): String = when {
         chatType == ChatType.PUBLIC_CITY -> "Kliq Stadt-Chat"
         chatId.startsWith("chat_") -> "Chat"
         else -> "Chat"
     }
 
-    /**
-     * Leitet die Gegenstellen-ID aus der Chat-ID ab.
-     * Unterstützt die Konventionen `chat_<userId>` und `priv_<name>`.
-     */
     private fun resolveTargetUserId(chatId: String): String = when {
         chatId.startsWith("chat_") -> chatId.removePrefix("chat_")
         chatId.startsWith("priv_") -> "usr_${chatId.removePrefix("priv_")}"
         else -> chatId
     }
 
-    /**
-     * Setzt Datumstrenner auf die erste Nachricht jedes Kalendertags.
-     */
     private fun withDateHeaders(messages: List<ChatMessage>): List<ChatMessage> {
         var lastDay = ""
         return messages.map { message ->
@@ -298,10 +267,6 @@ class ChatDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Persistiert die eingegebene Textnachricht und leert das Eingabefeld.
-     * Die Liste wird über den Room-Flow aktualisiert, nicht lokal fortgeschrieben.
-     */
     fun onSendMessage() {
         if (_uiState.value.isBlocked) return
         val text = _uiState.value.currentInput.trim()
@@ -331,10 +296,6 @@ class ChatDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Führt den Zustellungs- und Lesestatus einer gesendeten Nachricht nach.
-     * Die Statuswerte werden in der Datenbank aktualisiert und bleiben erhalten.
-     */
     private fun advanceMessageStatus(messageId: String) {
         viewModelScope.launch {
             delay(DELIVERY_DELAY_MS)
@@ -374,10 +335,6 @@ class ChatDetailViewModel @Inject constructor(
         _uiState.update { it.copy(selectedImageUri = null, imageCaption = "", isCompressingImage = false) }
     }
 
-    /**
-     * Komprimiert das ausgewählte Bild, speichert es lokal und persistiert
-     * die zugehörige Bildnachricht.
-     */
     fun sendSelectedImage(context: Context) {
         val imageUriString = _uiState.value.selectedImageUri ?: return
         if (_uiState.value.isBlocked || currentChatId.isBlank()) return
@@ -543,9 +500,6 @@ class ChatDetailViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Beendet die Aufnahme und persistiert die Sprachnachricht.
-     */
     fun stopAndSendVoiceRecording() {
         recordingTickerJob?.cancel()
         recordingTickerJob = null

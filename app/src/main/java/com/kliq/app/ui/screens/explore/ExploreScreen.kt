@@ -64,20 +64,6 @@ import com.kliq.app.ui.navigation.TopBarUiState
 import com.kliq.app.ui.theme.PurplePrimary
 import com.kliq.app.util.talkBackDescription
 
-/**
- * Explore-Screen mit Suchleiste, Kategorie- und Bewertungsfiltern
- * sowie einem 2-spaltigen Discovery-Grid.
- *
- * Die Inhalte stammen aus [ExploreViewModel] und damit aus der lokalen
- * Datenbank. Favoriten lassen sich direkt in der Kachel setzen.
- *
- * @param topBarState Aktueller Top-Bar UI-State.
- * @param onToggleMenu Callback zum Umschalten des Overflow-Menüs.
- * @param onDismissMenu Callback zum Schließen des Overflow-Menüs.
- * @param onMenuAction Callback bei Auswahl eines Menü-Eintrags.
- * @param onNavigateToClub Navigation zur Club-Detailansicht.
- * @param viewModel Hilt-injiziertes [ExploreViewModel].
- */
 @Composable
 fun ExploreScreen(
     topBarState: TopBarUiState,
@@ -223,12 +209,8 @@ fun ExploreScreen(
     }
 }
 
-/** Auswählbare Mindestbewertungen der Filterleiste. */
 private val RATING_FILTERS = listOf(0f, 3f, 4f, 4.5f)
 
-/**
- * Hinweis, wenn kein Eintrag den aktiven Filtern entspricht.
- */
 @Composable
 private fun EmptyDiscoverHint() {
     Column(
@@ -253,15 +235,6 @@ private fun EmptyDiscoverHint() {
     }
 }
 
-/**
- * Einzelne Kachel des Discovery-Grids.
- * Zeigt Club-Bild, Titel, Untertitel, Bewertung, Kategorie-Badge, Öffnungsstatus,
- * Favoriten-Umschalter und den Flammenknopf (Tages-Hype 🔥).
- *
- * @param onClick Callback beim Antippen der Kachel.
- * @param onToggleFavorite Callback beim Antippen des Favoriten-Symbols.
- * @param onToggleHype Callback beim Antippen des Flammen-Symbols.
- */
 @Composable
 private fun DiscoverGridCard(
     item: DiscoverItemUi,
@@ -281,7 +254,7 @@ private fun DiscoverGridCard(
                         if (item.isFavorite) ", als Favorit markiert" else ""
             )
     ) {
-        // Club / Bar Bild
+
         if (!item.imageUrl.isNullOrBlank()) {
             AsyncImage(
                 model = item.imageUrl,
@@ -304,7 +277,6 @@ private fun DiscoverGridCard(
             )
         }
 
-        // Gradient-Overlay für optimale Lesbarkeit
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -322,7 +294,6 @@ private fun DiscoverGridCard(
                 )
         )
 
-        // Kategorie-Badge oben links
         Box(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -339,7 +310,6 @@ private fun DiscoverGridCard(
             )
         }
 
-        // Favoriten-Button oben rechts
         IconButton(
             onClick = onToggleFavorite,
             modifier = Modifier
@@ -361,7 +331,6 @@ private fun DiscoverGridCard(
             )
         }
 
-        // Flammenknopf (Tages-Hype 🔥) - Oben rechts neben Favorit oder schwebend unten rechts
         Surface(
             onClick = onToggleHype,
             shape = RoundedCornerShape(12.dp),
@@ -389,7 +358,6 @@ private fun DiscoverGridCard(
             }
         }
 
-        // Club-Infos unten links
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)

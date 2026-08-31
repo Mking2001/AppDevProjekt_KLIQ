@@ -108,7 +108,7 @@ class ProfileAverageRatingUnitTest {
         testDispatcher.scheduler.advanceUntilIdle()
 
         val state = viewModel.uiState.value
-        val expectedExactAverage = (5 + 4 + 4) / 3.0 // 4.333333333333333
+        val expectedExactAverage = (5 + 4 + 4) / 3.0
         assertEquals(expectedExactAverage, state.averageRating, 0.0001)
         assertEquals("4.3", state.formattedAverageRating)
         assertEquals(3, state.totalReviewsCount)

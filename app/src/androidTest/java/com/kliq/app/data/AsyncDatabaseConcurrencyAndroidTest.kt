@@ -59,11 +59,6 @@ class AsyncDatabaseConcurrencyAndroidTest {
         db.close()
     }
 
-    /**
-     * 1. Asynchroner Datenabruf & Reaktives Streaming:
-     * Verifiziert, dass Datenbankabfragen auf Hintergrund-Threads ablaufen
-     * und reaktive Flows Ergebnisse sicher an den Consumer streamen.
-     */
     @Test
     fun test1_asynchronousDataQueryAndReactiveStreaming() = runBlocking {
         val club = ClubEntity(
@@ -97,11 +92,6 @@ class AsyncDatabaseConcurrencyAndroidTest {
         )
     }
 
-    /**
-     * 2. Thread-Sicherheit & Paralleles Schreiben unter hoher Last:
-     * Überprüft, dass das gleichzeitige Schreiben von 100 Chat-Einträgen
-     * über Coroutines auf IO-Dispatchern keinen Deadlock verursacht.
-     */
     @Test
     fun test2_parallelWriteThreadSafetyAndNoDeadlocks() = runBlocking {
         val chat = ChatEntity(
@@ -145,11 +135,6 @@ class AsyncDatabaseConcurrencyAndroidTest {
         )
     }
 
-    /**
-     * 3. Test-Dispatcher & Virtuelle Zeit-Mechanismen:
-     * Verifiziert simulierte Latenzen und Timeouts deterministisch via currentTime
-     * und virtueller Zeit in runTest.
-     */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     @Test
     fun test3_virtualTimeAndDeterministicTimeoutValidation() = runTest {
@@ -166,7 +151,7 @@ class AsyncDatabaseConcurrencyAndroidTest {
         db.chatDao().insertChat(chat)
 
         val startTimeMs = testScheduler.currentTime
-        delay(5000) // Virtuelle 5-Sekunden-Latenz
+        delay(5000)
 
         val sendResult = chatRepository.sendTextMessage(
             chatId = "chat_virtual_time",

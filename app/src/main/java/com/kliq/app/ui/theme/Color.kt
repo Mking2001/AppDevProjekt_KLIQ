@@ -2,7 +2,6 @@ package com.kliq.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Primary Purple (WCAG AA Compliant contrast > 4.5:1 for normal text, > 3:1 for graphics)
 val PurplePrimary = Color(0xFF8B5CF6)
 val PurplePrimaryDark = Color(0xFF6D28D9)
 val PurplePrimaryLight = Color(0xFFC084FC)
@@ -11,7 +10,6 @@ val PurpleContainerLight = Color(0xFFEDE9FE)
 val OnPurpleContainer = Color(0xFFEDE9FE)
 val OnPurpleContainerLight = Color(0xFF1E0A3C)
 
-// Secondary Teal
 val TealSecondary = Color(0xFF14B8A6)
 val TealSecondaryDark = Color(0xFF0F766E)
 val TealSecondaryLight = Color(0xFF5EEAD4)
@@ -20,7 +18,6 @@ val TealContainerLight = Color(0xFFCCFBF1)
 val OnTealContainer = Color(0xFFCCFBF1)
 val OnTealContainerLight = Color(0xFF042F2E)
 
-// Tertiary Fuchsia
 val FuchsiaTertiary = Color(0xFFD946EF)
 val FuchsiaTertiaryDark = Color(0xFFA21CAF)
 val FuchsiaTertiaryLight = Color(0xFFF0ABFC)
@@ -29,7 +26,6 @@ val FuchsiaContainerLight = Color(0xFFFAE8FF)
 val OnFuchsiaContainer = Color(0xFFFAE8FF)
 val OnFuchsiaContainerLight = Color(0xFF4A044E)
 
-// Error
 val ErrorRed = Color(0xFFEF4444)
 val ErrorRedDark = Color(0xFFDC2626)
 val ErrorRedLight = Color(0xFFFCA5A5)
@@ -38,7 +34,6 @@ val ErrorContainerLight = Color(0xFFFEE2E2)
 val OnErrorContainer = Color(0xFFFEE2E2)
 val OnErrorContainerLight = Color(0xFF450A0A)
 
-// Neutral Dark Mode (WCAG AA Contrast Verified for Nightlife & Club Environments)
 val DarkBackground = Color(0xFF0C0914)
 val DarkSurface = Color(0xFF161124)
 val DarkSurfaceVariant = Color(0xFF241C38)
@@ -55,7 +50,6 @@ val DarkInverseOnSurface = Color(0xFF161124)
 val DarkInversePrimary = Color(0xFF6D28D9)
 val DarkScrim = Color(0xFF000000)
 
-// Neutral Light Mode
 val LightBackground = Color(0xFFFCFAFF)
 val LightSurface = Color(0xFFF8F5FF)
 val LightSurfaceVariant = Color(0xFFEDE9FE)
@@ -72,7 +66,6 @@ val LightInverseOnSurface = Color(0xFFF3EEFF)
 val LightInversePrimary = Color(0xFFBB86FC)
 val LightScrim = Color(0xFF000000)
 
-// High-Contrast Mode (WCAG AAA >= 7:1 Contrast Ratio)
 val HighContrastPurplePrimary = Color(0xFFC084FC)
 val HighContrastBackground = Color(0xFF000000)
 val HighContrastSurface = Color(0xFF121212)
@@ -80,5 +73,3 @@ val HighContrastSurfaceVariant = Color(0xFF1F1B2E)
 val HighContrastOnBackground = Color(0xFFFFFFFF)
 val HighContrastOnSurface = Color(0xFFFFFFFF)
 val HighContrastOutline = Color(0xFFA855F7)
-
-

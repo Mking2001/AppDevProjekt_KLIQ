@@ -15,10 +15,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/**
- * Unit Test Suite verifying Adaptive Location Sampling, Stepped Power Policies,
- * Stationary Detection, and Burst Session Management (Step 9.7: GPS Battery Optimization).
- */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AdaptiveLocationSamplingTest {
 
@@ -57,7 +53,7 @@ class AdaptiveLocationSamplingTest {
     @Test
     fun testStationaryDetection_consecutiveLowSpeedFixes_triggersIdlePassiveMode() {
         val fix1 = LocationData(latitude = 52.52000, longitude = 13.40500, speed = 0.1f)
-        val fix2 = LocationData(latitude = 52.52001, longitude = 13.40501, speed = 0.05f) // < 2 meters away
+        val fix2 = LocationData(latitude = 52.52001, longitude = 13.40501, speed = 0.05f)
         val fix3 = LocationData(latitude = 52.52001, longitude = 13.40501, speed = 0.0f)
 
         controller.onLocationSampleReceived(fix1)
@@ -74,14 +70,13 @@ class AdaptiveLocationSamplingTest {
 
     @Test
     fun testMovementResumed_afterStationary_restoresBalancedMode() {
-        // Set stationary
+
         controller.setStationaryState(true)
         assertTrue(controller.isStationary.value)
         assertEquals(LocationTrackingMode.IDLE_PASSIVE, controller.effectiveMode.value)
 
-        // Receive fix with high displacement and speed
         val startFix = LocationData(latitude = 52.5200, longitude = 13.4050, speed = 0.0f)
-        val movingFix = LocationData(latitude = 52.5250, longitude = 13.4100, speed = 1.4f) // ~600m movement
+        val movingFix = LocationData(latitude = 52.5250, longitude = 13.4100, speed = 1.4f)
 
         controller.onLocationSampleReceived(startFix)
         controller.onLocationSampleReceived(movingFix)

@@ -1,8 +1,5 @@
 package com.kliq.app.data.model
 
-/**
- * Enumeration representing user gender identities.
- */
 enum class Gender {
     MALE,
     FEMALE,

@@ -8,9 +8,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Contract for secure local session persistence.
- */
 interface SessionStorage {
     fun saveSession(token: String, userId: String)
     fun getAuthToken(): String?
@@ -19,10 +16,6 @@ interface SessionStorage {
     fun clearSession()
 }
 
-/**
- * Platform-specific encrypted implementation using [EncryptedSharedPreferences]
- * backed by Android KeyStore [MasterKey] (AES256_GCM / AES256_SIV).
- */
 @Singleton
 class EncryptedSessionStorage @Inject constructor(
     @ApplicationContext private val context: Context
@@ -44,7 +37,7 @@ class EncryptedSessionStorage @Inject constructor(
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
         } catch (e: Exception) {
-            // Fallback for edge cases where KeyStore key fails to decrypt existing file
+
             context.getSharedPreferences(PREFS_FILENAME, Context.MODE_PRIVATE)
         }
     }

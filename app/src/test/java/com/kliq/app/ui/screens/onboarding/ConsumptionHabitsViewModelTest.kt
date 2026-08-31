@@ -74,7 +74,6 @@ class ConsumptionHabitsViewModelTest {
         viewModel.selectDrinkingHabit(DrinkingHabit.FREQUENTLY)
         assertTrue(viewModel.uiState.value.isSelectionValid)
 
-        // Toggle smoking off by selecting same habit again
         viewModel.selectSmokingHabit(SmokingHabit.OCCASIONALLY)
         val state = viewModel.uiState.value
         assertNull(state.selectedSmokingHabit)
